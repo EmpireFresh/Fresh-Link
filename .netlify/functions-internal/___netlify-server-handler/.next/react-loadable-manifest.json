@@ -1,0 +1,412 @@
+{
+  "app\\page.tsx -> @/components/SecurityGuard": {
+    "id": 5820,
+    "files": [
+      "static/chunks/5820.bbca8473e98bc4d2.js"
+    ]
+  },
+  "app\\page.tsx -> @/components/auth/LoginPage": {
+    "id": 13586,
+    "files": [
+      "static/chunks/3586.6c2bd0619a524949.js"
+    ]
+  },
+  "app\\page.tsx -> @/components/backoffice/BackOfficeLayout": {
+    "id": 2162,
+    "files": [
+      "static/chunks/2162.14eb4822c028e51a.js"
+    ]
+  },
+  "app\\page.tsx -> @/components/mobile/MobileLayout": {
+    "id": 34479,
+    "files": [
+      "static/chunks/8853.4fcce99db26159c1.js",
+      "static/chunks/4479.1a22336924d39339.js"
+    ]
+  },
+  "app\\page.tsx -> @/components/portail/PortailExterne": {
+    "id": 59099,
+    "files": [
+      "static/chunks/9099.66076292ca7b4f75.js"
+    ]
+  },
+  "components\\backoffice\\BOCommercial.tsx -> leaflet": {
+    "id": 85752,
+    "files": [
+      "static/chunks/d0deef33.a586094e67e92d1c.js"
+    ]
+  },
+  "components\\backoffice\\BODispatch.tsx -> leaflet": {
+    "id": 85752,
+    "files": [
+      "static/chunks/d0deef33.a586094e67e92d1c.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./ASHELMarketPanel": {
+    "id": 39834,
+    "files": [
+      "static/chunks/9834.45e274d8d3ede2da.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./AgentsIAPanel": {
+    "id": 11005,
+    "files": [
+      "static/chunks/1005.1e5cdec02f513910.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./AnalyseAchatPanel": {
+    "id": 51594,
+    "files": [
+      "static/chunks/1594.fcf18e1bd94d8ee6.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./AnalyseReceptionPanel": {
+    "id": 50343,
+    "files": [
+      "static/chunks/7081.e3bf862a2178f2b5.js",
+      "static/chunks/343.841b08fbf14c4252.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOAchat": {
+    "id": 14827,
+    "files": [
+      "static/chunks/4827.fb10e0d4290fd6a9.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOAffectationCommerciale": {
+    "id": 86285,
+    "files": [
+      "static/chunks/6285.90fccd9ff64bc8e1.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOArticles": {
+    "id": 18129,
+    "files": [
+      "static/chunks/44530001.804efca3473899f8.js",
+      "static/chunks/5463.bb98a9cdbe4a5bba.js",
+      "static/chunks/8129.4c6fd954d4d8995a.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOBonLivraison": {
+    "id": 80902,
+    "files": [
+      "static/chunks/8853.4fcce99db26159c1.js",
+      "static/chunks/902.d0608452eae2b5c9.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOBonPreparation": {
+    "id": 80748,
+    "files": [
+      "static/chunks/748.7de95e796abdb1f8.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOCash": {
+    "id": 45605,
+    "files": [
+      "static/chunks/8853.4fcce99db26159c1.js",
+      "static/chunks/5605.58b859aca6c41d0a.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOCommercial": {
+    "id": 22150,
+    "files": [
+      "static/chunks/2150.821b76822b63a743.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOComptabiliteRH": {
+    "id": 40549,
+    "files": [
+      "static/chunks/549.44e788deabd9d6d8.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOComptesExternes": {
+    "id": 59893,
+    "files": [
+      "static/chunks/9893.a0786b23d7f4efcc.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOCreditFournisseur": {
+    "id": 24286,
+    "files": [
+      "static/chunks/4286.e144a2662fe4becc.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BODashboard": {
+    "id": 70832,
+    "files": [
+      "static/chunks/7081.e3bf862a2178f2b5.js",
+      "static/chunks/2625.b787f014b2b36f50.js",
+      "static/chunks/832.447f4b997e345dc7.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BODatabase": {
+    "id": 7420,
+    "files": [
+      "static/chunks/44530001.804efca3473899f8.js",
+      "static/chunks/5463.bb98a9cdbe4a5bba.js",
+      "static/chunks/7420.8368e2716dfcb340.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BODemandesComptes": {
+    "id": 34168,
+    "files": [
+      "static/chunks/4168.296bece4b0a3fdad.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BODepots": {
+    "id": 78589,
+    "files": [
+      "static/chunks/8589.a536b4edd47d30cc.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BODispatch": {
+    "id": 40470,
+    "files": [
+      "static/chunks/470.584a269270a05a7a.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOFinance": {
+    "id": 70638,
+    "files": [
+      "static/chunks/638.b0f3efec088a1473.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOFinanceControlGestion": {
+    "id": 29998,
+    "files": [
+      "static/chunks/9998.d85c950b6bfe1d76.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOFournisseurs": {
+    "id": 80286,
+    "files": [
+      "static/chunks/286.8e7aa24944885c47.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOGPSTracker": {
+    "id": 47816,
+    "files": [
+      "static/chunks/7816.690f91df0a5f1d4f.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOGoogleSheets": {
+    "id": 28043,
+    "files": [
+      "static/chunks/8043.e4476c29c5fe7acb.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOHRDocuments": {
+    "id": 45776,
+    "files": [
+      "static/chunks/8853.4fcce99db26159c1.js",
+      "static/chunks/5776.0d4586f50953a2a9.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOIntelligencePrix": {
+    "id": 55256,
+    "files": [
+      "static/chunks/5256.2cd4e2c24b27589e.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOInvestissement": {
+    "id": 86643,
+    "files": [
+      "static/chunks/6643.5aafdc7631571066.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOInvestisseurDashboard": {
+    "id": 27859,
+    "files": [
+      "static/chunks/7859.cc3e83d395f0e6f2.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOLoyalty": {
+    "id": 95346,
+    "files": [
+      "static/chunks/5346.731e8fdef40961d2.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOMarketplace": {
+    "id": 96453,
+    "files": [
+      "static/chunks/6453.f58435fa1ad51e4c.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOPerformanceIncentives": {
+    "id": 30100,
+    "files": [
+      "static/chunks/100.919d8ff47f396dd6.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOPermissionsMatrix": {
+    "id": 93195,
+    "files": [
+      "static/chunks/3195.1172a86e921ea5ee.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOPricing": {
+    "id": 67014,
+    "files": [
+      "static/chunks/7014.c18e8789e4f2ffeb.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOProspection": {
+    "id": 55537,
+    "files": [
+      "static/chunks/7918.5397bcd5b1b28918.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOPurchaseOrders": {
+    "id": 70562,
+    "files": [
+      "static/chunks/8853.4fcce99db26159c1.js",
+      "static/chunks/562.c49f5b040da55255.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BORapportLivraison": {
+    "id": 97789,
+    "files": [
+      "static/chunks/7789.f9dc6257c300f20f.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BORecap": {
+    "id": 2077,
+    "files": [
+      "static/chunks/2077.5b289ceb1b5a589e.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOReception": {
+    "id": 57151,
+    "files": [
+      "static/chunks/7151.78cede851738d34b.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOResources": {
+    "id": 88607,
+    "files": [
+      "static/chunks/8607.8aae91a41ebd03d2.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BORetour": {
+    "id": 58157,
+    "files": [
+      "static/chunks/8157.01bdcb370e5700d8.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOSettings": {
+    "id": 38620,
+    "files": [
+      "static/chunks/8620.53d29b3483ecc3a7.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOSourcing": {
+    "id": 35930,
+    "files": [
+      "static/chunks/5930.ffe71aaa4b23b725.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOStock": {
+    "id": 55606,
+    "files": [
+      "static/chunks/5606.ee1edc4fb0a2746b.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOTemplateEditor": {
+    "id": 59773,
+    "files": [
+      "static/chunks/9773.cd7fc7532cbf4bdc.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOUsers": {
+    "id": 77704,
+    "files": [
+      "static/chunks/7704.61301d978effb190.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOWebIntegration": {
+    "id": 96180,
+    "files": [
+      "static/chunks/6180.c747e7e0ade39a8a.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./BOWhatsApp": {
+    "id": 78946,
+    "files": [
+      "static/chunks/8946.1c83e67c20549762.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./CaissesVidesPanel": {
+    "id": 24150,
+    "files": [
+      "static/chunks/4150.8b531e2a9416ab87.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./CameraPermissionsPanel": {
+    "id": 25374,
+    "files": [
+      "static/chunks/5374.d82fb50a8eb2513d.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./CutoffNotificationsPanel": {
+    "id": 4463,
+    "files": [
+      "static/chunks/4463.78d2156810b727ca.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./DeployGuidePanel": {
+    "id": 89946,
+    "files": [
+      "static/chunks/9946.7fb93218393e8e12.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./FeedbackPanel": {
+    "id": 13630,
+    "files": [
+      "static/chunks/3630.5cc7e3fe58cbc2bb.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./ForecastPanel": {
+    "id": 45104,
+    "files": [
+      "static/chunks/5104.5c70cc0fd13efc7b.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./ShelfLifePanel": {
+    "id": 90213,
+    "files": [
+      "static/chunks/213.9722091f961a7b22.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> ./TripChargesPanel": {
+    "id": 34773,
+    "files": [
+      "static/chunks/4773.321469d03476cb61.js"
+    ]
+  },
+  "components\\backoffice\\BackOfficeLayout.tsx -> @/lib/supabase/client": {
+    "id": 46414,
+    "files": [
+      "static/chunks/44530001.804efca3473899f8.js",
+      "static/chunks/5463.bb98a9cdbe4a5bba.js",
+      "static/chunks/6414.ad35b195a59a9bf7.js"
+    ]
+  },
+  "components\\mobile\\MobileLogistique.tsx -> leaflet": {
+    "id": 85752,
+    "files": [
+      "static/chunks/d0deef33.a586094e67e92d1c.js"
+    ]
+  },
+  "node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 90472,
+    "files": [
+      "static/chunks/472.2c08b965bd9148e2.js"
+    ]
+  },
+  "node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 99341,
+    "files": [
+      "static/chunks/9341.3ca6eb08eac1d97b.js"
+    ]
+  }
+}
