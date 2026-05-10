@@ -1004,6 +1004,41 @@ export interface CompanyConfig {
   appSlogan?: string           // Sub-label in sidebar (default: company nom)
 }
 
+// ── Coordonnées publiques — synchronisées avec Supabase ───────
+export interface CompanyContacts {
+  // Téléphones
+  tel_principal?: string
+  tel_secondaire?: string
+  tel_urgence?: string
+  // WhatsApp
+  whatsapp_principal?: string
+  whatsapp_commercial?: string
+  whatsapp_livraison?: string
+  // Emails
+  email_principal?: string
+  email_commercial?: string
+  email_comptabilite?: string
+  email_rh?: string
+  // Adresse postale
+  adresse_ligne1?: string
+  adresse_ligne2?: string
+  code_postal?: string
+  ville?: string
+  pays?: string
+  // Réseaux sociaux
+  instagram?: string
+  facebook?: string
+  linkedin?: string
+  tiktok?: string
+  // Horaires
+  horaires_ouverture?: string
+  horaires_livraison?: string
+  zone_livraison?: string
+  // GPS siège
+  gps_lat?: number
+  gps_lng?: number
+}
+
 // ── BPM Workflow Steps ────────────────────────────────────────────────────────
 // Each step can be enabled/disabled independently. Gate steps can be bypassed.
 export interface WorkflowStep {
@@ -2210,6 +2245,24 @@ export const store = {
     setLS("fl_company", c)
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("fl_company_updated"))
+    }
+  },
+
+  // --- Company contacts (coordonnées publiques + WhatsApp) ---
+  getCompanyContacts: (): CompanyContacts => getLS("fl_company_contacts", {
+    tel_principal: "",
+    whatsapp_principal: "",
+    email_principal: "",
+    ville: "Casablanca",
+    pays: "Maroc",
+    horaires_ouverture: "Lun-Sam : 06h00 - 20h00",
+    horaires_livraison: "Lun-Sam : 07h00 - 18h00",
+    zone_livraison: "Casablanca et région",
+  }),
+  saveCompanyContacts: (c: CompanyContacts) => {
+    setLS("fl_company_contacts", c)
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("fl_contacts_updated"))
     }
   },
 
