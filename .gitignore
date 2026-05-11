@@ -3,3 +3,5 @@ node_modules/
 .netlify/
 .vercel/
 *.log
+.next/
+.env.local
