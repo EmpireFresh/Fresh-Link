@@ -15,7 +15,7 @@
     "autoprefixer": "^10.5.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.14.0",
-    "next": "^15.3.2",
+    "next": "^15.3.3",
     "nodemailer": "^8.0.7",
     "postcss": "^8.5.14",
     "prop-types": "^15.8.1",
