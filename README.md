@@ -1,115 +1,156 @@
-# 🥑 FreshLink Empire Fresh v3.0
+# 🌿 Empire Fresh — Guide de déploiement complet
 
-> Plateforme de gestion commerciale, logistique et suivi de distribution — **fruits et légumes au Maroc**
+## Architecture
+
+```
+index.html          → Landing page + formulaire modal
+netlify/functions/  → Fonction serverless (Netlify)
+api/submit.js       → Route API serverless (Vercel)
+supabase/schema.sql → Schéma base de données
+```
+
+**Flux de données :**
+```
+Utilisateur remplit le formulaire
+        ↓
+POST /api/submit  (function serverless)
+        ↓
+    ┌───┴───┐
+    ↓       ↓
+Supabase  WhatsApp Groupe
+(stocke)  (notifie via Green API)
+```
 
 ---
 
-## 🚀 Démarrage rapide
+## ① Supabase — Base de données
 
+1. Créez un compte sur [supabase.com](https://supabase.com) (gratuit)
+2. Créez un **nouveau projet** (ex: `empire-fresh`)
+3. Allez dans **SQL Editor** → **New Query**
+4. Collez le contenu de `supabase/schema.sql` et exécutez
+5. Récupérez vos clés dans **Project Settings → API** :
+   - `Project URL` → `SUPABASE_URL`
+   - `service_role` (secret) → `SUPABASE_SERVICE_KEY`
+
+---
+
+## ② Green API — WhatsApp groupe
+
+> Green API permet d'envoyer des messages dans des groupes WhatsApp depuis votre numéro.
+
+1. Créez un compte sur [green-api.com](https://green-api.com)
+2. Créez une **instance** et scannez le QR code avec le numéro WhatsApp de l'entreprise
+3. Récupérez :
+   - `idInstance` → `GREEN_API_INSTANCE`
+   - `apiTokenInstance` → `GREEN_API_TOKEN`
+4. Trouvez l'ID du groupe cible :
+   - Ouvrez [web.whatsapp.com](https://web.whatsapp.com)
+   - Cliquez sur le groupe
+   - Regardez l'URL : `...#120363XXXXXXXXXX@g.us`
+   - → `WA_GROUP_ID=120363XXXXXXXXXX@g.us`
+
+**Tarifs Green API :** 3 mois gratuits, puis ~$5/mois pour usage modéré.
+
+---
+
+## ③ Déploiement Netlify (recommandé)
+
+### Option A — Glisser-déposer (le plus simple)
+1. Allez sur [app.netlify.com](https://app.netlify.com)
+2. Glissez le dossier `empire-fresh/` dans la zone de dépôt
+3. Netlify détecte automatiquement `netlify.toml`
+4. Allez dans **Site settings → Environment variables** et ajoutez :
+   ```
+   SUPABASE_URL         = https://xxxx.supabase.co
+   SUPABASE_SERVICE_KEY = eyJ...
+   GREEN_API_INSTANCE   = 1101234567
+   GREEN_API_TOKEN      = d75b...
+   WA_GROUP_ID          = 120363XXXXXXXXXX@g.us
+   ```
+5. **Redéployez** (Deploys → Trigger deploy)
+
+### Option B — Via GitHub (recommandé pour la prod)
 ```bash
-# Installer les dépendances
+git init
+git add .
+git commit -m "Empire Fresh initial"
+git remote add origin https://github.com/VOTRE_ORG/empire-fresh.git
+git push -u origin main
+```
+Puis connectez le repo dans Netlify → **New site from Git**.
+
+### Test local Netlify
+```bash
 npm install
-
-# Configurer les variables d'environnement
-cp .env.example .env.local
-# Remplir .env.local avec vos vraies clés
-
-# Lancer en développement
-npm run dev
-```
-
-## 🏗️ Stack technique
-
-- **Next.js 15** + React 19 + TypeScript
-- **Supabase** (base de données + auth)
-- **Tailwind CSS v3** + Lucide icons
-- **PWA** (Progressive Web App) installable sur mobile
-- **Recharts** pour les graphiques et analytics
-
-## 📁 Structure du projet
-
-```
-FreshLink-empire-fresh/
-├── app/                    # Pages & API routes (Next.js App Router)
-│   ├── api/ext/            # API publiques (catalogue, commandes, comptes)
-│   ├── globals.css         # Styles globaux
-│   ├── layout.tsx          # Layout racine (PWA, polices, metadata)
-│   └── page.tsx            # Page principale (routage par rôle)
-├── components/
-│   ├── auth/               # Login, authentification
-│   ├── backoffice/         # 50+ modules backoffice (BO*)
-│   ├── mobile/             # Interface mobile (agents terrain)
-│   ├── portail/            # Portails externes (clients, fournisseurs)
-│   └── ui/                 # Composants réutilisables
-├── lib/
-│   ├── ai.ts               # Agents IA (Anthropic / OpenAI / OpenRouter)
-│   ├── store.ts            # État global (zustand-like)
-│   ├── supabase/           # Client, serveur, sync
-│   ├── email.ts            # Envoi d'emails
-│   ├── print.tsx           # Génération PDF / impression
-│   └── lang.ts             # Internationalisation (FR/AR/EN)
-├── scripts/                # SQL + scripts de setup Supabase
-├── public/                 # Assets, icônes PWA, manifest
-└── .env.example            # Template variables d'environnement
-```
-
-## 🎯 Modules principaux
-
-### BackOffice
-| Module | Description |
-|--------|-------------|
-| BODashboard | Tableau de bord principal |
-| BOCommercial | Gestion commandes & clients |
-| BOStock | Inventaire & stocks |
-| BOFinance | Caisse, comptabilité, RH |
-| BOAchat | Achats & fournisseurs |
-| BODispatch | Dispatch livraisons |
-| BOAgentsIA | Agents IA experts |
-| BOPricing | Intelligence prix |
-| BOGPSTracker | Suivi GPS livreurs |
-| BOWhatsApp | Intégration WhatsApp |
-| + 40 autres modules | ... |
-
-### Mobile (terrain)
-- MobileDashboard, MobileCommercial, MobilePreparation
-- MobileLogistique, MobileAchat, MobilePricing
-- CameraIARetour (retours avec IA caméra)
-
-### Portails externes
-- PortailClient — commandes en ligne
-- PortailFournisseur — catalogue & offres
-- PortailExterne — API REST publique
-
-## 🔐 Variables d'environnement
-
-Voir `.env.example` pour la liste complète. Indispensables :
-- `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `ANTHROPIC_API_KEY` (ou `OPENAI_API_KEY`)
-- `SMTP_*` pour les emails
-
-## 📦 Scripts utiles
-
-```bash
-# Setup base de données Supabase
-node scripts/setup-supabase.mjs
-
-# Upload images articles
-node scripts/upload-images.mjs
-
-# Réinitialiser bons de livraison
-node scripts/fix-bl-final.js
-```
-
-## 🌐 Déploiement
-
-```bash
-# Vercel (recommandé)
-vercel deploy
-
-# Ou build manuel
-npm run build && npm start
+cp .env.example .env   # remplissez les valeurs
+npx netlify dev         # lance sur http://localhost:8888
 ```
 
 ---
 
-**Empire Fresh** · Casablanca, Maroc 🇲🇦
+## ④ Déploiement Vercel (alternative)
+
+```bash
+npm install -g vercel
+vercel login
+vercel --prod
+```
+
+Ajoutez les variables d'environnement dans **Vercel Dashboard → Project → Settings → Environment Variables** ou via CLI :
+```bash
+vercel env add SUPABASE_URL
+vercel env add SUPABASE_SERVICE_KEY
+vercel env add GREEN_API_INSTANCE
+vercel env add GREEN_API_TOKEN
+vercel env add WA_GROUP_ID
+```
+
+---
+
+## ⑤ Variables d'environnement — récapitulatif
+
+| Variable               | Obligatoire | Source                                  |
+|------------------------|-------------|------------------------------------------|
+| `SUPABASE_URL`         | ✅          | Supabase → Project Settings → API       |
+| `SUPABASE_SERVICE_KEY` | ✅          | Supabase → Project Settings → API       |
+| `GREEN_API_INSTANCE`   | ⚡ WA groupe | green-api.com → Dashboard               |
+| `GREEN_API_TOKEN`      | ⚡ WA groupe | green-api.com → Dashboard               |
+| `WA_GROUP_ID`          | ⚡ WA groupe | web.whatsapp.com → URL du groupe        |
+
+---
+
+## Consulter les inscriptions (Supabase)
+
+Dans Supabase Dashboard → **Table Editor → inscriptions** :
+- Filtrer par `status`, `quartier`, `type`
+- Modifier le `status` : `nouveau` → `contacté` → `client`
+- Exporter en CSV
+
+Ou dans **SQL Editor** :
+```sql
+-- Dernières 20 inscriptions
+SELECT * FROM v_inscriptions LIMIT 20;
+
+-- Par type de profil
+SELECT type, COUNT(*) FROM inscriptions GROUP BY type;
+
+-- Par quartier
+SELECT quartier, COUNT(*) FROM inscriptions GROUP BY quartier ORDER BY count DESC;
+```
+
+---
+
+## Sécurité
+
+- La clé `SUPABASE_SERVICE_KEY` n'est **jamais** exposée côté client
+- RLS activé : l'accès direct à la table est impossible depuis le navigateur
+- Les variables d'env sont injectées côté serveur uniquement (Netlify/Vercel)
+- Ajoutez un rate-limit sur `/api/submit` si nécessaire (Netlify ou Vercel middleware)
+
+---
+
+## Support
+
+**WhatsApp** : wa.me/212660671709  
+**Email** : Jawad@empire-fresh.co.site

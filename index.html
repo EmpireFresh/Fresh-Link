@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empire Fresh — Fruits & Légumes Frais à Casablanca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --g-hero:  #1b3520;
+  --g-deep:  #152a19;
+  --g-mid:   #1f4225;
+  --g-lime:  #8ec83f;
+  --orange:  #e8803b;
+  --orange-h:#d46c28;
+  --white:   #f2f5ee;
+  --muted:   rgba(210,230,210,.55);
+  --border:  rgba(142,200,63,.15);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--g-hero);color:var(--white);min-height:100vh;overflow-x:hidden}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(21,42,25,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--g-lime),#5faa1e);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.nav-logo b{display:block;font-family:'Fraunces',serif;font-weight:900;font-size:16px;color:var(--white);letter-spacing:-.3px}
+.nav-logo small{font-size:9px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:400}
+.nav-links{display:flex;gap:30px;list-style:none}
+.nav-links a{font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--white)}
+.nav-actions{display:flex;gap:10px;align-items:center}
+.btn-wa-nav{display:flex;align-items:center;gap:7px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.22);color:#50e880;font-size:12.5px;font-weight:600;padding:7px 15px;border-radius:100px;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-wa-nav:hover{background:rgba(37,211,102,.22)}
+.btn-inscr-nav{background:var(--orange);color:#fff;font-size:12.5px;font-weight:700;padding:8px 18px;border-radius:100px;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
+.btn-inscr-nav:hover{background:var(--orange-h);transform:translateY(-1px)}
+
+/* ── HERO ── */
+.hero{min-height:100vh;padding:120px 0 0;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.32}
+.b1{width:620px;height:520px;background:#2c5422;top:-120px;right:-180px;border-radius:60% 40% 30% 70%/50% 60% 40% 50%}
+.b2{width:360px;height:360px;background:#3a6a2a;bottom:60px;left:-100px;border-radius:30% 70% 70% 30%/30% 30% 70% 70%}
+.b3{width:180px;height:180px;background:var(--g-lime);opacity:.06;top:35%;right:8%;border-radius:50%}
+.hero-inner{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 48px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.18);border-radius:100px;padding:7px 16px;font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:28px;width:fit-content;animation:fadeD .6s ease both}
+.bdot{width:6px;height:6px;border-radius:50%;background:var(--g-lime);box-shadow:0 0 8px var(--g-lime);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hero-h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(46px,7vw,82px);line-height:1.0;letter-spacing:-2px;margin-bottom:22px;animation:fadeD .7s ease .1s both}
+.hero-h1 .lime{color:var(--g-lime);font-style:italic}
+.hero-sub{font-size:clamp(14px,1.6vw,17px);color:var(--muted);max-width:480px;line-height:1.65;font-weight:300;margin-bottom:40px;animation:fadeD .7s ease .2s both}
+.ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:64px;animation:fadeD .7s ease .3s both}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;padding:15px 30px;border-radius:100px;border:none;cursor:pointer;box-shadow:0 8px 28px rgba(232,128,59,.35);transition:all .25s ease}
+.btn-primary:hover{background:var(--orange-h);transform:translateY(-3px);box-shadow:0 12px 36px rgba(232,128,59,.45)}
+.btn-outline{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:15px;padding:14px 28px;border-radius:100px;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;transition:all .22s}
+.btn-outline:hover{border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.05)}
+.stats{border-top:1px solid rgba(255,255,255,.1);padding-top:36px;display:flex;gap:48px;animation:fadeD .7s ease .4s both}
+.stat-val{font-family:'Fraunces',serif;font-weight:900;font-size:42px;letter-spacing:-1.5px;color:var(--white);line-height:1}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;font-weight:400}
+.feats{background:rgba(0,0,0,.22);border-top:1px solid var(--border);padding:18px 48px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 32px;position:relative;z-index:1}
+.feat{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:500}
+
+/* ═══ MODAL ═══ */
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(8,20,10,.82);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--g-mid);border:1px solid var(--border);border-radius:22px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:40px 40px 36px;position:relative;transform:translateY(22px) scale(.96);transition:transform .38s cubic-bezier(.34,1.56,.64,1);box-shadow:0 32px 80px rgba(0,0,0,.55)}
+.overlay.open .modal{transform:none}
+.modal::-webkit-scrollbar{width:3px}
+.modal::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.mcls{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--muted);font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;line-height:1}
+.mcls:hover{background:rgba(255,255,255,.1);color:var(--white)}
+.mlogo{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+.mlogo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--g-lime),#5faa1e);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.mlogo b{font-family:'Fraunces',serif;font-weight:900;font-size:16px;color:var(--white)}
+.mlogo small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:400}
+
+/* progress */
+.prog{display:flex;align-items:center;margin-bottom:30px}
+.pn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
+.pn:not(:last-child)::after{content:'';position:absolute;top:16px;left:52%;width:96%;height:1.5px;background:rgba(255,255,255,.07);transition:background .4s}
+.pn.done:not(:last-child)::after{background:var(--g-lime)}
+.pn.active:not(:last-child)::after{background:rgba(142,200,63,.3)}
+.pc{width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);transition:all .3s cubic-bezier(.34,1.56,.64,1);position:relative;z-index:1}
+.pn.active .pc{background:var(--g-lime);border-color:var(--g-lime);color:var(--g-deep);box-shadow:0 0 0 5px rgba(142,200,63,.14),0 4px 14px rgba(142,200,63,.3);transform:scale(1.12)}
+.pn.done .pc{background:rgba(142,200,63,.16);border-color:var(--g-lime);color:var(--g-lime)}
+.pl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:500;transition:color .3s}
+.pn.active .pl{color:var(--g-lime)}
+.sh{font-family:'Fraunces',serif;font-weight:900;font-size:23px;letter-spacing:-.4px;color:var(--white);margin-bottom:4px;line-height:1.1}
+.sh em{color:var(--g-lime);font-style:italic}
+.ss{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.pane{display:none;animation:slideIn .3s ease both}
+.pane.active{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+
+/* choices */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.ch{border:1.5px solid rgba(255,255,255,.08);border-radius:11px;padding:15px 13px;cursor:pointer;background:rgba(255,255,255,.02);transition:all .2s;text-align:center;user-select:none}
+.ch:hover{border-color:rgba(142,200,63,.35);background:rgba(142,200,63,.05);transform:translateY(-2px)}
+.ch.sel{border-color:var(--g-lime);background:rgba(142,200,63,.1)}
+.ch .ci{font-size:24px;margin-bottom:6px}
+.ch .cl{font-weight:700;font-size:12.5px;color:var(--white)}
+.ch.sel .cl{color:var(--g-lime)}
+.ch .cd{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.3}
+
+/* fields */
+.f{margin-bottom:15px}
+.f label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:7px}
+.f input,.f select,.f textarea{width:100%;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:10px;padding:11px 13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--white);outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%238ec83f' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;cursor:pointer}
+.f select option{background:var(--g-mid)}
+.f input::placeholder,.f textarea::placeholder{color:rgba(210,230,210,.22)}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--g-lime);box-shadow:0 0 0 3px rgba(142,200,63,.1)}
+.f textarea{min-height:72px;resize:vertical}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* pills */
+.plbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:8px}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:15px}
+.pill{border:1.5px solid rgba(255,255,255,.1);border-radius:100px;padding:6px 13px;font-size:12.5px;color:var(--muted);cursor:pointer;background:transparent;transition:all .18s;user-select:none;font-family:inherit}
+.pill:hover{border-color:rgba(142,200,63,.4);color:var(--white)}
+.pill.sel{background:var(--g-lime);border-color:var(--g-lime);color:var(--g-deep);font-weight:600}
+#autres-wrap{display:none;margin-top:10px}
+#autres-wrap.show{display:block}
+
+/* buttons */
+.btn-row{display:flex;gap:10px;margin-top:22px}
+.bbk{background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);color:var(--muted);padding:11px 18px;border-radius:100px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.bbk:hover{background:rgba(255,255,255,.08);color:var(--white)}
+.bnx{flex:1;background:var(--g-lime);color:var(--g-deep);border:none;border-radius:100px;padding:12px 22px;font-family:'Fraunces',serif;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 4px 18px rgba(142,200,63,.28);transition:all .22s}
+.bnx:hover{background:#9fd44e;transform:translateY(-2px)}
+.bnx:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.bwa{flex:1;background:linear-gradient(135deg,#25d366,#128c4a);color:#fff;border:none;border-radius:100px;padding:12px 22px;font-family:'Fraunces',serif;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 4px 18px rgba(37,211,102,.28);transition:all .22s}
+.bwa:hover{transform:translateY(-2px)}
+.bwa:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.bwa svg{width:18px;height:18px;fill:white;flex-shrink:0}
+
+/* summary */
+.sumbox{background:rgba(0,0,0,.22);border:1px solid var(--border);border-radius:11px;padding:16px;margin-bottom:18px}
+.sr{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.sr:last-child{border-bottom:none}
+.sr .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.sr .v{font-size:13px;color:var(--white);font-weight:500;text-align:right;max-width:58%}
+
+/* success state */
+.success-box{text-align:center;padding:24px 16px}
+.success-icon{font-size:52px;margin-bottom:16px;display:block}
+.success-title{font-family:'Fraunces',serif;font-weight:900;font-size:22px;color:var(--white);margin-bottom:8px}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* loading spinner */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);color:#fff;font-weight:700;font-size:13px;padding:11px 22px;border-radius:100px;z-index:400;opacity:0;pointer-events:none;transition:all .38s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;font-family:inherit}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:#c0392b}
+.toast.success{background:#27ae60}
+.toast.warn{background:var(--orange)}
+
+@keyframes fadeD{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+
+@media(max-width:640px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .hero-inner{padding:0 24px}
+  .feats{padding:16px 24px;gap:10px 18px}
+  .modal{padding:26px 20px 22px}
+  .choices{gap:8px}
+  .f-row{grid-template-columns:1fr}
+  .pl{display:none}
+  .stats{gap:24px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-icon">🌿</div>
+    <div><b>Empire Fresh</b><small>by Empire Logistic Trading</small></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Catalogue</a></li>
+    <li><a href="#">Commander</a></li>
+    <li><a href="#">Livraison</a></li>
+    <li><a href="#">Partenaires B2B</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn-wa-nav">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+      WhatsApp
+    </button>
+    <button class="btn-inscr-nav" onclick="openModal()">S'inscrire →</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="badge"><span class="bdot"></span>🌿 Livraison dans tout Casablanca</div>
+    <h1 class="hero-h1">
+      Fruits &amp; Légumes<br>
+      <span class="lime">Frais du Marché</span><br>
+      livrés chez vous
+    </h1>
+    <p class="hero-sub">Produits frais, épluchés ou lavés — livrés en livraison standard ou express dans toute Casablanca. Idéal pour particuliers, restaurants, hôtels et marchands professionnels.</p>
+    <div class="ctas">
+      <button class="btn-primary" onclick="openModal()">S'inscrire maintenant →</button>
+      <button class="btn-outline">Voir le catalogue</button>
+    </div>
+    <div class="stats">
+      <div><div class="stat-val">50+</div><div class="stat-lbl">Produits frais</div></div>
+      <div><div class="stat-val">2h</div><div class="stat-lbl">Livraison express</div></div>
+      <div><div class="stat-val">B2C &amp; B2B</div><div class="stat-lbl">Particuliers &amp; Pros</div></div>
+    </div>
+  </div>
+  <div class="feats">
+    <div class="feat">🚚 Livraison standard &amp; express</div>
+    <div class="feat">🔪 Fruits &amp; légumes épluchés</div>
+    <div class="feat">💧 Produits lavés disponibles</div>
+    <div class="feat">🏪 Commandes Pro / Marchands</div>
+    <div class="feat">🔗 Intégration ERP</div>
+  </div>
+</section>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal" id="modal">
+    <button class="mcls" onclick="closeModal()">✕</button>
+    <div class="mlogo">
+      <div class="mlogo-icon">🌿</div>
+      <div><b>Empire Fresh</b><small>by Empire Logistic Trading</small></div>
+    </div>
+    <div class="prog">
+      <div class="pn active" id="nd1"><div class="pc">1</div><span class="pl">Profil</span></div>
+      <div class="pn" id="nd2"><div class="pc">2</div><span class="pl">Activité</span></div>
+      <div class="pn" id="nd3"><div class="pc">3</div><span class="pl">Contact</span></div>
+      <div class="pn" id="nd4"><div class="pc">✓</div><span class="pl">Envoi</span></div>
+    </div>
+
+    <!-- ÉTAPE 1 -->
+    <div class="pane active" id="p1">
+      <div class="sh">Vous êtes <em>qui ?</em></div>
+      <p class="ss">Sélectionnez votre profil pour adapter notre offre.</p>
+      <div class="choices">
+        <div class="ch" onclick="pickType(this,'Particulier')"><div class="ci">🏠</div><div class="cl">Particulier</div><div class="cd">Commandes personnelles &amp; familiales</div></div>
+        <div class="ch" onclick="pickType(this,'CHR / Horeca')"><div class="ci">🍽️</div><div class="cl">CHR / Horeca</div><div class="cd">Restaurant, hôtel, café, traiteur</div></div>
+        <div class="ch" onclick="pickType(this,'Marchand / Revendeur')"><div class="ci">🏪</div><div class="cl">Marchand</div><div class="cd">Épicerie, souk, supermarché</div></div>
+        <div class="ch" onclick="pickType(this,'Autres')"><div class="ci">💼</div><div class="cl">Autres</div><div class="cd">Entreprise, collectivité…</div></div>
+      </div>
+      <div id="autres-wrap">
+        <div class="f"><label>Précisez votre profil</label><input id="autresDetail" type="text" placeholder="Ex : Clinique, école, association…"></div>
+      </div>
+      <div class="btn-row"><button class="bnx" onclick="go(2)">Continuer →</button></div>
+    </div>
+
+    <!-- ÉTAPE 2 -->
+    <div class="pane" id="p2">
+      <div class="sh">Votre <em>activité</em></div>
+      <p class="ss">Quelques infos pour adapter notre offre à vos besoins réels.</p>
+      <div class="f">
+        <label>Taille de la structure</label>
+        <select id="taille"><option value="" disabled selected>Sélectionnez…</option><option>Particulier</option><option>Indépendant / Auto-entrepreneur</option><option>TPE (1–10 personnes)</option><option>PME (11–50 personnes)</option><option>Grande entreprise (50+)</option></select>
+      </div>
+      <div class="f">
+        <div class="plbl">Fréquence d'approvisionnement</div>
+        <div class="pills"><span class="pill" onclick="tog(this,'freq')">Quotidien</span><span class="pill" onclick="tog(this,'freq')">2–3×/semaine</span><span class="pill" onclick="tog(this,'freq')">1×/semaine</span><span class="pill" onclick="tog(this,'freq')">Bi-mensuel</span><span class="pill" onclick="tog(this,'freq')">À la demande</span></div>
+      </div>
+      <div class="f">
+        <div class="plbl">Gamme souhaitée</div>
+        <div class="pills"><span class="pill" onclick="tog(this,'gamme')">🌿 Frais tel quel</span><span class="pill" onclick="tog(this,'gamme')">🔪 Épluché</span><span class="pill" onclick="tog(this,'gamme')">💧 Lavé</span><span class="pill" onclick="tog(this,'gamme')">✨ Épluché + Lavé</span><span class="pill" onclick="tog(this,'gamme')">🥗 Prêt à cuisiner</span></div>
+      </div>
+      <div class="f">
+        <label>Volume estimé par commande</label>
+        <select id="volume"><option value="" disabled selected>Sélectionnez…</option><option>Moins de 5 kg</option><option>5 – 20 kg</option><option>20 – 50 kg</option><option>50 – 100 kg</option><option>Plus de 100 kg</option></select>
+      </div>
+      <div class="btn-row"><button class="bbk" onclick="go(1)">← Retour</button><button class="bnx" onclick="go(3)">Continuer →</button></div>
+    </div>
+
+    <!-- ÉTAPE 3 -->
+    <div class="pane" id="p3">
+      <div class="sh">Vos <em>coordonnées</em></div>
+      <p class="ss">Pour vous contacter et préparer votre première livraison.</p>
+      <div class="f"><label>Nom complet / Enseigne</label><input id="nom" type="text" placeholder="Ex : Jawad El Fassi / Café Anfa"></div>
+      <div class="f"><label>📱 Téléphone WhatsApp</label><input id="tel" type="tel" placeholder="+212 6XX XXX XXX"></div>
+      <div class="f"><label>📍 Adresse de livraison — Casablanca</label><input id="adresse" type="text" placeholder="Ex : 12 rue Ibn Batouta, Maarif"></div>
+      <div class="f-row">
+        <div class="f">
+          <label>Quartier / Zone</label>
+          <select id="quartier"><option value="" disabled selected>Quartier…</option><optgroup label="Centre & Résidentiel"><option>Centre-ville</option><option>Maarif</option><option>Ain Diab</option><option>Anfa</option><option>CIL / Palmier</option></optgroup><optgroup label="Quartiers Est"><option>Hay Mohammadi</option><option>Sidi Bernoussi</option><option>Ain Sebaa</option><option>Hay Hassani</option></optgroup><optgroup label="Médina & Historique"><option>Derb Sultan</option><option>Moulay Rachid</option><option>Ben M'sik</option></optgroup><optgroup label="Périphérie"><option>Bouskoura</option><option>Dar Bouazza</option><option>Autre</option></optgroup></select>
+        </div>
+        <div class="f">
+          <label>Mode de livraison</label>
+          <select id="livraison"><option value="" disabled selected>Choisir…</option><option>🚛 Standard (24h)</option><option>⚡ Express (2h)</option></select>
+        </div>
+      </div>
+      <div class="f"><label>Notes / instructions (optionnel)</label><textarea id="notes" placeholder="Allergies, heure préférée, accès immeuble…"></textarea></div>
+      <div class="btn-row"><button class="bbk" onclick="go(2)">← Retour</button><button class="bnx" onclick="go(4)">Vérifier →</button></div>
+    </div>
+
+    <!-- ÉTAPE 4 — RECAP -->
+    <div class="pane" id="p4">
+      <div class="sh">Tout est <em>prêt !</em></div>
+      <p class="ss">Vérifiez vos informations avant d'envoyer votre inscription.</p>
+      <div class="sumbox" id="sumbox"></div>
+      <div class="btn-row" style="flex-direction:column;gap:9px">
+        <button class="bwa" id="submitBtn" onclick="submitForm()" style="width:100%">
+          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+          Envoyer mon inscription
+        </button>
+        <button class="bbk" onclick="go(3)" style="width:100%;text-align:center">← Modifier</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 5 — SUCCESS -->
+    <div class="pane" id="p5">
+      <div class="success-box">
+        <span class="success-icon">🎉</span>
+        <div class="success-title">Inscription envoyée !</div>
+        <p class="success-sub">Notre équipe vous contactera sous peu sur WhatsApp.<br>Bienvenue chez <strong>Empire Fresh</strong> !</p>
+        <div class="btn-row" style="justify-content:center;margin-top:24px">
+          <button class="bnx" onclick="closeModal()" style="flex:none;padding:12px 32px">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG — remplacez par votre URL de déploiement ──────────────────────
+// En développement local : http://localhost:8888/api/submit (Netlify Dev)
+// En production Netlify  : /api/submit  (chemin relatif suffit)
+// En production Vercel   : /api/submit
+const API_URL = '/api/submit';
+
+// ─── STATE ────────────────────────────────────────────────────────────────
+const S = { type:'', autresDetail:'', taille:'', freq:[], gamme:[], volume:'', nom:'', tel:'', adresse:'', quartier:'', livraison:'', notes:'' };
+let cur = 1;
+
+// ─── MODAL ────────────────────────────────────────────────────────────────
+function openModal()  { document.getElementById('overlay').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal() { document.getElementById('overlay').classList.remove('open'); document.body.style.overflow=''; }
+function bgClose(e)   { if(e.target===document.getElementById('overlay')) closeModal(); }
+
+// ─── SELECTIONS ───────────────────────────────────────────────────────────
+function pickType(el, val) {
+  document.querySelectorAll('.ch').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel'); S.type = val;
+  document.getElementById('autres-wrap').classList.toggle('show', val === 'Autres');
+}
+function tog(el, key) {
+  el.classList.toggle('sel');
+  const txt = el.textContent.trim();
+  const i = S[key].indexOf(txt);
+  i === -1 ? S[key].push(txt) : S[key].splice(i, 1);
+}
+
+// ─── STEP NAVIGATION ──────────────────────────────────────────────────────
+function go(n) {
+  if (!validate(cur)) return;
+  save(cur);
+  if (n === 4) buildSum();
+  document.getElementById('p'+cur).classList.remove('active');
+  document.getElementById('p'+n).classList.add('active');
+  const old = document.getElementById('nd'+cur);
+  old.classList.remove('active');
+  if (n > cur) old.classList.add('done'); else old.classList.remove('done');
+  const nw = document.getElementById('nd'+n);
+  nw.classList.remove('done'); nw.classList.add('active');
+  cur = n;
+  document.getElementById('modal').scrollTop = 0;
+}
+
+function save(s) {
+  if (s===1) S.autresDetail = document.getElementById('autresDetail').value;
+  if (s===2) { S.taille = document.getElementById('taille').value; S.volume = document.getElementById('volume').value; }
+  if (s===3) { S.nom=document.getElementById('nom').value; S.tel=document.getElementById('tel').value; S.adresse=document.getElementById('adresse').value; S.quartier=document.getElementById('quartier').value; S.livraison=document.getElementById('livraison').value; S.notes=document.getElementById('notes').value; }
+}
+
+function validate(s) {
+  if (s===1) { if (!S.type) { toast('Veuillez choisir votre profil','warn'); return false; } if (S.type==='Autres' && !document.getElementById('autresDetail').value.trim()) { toast('Précisez votre profil','warn'); return false; } }
+  if (s===2) { if (!document.getElementById('taille').value) { toast('Sélectionnez la taille de la structure','warn'); return false; } if (!document.getElementById('volume').value) { toast('Sélectionnez un volume estimé','warn'); return false; } }
+  if (s===3) { if (!document.getElementById('nom').value.trim()) { toast('Entrez votre nom ou enseigne','warn'); return false; } if (!document.getElementById('tel').value.trim()) { toast('Entrez votre numéro WhatsApp','warn'); return false; } if (!document.getElementById('adresse').value.trim()) { toast("Entrez votre adresse",'warn'); return false; } if (!document.getElementById('quartier').value) { toast('Sélectionnez votre quartier','warn'); return false; } }
+  return true;
+}
+
+function buildSum() {
+  const rows=[['Profil',S.type+(S.autresDetail?' — '+S.autresDetail:'')],['Structure',S.taille],['Fréquence',S.freq.join(', ')||'—'],['Gamme',S.gamme.join(', ')||'—'],['Volume',S.volume],['Nom',S.nom],['WhatsApp',S.tel],['Adresse',S.adresse],['Quartier',S.quartier],['Livraison',S.livraison||'—'],['Notes',S.notes||'—']];
+  document.getElementById('sumbox').innerHTML = rows.map(([k,v])=>`<div class="sr"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+}
+
+// ─── SUBMIT TO API ─────────────────────────────────────────────────────────
+async function submitForm() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Envoi en cours…';
+
+  const payload = {
+    type:          S.type,
+    autres_detail: S.autresDetail,
+    taille:        S.taille,
+    frequence:     S.freq.join(', '),
+    gamme:         S.gamme.join(', '),
+    volume:        S.volume,
+    nom:           S.nom,
+    telephone:     S.tel,
+    adresse:       S.adresse,
+    quartier:      S.quartier,
+    livraison:     S.livraison,
+    notes:         S.notes,
+  };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+
+    // Success → show step 5
+    document.getElementById('p4').classList.remove('active');
+    document.getElementById('p5').classList.add('active');
+    document.getElementById('nd4').classList.add('done');
+    toast('✅ Inscription envoyée avec succès !', 'success');
+
+  } catch (err) {
+    console.error(err);
+    toast('Erreur : ' + err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg> Réessayer';
+  }
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────
+function toast(msg, type='warn') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

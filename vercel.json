@@ -1,31 +1,29 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "devCommand": "next dev",
-  "installCommand": "npm install --legacy-peer-deps",
-  "outputDirectory": ".next",
-  "regions": ["cdg1"],
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/submit.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/submit",
+      "dest": "/api/submit.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    },
-    {
-      "source": "/_next/static/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        { "key": "X-Frame-Options",        "value": "DENY" },
+        { "key": "X-Content-Type-Options",  "value": "nosniff" },
+        { "key": "Referrer-Policy",         "value": "strict-origin-when-cross-origin" }
       ]
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://gcpcrnagyqiedouucmeq.supabase.co",
-    "NEXT_PUBLIC_STORAGE_BUCKET": "freshlink-media",
-    "NEXT_PUBLIC_APP_NAME": "FreshLink Empire Fresh",
-    "NEXT_PUBLIC_APP_VERSION": "3.0.0"
-  }
+  ]
 }

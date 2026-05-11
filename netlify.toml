@@ -1,49 +1,27 @@
-# ══════════════════════════════════════════════════════════════════════════
-# FreshLink Empire Fresh — Netlify Configuration
-# Site: https://empire-fresh.netlify.app
-# ══════════════════════════════════════════════════════════════════════════
-
+# netlify.toml
 [build]
-  command   = "npm run build"
-  publish   = ".next"
+  publish   = "."                    # index.html est à la racine
+  functions = "netlify/functions"    # dossier des fonctions serverless
 
-[build.environment]
-  NODE_VERSION = "20"
-  NPM_VERSION  = "10"
-  NEXT_TELEMETRY_DISABLED = "1"
+[functions]
+  node_bundler = "esbuild"           # bundler moderne, supporte ESM
 
-# ── Next.js on Netlify requires @netlify/plugin-nextjs ────────────────────
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# Redirige /api/submit → la fonction Netlify
+[[redirects]]
+  from   = "/api/submit"
+  to     = "/.netlify/functions/submit"
+  status = 200
 
-# ── Headers de sécurité ──────────────────────────────────────────────────
+# Headers de sécurité
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options        = "SAMEORIGIN"
+    X-Frame-Options        = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy        = "strict-origin-when-cross-origin"
-    X-XSS-Protection       = "1; mode=block"
 
-# ── Cache des assets statiques ───────────────────────────────────────────
+# Cache long pour les assets statiques
 [[headers]]
-  for = "/_next/static/*"
+  for = "/fonts/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/static/*"
-  [headers.values]
-    Cache-Control = "public, max-age=86400"
-
-# ── Redirects ────────────────────────────────────────────────────────────
-[[redirects]]
-  from   = "/api/*"
-  to     = "/api/:splat"
-  status = 200
-
-[[redirects]]
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
-  conditions = {Role = ["admin"]}
