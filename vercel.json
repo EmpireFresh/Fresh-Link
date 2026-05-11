@@ -23,9 +23,12 @@
     }
   ],
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://gcpcrnagyqiedouucmeq.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://jwdrwapuetqoqnankgma.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3ZHJ3YXB1ZXRxb3FuYW5rZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDE1NzUsImV4cCI6MjA5NDAxNzU3NX0.9l0e2eE9milvCWg29TIoGXgWY-ULOmTVrPmWRCsIvtw",
     "NEXT_PUBLIC_STORAGE_BUCKET": "freshlink-media",
     "NEXT_PUBLIC_APP_NAME": "FreshLink Empire Fresh",
-    "NEXT_PUBLIC_APP_VERSION": "3.0.0"
+    "NEXT_PUBLIC_APP_VERSION": "3.0.0",
+    "NEXT_PUBLIC_APP_URL": "https://freshlink.empire-fresh.ma",
+    "NEXT_PUBLIC_CLIENT_SITE_URL": "https://empire-fresh.netlify.app"
   }
 }
