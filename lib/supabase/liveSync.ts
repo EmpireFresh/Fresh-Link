@@ -17,8 +17,12 @@ async function db() {
   return dbModule
 }
 
+let _liveSyncDepth = 0
 function fire(fn: () => Promise<void>) {
+  if (_liveSyncDepth > 0) return
+  _liveSyncDepth++
   fn().catch(() => { /* never block UI — Supabase sync is best-effort */ })
+    .finally(() => { _liveSyncDepth-- })
 }
 
 let activated = false

@@ -109,6 +109,7 @@ export default function MobileCommercial({ user }: Props) {
 
   // Tab state
   const [commTab, setCommTab] = useState<CommTab>("nouvelle")
+  const [habitudeSearch, setHabitudeSearch] = useState("")
 
   // Client habits: articleId -> { count, lastDate, qteTotal, dernierQte, dernierQteUM, dernierUM } — computed when client changes
   const [clientHabits, setClientHabits] = useState<Record<string, { count: number; lastDate: string; qteTotal: number; dernierQte: number; dernierQteUM?: number; dernierUM?: string }>>({})
@@ -246,6 +247,19 @@ export default function MobileCommercial({ user }: Props) {
     setArticles(store.getArticles())
     setClients(store.getClients())
     if (isAdmin) setAllUsers(store.getUsers().filter(u => ["prevendeur","resp_commercial","team_leader","admin","super_admin"].includes(u.role) && u.actif))
+    // Pull fresh data from Supabase in background to hydrate habits
+    import("@/lib/supabase/db").then(async (db) => {
+      try {
+        const [cmdsFromSB, { clients: cFromSB }, arts] = await Promise.all([
+          db.fetchCommandes(),
+          db.fetchClients(),
+          db.fetchArticles(),
+        ])
+        if (cmdsFromSB?.length) refreshMyCommandes()
+        if (cFromSB?.length) setClients(cFromSB)
+        if (arts?.length) setArticles(arts)
+      } catch { /* offline — localStorage already shown */ }
+    })
   }, [])
 
   // Auto-capture GPS on mount — GPS is MANDATORY
@@ -269,6 +283,7 @@ export default function MobileCommercial({ user }: Props) {
     if (client?.defaultHeureLivraison) {
       setHeureLivraison(client.defaultHeureLivraison)
     }
+    setHabitudeSearch(clients.find(c => c.id === selectedClientId)?.nom || "")
   }, [selectedClientId, clients])
 
   // Compute article habits from past commandes for selected client
@@ -1031,6 +1046,41 @@ export default function MobileCommercial({ user }: Props) {
       {(commTab as string) === "habitudes" && (
         <div className="flex flex-col gap-3">
 
+          {/* ── Alertes rapides ─────────────────────────── */}
+          {(() => {
+            const today = store.today()
+            const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)
+            const visites = store.getVisites ? store.getVisites() : []
+            const visitedIds = new Set(visites.filter(v => v.date >= sevenDaysAgo).map(v => v.clientId))
+            const notVisited = myClients.filter(c => !visitedIds.has(c.id)).slice(0, 3)
+            const pendingToday = store.getCommandes().filter(c => c.date === today && c.commercialId === user.id && (c.statut === "en_attente" || c.statut === "en_attente_approbation")).length
+            if (notVisited.length === 0 && pendingToday === 0) return null
+            return (
+              <div className="flex flex-col gap-2">
+                {pendingToday > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                    <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                    <p className="text-xs font-semibold text-blue-800">{pendingToday} commande(s) en attente aujourd&apos;hui</p>
+                  </div>
+                )}
+                {notVisited.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col gap-1.5">
+                    <p className="text-xs font-bold text-amber-800">Clients non visites depuis 7 jours</p>
+                    {notVisited.map(c => (
+                      <div key={c.id} className="flex items-center justify-between">
+                        <span className="text-xs text-amber-700 font-semibold">{c.nom}</span>
+                        <button onClick={() => { setSelectedClientId(c.id); setHabitudeSearch(c.nom) }}
+                          className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-500 text-white">
+                          Voir habitudes
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
           {/* Client selector — shown directly in habitudes tab so user doesn't need to go to "nouvelle" first */}
           <div className="bg-card rounded-xl border border-border p-3 flex flex-col gap-2">
             <p className="text-xs font-bold text-foreground">Client / الزبون</p>
@@ -1039,10 +1089,11 @@ export default function MobileCommercial({ user }: Props) {
               <input
                 type="text"
                 placeholder="Rechercher un client..."
-                defaultValue={selectedClient?.nom || ""}
+                value={habitudeSearch}
                 onChange={e => {
+                  setHabitudeSearch(e.target.value)
                   const q = e.target.value.toLowerCase()
-                  const found = myClients.find(c => c.nom.toLowerCase().includes(q) && c.nom.toLowerCase() === q)
+                  const found = myClients.find(c => c.nom.toLowerCase() === q)
                   if (found) setSelectedClientId(found.id)
                 }}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -1051,7 +1102,7 @@ export default function MobileCommercial({ user }: Props) {
             {/* Quick client list */}
             <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
               {myClients.filter(c => {
-                const q = (selectedClient?.nom || "").toLowerCase()
+                const q = habitudeSearch.toLowerCase()
                 return !q || c.nom.toLowerCase().includes(q) || c.id === selectedClientId
               }).slice(0, 8).map(c => (
                 <button key={c.id} onClick={() => setSelectedClientId(c.id)}
@@ -1113,6 +1164,12 @@ export default function MobileCommercial({ user }: Props) {
                         {/* Row 1: stock + nb commandes */}
                         <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700">{habit.count}x cmd</span>
+                          {habit.lastDate < new Date(Date.now() - 14*24*60*60*1000).toISOString().slice(0,10) && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-red-100 text-red-600 flex items-center gap-0.5">
+                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                              +14j
+                            </span>
+                          )}
                           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg ${art.stockDisponible > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
                             Stock: {art.stockDisponible > 0 ? `${art.stockDisponible} ${art.unite}` : "Rupture"}
                           </span>
