@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { isSyncDone, runFullSync, resetSync, type SyncProgress } from "@/lib/supabase/syncManager"
 import { createClient } from "@/lib/supabase/client"
 
-const SUPABASE_URL = "https://gcpcrnagyqiedouucmeq.supabase.co"
+const SUPABASE_URL = "https://jwdrwapuetqoqnankgma.supabase.co"
 const ANON_KEY_PREVIEW = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...SeK7cszs"
 
 type ConnStatus = "idle" | "checking" | "connected" | "error"
@@ -59,13 +59,7 @@ export default function SyncBanner() {
   }, [])
 
   useEffect(() => {
-    // Only sync if Supabase env vars are configured — otherwise skip silently
-    const hasSupabase =
-      typeof process !== "undefined" &&
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_URL !== ""
-    if (!hasSupabase) return
-
+    // client.ts has a hardcoded fallback — Supabase is always reachable
     // Auto-trigger if not yet synced
     if (!isSyncDone()) {
       setVisible(true)

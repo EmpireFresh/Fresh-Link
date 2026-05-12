@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import PWAInstall from '@/components/PWAInstall'
+import LiveSyncProvider from '@/components/LiveSyncProvider'
 
 const inter = Inter({
   subsets: ["latin"],
@@ -93,6 +94,7 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-background text-foreground">
         {children}
         <PWAInstall />
+        <LiveSyncProvider />
       </body>
     </html>
   )
