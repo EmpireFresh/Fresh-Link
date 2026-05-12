@@ -3,6 +3,7 @@ import { Inter, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import PWAInstall from '@/components/PWAInstall'
 import LiveSyncProvider from '@/components/LiveSyncProvider'
+import SyncBanner from '@/components/SyncBanner'
 
 const inter = Inter({
   subsets: ["latin"],
@@ -95,6 +96,7 @@ export default function RootLayout({
         {children}
         <PWAInstall />
         <LiveSyncProvider />
+        <SyncBanner />
       </body>
     </html>
   )
