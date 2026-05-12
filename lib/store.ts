@@ -1606,7 +1606,7 @@ const DEFAULT_USERS: User[] = [
   // === DEMO — CLIENT ===
   {
     id: "u_client", name: "Demo Client", email: "client.demo@freshlink.ma", password: "1234",
-    role: "client", actif: true,
+    role: "client", actif: true, phone: "0600000001",
     clientId: "c1",   // linked to Epicerie Al Baraka
   },
   // === DEMO — FOURNISSEUR ===
@@ -2006,14 +2006,26 @@ export const store = {
     return null
   },
 
-  // Client login — by name (case insensitive) for the portal
-  loginClient: (name: string): User | null => {
+  // Client login — by name (case insensitive) for the portal (legacy)
+  loginClient: (name: string): User | null => store.loginExternal(name, "client"),
+
+  // External login — by name, phone, or email; subtype filters role
+  loginExternal: (identifier: string, subtype?: "client" | "fournisseur" | "chr"): User | null => {
     const users = store.getUsers()
-    return users.find(u =>
-      u.role === "client" &&
-      u.name.toLowerCase() === name.toLowerCase().trim() &&
-      u.actif
-    ) || null
+    const raw = identifier.trim()
+    const lower = raw.toLowerCase()
+    const cleanPhone = raw.replace(/[\s\-\.\(\)]/g, "")
+    return users.find(u => {
+      if (!u.actif) return false
+      if (u.role !== "client" && u.role !== "fournisseur") return false
+      if (subtype === "fournisseur" && u.role !== "fournisseur") return false
+      if ((subtype === "client" || subtype === "chr") && u.role !== "client") return false
+      if (u.email && u.email.toLowerCase() === lower) return true
+      if (u.phone && u.phone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
+      if (u.telephone && u.telephone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
+      if (subtype !== "chr" && u.name.toLowerCase() === lower) return true
+      return false
+    }) || null
   },
 
   // --- Session ---

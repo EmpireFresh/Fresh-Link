@@ -107,6 +107,27 @@ const DEMO_ACCOUNTS: {
 const DEMO_GROUPS = ["Direction", "Finance", "Commercial", "Logistique"] as const
 type DemoGroup = typeof DEMO_GROUPS[number]
 
+const DEMO_EXTERNAL = [
+  {
+    subtype: "client" as const,
+    label: "Demo Client",
+    name: "Demo Client",
+    email: "client.demo@freshlink.ma",
+    phone: "0600000001",
+    note: "Epicerie Al Baraka — lié au compte client",
+  },
+  {
+    subtype: "fournisseur" as const,
+    label: "Demo Fournisseur",
+    name: "Demo Fournisseur",
+    email: "fournisseur.demo@freshlink.ma",
+    phone: "0600000002",
+    note: "Marché Central Casa — lié au compte fournisseur",
+  },
+]
+
+type ExternalType = "client" | "fournisseur" | "chr"
+
 function generatePassword(len = 10): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#"
   return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
@@ -123,26 +144,26 @@ const FEATURES = [
 const N_LEVELS = [
   {
     level: "Achat & Sourcing",
-    names: "JARIRI — Vendeur Terrain · ASHEL — Acheteur Expert",
-    sub: "Prospection terrain, négociation prix, sourcing qualité",
+    names: "IA 1 — Acheteur Expert · IA 2 — Vendeur Terrain",
+    sub: "Sourcing, négociation prix, prospection terrain",
     color: "#10b981", bg: "#f0fdf4", border: "#bbf7d0"
   },
   {
     level: "Supply Chain & Commercial",
-    names: "JAWAD — Supply Chain · ZIZI — Commercial · AYOUB — Logistique",
-    sub: "Optimisation tournées, prospection clients, dispatch terrain",
+    names: "IA 3 — Supply Chain · IA 4 — CHR · IA 5 — Logistique",
+    sub: "Optimisation tournées, prospection clients, dispatch",
     color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe"
   },
   {
     level: "Finance & Qualité",
-    names: "AZMI — Finance · THOMAS — Contrôle Gestion · ABDELALI — Qualité",
+    names: "IA 6 — Ctrl Gestion · IA 7 — Finance · IA 8-9 — Qualité",
     sub: "P&L temps réel, marges, contrôle qualité produits",
     color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe"
   },
   {
     level: "RH & Qualité Système",
-    names: "OURAI — DRH · S.ABDELILAH — Qualicien",
-    sub: "Paie automatique, HACCP, processus qualité",
+    names: "IA 10 — RH & Paie",
+    sub: "Paie automatique, matricules, HACCP, processus",
     color: "#f59e0b", bg: "#fffbeb", border: "#fde68a"
   },
 ]
@@ -160,6 +181,7 @@ export default function LoginPage({ onLogin }: Props) {
   const [forgotStatus, setForgotStatus] = useState<"idle" | "sending" | "sent" | "notfound">("idle")
   const [showDemo, setShowDemo] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<DemoGroup>("Direction")
+  const [externalType, setExternalType] = useState<ExternalType>("client")
 
   // ── Entrance animations ──────────────────────────────────────────────────────
   const [companyBrand, setCompanyBrand] = useState(() => store.getCompanyConfig())
@@ -283,10 +305,17 @@ export default function LoginPage({ onLogin }: Props) {
     setLoading(true); setError("")
     await new Promise(r => setTimeout(r, 300))
     if (clientMode) {
-      if (!identifier.trim()) { setError("Veuillez entrer votre nom"); setLoading(false); return }
-      const clientUser = store.loginClient(identifier.trim())
-      if (clientUser) { onLogin(clientUser) }
-      else { setError("Nom non trouve. Contactez votre commercial."); setLoading(false) }
+      if (!identifier.trim()) { setError("Veuillez entrer votre identifiant"); setLoading(false); return }
+      const raw = identifier.trim()
+      const isPhone = /^[\+0]/.test(raw) && raw.replace(/[\s\-\.]/g, "").length >= 8
+      const isEmail = raw.includes("@")
+      if (externalType === "chr" && !isPhone && !isEmail) {
+        setError("CHR : utilisez votre adresse email ou numéro de téléphone")
+        setLoading(false); return
+      }
+      const extUser = store.loginExternal(raw, externalType)
+      if (extUser) { onLogin(extUser) }
+      else { setError("Identifiant non trouvé. Contactez votre commercial FreshLink."); setLoading(false) }
       return
     }
     if (!identifier.trim() || !password.trim()) { setError("Remplissez tous les champs"); setLoading(false); return }
@@ -494,7 +523,9 @@ export default function LoginPage({ onLogin }: Props) {
           <div>
             <h1 className="text-xl font-black text-slate-800">Connexion</h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              {clientMode ? "Portail client — entrez votre nom" : "Email ou nom d'utilisateur"}
+              {clientMode
+                ? externalType === "chr" ? "Portail CHR — email ou téléphone" : `Portail ${externalType} — nom, téléphone ou email`
+                : "Email ou nom d'utilisateur"}
             </p>
           </div>
 
@@ -512,21 +543,56 @@ export default function LoginPage({ onLogin }: Props) {
 
           {/* Login form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-2.5" autoComplete="off">
+
+            {/* External sub-type selector */}
+            {clientMode && (
+              <div className="flex rounded-xl overflow-hidden p-1 bg-slate-100 border border-slate-200">
+                {(["client", "fournisseur", "chr"] as ExternalType[]).map(t => (
+                  <button key={t} type="button"
+                    onClick={() => { setExternalType(t); setIdentifier(""); setError("") }}
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+                      externalType === t ? "bg-white text-green-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    }`}>
+                    {t === "client" ? "🛒 Client" : t === "fournisseur" ? "🚚 Fournisseur" : "🏨 CHR"}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Identifier */}
             <div className="relative">
               <svg width="14" height="14" className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                {clientMode
+                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                }
               </svg>
               <input
                 type="text"
                 value={identifier}
                 onChange={e => { setIdentifier(e.target.value); setError("") }}
-                placeholder={clientMode ? "Nom du client" : "Email ou identifiant"}
+                placeholder={
+                  clientMode
+                    ? externalType === "chr"
+                      ? "Email ou numéro de téléphone"
+                      : "Nom, numéro de téléphone ou email"
+                    : "Email ou identifiant"
+                }
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all shadow-sm"
                 autoComplete="off"
                 data-lpignore="true"
               />
             </div>
+            {/* Smart detection hint */}
+            {clientMode && identifier.trim().length > 2 && (
+              <p className="text-[10px] text-slate-400 px-1 -mt-1">
+                {/^[\+0]/.test(identifier.trim())
+                  ? "📱 Numéro de téléphone détecté"
+                  : identifier.includes("@")
+                    ? "📧 Adresse email détectée"
+                    : "👤 Nom d'utilisateur détecté"}
+              </p>
+            )}
 
             {/* Password */}
             {!clientMode && (
@@ -675,7 +741,7 @@ export default function LoginPage({ onLogin }: Props) {
               </svg>
             </button>
 
-            {showDemo && (
+            {showDemo && !clientMode && (
               <div className="border-t border-slate-100">
                 <div className="flex bg-slate-50">
                   {DEMO_GROUPS.map(g => (
@@ -703,6 +769,54 @@ export default function LoginPage({ onLogin }: Props) {
                       </div>
                       <span className="text-[9px] text-slate-300 font-mono shrink-0 bg-slate-100 px-1.5 py-0.5 rounded">{acc.password}</span>
                     </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {showDemo && clientMode && (
+              <div className="border-t border-slate-100">
+                {/* Local-only notice */}
+                <div className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 border-b border-amber-100">
+                  <svg className="w-3 h-3 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-[9px] text-amber-600 font-semibold">Démo local uniquement — les comptes réels sont sur Supabase</p>
+                </div>
+                <div className="p-1.5 flex flex-col gap-1">
+                  {DEMO_EXTERNAL.map(acc => (
+                    <div key={acc.email} className="rounded-lg border border-slate-100 overflow-hidden">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0"
+                          style={{ background: acc.subtype === "client" ? "#16a34a" : "#2563eb" }}>
+                          {acc.subtype === "client" ? "C" : "F"}
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-700">{acc.label}</p>
+                        <span className={`ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
+                          acc.subtype === "client" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                        }`}>{acc.subtype}</span>
+                      </div>
+                      <div className="p-1.5 flex flex-col gap-0.5">
+                        {[
+                          { icon: "👤", label: acc.name },
+                          { icon: "📧", label: acc.email },
+                          { icon: "📱", label: acc.phone },
+                        ].map(opt => (
+                          <button key={opt.label} type="button"
+                            onClick={() => {
+                              setIdentifier(opt.label)
+                              setExternalType(acc.subtype)
+                              setClientMode(true); setError(""); setShowDemo(false)
+                            }}
+                            className="w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-green-50 transition-colors text-left">
+                            <span className="text-[10px]">{opt.icon}</span>
+                            <span className="text-[10px] font-mono text-slate-600">{opt.label}</span>
+                            <span className="ml-auto text-[8px] text-green-600 font-bold opacity-0 group-hover:opacity-100">Utiliser</span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[8px] text-slate-400 px-2.5 pb-1.5">{acc.note}</p>
+                    </div>
                   ))}
                 </div>
               </div>
