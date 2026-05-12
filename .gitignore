@@ -26,6 +26,12 @@ debug.log
 # Vercel
 .vercel
 
+# Netlify
+.netlify/
+
+# Deno lock
+deno.lock
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

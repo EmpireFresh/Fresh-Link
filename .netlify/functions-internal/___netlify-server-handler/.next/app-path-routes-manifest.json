@@ -1,8 +1,0 @@
-{
-  "/_not-found/page": "/_not-found",
-  "/api/ext/demande-compte/route": "/api/ext/demande-compte",
-  "/api/ext/catalogue/route": "/api/ext/catalogue",
-  "/api/ext/commandes/route": "/api/ext/commandes",
-  "/api/ext/rapport-journalier/route": "/api/ext/rapport-journalier",
-  "/page": "/"
-}

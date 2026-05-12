@@ -1,8 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/ext/demande-compte/route": "app/api/ext/demande-compte/route.js",
-  "/api/ext/catalogue/route": "app/api/ext/catalogue/route.js",
-  "/api/ext/commandes/route": "app/api/ext/commandes/route.js",
-  "/api/ext/rapport-journalier/route": "app/api/ext/rapport-journalier/route.js",
-  "/page": "app/page.js"
-}
