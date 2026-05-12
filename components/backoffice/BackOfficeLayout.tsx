@@ -410,6 +410,8 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isOnline, setIsOnline]         = useState(true)
   const [sbStatus, setSbStatus]         = useState<"checking" | "connected" | "error">("checking")
+  const [syncRunning, setSyncRunning]   = useState(false)
+  const [syncDone, setSyncDone]         = useState(false)
   const [showProfil, setShowProfil]     = useState(false)
   const [profilPhoto, setProfilPhoto]   = useState(user.photoUrl ?? "")
   const [navSearch, setNavSearch]       = useState("")
@@ -627,23 +629,63 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
               <span className="hidden sm:inline">{isOnline ? "En ligne" : "Hors ligne"}</span>
             </div>
 
-            {/* Supabase status */}
-            <div
-              title={sbStatus === "connected" ? "Supabase connecte" : sbStatus === "error" ? "Supabase non connecte" : "Verification Supabase..."}
-              className={[
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border cursor-default select-none",
-                sbStatus === "connected"  ? "bg-sky-50   border-sky-200   text-sky-700"
-                : sbStatus === "error"    ? "bg-rose-50  border-rose-200  text-rose-700"
-                                          : "bg-slate-50 border-slate-200 text-slate-500"
-              ].join(" ")}>
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                sbStatus === "connected"  ? "bg-sky-500 animate-pulse"
-                : sbStatus === "error"    ? "bg-rose-500"
-                                          : "bg-slate-400 animate-pulse"
-              }`} />
-              <span className="hidden sm:inline">
-                {sbStatus === "connected" ? "Supabase" : sbStatus === "error" ? "DB offline" : "DB..."}
-              </span>
+            {/* Supabase status + Sync button */}
+            <div className="flex items-center gap-1">
+              <div
+                title={sbStatus === "connected" ? "Supabase connecte" : sbStatus === "error" ? "Supabase non connecte" : "Verification Supabase..."}
+                className={[
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border cursor-default select-none",
+                  sbStatus === "connected"  ? "bg-sky-50   border-sky-200   text-sky-700"
+                  : sbStatus === "error"    ? "bg-rose-50  border-rose-200  text-rose-700"
+                                            : "bg-slate-50 border-slate-200 text-slate-500"
+                ].join(" ")}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  sbStatus === "connected"  ? "bg-sky-500 animate-pulse"
+                  : sbStatus === "error"    ? "bg-rose-500"
+                                            : "bg-slate-400 animate-pulse"
+                }`} />
+                <span className="hidden sm:inline">
+                  {sbStatus === "connected" ? "Supabase" : sbStatus === "error" ? "DB offline" : "DB..."}
+                </span>
+              </div>
+              <button
+                onClick={async () => {
+                  if (syncRunning) return
+                  setSyncRunning(true)
+                  setSyncDone(false)
+                  try {
+                    const { resetSync, runFullSync } = await import("@/lib/supabase/syncManager")
+                    resetSync()
+                    await runFullSync(() => {})
+                    setSyncDone(true)
+                    setTimeout(() => setSyncDone(false), 3000)
+                  } catch { /* offline */ }
+                  setSyncRunning(false)
+                }}
+                disabled={syncRunning}
+                title="Synchroniser données locales → Supabase"
+                className={[
+                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all",
+                  syncDone     ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                  : syncRunning ? "bg-blue-50   border-blue-200   text-blue-600 animate-pulse"
+                                : "bg-slate-50  border-slate-200  text-slate-500 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-700"
+                ].join(" ")}>
+                {syncRunning ? (
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                ) : syncDone ? (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                )}
+                <span className="hidden sm:inline">{syncRunning ? "Sync..." : syncDone ? "OK" : "Sync"}</span>
+              </button>
             </div>
 
             {/* Jawad crown badge */}
