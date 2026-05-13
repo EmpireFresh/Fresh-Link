@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { store, type PriceEntry, type PriceEntryType, type PriceSource, type PriceEvolution, type Article } from "@/lib/store"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 const CATEGORIES  = ["Légumes fruits","Légumes racines","Légumes feuilles","Herbes aromatiques","Agrumes","Fruits tropicaux","Fruits rouges","Fruits secs","Céréales","Autre"]
 const UNITES      = ["kg","tonne","caisse","palette","unité","lot","sac"]
@@ -233,15 +234,15 @@ export default function BOPricing({ user }: { user?: { id: string; name: string 
                   placeholder="Ex: Tomates rondes, Oranges Navel..."
                   className="flex-1 px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                 {articles.length > 0 && (
-                  <select value={form.articleId ?? ""}
-                    onChange={e => {
-                      const art = articles.find(a => a.id === e.target.value)
+                  <ArticleCombobox
+                    articles={articles}
+                    value={form.articleId ?? ""}
+                    onChange={(artId, art) => {
                       if (art) setForm(f => ({ ...f, articleId: art.id, articleNom: art.nom, categorie: art.famille ?? f.categorie, unite: art.unite ?? f.unite }))
                     }}
-                    className="px-2 py-2 rounded-xl border border-border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option value="">Catalogue...</option>
-                    {articles.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
-                  </select>
+                    placeholder="Catalogue..."
+                    className="w-48"
+                  />
                 )}
               </div>
             </div>

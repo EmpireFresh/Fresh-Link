@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { store, type Article, type User, type Client, type Commande, DELAI_RECOUVREMENT_LABELS, type DelaiRecouvrement, MODALITE_LABELS, type ModalitePaiement } from "@/lib/store"
 import { sendEmail, buildCommandeEmail } from "@/lib/email"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 interface Props { user: User }
 
@@ -1179,37 +1180,15 @@ export default function MobileCommercial({ user }: Props) {
                 )}
               </div>
 
-              {/* Article display — tap to open picker */}
-              {art ? (
-                <div className="flex items-center gap-3 p-2 rounded-xl border border-primary/30 bg-primary/5">
-                  <img src={art.photo || "https://placehold.co/48x48/e2e8f0/64748b?text=Art"}
-                    alt={`${art.nom} produit selectionne`}
-                    className="w-12 h-12 rounded-xl object-cover border border-border shrink-0"
-                    onError={e => { e.currentTarget.src = "https://placehold.co/48x48/e2e8f0/64748b?text=Art" }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-foreground text-sm">{art.nom}</p>
-                    <p className="text-xs text-muted-foreground" dir="rtl">{art.nomAr}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg ${art.stockDisponible > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
-                        Stock: {art.stockDisponible} {art.unite}
-                      </span>
-                      {(clientHabits[art.id]?.count ?? 0) >= 2 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700 font-semibold">
-                          {clientHabits[art.id].count}x commande(s)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button onClick={() => updateLigne(i, "articleId", "")}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-500 shrink-0">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
-              ) : (
-                <div className="px-3 py-3 rounded-xl border-2 border-dashed border-border/50 text-center">
-                  <p className="text-xs text-muted-foreground">Cochez un article ci-dessus pour remplir cette ligne</p>
-                </div>
-              )}
+              {/* Article selector */}
+              <ArticleCombobox
+                articles={pickerArticles}
+                value={ligne.articleId}
+                onChange={(artId, artObj) => {
+                  if (!artObj) { updateLigne(i, "articleId", ""); return }
+                  updateLigne(i, "articleId", artId)
+                }}
+              />
 
               {art && (() => {
                 const vStock = store.getVirtualStock(art.id)

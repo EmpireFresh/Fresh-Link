@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { store, type Article, type TransfertStock, type CaisseVide, type CaisseVideMouvement, type ContenantTare, DEFAULT_CONTENANTS_TARE, FAMILLES_ARTICLES, type BonLivraison, type Retour } from "@/lib/store"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 const DH = (n: number) => `${n.toLocaleString("fr-MA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DH`
 
@@ -1223,10 +1224,12 @@ export default function BOStock({ user }: { user: { id: string; name: string } }
             <div className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">Article / المنتج</label>
-                <select value={transForm.articleId} onChange={e => setTransForm({ ...transForm, articleId: e.target.value })} className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option value="">Sélectionner un article...</option>
-                  {articles.map(a => <option key={a.id} value={a.id}>{a.nom} (Conf: {a.stockDisponible}kg | Def: {a.stockDefect}kg)</option>)}
-                </select>
+                <ArticleCombobox
+                  articles={articles}
+                  value={transForm.articleId}
+                  onChange={(artId, _art) => setTransForm({ ...transForm, articleId: artId })}
+                  placeholder="Sélectionner un article..."
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">Sens du transfert / اتجاه التحويل</label>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { store, type Article, type LigneAchat, type User, type Fournisseur, type HistoriquePrixAchat, type Client } from "@/lib/store"
 import { sendEmail, buildAchatEmail } from "@/lib/email"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 import { CameraQualiteIA, ComparatifFournisseurs } from "@/components/mobile/AchatIAModules"
 
 interface Props { user: User }
@@ -1501,11 +1502,12 @@ function ChargesParArticle({ articles, acheteurNom }: { articles: Article[]; ach
         <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-3">
           <p className="text-sm font-bold text-slate-800">Saisir les charges liees a un achat</p>
 
-          <select value={form.articleId} onChange={e => setForm(p => ({ ...p, articleId: e.target.value }))}
-            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
-            <option value="">-- Article achete *</option>
-            {articles.map(a => <option key={a.id} value={a.id}>{a.nom} ({a.unite})</option>)}
-          </select>
+          <ArticleCombobox
+            articles={articles}
+            value={form.articleId}
+            onChange={(artId, _art) => setForm(p => ({ ...p, articleId: artId }))}
+            placeholder="-- Article achete *"
+          />
 
           <div className="grid grid-cols-2 gap-2">
             <div>

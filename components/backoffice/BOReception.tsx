@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { store, type BonAchat, type PurchaseOrder, type Reception, type Article, type Fournisseur, type ContenantTare } from "@/lib/store"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 type SourceTab = "bons" | "po" | "manuel" | "historique"
 
@@ -457,11 +458,12 @@ export default function BOReception({ user }: { user: { id: string; name: string
                       </button>
                     )}
                   </div>
-                  <select value={l.articleId} onChange={e => { const n = [...manuelLignes]; n[i] = { ...n[i], articleId: e.target.value }; setManuelLignes(n) }}
-                    className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option value="">Choisir un article</option>
-                    {articles.map(a => <option key={a.id} value={a.id}>{a.nom} — Stock: {a.stockDisponible} {a.unite}</option>)}
-                  </select>
+                  <ArticleCombobox
+                    articles={articles}
+                    value={l.articleId}
+                    onChange={(artId, _art) => { const n = [...manuelLignes]; n[i] = { ...n[i], articleId: artId }; setManuelLignes(n) }}
+                    placeholder="Choisir un article"
+                  />
                   <div className="grid grid-cols-3 gap-2">
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-semibold text-muted-foreground">Qte commandee</label>

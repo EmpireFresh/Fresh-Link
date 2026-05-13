@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect, useMemo } from "react"
 import { store, type Article } from "@/lib/store"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 interface Lot {
   id: string
@@ -265,14 +266,12 @@ export default function ShelfLifePanel() {
               {/* Article */}
               <div>
                 <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#94a3b8" }}>Article</label>
-                <select value={form.articleId} onChange={e => setForm(f => ({ ...f, articleId: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none"
-                  style={{ background: "oklch(0.18 0.03 260)", color: "#f1f5f9", border: "1px solid oklch(0.28 0.05 260)" }}>
-                  <option value="">Choisir un article</option>
-                  {articles.filter(a => a.shelfLifeJours).map(a => (
-                    <option key={a.id} value={a.id}>{a.nom} — DLC : {a.shelfLifeJours} j</option>
-                  ))}
-                </select>
+                <ArticleCombobox
+                  articles={articles.filter(a => a.shelfLifeJours)}
+                  value={form.articleId}
+                  onChange={(artId, _art) => setForm(f => ({ ...f, articleId: artId }))}
+                  placeholder="Choisir un article"
+                />
               </div>
               {/* Qte */}
               <div>

@@ -663,10 +663,131 @@ const EMPTY_USER: Omit<User, "id"> = {
 }
 
 // ─────────────────────────────────────────────────────────────
-// PermissionsTabs — Mobile / Back-office separated permissions UI
+// PERMISSION_GROUPS — Grouped permission definitions with cascade
 // ─────────────────────────────────────────────────────────────
 
-type PermTab = "mobile" | "backoffice"
+const PERMISSION_GROUPS = [
+  {
+    id: "commercial",
+    label: "Commercial & Ventes",
+    labelAr: "التجارة والمبيعات",
+    color: "bg-lime-500",
+    borderColor: "border-lime-500",
+    bgLight: "bg-lime-50",
+    borderLight: "border-lime-200",
+    textColor: "text-lime-800",
+    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2",
+    permissions: ["canViewCommercial", "canViewCash", "canCreateCommandeBO"] as (keyof User)[],
+    description: "Commandes, BL, prospection, caisse",
+    subLabels: {
+      canViewCommercial:    { label: "Commandes & Clients",          labelAr: "الطلبيات والزبائن" },
+      canViewCash:          { label: "Cash & Bons de livraison",     labelAr: "الكاش ووصولات التسليم" },
+      canCreateCommandeBO:  { label: "Créer commandes (Back-office)",labelAr: "إنشاء الطلبيات" },
+    } as Record<string, { label: string; labelAr: string }>,
+  },
+  {
+    id: "stock",
+    label: "Stock & Logistique",
+    labelAr: "المخزون والخدمات اللوجستية",
+    color: "bg-sky-500",
+    borderColor: "border-sky-500",
+    bgLight: "bg-sky-50",
+    borderLight: "border-sky-200",
+    textColor: "text-sky-800",
+    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+    permissions: ["canViewStock", "canViewLogistique"] as (keyof User)[],
+    description: "Stock, réception, dispatch, livraison",
+    subLabels: {
+      canViewStock:       { label: "Stock & Inventaire",               labelAr: "المخزون والجرد" },
+      canViewLogistique:  { label: "Logistique — Dispatch, Trips, BL", labelAr: "اللوجستيك والتوصيل" },
+    } as Record<string, { label: string; labelAr: string }>,
+  },
+  {
+    id: "finance",
+    label: "Finance & Comptabilité",
+    labelAr: "المالية والمحاسبة",
+    color: "bg-emerald-500",
+    borderColor: "border-emerald-500",
+    bgLight: "bg-emerald-50",
+    borderLight: "border-emerald-200",
+    textColor: "text-emerald-800",
+    icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 11v-1",
+    permissions: ["canViewFinance", "canViewRecap"] as (keyof User)[],
+    description: "Trésorerie, marges, P&L, synthèse",
+    subLabels: {
+      canViewFinance: { label: "Finance & Comptabilité", labelAr: "المالية والمحاسبة" },
+      canViewRecap:   { label: "Récap & KPIs",           labelAr: "ملخصات الأداء" },
+    } as Record<string, { label: string; labelAr: string }>,
+  },
+  {
+    id: "achat",
+    label: "Achats & Sourcing",
+    labelAr: "المشتريات والتوريد",
+    color: "bg-amber-500",
+    borderColor: "border-amber-500",
+    bgLight: "bg-amber-50",
+    borderLight: "border-amber-200",
+    textColor: "text-amber-800",
+    icon: "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17",
+    permissions: ["canViewAchat"] as (keyof User)[],
+    description: "Bons d'achat, fournisseurs, prix marché",
+    subLabels: {
+      canViewAchat: { label: "Bons d'achat & Fournisseurs", labelAr: "وصولات الشراء والموردون" },
+    } as Record<string, { label: string; labelAr: string }>,
+  },
+  {
+    id: "rh",
+    label: "RH & Administration",
+    labelAr: "الموارد البشرية",
+    color: "bg-violet-500",
+    borderColor: "border-violet-500",
+    bgLight: "bg-violet-50",
+    borderLight: "border-violet-200",
+    textColor: "text-violet-800",
+    icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+    permissions: ["canViewRH"] as (keyof User)[],
+    description: "Équipe, salaires, congés, matricules",
+    subLabels: {
+      canViewRH: { label: "RH — Salaires, Matricules, Contrats", labelAr: "الموارد البشرية والرواتب" },
+    } as Record<string, { label: string; labelAr: string }>,
+  },
+  {
+    id: "database",
+    label: "Base de Données & Config",
+    labelAr: "قاعدة البيانات والإعدادات",
+    color: "bg-orange-500",
+    borderColor: "border-orange-500",
+    bgLight: "bg-orange-50",
+    borderLight: "border-orange-200",
+    textColor: "text-orange-800",
+    icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582 4-8 4s8 1.79 8 4",
+    permissions: ["canViewDatabase"] as (keyof User)[],
+    description: "Articles, clients, paramètres système",
+    subLabels: {
+      canViewDatabase: { label: "Base de données & Paramètres", labelAr: "قاعدة البيانات والإعدادات" },
+    } as Record<string, { label: string; labelAr: string }>,
+  },
+  {
+    id: "external",
+    label: "Portails Externes",
+    labelAr: "البوابات الخارجية",
+    color: "bg-indigo-500",
+    borderColor: "border-indigo-500",
+    bgLight: "bg-indigo-50",
+    borderLight: "border-indigo-200",
+    textColor: "text-indigo-800",
+    icon: "M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9",
+    permissions: ["canViewExternal"] as (keyof User)[],
+    description: "Comptes clients, fournisseurs, demandes",
+    subLabels: {
+      canViewExternal: { label: "Portails — Clients & Fournisseurs", labelAr: "بوابات الزبائن والموردين" },
+    } as Record<string, { label: string; labelAr: string }>,
+  },
+]
+
+// ─────────────────────────────────────────────────────────────
+// PermissionsTabs — Grouped permission cards with cascade toggle
+// ─────────────────────────────────────────────────────────────
 
 function PermissionsTabs({
   form,
@@ -675,145 +796,147 @@ function PermissionsTabs({
   form: Omit<User, "id">
   setForm: React.Dispatch<React.SetStateAction<Omit<User, "id">>>
 }) {
-  const [permTab, setPermTab] = useState<PermTab>("mobile")
-
-  const activeSections = permTab === "mobile" ? MOBILE_PERM_SECTIONS : BACKOFFICE_PERM_SECTIONS
-
-  const colorMap: Record<string, string> = {
-    indigo: "bg-indigo-600", amber: "bg-amber-500", emerald: "bg-emerald-600",
-    cyan: "bg-cyan-600", violet: "bg-violet-600", rose: "bg-rose-600",
-  }
-  const lightMap: Record<string, string> = {
-    indigo: "bg-indigo-50 border-indigo-200", amber: "bg-amber-50 border-amber-200",
-    emerald: "bg-emerald-50 border-emerald-200", cyan: "bg-cyan-50 border-cyan-200",
-    violet: "bg-violet-50 border-violet-200", rose: "bg-rose-50 border-rose-200",
-  }
-  const textMap: Record<string, string> = {
-    indigo: "text-indigo-700", amber: "text-amber-700", emerald: "text-emerald-700",
-    cyan: "text-cyan-700", violet: "text-violet-700", rose: "text-rose-700",
-  }
+  const isFullAccessRole = form.role === "super_super_admin" || form.role === "super_admin"
 
   const handleToggleAll = (on: boolean) => {
     const update: Partial<Omit<User, "id">> = {}
-    PERM_LABELS.forEach(p => { (update as Record<string, unknown>)[p.key as string] = on })
+    PERMISSION_GROUPS.forEach(g => g.permissions.forEach(k => { (update as Record<string, unknown>)[k as string] = on }))
     setForm(prev => ({ ...prev, ...update }))
+  }
+
+  const handleGroupToggle = (group: typeof PERMISSION_GROUPS[number], on: boolean) => {
+    const update: Partial<Omit<User, "id">> = {}
+    group.permissions.forEach(k => { (update as Record<string, unknown>)[k as string] = on })
+    setForm(prev => ({ ...prev, ...update }))
+  }
+
+  const handlePermToggle = (key: keyof User) => {
+    setForm(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }))
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Header */}
+      {/* Section header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Droits d&apos;acces / الصلاحيات</h4>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Separees par interface — Mobile et Back-office</p>
+          <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Droits d&apos;accès / الصلاحيات</h4>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Permissions par module — activation en cascade disponible</p>
         </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={() => handleToggleAll(true)}
-            className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">
-            Tout activer
-          </button>
-          <button type="button" onClick={() => handleToggleAll(false)}
-            className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
-            Tout desactiver
-          </button>
+        {!isFullAccessRole && (
+          <div className="flex gap-2">
+            <button type="button" onClick={() => handleToggleAll(true)}
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">
+              Tout activer
+            </button>
+            <button type="button" onClick={() => handleToggleAll(false)}
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+              Tout désactiver
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Full access banner for super admins */}
+      {isFullAccessRole ? (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-300">
+          <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-amber-800">Accès complet — toutes permissions accordées automatiquement</p>
+            <p className="text-xs text-amber-700 mt-0.5">وصول كامل — جميع الصلاحيات ممنوحة تلقائياً لهذا الدور</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Grouped permission cards */
+        <div className="flex flex-col gap-3">
+          {PERMISSION_GROUPS.map(group => {
+            const activeCount = group.permissions.filter(k => !!form[k as keyof typeof form]).length
+            const totalCount = group.permissions.length
+            const allOn = activeCount === totalCount
+            const someOn = activeCount > 0 && activeCount < totalCount
 
-      {/* Tab switcher */}
-      <div className="flex gap-1 bg-muted rounded-xl p-1">
-        <button type="button" onClick={() => setPermTab("mobile")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${permTab === "mobile" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
-          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          Droits Mobile
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-bold">App terrain</span>
-        </button>
-        <button type="button" onClick={() => setPermTab("backoffice")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${permTab === "backoffice" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
-          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          Droits Back-office
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">Gestion BO</span>
-        </button>
-      </div>
-
-      {/* Context note */}
-      <div className={`flex items-start gap-2 px-3 py-2 rounded-xl text-xs border ${permTab === "mobile" ? "bg-green-50 border-green-200 text-green-800" : "bg-blue-50 border-blue-200 text-blue-800"}`}>
-        <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        {permTab === "mobile"
-          ? "Ces droits controlent ce que l'utilisateur peut faire depuis l'application mobile terrain (prevendeur, acheteur, magasinier, livreur...)."
-          : "Ces droits controlent ce que l'utilisateur peut voir et faire depuis l'interface back-office (tableaux de bord, commandes, stock, administration...)."
-        }
-      </div>
-
-      {/* Sections */}
-      <div className="flex flex-col rounded-xl overflow-hidden border border-border">
-        {activeSections.map((section, si) => {
-          const uniqueKeys = [...new Set(section.pages.map(p => p.permKey))]
-          const allOn = uniqueKeys.every(k => !!form[k as keyof typeof form])
-          const anyOn = uniqueKeys.some(k => !!form[k as keyof typeof form])
-
-          return (
-            <div key={section.group} className={`border-b border-border last:border-b-0 ${si % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
-              {/* Section header + master toggle */}
-              <div className={`flex items-center justify-between px-4 py-2 ${lightMap[section.color]}`}>
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${colorMap[section.color]}`} />
-                  <span className={`text-xs font-bold ${textMap[section.color]}`}>{section.group}</span>
-                  <span className="text-[10px] text-muted-foreground" dir="rtl">{section.groupAr}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-medium ${allOn ? "text-emerald-600" : anyOn ? "text-amber-600" : "text-muted-foreground"}`}>
-                    {allOn ? "Tout actif" : anyOn ? "Partiel" : "Desactive"}
-                  </span>
-                  <button type="button"
-                    onClick={() => {
-                      const update: Partial<Omit<User, "id">> = {}
-                      uniqueKeys.forEach(k => { update[k as keyof typeof update] = !allOn as never })
-                      setForm(prev => ({ ...prev, ...update }))
-                    }}
-                    className={`relative w-9 h-5 rounded-full transition-colors ${allOn ? "bg-emerald-500" : "bg-muted"}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${allOn ? "left-4" : "left-0.5"}`} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Individual permissions */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 divide-border">
-                {section.pages.map((page, pi) => {
-                  const isOn = !!(form[page.permKey as keyof typeof form])
-                  return (
-                    <div key={pi}
-                      className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 transition-colors border-border sm:odd:border-r">
-                      <button
-                        type="button"
-                        aria-label={`${isOn ? "Desactiver" : "Activer"} ${page.label}`}
-                        onClick={e => {
-                          e.stopPropagation()
-                          setForm(prev => ({ ...prev, [page.permKey]: !prev[page.permKey as keyof typeof prev] }))
-                        }}
-                        className={`relative w-9 h-5 rounded-full shrink-0 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 ${isOn ? "bg-emerald-500" : "bg-slate-200"}`}>
-                        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${isOn ? "left-4" : "left-0.5"}`} />
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-700 truncate">{page.label}</p>
-                        <p className="text-[10px] text-slate-400" dir="rtl">{page.labelAr}</p>
-                      </div>
-                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold shrink-0 ${isOn ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
-                        {isOn ? "OUI" : "NON"}
-                      </span>
+            return (
+              <div key={group.id}
+                className={`rounded-xl border overflow-hidden border-l-4 ${group.borderColor} border-t border-r border-b ${group.borderLight} bg-card`}>
+                {/* Group header */}
+                <div className={`flex items-center justify-between px-4 py-3 ${group.bgLight}`}>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Icon */}
+                    <div className={`w-8 h-8 rounded-lg ${group.color} flex items-center justify-center shrink-0`}>
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={group.icon} />
+                      </svg>
                     </div>
-                  )
-                })}
+                    {/* Label + description */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-sm font-bold ${group.textColor}`}>{group.label}</span>
+                        <span className="text-[10px] text-muted-foreground" dir="rtl">{group.labelAr}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground truncate">{group.description}</p>
+                    </div>
+                  </div>
+                  {/* Master toggle — right side */}
+                  <div className="flex items-center gap-2 shrink-0 ml-3">
+                    <span className={`text-[10px] font-semibold ${allOn ? "text-emerald-600" : someOn ? "text-amber-600" : "text-slate-400"}`}>
+                      {activeCount}/{totalCount}
+                    </span>
+                    {/* Toggle button with indeterminate visual */}
+                    <button
+                      type="button"
+                      aria-label={`${allOn ? "Désactiver" : "Activer"} tout le groupe ${group.label}`}
+                      onClick={() => handleGroupToggle(group, !allOn)}
+                      className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                        allOn
+                          ? "bg-emerald-500 focus:ring-emerald-400"
+                          : someOn
+                            ? "bg-amber-400 focus:ring-amber-400"
+                            : "bg-slate-200 focus:ring-slate-300"
+                      }`}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                        allOn ? "left-6" : someOn ? "left-3" : "left-1"
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sub-permissions list */}
+                <div className="divide-y divide-border bg-background">
+                  {group.permissions.map(permKey => {
+                    const isOn = !!form[permKey as keyof typeof form]
+                    const subLabel = group.subLabels[permKey as string]
+                    return (
+                      <div key={permKey as string}
+                        className="flex items-center gap-3 px-4 pl-8 py-2.5 hover:bg-slate-50/70 transition-colors">
+                        {/* Indented checkbox toggle */}
+                        <button
+                          type="button"
+                          aria-label={`${isOn ? "Désactiver" : "Activer"} — ${subLabel?.label ?? permKey as string}`}
+                          onClick={() => handlePermToggle(permKey)}
+                          className={`relative w-9 h-5 rounded-full shrink-0 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-emerald-400 ${isOn ? "bg-emerald-500" : "bg-slate-200"}`}>
+                          <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${isOn ? "left-4" : "left-0.5"}`} />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-semibold ${isOn ? "text-slate-900" : "text-slate-500"}`}>
+                            {subLabel?.label ?? permKey as string}
+                          </p>
+                          <p className="text-[10px] text-slate-400" dir="rtl">{subLabel?.labelAr}</p>
+                        </div>
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold shrink-0 ${isOn ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
+                          {isOn ? "OUI" : "NON"}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

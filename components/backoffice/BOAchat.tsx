@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { store, type BonAchat, type Article, type Fournisseur } from "@/lib/store"
 import { sendEmail, buildAchatEmail } from "@/lib/email"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 export default function BOAchat() {
   const [bons, setBons] = useState<BonAchat[]>([])
@@ -362,15 +363,16 @@ export default function BOAchat() {
                         <div key={i} className={`grid grid-cols-[2fr_1fr_1fr_1fr_80px_36px] gap-0 items-start border-t border-border ${i % 2 === 0 ? "bg-white" : "bg-muted/20"}`}>
                           {/* Article select */}
                           <div className="px-2 py-2">
-                            <select value={l.articleId} onChange={e => {
-                              const n = [...formLignes]; n[i] = { ...n[i], articleId: e.target.value }
-                              const a = articles.find(a => a.id === e.target.value)
-                              if (a) n[i].prixAchat = a.prixAchat.toString()
-                              setFormLignes(n)
-                            }} className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-xs font-sans focus:outline-none focus:ring-1 focus:ring-primary">
-                              <option value="">— Article</option>
-                              {articles.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
-                            </select>
+                            <ArticleCombobox
+                              articles={articles}
+                              value={l.articleId}
+                              onChange={(artId, artObj) => {
+                                const n = [...formLignes]; n[i] = { ...n[i], articleId: artId }
+                                if (artObj) n[i].prixAchat = artObj.prixAchat.toString()
+                                setFormLignes(n)
+                              }}
+                              placeholder="— Article"
+                            />
                             {art && <p className="text-[10px] text-muted-foreground mt-0.5 pl-1">Stock: {art.stockDisponible} {art.unite}</p>}
                           </div>
                           {/* Quantite */}

@@ -6,6 +6,7 @@ import {
   type Commande, type Trip, type User, type BonLivraison, type MotifRetour, type Client, type Reception, type Article, type Fournisseur, DELAI_RECOUVREMENT_LABELS
 } from "@/lib/store"
 import { printBL } from "@/lib/print"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 interface Props { user: User }
 
@@ -1198,11 +1199,12 @@ function MagasinierReceptionTab({ user }: { user: User }) {
             {lignes.map((l, i) => (
               <div key={i} className="bg-slate-50 rounded-xl border border-slate-200 p-3 flex flex-col gap-2.5">
                 {source === "manuel" ? (
-                  <select value={l.articleId} onChange={e => updateLigne(i, { articleId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
-                    <option value="">-- Article *</option>
-                    {articles.map(a => <option key={a.id} value={a.id}>{a.nom} ({a.unite})</option>)}
-                  </select>
+                  <ArticleCombobox
+                    articles={articles}
+                    value={l.articleId}
+                    onChange={(artId, _art) => updateLigne(i, { articleId: artId })}
+                    placeholder="-- Article *"
+                  />
                 ) : (
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-bold text-slate-800">{l.articleNom}</p>
