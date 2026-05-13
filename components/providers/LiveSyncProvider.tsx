@@ -42,6 +42,12 @@ const ERP_KEYS: Record<string, string> = {
   fl_purchase_orders:  "fl_purchase_orders",
   fl_transferts:       "fl_transferts_stock",  // clé LS ≠ table SB
   fl_messages:         "fl_messages",
+  // ── Tables manquantes (ajoutées v2.1) ─────────────────────────────
+  fl_depots:           "fl_depots",
+  fl_livreurs:         "fl_livreurs",
+  fl_demandes_achat:   "fl_demandes_achat",
+  fl_notices:          "fl_notices",
+  fl_non_achats:       "fl_non_achats",
 }
 
 // Clés à IGNORER (sessions, config UI, démo — ne pas pousser vers Supabase)
