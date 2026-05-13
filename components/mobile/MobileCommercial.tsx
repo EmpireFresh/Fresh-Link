@@ -1057,198 +1057,6 @@ export default function MobileCommercial({ user }: Props) {
         {/* Coordinates intentionally hidden from prevendeur screen */}
       </div>
 
-      {/* ── HABITUDES TAB ─────────────────────────────────────────────────── */}
-      {(commTab as string) === "habitudes" && (
-        <div className="flex flex-col gap-3">
-
-          {/* ── Alertes rapides ─────────────────────────── */}
-          {(() => {
-            const today = store.today()
-            const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)
-            const visites = store.getVisites ? store.getVisites() : []
-            const visitedIds = new Set(visites.filter(v => v.date >= sevenDaysAgo).map(v => v.clientId))
-            const notVisited = myClients.filter(c => !visitedIds.has(c.id)).slice(0, 3)
-            const pendingToday = store.getCommandes().filter(c => c.date === today && c.commercialId === user.id && (c.statut === "en_attente" || c.statut === "en_attente_approbation")).length
-            if (notVisited.length === 0 && pendingToday === 0) return null
-            return (
-              <div className="flex flex-col gap-2">
-                {pendingToday > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-50 border border-blue-200">
-                    <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                    <p className="text-xs font-semibold text-blue-800">{pendingToday} commande(s) en attente aujourd&apos;hui</p>
-                  </div>
-                )}
-                {notVisited.length > 0 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col gap-1.5">
-                    <p className="text-xs font-bold text-amber-800">Clients non visites depuis 7 jours</p>
-                    {notVisited.map(c => (
-                      <div key={c.id} className="flex items-center justify-between">
-                        <span className="text-xs text-amber-700 font-semibold">{c.nom}</span>
-                        <button onClick={() => { setSelectedClientId(c.id); setHabitudeSearch(c.nom) }}
-                          className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-500 text-white">
-                          Voir habitudes
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })()}
-
-          {/* Client selector — shown directly in habitudes tab so user doesn't need to go to "nouvelle" first */}
-          <div className="bg-card rounded-xl border border-border p-3 flex flex-col gap-2">
-            <p className="text-xs font-bold text-foreground">Client / الزبون</p>
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              <input
-                type="text"
-                placeholder="Rechercher un client..."
-                value={habitudeSearch}
-                onChange={e => {
-                  setHabitudeSearch(e.target.value)
-                  const q = e.target.value.toLowerCase()
-                  const found = myClients.find(c => c.nom.toLowerCase() === q)
-                  if (found) setSelectedClientId(found.id)
-                }}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            {/* Quick client list */}
-            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
-              {myClients.filter(c => {
-                const q = habitudeSearch.toLowerCase()
-                return !q || c.nom.toLowerCase().includes(q) || c.id === selectedClientId
-              }).slice(0, 8).map(c => (
-                <button key={c.id} onClick={() => setSelectedClientId(c.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-left text-sm transition-all ${selectedClientId === c.id ? "bg-primary/10 border border-primary/30 font-semibold text-primary" : "hover:bg-muted text-foreground"}`}>
-                  <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">{c.nom[0]}</span>
-                  <span className="truncate">{c.nom}</span>
-                  {selectedClientId === c.id && <svg className="w-4 h-4 ml-auto shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">Habitudes du client</p>
-                <p className="text-xs text-muted-foreground">
-                  {selectedClientId
-                    ? Object.keys(clientHabits).length > 0
-                      ? `${Object.keys(clientHabits).length} articles commandes regulierement`
-                      : "Aucun historique pour ce client"
-                    : "Selectionnez un client ci-dessus"}
-                </p>
-              </div>
-            </div>
-            {selectedClientId && Object.keys(clientHabits).length > 0 && (
-              <button onClick={autoFillPanier}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
-                style={{ background: "oklch(0.38 0.2 260)" }}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Preparer panier automatique
-              </button>
-            )}
-          </div>
-          {selectedClientId && Object.keys(clientHabits).length > 0 && (
-            <div className="bg-card rounded-xl border border-border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Article</th>
-                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Dernière Qté</th>
-                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Moy.</th>
-                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Cmds</th>
-                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Dernière date</th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(clientHabits)
-                      .sort(([, a], [, b]) => b.count - a.count)
-                      .map(([artId, habit]) => {
-                        const art = articles.find(a => a.id === artId)
-                        if (!art) return null
-                        const pv = store.computePV(art)
-                        const inCart = lignes.some(l => l.articleId === artId)
-                        const avgBase = habit.count > 0 ? habit.qteTotal / habit.count : 0
-                        const dernQte = habit.dernierQteUM && habit.dernierUM
-                          ? `${habit.dernierQteUM} ${habit.dernierUM}`
-                          : `${habit.dernierQte} ${art.unite}`
-                        const moyQte = art.um && art.colisageParUM && avgBase >= art.colisageParUM
-                          ? `${(avgBase / art.colisageParUM).toFixed(1)} ${art.um}`
-                          : `${avgBase.toFixed(1)} ${art.unite}`
-                        const inactivityDays = store.getAlertConfig?.()?.inactivityDays ?? 30
-                        const halfDays = Math.round(inactivityDays / 2)
-                        const isStale = habit.lastDate < new Date(Date.now() - halfDays*24*60*60*1000).toISOString().slice(0,10)
-                        return (
-                          <tr key={artId} className={`border-b border-border last:border-0 transition-colors ${inCart ? "bg-primary/5" : "hover:bg-muted/30"}`}>
-                            <td className="px-3 py-2.5">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-foreground truncate max-w-[120px]">{art.nom}</span>
-                                {isStale && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-600 shrink-0">+{halfDays}j</span>}
-                                {art.stockDisponible <= 0 && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-orange-100 text-orange-600 shrink-0">Rupture</span>}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">{pv} DH/{art.unite}</div>
-                            </td>
-                            <td className="px-3 py-2.5 text-center font-semibold text-foreground">{dernQte}</td>
-                            <td className="px-3 py-2.5 text-center text-blue-700 font-semibold">{moyQte}</td>
-                            <td className="px-3 py-2.5 text-center">
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{habit.count}x</span>
-                            </td>
-                            <td className="px-3 py-2.5 text-center text-muted-foreground">{habit.lastDate}</td>
-                            <td className="px-3 py-2.5 text-right">
-                              {inCart ? (
-                                <span className="text-[10px] font-bold text-primary">✓ Panier</span>
-                              ) : (
-                                <button
-                                  disabled={art.stockDisponible <= 0}
-                                  onClick={() => {
-                                    const hasUM = !!(habit.dernierQteUM && habit.dernierUM && art.um && habit.dernierUM === art.um)
-                                    const prefillQty = hasUM ? String(habit.dernierQteUM) : String(habit.dernierQte > 0 ? habit.dernierQte : "")
-                                    const prefillMode = hasUM ? art.um! : "base"
-                                    const emptyIdx = lignes.findIndex(l => !l.articleId)
-                                    const newLigne: LigneForm = { articleId: artId, quantite: prefillQty, prixVente: String(pv), uniteMode: prefillMode }
-                                    if (emptyIdx >= 0) { const updated = [...lignes]; updated[emptyIdx] = newLigne; setLignes(updated) }
-                                    else setLignes(prev => [...prev, newLigne])
-                                    setCommTab("nouvelle")
-                                  }}
-                                  className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground disabled:opacity-40">
-                                  Renouveler
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-          {selectedClientId && Object.keys(clientHabits).length === 0 && (
-            <div className="bg-card rounded-xl border border-border p-8 flex flex-col items-center gap-3 text-center">
-              <svg className="w-10 h-10 text-muted-foreground/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p className="text-sm font-semibold text-muted-foreground">Aucune habitude enregistree</p>
-              <p className="text-xs text-muted-foreground">Les habitudes se creent automatiquement apres plusieurs commandes passees par ce client.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* placeholder to close previous structure */}
       {/* INLINE ARTICLE SELECTOR ─────────────────────────────────────────── */}
       <div className="bg-card rounded-xl border border-border flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -1761,6 +1569,141 @@ export default function MobileCommercial({ user }: Props) {
 
       {/* END nouvelle commande tab */}
       </>)}
+
+      {/* ── HABITUDES TAB ─────────────────────────────────────────────────── */}
+      {(commTab as string) === "habitudes" && (
+        <div className="flex flex-col gap-3">
+          {/* Header */}
+          <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Habitudes d&apos;achat / عادات الشراء</h3>
+                <p className="text-xs text-muted-foreground">
+                  {selectedClientId
+                    ? `${Object.keys(clientHabits).length} article(s) commandes regulierement`
+                    : "Selectionnez un client pour voir ses habitudes"}
+                </p>
+              </div>
+              {selectedClientId && Object.keys(clientHabits).length > 0 && (
+                <button
+                  onClick={() => { autoFillPanier(); setCommTab("nouvelle") }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Auto-panier
+                </button>
+              )}
+            </div>
+
+            {/* Search */}
+            {selectedClientId && Object.keys(clientHabits).length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-background">
+                <svg className="w-4 h-4 text-muted-foreground shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={habitudeSearch}
+                  onChange={e => setHabitudeSearch(e.target.value)}
+                  placeholder="Filtrer les articles..."
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                />
+                {habitudeSearch && (
+                  <button onClick={() => setHabitudeSearch("")} className="text-muted-foreground hover:text-foreground">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Habits list */}
+          {!selectedClientId ? (
+            <div className="bg-card rounded-xl border border-border p-10 text-center">
+              <svg className="w-10 h-10 mx-auto text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <p className="text-sm font-semibold text-muted-foreground">Selectionnez un client</p>
+              <p className="text-xs text-muted-foreground mt-1">Les habitudes d&apos;achat s&apos;affichent apres avoir choisi un client</p>
+            </div>
+          ) : Object.keys(clientHabits).length === 0 ? (
+            <div className="bg-card rounded-xl border border-border p-10 text-center">
+              <svg className="w-10 h-10 mx-auto text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p className="text-sm font-semibold text-muted-foreground">Aucune habitude enregistree</p>
+              <p className="text-xs text-muted-foreground mt-1">Ce client n&apos;a pas encore de commandes repetees</p>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="divide-y divide-border">
+                {Object.entries(clientHabits)
+                  .filter(([artId]) => {
+                    const art = articles.find(a => a.id === artId)
+                    if (!art) return false
+                    if (!habitudeSearch.trim()) return true
+                    const q = habitudeSearch.trim().toLowerCase()
+                    return art.nom.toLowerCase().includes(q) || art.nomAr.includes(q)
+                  })
+                  .sort(([, a], [, b]) => b.count - a.count)
+                  .map(([artId, hab]) => {
+                    const art = articles.find(a => a.id === artId)
+                    if (!art) return null
+                    const pv = store.computePV(art)
+                    const inCart = lignes.some(l => l.articleId === artId)
+                    const stockOk = art.stockDisponible > 0
+                    return (
+                      <div key={artId} className="flex items-center gap-3 px-4 py-3">
+                        <img
+                          src={art.photo || "https://placehold.co/40x40/e2e8f0/64748b?text=Art"}
+                          alt={`${art.nom} habitude`}
+                          className="w-10 h-10 rounded-xl object-cover border border-border shrink-0"
+                          onError={e => { e.currentTarget.src = "https://placehold.co/40x40/e2e8f0/64748b?text=Art" }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground truncate">{art.nom}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700">
+                              {hab.count}x commande(s)
+                            </span>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg ${stockOk ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                              {stockOk ? `${art.stockDisponible} ${art.unite} dispo` : "Rupture"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              Derniere: {hab.lastDate}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className="text-sm font-bold text-primary">{pv} DH</span>
+                          <button
+                            onClick={() => {
+                              const hasUM = !!(hab.dernierQteUM && hab.dernierUM && art.um && hab.dernierUM === art.um)
+                              const dq = hab.dernierQte ?? 0
+                              const prefillQty = hasUM ? String(hab.dernierQteUM) : dq > 0 ? String(dq) : ""
+                              const prefillMode = hasUM ? art.um! : "base"
+                              if (inCart) {
+                                const idx = lignes.findIndex(l => l.articleId === artId)
+                                if (idx >= 0) setLignes(prev => prev.filter((_, j) => j !== idx))
+                              } else {
+                                setLignes(prev => [...prev, { articleId: artId, quantite: prefillQty, prixVente: String(pv), uniteMode: prefillMode }])
+                                setCommTab("nouvelle")
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${inCart ? "bg-red-50 text-red-600 border border-red-200" : "text-white"}`}
+                            style={inCart ? {} : { background: "oklch(0.65 0.17 145)" }}>
+                            {inCart ? "Retirer" : "Commander"}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── MES COMMANDES TAB ─────────────────────────────────────── */}
       {commTab === "mes_commandes" && (
