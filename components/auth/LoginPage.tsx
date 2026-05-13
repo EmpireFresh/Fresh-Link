@@ -419,8 +419,8 @@ export default function LoginPage({ onLogin }: Props) {
       {/* ── Main content row ────────────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
 
-      {/* ── Left brand panel — md+ ─────────────────────────────────────────────── */}
-      <div className="flex flex-col justify-between w-[200px] sm:w-[240px] md:w-[260px] lg:w-[310px] shrink-0 px-5 py-7 lg:px-8 lg:py-9 relative overflow-hidden"
+      {/* ── Left brand panel — hidden on mobile, visible md+ ─────────────────── */}
+      <div className="hidden md:flex flex-col justify-between w-[260px] lg:w-[310px] shrink-0 px-5 py-7 lg:px-8 lg:py-9 relative overflow-hidden"
         style={{ background: "linear-gradient(160deg, #0a1f14 0%, #0d2a1a 60%, #112d1c 100%)", borderRight: "1px solid rgba(74,222,128,0.08)" }}>
 
         {/* Grid texture */}
