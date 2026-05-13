@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { store, type User, getUserInterface } from "@/lib/store"
 import dynamic from "next/dynamic"
+import LiveSyncProvider from "@/components/providers/LiveSyncProvider"
 
 // All heavy components loaded dynamically — never crash the initial bundle
 const LoginPage        = dynamic(() => import("@/components/auth/LoginPage"),             { ssr: false, loading: () => <Spinner /> })
@@ -53,6 +54,13 @@ export default function App() {
         const iface = getUserInterface(loggedUser)
         setView(iface === "mobile" ? "mobile" : "backoffice")
       }
+      // Charger les données fraîches depuis Supabase en arrière-plan
+      import("@/lib/supabase/db").then(({ syncFromSupabase }) => {
+        syncFromSupabase().then(({ ok, tables }) => {
+          console.log(`[FreshLink] Sync login — ${tables.length} tables chargées depuis Supabase`)
+          if (ok) window.dispatchEvent(new CustomEvent("fl_store_updated", { detail: { table: "all" } }))
+        }).catch(() => {/* offline OK */})
+      })
     } catch (e: unknown) {
       console.error("Login error:", e)
     }
@@ -110,17 +118,17 @@ export default function App() {
     const needsGuard    = !isSuperAdmin && !isDemoAccount && user.requireCameraAuth === true
     const content = <MobileLayout user={user} onLogout={handleLogout} />
     return (
-      <>
+      <LiveSyncProvider>
         {needsGuard ? <SecurityGuard skipGps={false}>{content}</SecurityGuard> : content}
         {bothSwitcher}
-      </>
+      </LiveSyncProvider>
     )
   }
 
   return (
-    <>
+    <LiveSyncProvider>
       <BackOfficeLayout user={user} onLogout={handleLogout} />
       {bothSwitcher}
-    </>
+    </LiveSyncProvider>
   )
 }

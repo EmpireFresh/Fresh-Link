@@ -63,6 +63,18 @@ export default function BODispatch({ user }: Props) {
 
   useEffect(() => { refresh() }, [])
 
+  // Rechargement Realtime depuis un autre appareil
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent<{ table: string }>
+      const relevant = ["fl_commandes", "fl_trips", "fl_bons_livraison", "all"]
+      if (!ev.detail?.table || relevant.includes(ev.detail.table)) refresh()
+    }
+    window.addEventListener("fl_store_updated", handler)
+    return () => window.removeEventListener("fl_store_updated", handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const refresh = () => {
     setCommandes(store.getCommandes())
     setTrips(store.getTrips())

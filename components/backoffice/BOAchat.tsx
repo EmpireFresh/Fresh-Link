@@ -60,6 +60,18 @@ export default function BOAchat() {
     setFormEmail(store.getEmailConfig().achat)
   }, [])
 
+  // Rechargement Realtime depuis un autre appareil
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent<{ table: string }>
+      const relevant = ["fl_bons_achat", "fl_articles", "fl_fournisseurs", "all"]
+      if (!ev.detail?.table || relevant.includes(ev.detail.table)) refresh()
+    }
+    window.addEventListener("fl_store_updated", handler)
+    return () => window.removeEventListener("fl_store_updated", handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const refresh = () => {
     setBons(store.getBonsAchat())
     setArticles(store.getArticles())
