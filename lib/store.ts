@@ -2612,6 +2612,13 @@ export const store = {
   saveMessages: (m: Message[]) => setLS("fl_messages", m),
   addMessage: (m: Message) => { const msgs = store.getMessages(); msgs.push(m); store.saveMessages(msgs) },
 
+  // --- Alert inactivity config ---
+  getAlertConfig: (): { inactivityDays: number } =>
+    getLS("fl_alert_config", { inactivityDays: 30 }),
+  saveAlertConfig: (c: { inactivityDays: number }) => {
+    setLS("fl_alert_config", c)
+  },
+
   // --- Email config ---
   getEmailConfig: (): EmailConfig => getLS("fl_email_config", DEFAULT_EMAIL_CONFIG),
   saveEmailConfig: (c: EmailConfig) => setLS("fl_email_config", c),

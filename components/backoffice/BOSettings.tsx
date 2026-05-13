@@ -81,6 +81,8 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     } } catch { return {} }
   })
   const [alertSaved, setAlertSaved] = useState("")
+  const [alertInactivityDays, setAlertInactivityDays] = useState(() => store.getAlertConfig?.()?.inactivityDays ?? 30)
+  const [savedAlert, setSavedAlert] = useState(false)
   const [seedMsg, setSeedMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [seeding, setSeeding] = useState(false)
 

@@ -1145,102 +1145,80 @@ export default function MobileCommercial({ user }: Props) {
             )}
           </div>
           {selectedClientId && Object.keys(clientHabits).length > 0 && (
-            <div className="flex flex-col gap-2">
-              {Object.entries(clientHabits)
-                .sort(([, a], [, b]) => b.count - a.count)
-                .map(([artId, habit]) => {
-                  const art = articles.find(a => a.id === artId)
-                  if (!art) return null
-                  const pv = store.computePV(art)
-                  const inCart = lignes.some(l => l.articleId === artId)
-                  return (
-                    <div key={artId} className={`flex items-center gap-3 p-3 rounded-xl border ${inCart ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}>
-                      <img src={art.photo || "https://placehold.co/48x48/e2e8f0/64748b?text=Art"}
-                        alt={`${art.nom} produit habituel`}
-                        className="w-11 h-11 rounded-xl object-cover shrink-0 border border-border"
-                        onError={e => { e.currentTarget.src = "https://placehold.co/48x48/e2e8f0/64748b?text=Art" }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">{art.nom}</p>
-                        {/* Row 1: stock + nb commandes */}
-                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700">{habit.count}x cmd</span>
-                          {habit.lastDate < new Date(Date.now() - 14*24*60*60*1000).toISOString().slice(0,10) && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-red-100 text-red-600 flex items-center gap-0.5">
-                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                              +14j
-                            </span>
-                          )}
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg ${art.stockDisponible > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
-                            Stock: {art.stockDisponible > 0 ? `${art.stockDisponible} ${art.unite}` : "Rupture"}
-                          </span>
-                        </div>
-                        {/* Row 2: moyenne + dernière commande with UM conversion */}
-                        <div className="flex items-center gap-2 flex-wrap mt-1">
-                          {/* Average qty — shown in UM if applicable */}
-                          <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-1.5 py-0.5">
-                            <svg className="w-2.5 h-2.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            <span className="text-[10px] font-semibold text-blue-700">
-                              {(() => {
-                                const avgBase = habit.count > 0 ? habit.qteTotal / habit.count : 0
-                                if (art.um && art.colisageParUM && avgBase >= art.colisageParUM) {
-                                  const avgUM = avgBase / art.colisageParUM
-                                  return `Moy: ${avgUM % 1 === 0 ? avgUM : avgUM.toFixed(1)} ${art.um} (${avgBase.toFixed(0)} ${art.unite})`
-                                }
-                                return `Moy: ${avgBase.toFixed(1)} ${art.unite}`
-                              })()}
-                            </span>
-                          </div>
-                          {/* Last order qty — shown in UM+base if applicable */}
-                          <div className="flex items-center gap-1 bg-violet-50 border border-violet-100 rounded-lg px-1.5 py-0.5">
-                            <svg className="w-2.5 h-2.5 text-violet-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-[10px] font-semibold text-violet-700">
-                              {habit.dernierQteUM && habit.dernierUM
-                                ? `Derniere: ${habit.dernierQteUM} ${habit.dernierUM} = ${habit.dernierQte} ${art.unite}`
-                                : `Derniere: ${habit.dernierQte} ${art.unite}`
-                              }
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground">{habit.lastDate}</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        <span className="text-sm font-bold text-primary">{pv} DH/{art.unite}</span>
-                        {inCart ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary text-primary-foreground">Dans panier</span>
-                        ) : (
-                          <button
-                            disabled={art.stockDisponible <= 0}
-                            onClick={() => {
-                              // Prefer stored UM from last order; fallback to base-unit math
-                              const hasUM = !!(habit.dernierQteUM && habit.dernierUM && art.um && habit.dernierUM === art.um)
-                              const dq = habit.dernierQte
-                              const prefillQty = hasUM
-                                ? String(habit.dernierQteUM)
-                                : String(dq > 0 ? dq : "")
-                              const prefillMode = hasUM ? art.um! : "base"
-                              const emptyIdx = lignes.findIndex(l => !l.articleId)
-                              const newLigne: LigneForm = { articleId: artId, quantite: prefillQty, prixVente: String(pv), uniteMode: prefillMode }
-                              if (emptyIdx >= 0) {
-                                const updated = [...lignes]
-                                updated[emptyIdx] = newLigne
-                                setLignes(updated)
-                              } else {
-                                setLignes(prev => [...prev, newLigne])
-                              }
-                              setCommTab("nouvelle")
-                            }}
-                            className="text-[10px] font-bold px-2.5 py-1.5 rounded-xl bg-primary text-primary-foreground disabled:opacity-40">
-                            Renouveler
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Article</th>
+                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Dernière Qté</th>
+                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Moy.</th>
+                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Cmds</th>
+                      <th className="text-center px-3 py-2.5 font-semibold text-muted-foreground">Dernière date</th>
+                      <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(clientHabits)
+                      .sort(([, a], [, b]) => b.count - a.count)
+                      .map(([artId, habit]) => {
+                        const art = articles.find(a => a.id === artId)
+                        if (!art) return null
+                        const pv = store.computePV(art)
+                        const inCart = lignes.some(l => l.articleId === artId)
+                        const avgBase = habit.count > 0 ? habit.qteTotal / habit.count : 0
+                        const dernQte = habit.dernierQteUM && habit.dernierUM
+                          ? `${habit.dernierQteUM} ${habit.dernierUM}`
+                          : `${habit.dernierQte} ${art.unite}`
+                        const moyQte = art.um && art.colisageParUM && avgBase >= art.colisageParUM
+                          ? `${(avgBase / art.colisageParUM).toFixed(1)} ${art.um}`
+                          : `${avgBase.toFixed(1)} ${art.unite}`
+                        const inactivityDays = store.getAlertConfig?.()?.inactivityDays ?? 30
+                        const halfDays = Math.round(inactivityDays / 2)
+                        const isStale = habit.lastDate < new Date(Date.now() - halfDays*24*60*60*1000).toISOString().slice(0,10)
+                        return (
+                          <tr key={artId} className={`border-b border-border last:border-0 transition-colors ${inCart ? "bg-primary/5" : "hover:bg-muted/30"}`}>
+                            <td className="px-3 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground truncate max-w-[120px]">{art.nom}</span>
+                                {isStale && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-600 shrink-0">+{halfDays}j</span>}
+                                {art.stockDisponible <= 0 && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-orange-100 text-orange-600 shrink-0">Rupture</span>}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">{pv} DH/{art.unite}</div>
+                            </td>
+                            <td className="px-3 py-2.5 text-center font-semibold text-foreground">{dernQte}</td>
+                            <td className="px-3 py-2.5 text-center text-blue-700 font-semibold">{moyQte}</td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{habit.count}x</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-center text-muted-foreground">{habit.lastDate}</td>
+                            <td className="px-3 py-2.5 text-right">
+                              {inCart ? (
+                                <span className="text-[10px] font-bold text-primary">✓ Panier</span>
+                              ) : (
+                                <button
+                                  disabled={art.stockDisponible <= 0}
+                                  onClick={() => {
+                                    const hasUM = !!(habit.dernierQteUM && habit.dernierUM && art.um && habit.dernierUM === art.um)
+                                    const prefillQty = hasUM ? String(habit.dernierQteUM) : String(habit.dernierQte > 0 ? habit.dernierQte : "")
+                                    const prefillMode = hasUM ? art.um! : "base"
+                                    const emptyIdx = lignes.findIndex(l => !l.articleId)
+                                    const newLigne: LigneForm = { articleId: artId, quantite: prefillQty, prixVente: String(pv), uniteMode: prefillMode }
+                                    if (emptyIdx >= 0) { const updated = [...lignes]; updated[emptyIdx] = newLigne; setLignes(updated) }
+                                    else setLignes(prev => [...prev, newLigne])
+                                    setCommTab("nouvelle")
+                                  }}
+                                  className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground disabled:opacity-40">
+                                  Renouveler
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
           {selectedClientId && Object.keys(clientHabits).length === 0 && (
