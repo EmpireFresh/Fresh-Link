@@ -1,25 +1,23 @@
 "use client"
 
 // ============================================================
-// FreshLink Pro — LiveSyncProvider v2
+// FreshLink Pro — LiveSyncProvider v3 (JSONB payload)
 //
-// PROBLÈME ROOT CAUSE :
-//   store.saveXxx() écrit UNIQUEMENT dans localStorage.
-//   Supabase ne reçoit jamais les données → les autres appareils
-//   ne voient rien.
+// ARCHITECTURE SYNC :
+//   Chaque table Supabase a le schéma :
+//     id TEXT PRIMARY KEY, payload JSONB, updated_at TIMESTAMPTZ
 //
-// SOLUTION :
-//   1. WRITE PATH — Intercepte localStorage.setItem pour toutes
-//      les clés ERP. Quand une donnée change, diff l'ancien/nouveau
-//      tableau et pousse les items modifiés vers Supabase.
+//   WRITE PATH  : localStorage.setItem intercepté →
+//     diff old/new → upsert { id, payload: item } vers Supabase
 //
-//   2. READ PATH — Supabase Realtime écoute toutes les tables ERP.
-//      Quand un autre appareil écrit dans Supabase, on reçoit le
-//      changement ici, on met à jour localStorage, et on dispatche
-//      fl_store_updated pour que les composants se rafraîchissent.
+//   READ PATH   : Supabase Realtime →
+//     event reçu → extraire payload.payload (l'objet réel) →
+//     mettre à jour localStorage → dispatche fl_store_updated
 //
-//   3. FLAG anti-loop — isRealtimeRef empêche que les écritures
-//      Realtime → localStorage déclenchent un re-push vers Supabase.
+//   BOOTSTRAP   : au mount, si table Supabase vide → push local data
+//
+//   ANTI-LOOP   : isRealtimeRef empêche le re-push des écritures
+//                 Realtime → localStorage vers Supabase
 // ============================================================
 
 import { useEffect, useRef } from "react"
@@ -42,7 +40,6 @@ const ERP_KEYS: Record<string, string> = {
   fl_purchase_orders:  "fl_purchase_orders",
   fl_transferts:       "fl_transferts_stock",  // clé LS ≠ table SB
   fl_messages:         "fl_messages",
-  // ── Tables manquantes (ajoutées v2.1) ─────────────────────────────
   fl_depots:           "fl_depots",
   fl_livreurs:         "fl_livreurs",
   fl_demandes_achat:   "fl_demandes_achat",
@@ -50,7 +47,7 @@ const ERP_KEYS: Record<string, string> = {
   fl_non_achats:       "fl_non_achats",
 }
 
-// Clés à IGNORER (sessions, config UI, démo — ne pas pousser vers Supabase)
+// Clés à IGNORER (sessions, config UI — ne pas pousser vers Supabase)
 const IGNORED_KEYS = new Set([
   "fl_session", "fl_caisse", "fl_caisse_pricing", "fl_email_config",
   "fl_company", "fl_company_contacts", "fl_workflow_config",
@@ -61,9 +58,30 @@ const IGNORED_KEYS = new Set([
   "fl_web_integration", "fl_supabase_synced_v1",
 ])
 
+// ── Helpers JSONB ──────────────────────────────────────────────────────────────
+// Chaque ligne Supabase = { id, payload: <objet complet>, updated_at }
+// Cela évite tout mismatch de colonnes (camelCase vs snake_case).
+
+function toRow(item: Record<string, unknown>) {
+  return {
+    id:      item.id as string,
+    payload: item,
+    updated_at: new Date().toISOString(),
+  }
+}
+
+function fromRow(row: Record<string, unknown>): Record<string, unknown> {
+  // Si le row a un champ payload (schéma JSONB) → utiliser payload
+  // Sinon fallback sur le row lui-même (compatibilité ancien schéma)
+  if (row.payload && typeof row.payload === "object") {
+    return row.payload as Record<string, unknown>
+  }
+  return row
+}
+
 export default function LiveSyncProvider({ children }: { children?: React.ReactNode }) {
-  const isRealtimeRef = useRef(false)       // true pendant les mises à jour Realtime
-  const prevRef       = useRef<Record<string, string>>({}) // shadow des valeurs localStorage
+  const isRealtimeRef = useRef(false)
+  const prevRef       = useRef<Record<string, string>>({})
   const sbRef         = useRef(createClient())
 
   useEffect(() => {
@@ -81,8 +99,7 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
     localStorage.setItem = function (key: string, value: string) {
       originalSetItem(key, value)
 
-      // Ne pas repousser vers Supabase si c'est Realtime qui a déclenché l'écriture
-      if (isRealtimeRef.current) return
+      if (isRealtimeRef.current) return   // écriture venant de Realtime — ne pas re-pousser
       if (IGNORED_KEYS.has(key)) return
 
       const sbTable = ERP_KEYS[key]
@@ -95,7 +112,7 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
         const newItems  = JSON.parse(value) as Array<Record<string, unknown>>
         const prevItems: Array<Record<string, unknown>> = prevValue ? JSON.parse(prevValue) : []
 
-        // Diff pour trouver les items ajoutés ou modifiés
+        // Diff : trouver items ajoutés ou modifiés
         const prevMap = new Map(prevItems.map(i => [i.id, JSON.stringify(i)]))
         const newSet  = new Set(newItems.map(i => i.id))
 
@@ -105,24 +122,26 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
         const deleted = prevItems.filter(i => !newSet.has(i.id))
 
         if (upserted.length > 0) {
-          void sb.from(sbTable).upsert(upserted, { onConflict: "id" }).then(({ error }) => {
+          // Envoyer { id, payload: item } — schéma JSONB universel
+          const rows = upserted.map(toRow)
+          void sb.from(sbTable).upsert(rows, { onConflict: "id" }).then(({ error }) => {
             if (error) console.warn(`[LiveSync↑] upsert ${sbTable}:`, error.message)
-            else if (upserted.length > 0) console.log(`[LiveSync↑] ${sbTable} — ${upserted.length} record(s) envoyé(s)`)
+            else console.log(`[LiveSync↑] ${sbTable} — ${upserted.length} envoyé(s)`)
           })
         }
 
         for (const item of deleted) {
-          void sb.from(sbTable).delete().eq("id", item.id).then(({ error }) => {
+          void sb.from(sbTable).delete().eq("id", item.id as string).then(({ error }) => {
             if (error) console.warn(`[LiveSync↑] delete ${sbTable}:`, error.message)
           })
         }
       } catch {
-        // JSON invalide ou tableau vide — ignorer
+        // JSON invalide — ignorer
       }
     }
 
     // ── 2. READ PATH : Supabase Realtime ───────────────────────────────────
-    const channel = sb.channel("freshlink-erp-realtime-v2", {
+    const channel = sb.channel("freshlink-erp-realtime-v3", {
       config: { broadcast: { self: false } },
     })
 
@@ -135,20 +154,25 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
           try {
             const raw = localStorage.getItem(lsKey)
             const current: Array<Record<string, unknown>> = raw ? JSON.parse(raw) : []
-            const { eventType, new: newRec, old: oldRec } = payload
+            const { eventType, new: newRow, old: oldRow } = payload
+
+            // Extraire l'objet réel depuis le payload JSONB
+            const newRec = newRow ? fromRow(newRow) : null
+            const oldId  = oldRow?.id as string | undefined
+
             let updated = current
 
             if (eventType === "INSERT" && newRec?.id && !current.some(r => r.id === newRec.id)) {
               updated = [...current, newRec]
             } else if (eventType === "UPDATE" && newRec?.id) {
               updated = current.map(r => r.id === newRec.id ? { ...r, ...newRec } : r)
-            } else if (eventType === "DELETE" && oldRec?.id) {
-              updated = current.filter(r => r.id !== oldRec.id)
+            } else if (eventType === "DELETE" && oldId) {
+              updated = current.filter(r => r.id !== oldId)
             }
 
             if (updated !== current) {
               const json = JSON.stringify(updated)
-              localStorage.setItem(lsKey, json)   // setItem est intercepté — flag isRealtime le bloque
+              originalSetItem(lsKey, json)         // bypass intercepteur (flag déjà actif)
               prevRef.current[lsKey] = json
               window.dispatchEvent(new CustomEvent("fl_store_updated", { detail: { table: sbTable } }))
               console.log(`[LiveSync↓] ${sbTable} — ${eventType}`)
@@ -162,33 +186,51 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
 
     channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
-        console.log("[LiveSync] ✅ Supabase Realtime connecté — sync bidirectionnel actif")
+        console.log("[LiveSync] ✅ Realtime connecté — sync bidirectionnel actif (JSONB v3)")
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         console.warn("[LiveSync] ⚠️ Realtime:", status)
       }
     })
 
-    // ── 3. Pousser les données localStorage existantes vers Supabase ────────
-    // (tables vides au départ — premier push uniquement si Supabase est vide)
+    // ── 3. Bootstrap : charger Supabase → localStorage au démarrage ─────────
+    // Si Supabase a des données (d'un autre appareil), les charger localement
     void (async () => {
       try {
         for (const [lsKey, sbTable] of Object.entries(ERP_KEYS)) {
+          const { data, error } = await sb.from(sbTable).select("id, payload").limit(500)
+          if (error || !data || data.length === 0) continue
+
+          // Convertir les rows Supabase en objets localStorage
+          const sbItems = data.map(fromRow).filter(r => r && r.id)
+
+          // Fusionner avec localStorage : priorité aux données Supabase
           const raw = localStorage.getItem(lsKey)
-          if (!raw) continue
-          const items: Array<Record<string, unknown>> = JSON.parse(raw)
-          if (items.length === 0) continue
+          const localItems: Array<Record<string, unknown>> = raw ? JSON.parse(raw) : []
+          const localMap = new Map(localItems.map(i => [i.id, i]))
 
-          // Vérifier si la table est vide dans Supabase
-          const { data } = await sb.from(sbTable).select("id").limit(1)
-          if (data && data.length > 0) continue  // table déjà peuplée — skip
+          // Items de Supabase écrasent le local (source de vérité = Supabase)
+          for (const item of sbItems) {
+            localMap.set(item.id as string, item)
+          }
 
-          // Table vide → pousser les données localStorage
-          console.log(`[LiveSync] Premier push ${sbTable} (${items.length} items)…`)
-          await sb.from(sbTable).upsert(items, { onConflict: "id" })
+          // Aussi pousser les items locaux absents de Supabase
+          const sbIds = new Set(sbItems.map(i => i.id as string))
+          const localOnly = localItems.filter(i => !sbIds.has(i.id as string))
+          if (localOnly.length > 0) {
+            const rows = localOnly.map(toRow)
+            void sb.from(sbTable).upsert(rows, { onConflict: "id" })
+          }
+
+          const merged = Array.from(localMap.values())
+          const json = JSON.stringify(merged)
+          originalSetItem(lsKey, json)
+          prevRef.current[lsKey] = json
         }
-        console.log("[LiveSync] ✅ Données initiales synchronisées vers Supabase")
+
+        window.dispatchEvent(new CustomEvent("fl_store_updated", { detail: { table: "all" } }))
+        console.log("[LiveSync] ✅ Bootstrap sync terminé")
       } catch (e) {
-        console.warn("[LiveSync] Sync initial:", e)
+        console.warn("[LiveSync] Bootstrap sync:", e)
       }
     })()
 
