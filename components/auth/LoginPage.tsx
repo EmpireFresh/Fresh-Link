@@ -162,6 +162,7 @@ export default function LoginPage({ onLogin }: Props) {
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
   const [clientMode, setClientMode] = useState(false)
+  const [chrPwd, setChrPwd] = useState("")
   const [pendingUser, setPendingUser] = useState<User | null>(null)
   const [showForgot, setShowForgot] = useState(false)
   const [forgotEmail, setForgotEmail] = useState("")
@@ -301,8 +302,15 @@ export default function LoginPage({ onLogin }: Props) {
         setLoading(false); return
       }
       const extUser = store.loginExternal(raw, externalType)
-      if (extUser) { onLogin(extUser) }
-      else { setError("Identifiant non trouvé. Contactez votre commercial FreshLink."); setLoading(false) }
+      if (!extUser) { setError("Identifiant non trouvé. Contactez votre commercial FreshLink."); setLoading(false); return }
+      // CHR clients require a password
+      if (externalType === "chr") {
+        if (!chrPwd.trim()) { setError("Mot de passe requis pour les clients CHR"); setLoading(false); return }
+        if (extUser.password && extUser.password !== chrPwd.trim()) {
+          setError("Mot de passe incorrect"); setLoading(false); return
+        }
+      }
+      onLogin(extUser)
       return
     }
     if (!identifier.trim() || !password.trim()) { setError("Remplissez tous les champs"); setLoading(false); return }
@@ -613,6 +621,24 @@ export default function LoginPage({ onLogin }: Props) {
                     ? "📧 Adresse email détectée"
                     : "👤 Nom d'utilisateur détecté"}
               </p>
+            )}
+
+            {/* CHR password field */}
+            {clientMode && externalType === "chr" && (
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-purple-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <input
+                  type="password"
+                  value={chrPwd}
+                  onChange={e => { setChrPwd(e.target.value); setError("") }}
+                  placeholder="Mot de passe CHR"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border border-purple-200 bg-purple-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400/30 focus:border-purple-400 transition-all shadow-sm"
+                  autoComplete="off"
+                  data-lpignore="true"
+                />
+              </div>
             )}
 
             {/* Password */}

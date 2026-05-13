@@ -253,6 +253,7 @@ export interface Article {
   promoCHR?: number       // remise % CHR
   promoMarchand?: number  // remise % marchand
   promoParticulier?: number // remise % particulier
+  clientPrices?: Record<string, { prix?: number; promo?: number }> // overrides par client individuel
 }
 
 // Gestion caisses vides

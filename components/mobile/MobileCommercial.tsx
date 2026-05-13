@@ -286,7 +286,7 @@ export default function MobileCommercial({ user }: Props) {
     if (client?.defaultHeureLivraison) {
       setHeureLivraison(client.defaultHeureLivraison)
     }
-    setHabitudeSearch(clients.find(c => c.id === selectedClientId)?.nom || "")
+    setHabitudeSearch("")
   }, [selectedClientId, clients])
 
   // Compute article habits from past commandes for selected client

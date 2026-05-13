@@ -33,7 +33,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [motifs, setMotifs] = useState<MotifRetour[]>([])
   const [newMotif, setNewMotif] = useState({ label: "", labelAr: "" })
   const [saved, setSaved] = useState("")
-  const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "vercel" | "ai_config" | "alertes" | "transporteurs">("entreprise")
+  const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "ai_config" | "alertes" | "transporteurs">("entreprise")
   const [transporteurs, setTransporteurs] = useState<TransportCompany[]>([])
   const [editingTransport, setEditingTransport] = useState<TransportCompany | null>(null)
   const [showTransportForm, setShowTransportForm] = useState(false)
@@ -288,7 +288,6 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     { id: "motifs" as const,      label: "Motifs retour",             labelAr: "أسباب الإرجاع" },
     { id: "contenants" as const,  label: "Poids contenants",          labelAr: "أوزان الحاويات" },
     { id: "dataguard" as const,   label: "DataGuard",                 labelAr: "حماية البيانات" },
-    { id: "vercel" as const,      label: "Deploiement Vercel",        labelAr: "النشر على Vercel" },
     { id: "ai_config" as const,   label: "IA & Modeles",              labelAr: "الذكاء الاصطناعي" },
     { id: "alertes" as const,     label: "Alertes Email",             labelAr: "تنبيهات البريد" },
     { id: "transporteurs" as const, label: "Transporteurs",           labelAr: "شركات النقل" },
@@ -1903,132 +1902,6 @@ To: {{to_email}}
         </div>
       )}
 
-      {/* Deploiement Vercel */}
-      {tab === "vercel" && (
-        <div className="flex flex-col gap-4">
-          {/* Header */}
-          <div className="bg-card rounded-2xl border border-border p-5 flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#000" }}>
-              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white"><path d="M12 2L2 19.5h20L12 2z"/></svg>
-            </div>
-            <div>
-              <h3 className="font-bold text-foreground text-sm">Deployer sur Vercel</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Suivez ces etapes pour mettre votre application FreshLink en production sur Vercel gratuitement.
-              </p>
-            </div>
-          </div>
-
-          {/* Steps */}
-          {[
-            {
-              n: 1, title: "Creer un compte Vercel",
-              body: "Allez sur vercel.com et cliquez \"Sign Up\". Connectez-vous avec votre compte GitHub (recommande) ou creez un compte avec votre email.",
-              link: "https://vercel.com/signup", linkLabel: "vercel.com/signup",
-              tip: null,
-            },
-            {
-              n: 2, title: "Installer Vercel CLI (optionnel mais recommande)",
-              body: "Ouvrez un terminal et executez la commande ci-dessous. Ensuite connectez-vous avec: vercel login",
-              code: "npm install -g vercel",
-              tip: null,
-            },
-            {
-              n: 3, title: "Pousser le code sur GitHub",
-              body: "Creez un nouveau depot GitHub (prive ou public) et poussez le code source de l application. Vercel se connecte automatiquement a GitHub pour les deployements automatiques.",
-              code: "git init\ngit add .\ngit commit -m \"Initial commit FreshLink\"\ngit remote add origin https://github.com/VOTRE_NOM/freshlink.git\ngit push -u origin main",
-              tip: null,
-            },
-            {
-              n: 4, title: "Importer le projet dans Vercel",
-              body: "Dans le dashboard Vercel, cliquez \"Add New Project\" puis importez votre depot GitHub. Vercel detecte automatiquement Next.js et configure le build.",
-              link: "https://vercel.com/new", linkLabel: "vercel.com/new",
-              tip: "Framework Preset: Next.js sera detecte automatiquement.",
-            },
-            {
-              n: 5, title: "Configurer les variables d environnement",
-              body: "Avant de deployer, ajoutez ces variables dans Settings > Environment Variables de votre projet Vercel :",
-              envVars: [
-                { key: "NEXT_PUBLIC_SUPABASE_URL", value: "https://jwdrwapuetqoqnankgma.supabase.co" },
-                { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5waHJuY211eGJ3YWhxbnpkeXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NDUyNDUsImV4cCI6MjA5MDUyMTI0NX0._4bA9RtIVMUjNgxd2ojd9_3b6vzGRddpPPbioalRsMw" },
-              ],
-              tip: "Ces variables sont aussi requises pour que la synchronisation Supabase fonctionne en production.",
-            },
-            {
-              n: 6, title: "Lancer le deploiement",
-              body: "Cliquez \"Deploy\" dans Vercel. Le build dure en general 1-3 minutes. Une fois termine, vous recevrez une URL du type https://freshlink-XXXXX.vercel.app",
-              tip: "Chaque push sur la branche main declenchera automatiquement un nouveau deploiement.",
-            },
-            {
-              n: 7, title: "Configurer un domaine personnalise (optionnel)",
-              body: "Dans Settings > Domains de votre projet Vercel, ajoutez votre domaine. Vercel fournit les enregistrements DNS a configurer chez votre registrar.",
-              tip: null,
-            },
-          ].map(step => (
-            <div key={step.n} className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
-                  style={{ background: "oklch(0.38 0.2 260)" }}>
-                  {step.n}
-                </div>
-                <h4 className="font-bold text-sm text-foreground">{step.title}</h4>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{step.body}</p>
-              {"code" in step && step.code && (
-                <pre className="px-4 py-3 rounded-xl text-xs font-mono overflow-x-auto"
-                  style={{ background: "oklch(0.12 0.02 260)", color: "oklch(0.88 0.015 245)", border: "1px solid oklch(0.22 0.04 260)" }}>
-                  {step.code}
-                </pre>
-              )}
-              {"envVars" in step && step.envVars && (
-                <div className="flex flex-col gap-2">
-                  {step.envVars.map(ev => (
-                    <div key={ev.key} className="flex flex-col gap-0.5 px-4 py-2.5 rounded-xl"
-                      style={{ background: "oklch(0.12 0.02 260)", border: "1px solid oklch(0.22 0.04 260)" }}>
-                      <span className="text-[10px] font-bold" style={{ color: "oklch(0.65 0.15 200)" }}>{ev.key}</span>
-                      <span className="text-xs font-mono break-all" style={{ color: "oklch(0.85 0.015 245)" }}>{ev.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {step.tip && (
-                <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200">
-                  <svg className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-xs text-blue-700">{step.tip}</p>
-                </div>
-              )}
-              {step.link && (
-                <a href={step.link} target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary underline underline-offset-2">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  {step.linkLabel}
-                </a>
-              )}
-            </div>
-          ))}
-
-          {/* Quick deploy button */}
-          <div className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-3">
-            <h4 className="font-bold text-sm text-foreground">Deploiement rapide (1-clic)</h4>
-            <p className="text-xs text-muted-foreground">
-              Si votre code est deja sur GitHub, cliquez ce bouton pour importer directement dans Vercel.
-            </p>
-            <a
-              href="https://vercel.com/new"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-              style={{ background: "#000" }}>
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M12 2L2 19.5h20L12 2z"/></svg>
-              Deployer sur Vercel
-            </a>
-          </div>
-        </div>
-      )}
 
       {/* Motifs retour */}
       {tab === "motifs" && (
