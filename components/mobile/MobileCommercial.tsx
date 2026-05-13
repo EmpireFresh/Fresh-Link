@@ -153,11 +153,12 @@ export default function MobileCommercial({ user }: Props) {
     })
   }, [articles, clientHabits, selectedClientId])
 
-  // Articles in habits but NOT in current cart — ordered more than 30 days ago
+  // Articles in habits but NOT in current cart — ordered more than inactivityDays ago
   const missedArticles = useMemo(() => {
     if (!selectedClientId || Object.keys(clientHabits).length === 0) return []
     const inCart = new Set(lignes.map(l => l.articleId))
-    const threshold = new Date(); threshold.setDate(threshold.getDate() - 30)
+    const inactivityDays = store.getAlertConfig?.()?.inactivityDays ?? 30
+    const threshold = new Date(); threshold.setDate(threshold.getDate() - inactivityDays)
     const thresholdStr = threshold.toISOString().slice(0, 10)
     return Object.entries(clientHabits)
       .filter(([artId, h]) => !inCart.has(artId) && h.count >= 2 && h.lastDate < thresholdStr)

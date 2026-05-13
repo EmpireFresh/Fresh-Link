@@ -2168,6 +2168,32 @@ To: {{to_email}}
             </div>
           </div>
 
+          {/* Alert inactivité */}
+          <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
+            <h3 className="font-bold text-sm text-foreground">Inactivité client (Habitudes mobile)</h3>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-foreground">Période d&apos;inactivité client (alertes)</label>
+              <p className="text-[11px] text-muted-foreground">Nombre de jours sans commande avant alerte dans l&apos;onglet Habitudes</p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={alertInactivityDays}
+                  onChange={e => setAlertInactivityDays(Number(e.target.value))}
+                  className="w-24 px-3 py-2 rounded-xl border border-border bg-background text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground">jours</span>
+                <button
+                  onClick={() => { store.saveAlertConfig({ inactivityDays: alertInactivityDays }); setSavedAlert(true); setTimeout(() => setSavedAlert(false), 2000) }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white"
+                  style={{ background: "oklch(0.38 0.2 260)" }}>
+                  {savedAlert ? "✓ Sauvegardé" : "Enregistrer"}
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Simulation */}
           <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
             <h3 className="font-bold text-sm text-foreground">Simulation d&apos;alerte</h3>
