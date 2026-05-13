@@ -8,7 +8,7 @@
 // ============================================================
 
 import { store } from "@/lib/store"
-import type { Commande, BonLivraison, Trip, Visite, Client, Article, BonAchat, Retour } from "@/lib/store"
+import type { Commande, BonLivraison, Trip, Visite, Client, Article, BonAchat, Retour, User } from "@/lib/store"
 
 // Lazy-import db to avoid server-side execution
 let dbModule: typeof import("./db") | null = null
@@ -30,6 +30,23 @@ let activated = false
 export function activateLiveSync() {
   if (activated || typeof window === "undefined") return
   activated = true
+
+  // ── Users ─────────────────────────────────────────────────────
+  const origSaveUsers = store.saveUsers.bind(store)
+  store.saveUsers = (users: User[]) => {
+    const before = store.getUsers()
+    origSaveUsers(users)
+    fire(async () => {
+      const d = await db()
+      const newIds = new Set(users.map(u => u.id))
+      // Delete users removed from the list
+      for (const u of before) {
+        if (!newIds.has(u.id)) await d.deleteUser(u.id)
+      }
+      // Upsert remaining users
+      for (const u of users) await d.upsertUser(u)
+    })
+  }
 
   // ── Commandes ────────────────────────────────────────────────
   const origAddCommande = store.addCommande.bind(store)
@@ -97,9 +114,14 @@ export function activateLiveSync() {
   // ── Clients ──────────────────────────────────────────────────
   const origSaveClients = store.saveClients.bind(store)
   store.saveClients = (clients: Client[]) => {
+    const before = store.getClients()
     origSaveClients(clients)
     fire(async () => {
       const d = await db()
+      const newIds = new Set(clients.map(c => c.id))
+      for (const c of before) {
+        if (!newIds.has(c.id)) await d.deleteClient(c.id)
+      }
       for (const c of clients) await d.upsertClient(c)
     })
   }
