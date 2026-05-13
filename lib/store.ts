@@ -1915,6 +1915,7 @@ function getLS<T>(key: string, def: T): T {
 function setLS<T>(key: string, val: T): void {
   if (typeof window === "undefined") return
   localStorage.setItem(key, JSON.stringify(val))
+  window.dispatchEvent(new CustomEvent("fl_store_updated", { detail: key }))
 }
 
 // ============================================================

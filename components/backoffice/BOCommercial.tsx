@@ -37,6 +37,17 @@ export default function BOCommercial({ user }: Props) {
 
   const refresh = () => setCommandes(store.getCommandes())
 
+  // Re-render when Supabase pushes fresh data
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const key = (e as CustomEvent).detail as string
+      if (key === "fl_commandes" || key === "fl_clients") refresh()
+    }
+    window.addEventListener("fl_store_updated", handler)
+    return () => window.removeEventListener("fl_store_updated", handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleApprove = (id: string) => {
     store.updateCommande(id, {
       statut: "valide",

@@ -851,6 +851,17 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
 
   useEffect(() => { if (canAccess) { const all = store.getUsers().filter(u => u.id !== JAWAD_ID && (u.role !== 'super_super_admin' || currentUser.id === u.id)); setUsers(all) } }, [canAccess])
 
+  // Re-sync when Supabase pushes fresh data (fl_store_updated fires on every setLS call)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const key = (e as CustomEvent).detail as string
+      if (key === "fl_users" && canAccess) reload()
+    }
+    window.addEventListener("fl_store_updated", handler)
+    return () => window.removeEventListener("fl_store_updated", handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canAccess])
+
   // Guard AFTER hooks — safe conditional render
   if (!canAccess) return <AccessDenied />
 
