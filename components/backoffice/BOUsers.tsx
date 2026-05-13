@@ -673,6 +673,7 @@ const PERMISSION_GROUPS = [
     labelAr: "التجارة والمبيعات",
     color: "bg-lime-500",
     borderColor: "border-lime-500",
+    borderLeftClass: "border-l-lime-500",
     bgLight: "bg-lime-50",
     borderLight: "border-lime-200",
     textColor: "text-lime-800",
@@ -691,6 +692,7 @@ const PERMISSION_GROUPS = [
     labelAr: "المخزون والخدمات اللوجستية",
     color: "bg-sky-500",
     borderColor: "border-sky-500",
+    borderLeftClass: "border-l-sky-500",
     bgLight: "bg-sky-50",
     borderLight: "border-sky-200",
     textColor: "text-sky-800",
@@ -708,6 +710,7 @@ const PERMISSION_GROUPS = [
     labelAr: "المالية والمحاسبة",
     color: "bg-emerald-500",
     borderColor: "border-emerald-500",
+    borderLeftClass: "border-l-emerald-500",
     bgLight: "bg-emerald-50",
     borderLight: "border-emerald-200",
     textColor: "text-emerald-800",
@@ -725,6 +728,7 @@ const PERMISSION_GROUPS = [
     labelAr: "المشتريات والتوريد",
     color: "bg-amber-500",
     borderColor: "border-amber-500",
+    borderLeftClass: "border-l-amber-500",
     bgLight: "bg-amber-50",
     borderLight: "border-amber-200",
     textColor: "text-amber-800",
@@ -741,6 +745,7 @@ const PERMISSION_GROUPS = [
     labelAr: "الموارد البشرية",
     color: "bg-violet-500",
     borderColor: "border-violet-500",
+    borderLeftClass: "border-l-violet-500",
     bgLight: "bg-violet-50",
     borderLight: "border-violet-200",
     textColor: "text-violet-800",
@@ -757,6 +762,7 @@ const PERMISSION_GROUPS = [
     labelAr: "قاعدة البيانات والإعدادات",
     color: "bg-orange-500",
     borderColor: "border-orange-500",
+    borderLeftClass: "border-l-orange-500",
     bgLight: "bg-orange-50",
     borderLight: "border-orange-200",
     textColor: "text-orange-800",
@@ -773,6 +779,7 @@ const PERMISSION_GROUPS = [
     labelAr: "البوابات الخارجية",
     color: "bg-indigo-500",
     borderColor: "border-indigo-500",
+    borderLeftClass: "border-l-indigo-500",
     bgLight: "bg-indigo-50",
     borderLight: "border-indigo-200",
     textColor: "text-indigo-800",
@@ -860,7 +867,7 @@ function PermissionsTabs({
 
             return (
               <div key={group.id}
-                className={`rounded-xl border overflow-hidden border-l-4 ${group.borderColor} border-t border-r border-b ${group.borderLight} bg-card`}>
+                className={`rounded-xl overflow-hidden border border-l-4 ${group.borderLight} ${group.borderLeftClass} bg-card`}>
                 {/* Group header */}
                 <div className={`flex items-center justify-between px-4 py-3 ${group.bgLight}`}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
