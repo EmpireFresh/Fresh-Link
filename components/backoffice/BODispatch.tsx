@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { store, type Commande, type Trip, type Livreur, type TransportCompany, type User, ROLE_COLORS } from "@/lib/store"
+import { uploadToStorage } from "@/lib/supabase/client"
 
 interface Props { user: User }
 
@@ -741,29 +742,38 @@ export default function BODispatch({ user }: Props) {
                         <div key={f.key} className="flex flex-col gap-1">
                           <label className="text-xs font-semibold text-foreground">{f.label}</label>
                           <div className="flex gap-1.5">
-                            <input type="text" placeholder="URL ou base64..."
+                            <input type="text" placeholder="URL du fichier…"
                               value={(transportForm as unknown as Record<string, string>)[f.key] || ""}
                               onChange={e => setTransportForm({ ...transportForm, [f.key]: e.target.value })}
                               className="flex-1 px-2 py-2 rounded-lg border border-border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-primary min-w-0" />
                             <label className="px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer text-xs font-semibold text-slate-600 whitespace-nowrap transition-colors">
                               📎
                               <input type="file" accept={f.accept} {...(f.capture ? { capture: f.capture as "user"|"environment" } : {})} className="hidden"
-                                onChange={e => {
+                                onChange={async e => {
                                   const file = e.target.files?.[0]
                                   if (!file) return
-                                  const reader = new FileReader()
-                                  reader.onload = ev => setTransportForm({ ...transportForm, [f.key]: ev.target?.result as string })
-                                  reader.readAsDataURL(file)
+                                  // Upload vers Supabase Storage (fallback base64 si offline)
+                                  const folder = f.key === "scanPermis" ? "permis"
+                                    : f.key === "scanCarteGrise" ? "cartes_grises"
+                                    : f.key === "photoConducteur" ? "photos_livreurs"
+                                    : "conducteurs"
+                                  const url = await uploadToStorage(file, folder as Parameters<typeof uploadToStorage>[1])
+                                  if (url) setTransportForm(prev => ({ ...prev, [f.key]: url }))
                                 }} />
                             </label>
                           </div>
-                          {(transportForm as unknown as Record<string, string>)[f.key]?.startsWith("data:image") && (
-                            <img src={(transportForm as unknown as Record<string, string>)[f.key]} alt={f.label} className="w-full h-20 object-cover rounded-lg border border-slate-200 mt-1" />
-                          )}
+                          {(() => {
+                            const val = (transportForm as unknown as Record<string, string>)[f.key]
+                            if (!val) return null
+                            const isImg = val.startsWith("data:image") || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(val)
+                            return isImg
+                              ? <img src={val} alt={f.label} className="w-full h-20 object-cover rounded-lg border border-slate-200 mt-1" />
+                              : <a href={val} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 underline mt-1 truncate block">{val}</a>
+                          })()}
                         </div>
                       ))}
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-2">Photos et scans stockés localement (base64) ou via Supabase Storage fl-conducteurs</p>
+                    <p className="text-[10px] text-slate-400 mt-2">Photos et scans uploadés dans Supabase Storage (bucket freshlink-media) — fallback base64 si hors-ligne</p>
                   </div>
 
                   <div className="flex flex-col gap-1">

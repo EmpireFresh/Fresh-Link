@@ -5,6 +5,7 @@ import { store, type EmailConfig, type MotifRetour, type CompanyConfig, type Com
 import { useRealtimeSync } from "@/lib/supabase/useRealtimeSync"
 import { seedDemoData } from "@/lib/seedData"
 import { saveEmailJSConfig, getEmailJSConfigPublic, testEmailJSConnection } from "@/lib/email"
+import { createClient } from "@/lib/supabase/client"
 
 function AccessDenied() {
   return (
@@ -47,6 +48,9 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [testing, setTesting] = useState(false)
   const [dgMsg, setDgMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [clearMode, setClearMode] = useState<"local" | "supabase" | "both">("both")
+  const [sbTestResult, setSbTestResult] = useState<{ ok: boolean; text: string } | null>(null)
+  const [sbTesting, setSbTesting] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
   const logoRef = useRef<HTMLInputElement>(null)
   const [company, setCompany] = useState<CompanyConfig>(() => store.getCompanyConfig())
@@ -188,10 +192,75 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     }
   }
 
-  const handleClearAll = () => {
-    localStorage.clear()
+  const ERP_TABLES_SYNC = [
+    "fl_commandes","fl_clients","fl_users","fl_articles","fl_fournisseurs",
+    "fl_bons_achat","fl_bons_livraison","fl_bons_preparation","fl_receptions",
+    "fl_trips","fl_retours","fl_visites","fl_purchase_orders","fl_transferts_stock",
+    "fl_messages","fl_depots","fl_livreurs","fl_demandes_achat","fl_notices","fl_non_achats",
+  ]
+
+  const handleClearAll = async () => {
+    // Protection super_admin : leur compte ne peut jamais être supprimé
+    const isSuperAdmin = user.role === "super_super_admin"
     setShowClearConfirm(false)
-    setDgMsg({ ok: true, text: "Toutes les données ont été effacées. Rechargez la page." })
+
+    try {
+      // 1. Effacer localStorage
+      if (clearMode === "local" || clearMode === "both") {
+        localStorage.clear()
+      }
+
+      // 2. Effacer Supabase (si demandé)
+      if (clearMode === "supabase" || clearMode === "both") {
+        const sb = createClient()
+        let sbErrors = 0
+        for (const table of ERP_TABLES_SYNC) {
+          try {
+            // DELETE all rows except the super_admin user if applicable
+            if (table === "fl_users" && isSuperAdmin) {
+              // Ne pas supprimer le compte super_admin courant
+              await sb.from(table).delete().neq("id", user.id)
+            } else {
+              await sb.from(table).delete().gte("id", "")  // delete all
+            }
+          } catch { sbErrors++ }
+        }
+        if (sbErrors > 0) {
+          setDgMsg({ ok: false, text: `Effacement partiel — ${sbErrors} tables Supabase inaccessibles (données locales effacées).` })
+          setTimeout(() => setDgMsg(null), 5000)
+          return
+        }
+      }
+
+      setDgMsg({ ok: true, text: clearMode === "local" ? "Données locales effacées. Rechargez la page." : "Toutes les données effacées (local + Supabase). Rechargez la page." })
+    } catch {
+      setDgMsg({ ok: false, text: "Erreur lors de l'effacement. Vérifiez la connexion Supabase." })
+    }
+    setTimeout(() => setDgMsg(null), 6000)
+  }
+
+  const handleTestSupabase = async () => {
+    setSbTesting(true)
+    setSbTestResult(null)
+    try {
+      const res = await fetch("/api/test-sync")
+      const data = await res.json()
+      if (data.status === "ok") {
+        const missing = data.tables?.missing?.length ?? 0
+        const withData = data.tables?.have_data ?? 0
+        setSbTestResult({
+          ok: true,
+          text: `✅ Supabase connecté — ${data.tables?.exist}/${data.tables?.total_expected} tables, ${withData} avec données${missing > 0 ? ` · ⚠️ ${missing} tables manquantes` : ""}`,
+        })
+      } else {
+        setSbTestResult({ ok: false, text: "❌ Supabase inaccessible — vérifiez les variables d'environnement Vercel" })
+      }
+    } catch {
+      setSbTestResult({ ok: false, text: "❌ Erreur réseau — API test-sync inaccessible" })
+    } finally {
+      setSbTesting(false)
+      setTimeout(() => setSbTestResult(null), 10000)
+    }
   }
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1672,6 +1741,34 @@ To: {{to_email}}
             </label>
           </div>
 
+          {/* Test connectivité Supabase */}
+          <div className="bg-card rounded-2xl border border-blue-200 p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-blue-50">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-700 text-sm">Test connectivité Supabase / اختبار الاتصال</h3>
+                <p className="text-xs text-muted-foreground">Vérifie que les tables existent, le schéma JSONB et la connexion</p>
+              </div>
+            </div>
+            {sbTestResult && (
+              <div className={`flex items-start gap-2 px-3 py-2.5 rounded-xl border text-xs ${sbTestResult.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+                {sbTestResult.text}
+              </div>
+            )}
+            <button onClick={handleTestSupabase} disabled={sbTesting}
+              className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-blue-300 text-blue-700 hover:bg-blue-50 disabled:opacity-60 transition-colors">
+              {sbTesting
+                ? <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>
+                : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              }
+              {sbTesting ? "Test en cours…" : "Tester la connexion Supabase"}
+            </button>
+          </div>
+
           {/* Réinitialisation */}
           <div className="bg-card rounded-2xl border border-red-200 p-6 flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -1681,25 +1778,50 @@ To: {{to_email}}
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-red-700 text-sm">Réinitialiser toutes les données / مسح جميع البيانات</h3>
-                <p className="text-xs text-muted-foreground">Efface définitivement toutes les données du navigateur</p>
+                <h3 className="font-semibold text-red-700 text-sm">Réinitialiser les données / مسح البيانات</h3>
+                <p className="text-xs text-muted-foreground">Efface définitivement les données — local et/ou Supabase</p>
               </div>
             </div>
+
+            {/* Sélection du scope */}
+            <div className="flex gap-2 flex-wrap">
+              {([
+                { val: "local", label: "Local uniquement", desc: "Navigateur seulement" },
+                { val: "supabase", label: "Supabase uniquement", desc: "Base de données distante" },
+                { val: "both", label: "Les deux", desc: "Reset complet" },
+              ] as const).map(opt => (
+                <button key={opt.val} onClick={() => setClearMode(opt.val)}
+                  className={`flex flex-col items-start px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${clearMode === opt.val ? "bg-red-100 border-red-400 text-red-800" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                  <span>{opt.label}</span>
+                  <span className="text-[10px] opacity-70">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+
+            {user.role === "super_super_admin" && (
+              <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                <span>Votre compte super_admin est protégé et ne sera jamais supprimé même lors d&apos;un reset total.</span>
+              </div>
+            )}
+
             {!showClearConfirm ? (
               <button onClick={() => setShowClearConfirm(true)}
                 className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Effacer toutes les données
+                Effacer {clearMode === "local" ? "les données locales" : clearMode === "supabase" ? "Supabase" : "toutes les données"}
               </button>
             ) : (
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-semibold text-red-700">Confirmez-vous la suppression de toutes les données ?</p>
+                <p className="text-sm font-semibold text-red-700">
+                  Confirmez la suppression {clearMode === "both" ? "locale + Supabase" : clearMode === "supabase" ? "Supabase" : "locale"} ?
+                </p>
                 <div className="flex gap-2">
                   <button onClick={handleClearAll}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors">
-                    Oui, effacer tout
+                    Oui, effacer
                   </button>
                   <button onClick={() => setShowClearConfirm(false)}
                     className="px-4 py-2 rounded-xl text-sm font-semibold border border-border hover:bg-muted transition-colors">

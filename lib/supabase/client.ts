@@ -31,15 +31,26 @@ export function getStorageUrl(path: string): string {
   return `${SUPABASE_URL}/storage/v1/object/public/freshlink-media/${path}`
 }
 
-// Upload file to freshlink-media bucket
+export type StorageFolder =
+  | "articles"
+  | "conducteurs"
+  | "signatures"
+  | "documents"
+  | "contrats"      // contrats CHR, devis clients
+  | "permis"        // permis de conduire livreurs
+  | "cartes_grises" // cartes grises véhicules
+  | "photos_livreurs"
+
+// Upload file to freshlink-media bucket — with base64 fallback if Storage unavailable
 export async function uploadToStorage(
   file: File,
-  folder: "articles" | "conducteurs" | "signatures" | "documents"
+  folder: StorageFolder
 ): Promise<string | null> {
   try {
     const client = createClient()
     const ext = file.name.split(".").pop() ?? "jpg"
-    const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_")
+    const path = `${folder}/${Date.now()}_${safeName}`
     const { error } = await client.storage
       .from("freshlink-media")
       .upload(path, file, { upsert: true, contentType: file.type })
@@ -47,7 +58,27 @@ export async function uploadToStorage(
     const { data } = client.storage.from("freshlink-media").getPublicUrl(path)
     return data.publicUrl
   } catch (e) {
-    console.error("[storage] upload failed:", e)
-    return null
+    console.error("[storage] upload failed — fallback base64:", e)
+    // Fallback: encode as base64 data URL for offline mode
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (ev) => resolve(ev.target?.result as string ?? null)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(file)
+    })
+  }
+}
+
+// Delete file from storage by public URL
+export async function deleteFromStorage(publicUrl: string): Promise<boolean> {
+  try {
+    const client = createClient()
+    // Extract path from public URL: .../object/public/freshlink-media/FOLDER/FILE
+    const match = publicUrl.match(/freshlink-media\/(.+)$/)
+    if (!match) return false
+    const { error } = await client.storage.from("freshlink-media").remove([match[1]])
+    return !error
+  } catch {
+    return false
   }
 }
