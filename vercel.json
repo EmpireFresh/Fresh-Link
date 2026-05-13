@@ -1,7 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "devCommand": "next dev",
+  "buildCommand": "next build",
   "installCommand": "npm install --legacy-peer-deps",
   "outputDirectory": ".next",
   "regions": ["cdg1"],
@@ -20,12 +19,14 @@
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
+    },
+    {
+      "source": "/api/ext/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://gcpcrnagyqiedouucmeq.supabase.co",
-    "NEXT_PUBLIC_STORAGE_BUCKET": "freshlink-media",
-    "NEXT_PUBLIC_APP_NAME": "FreshLink Empire Fresh",
-    "NEXT_PUBLIC_APP_VERSION": "3.0.0"
-  }
+  ]
 }

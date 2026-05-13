@@ -173,10 +173,6 @@ export async function deleteClient(id: string) {
 }
 
 export async function fetchClients(): Promise<{ clients: Client[]; source: "supabase" | "local" }> {
-  // Fallback to local if Supabase not configured
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { clients: store.getClients(), source: "local" }
-  }
   try {
     const { data, error } = await db().from("fl_clients").select("*").order("nom")
     if (error) throw error

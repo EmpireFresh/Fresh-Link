@@ -207,7 +207,7 @@ export default function DeployGuidePanel() {
               <div className="p-4 rounded-xl bg-slate-800 text-slate-200 text-xs leading-relaxed mb-4">
                 <p className="font-black text-white mb-2">Vos identifiants FreshLink Pro</p>
                 <p className="mb-1"><span className="text-slate-400">URL Supabase :</span><br/>
-                  <span className="font-mono text-emerald-400 text-[11px] break-all">https://gcpcrnagyqiedouucmeq.supabase.co</span>
+                  <span className="font-mono text-emerald-400 text-[11px] break-all">https://jwdrwapuetqoqnankgma.supabase.co</span>
                 </p>
                 <p className="mb-1"><span className="text-slate-400">Anon Key :</span><br/>
                   <span className="font-mono text-blue-400 text-[10px] break-all">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5bmJlamNpdXplZHp1cnhoc3VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MDg0MjYsImV4cCI6MjA5MDE4NDQyNn0.vPgtRBu37SguLxpb7qs95_17U9ksX1S0tkyJSwP5wBg</span>
@@ -256,7 +256,7 @@ export default function DeployGuidePanel() {
                 </div>
               </div>
 
-              <StepHeader n={2} title="Creer un nouveau projet" sub="Votre projet est deja cree : gcpcrnagyqiedouucmeq. Si vous avez un projet existant, voici comment en creer un nouveau." color="blue" />
+              <StepHeader n={2} title="Creer un nouveau projet" sub="Votre projet est deja cree : jwdrwapuetqoqnankgma. Si vous avez un projet existant, voici comment en creer un nouveau." color="blue" />
               <div className="pl-4 mb-4">
                 <div className="space-y-2">
                   {[
@@ -296,7 +296,7 @@ export default function DeployGuidePanel() {
                 </div>
                 <div className="p-3 rounded-xl bg-slate-800 text-xs font-mono text-slate-100">
                   <p className="text-slate-400 mb-1">Vos cles actuelles :</p>
-                  <p className="text-emerald-400 break-all text-[10px]">https://gcpcrnagyqiedouucmeq.supabase.co</p>
+                  <p className="text-emerald-400 break-all text-[10px]">https://jwdrwapuetqoqnankgma.supabase.co</p>
                   <p className="text-blue-400 break-all text-[10px] mt-1">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..._4bA9RtIVMUjNgxd2ojd9</p>
                 </div>
               </div>
@@ -387,7 +387,7 @@ export default function DeployGuidePanel() {
               <StepHeader n={1} title="Dans Vercel — Ajouter les variables" sub="Project → Settings → Environment Variables" color="amber" />
               <div className="pl-4 mb-4">
                 <p className="text-xs text-slate-600 font-semibold mb-2">Copiez-collez exactement ces variables :</p>
-                <Code lang="env" code={`NEXT_PUBLIC_SUPABASE_URL=https://gcpcrnagyqiedouucmeq.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5waHJuY211eGJ3YWhxbnpkeXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NDUyNDUsImV4cCI6MjA5MDUyMTI0NX0._4bA9RtIVMUjNgxd2ojd9_3b6vzGRddpPPbioalRsMw`} />
+                <Code lang="env" code={`NEXT_PUBLIC_SUPABASE_URL=https://jwdrwapuetqoqnankgma.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3ZHJ3YXB1ZXRxb3FuYW5rZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDE1NzUsImV4cCI6MjA5NDAxNzU3NX0.9l0e2eE9milvCWg29TIoGXgWY-ULOmTVrPmWRCsIvtw`} />
                 <Info>Selectionnez <strong>Production, Preview, Development</strong> pour les 3 environnements, puis cliquez Save.</Info>
                 <div className="space-y-2 mt-3">
                   {[

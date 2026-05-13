@@ -92,6 +92,7 @@ export default function MobileCommercial({ user }: Props) {
     typeProduits: "moyenne" as Client["typeProduits"],
     rotation: "journalier" as Client["rotation"],
     telephone: "", email: "", adresse: "",
+    categorie: undefined as "chr" | "marchand" | "particulier" | undefined,
   })
 
   // Proximity radius (km) — configurable by prevendeur
@@ -109,6 +110,7 @@ export default function MobileCommercial({ user }: Props) {
 
   // Tab state
   const [commTab, setCommTab] = useState<CommTab>("nouvelle")
+  const [habitudeSearch, setHabitudeSearch] = useState("")
 
   // Client habits: articleId -> { count, lastDate, qteTotal, dernierQte, dernierQteUM, dernierUM } — computed when client changes
   const [clientHabits, setClientHabits] = useState<Record<string, { count: number; lastDate: string; qteTotal: number; dernierQte: number; dernierQteUM?: number; dernierUM?: string }>>({})
@@ -152,11 +154,12 @@ export default function MobileCommercial({ user }: Props) {
     })
   }, [articles, clientHabits, selectedClientId])
 
-  // Articles in habits but NOT in current cart — ordered more than 30 days ago
+  // Articles in habits but NOT in current cart — ordered more than inactivityDays ago
   const missedArticles = useMemo(() => {
     if (!selectedClientId || Object.keys(clientHabits).length === 0) return []
     const inCart = new Set(lignes.map(l => l.articleId))
-    const threshold = new Date(); threshold.setDate(threshold.getDate() - 30)
+    const inactivityDays = store.getAlertConfig?.()?.inactivityDays ?? 30
+    const threshold = new Date(); threshold.setDate(threshold.getDate() - inactivityDays)
     const thresholdStr = threshold.toISOString().slice(0, 10)
     return Object.entries(clientHabits)
       .filter(([artId, h]) => !inCart.has(artId) && h.count >= 2 && h.lastDate < thresholdStr)
@@ -246,6 +249,19 @@ export default function MobileCommercial({ user }: Props) {
     setArticles(store.getArticles())
     setClients(store.getClients())
     if (isAdmin) setAllUsers(store.getUsers().filter(u => ["prevendeur","resp_commercial","team_leader","admin","super_admin"].includes(u.role) && u.actif))
+    // Pull fresh data from Supabase in background to hydrate habits
+    import("@/lib/supabase/db").then(async (db) => {
+      try {
+        const [cmdsFromSB, { clients: cFromSB }, arts] = await Promise.all([
+          db.fetchCommandes(),
+          db.fetchClients(),
+          db.fetchArticles(),
+        ])
+        if (cmdsFromSB?.length) refreshMyCommandes()
+        if (cFromSB?.length) setClients(cFromSB)
+        if (arts?.length) setArticles(arts)
+      } catch { /* offline — localStorage already shown */ }
+    })
   }, [])
 
   // Auto-capture GPS on mount — GPS is MANDATORY
@@ -269,6 +285,7 @@ export default function MobileCommercial({ user }: Props) {
     if (client?.defaultHeureLivraison) {
       setHeureLivraison(client.defaultHeureLivraison)
     }
+    setHabitudeSearch(clients.find(c => c.id === selectedClientId)?.nom || "")
   }, [selectedClientId, clients])
 
   // Compute article habits from past commandes for selected client
@@ -403,6 +420,7 @@ export default function MobileCommercial({ user }: Props) {
       createdBy: user.id,
       createdAt: store.today(),
       prevendeurId: user.id,
+      categorie: newClient.categorie,
     }
     store.addClient(client)
     setClients(store.getClients())
@@ -410,7 +428,7 @@ export default function MobileCommercial({ user }: Props) {
     setShowAddClient(false)
     setNewClient({ nom: "", secteur: user.secteur || "", zone: "", type: "epicerie", typeAutre: "",
       taille: "150-300kg", typeProduits: "moyenne", rotation: "journalier",
-      telephone: "", email: "", adresse: "" })
+      telephone: "", email: "", adresse: "", categorie: undefined })
   }
 
   // Returns the quantity in BASE units (kg/piece/...) regardless of input mode
@@ -918,6 +936,18 @@ export default function MobileCommercial({ user }: Props) {
               </div>
             )}
             <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-foreground">Catégorie tarifaire</label>
+              <select
+                value={newClient.categorie ?? ""}
+                onChange={e => setNewClient({ ...newClient, categorie: (e.target.value as "chr"|"marchand"|"particulier") || undefined })}
+                className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="">Standard</option>
+                <option value="chr">CHR / HORECA</option>
+                <option value="marchand">Marchand</option>
+                <option value="particulier">Particulier</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-foreground">Taille / capacité</label>
               <select value={newClient.taille} onChange={e => setNewClient({ ...newClient, taille: e.target.value as Client["taille"] })}
                 className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
@@ -1027,178 +1057,6 @@ export default function MobileCommercial({ user }: Props) {
         {/* Coordinates intentionally hidden from prevendeur screen */}
       </div>
 
-      {/* ── HABITUDES TAB ─────────────────────────────────────────────────── */}
-      {(commTab as string) === "habitudes" && (
-        <div className="flex flex-col gap-3">
-
-          {/* Client selector — shown directly in habitudes tab so user doesn't need to go to "nouvelle" first */}
-          <div className="bg-card rounded-xl border border-border p-3 flex flex-col gap-2">
-            <p className="text-xs font-bold text-foreground">Client / الزبون</p>
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              <input
-                type="text"
-                placeholder="Rechercher un client..."
-                defaultValue={selectedClient?.nom || ""}
-                onChange={e => {
-                  const q = e.target.value.toLowerCase()
-                  const found = myClients.find(c => c.nom.toLowerCase().includes(q) && c.nom.toLowerCase() === q)
-                  if (found) setSelectedClientId(found.id)
-                }}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            {/* Quick client list */}
-            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
-              {myClients.filter(c => {
-                const q = (selectedClient?.nom || "").toLowerCase()
-                return !q || c.nom.toLowerCase().includes(q) || c.id === selectedClientId
-              }).slice(0, 8).map(c => (
-                <button key={c.id} onClick={() => setSelectedClientId(c.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-left text-sm transition-all ${selectedClientId === c.id ? "bg-primary/10 border border-primary/30 font-semibold text-primary" : "hover:bg-muted text-foreground"}`}>
-                  <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">{c.nom[0]}</span>
-                  <span className="truncate">{c.nom}</span>
-                  {selectedClientId === c.id && <svg className="w-4 h-4 ml-auto shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">Habitudes du client</p>
-                <p className="text-xs text-muted-foreground">
-                  {selectedClientId
-                    ? Object.keys(clientHabits).length > 0
-                      ? `${Object.keys(clientHabits).length} articles commandes regulierement`
-                      : "Aucun historique pour ce client"
-                    : "Selectionnez un client ci-dessus"}
-                </p>
-              </div>
-            </div>
-            {selectedClientId && Object.keys(clientHabits).length > 0 && (
-              <button onClick={autoFillPanier}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
-                style={{ background: "oklch(0.38 0.2 260)" }}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Preparer panier automatique
-              </button>
-            )}
-          </div>
-          {selectedClientId && Object.keys(clientHabits).length > 0 && (
-            <div className="flex flex-col gap-2">
-              {Object.entries(clientHabits)
-                .sort(([, a], [, b]) => b.count - a.count)
-                .map(([artId, habit]) => {
-                  const art = articles.find(a => a.id === artId)
-                  if (!art) return null
-                  const pv = store.computePV(art)
-                  const inCart = lignes.some(l => l.articleId === artId)
-                  return (
-                    <div key={artId} className={`flex items-center gap-3 p-3 rounded-xl border ${inCart ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}>
-                      <img src={art.photo || "https://placehold.co/48x48/e2e8f0/64748b?text=Art"}
-                        alt={`${art.nom} produit habituel`}
-                        className="w-11 h-11 rounded-xl object-cover shrink-0 border border-border"
-                        onError={e => { e.currentTarget.src = "https://placehold.co/48x48/e2e8f0/64748b?text=Art" }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">{art.nom}</p>
-                        {/* Row 1: stock + nb commandes */}
-                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700">{habit.count}x cmd</span>
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg ${art.stockDisponible > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
-                            Stock: {art.stockDisponible > 0 ? `${art.stockDisponible} ${art.unite}` : "Rupture"}
-                          </span>
-                        </div>
-                        {/* Row 2: moyenne + dernière commande with UM conversion */}
-                        <div className="flex items-center gap-2 flex-wrap mt-1">
-                          {/* Average qty — shown in UM if applicable */}
-                          <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-1.5 py-0.5">
-                            <svg className="w-2.5 h-2.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            <span className="text-[10px] font-semibold text-blue-700">
-                              {(() => {
-                                const avgBase = habit.count > 0 ? habit.qteTotal / habit.count : 0
-                                if (art.um && art.colisageParUM && avgBase >= art.colisageParUM) {
-                                  const avgUM = avgBase / art.colisageParUM
-                                  return `Moy: ${avgUM % 1 === 0 ? avgUM : avgUM.toFixed(1)} ${art.um} (${avgBase.toFixed(0)} ${art.unite})`
-                                }
-                                return `Moy: ${avgBase.toFixed(1)} ${art.unite}`
-                              })()}
-                            </span>
-                          </div>
-                          {/* Last order qty — shown in UM+base if applicable */}
-                          <div className="flex items-center gap-1 bg-violet-50 border border-violet-100 rounded-lg px-1.5 py-0.5">
-                            <svg className="w-2.5 h-2.5 text-violet-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-[10px] font-semibold text-violet-700">
-                              {habit.dernierQteUM && habit.dernierUM
-                                ? `Derniere: ${habit.dernierQteUM} ${habit.dernierUM} = ${habit.dernierQte} ${art.unite}`
-                                : `Derniere: ${habit.dernierQte} ${art.unite}`
-                              }
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground">{habit.lastDate}</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        <span className="text-sm font-bold text-primary">{pv} DH/{art.unite}</span>
-                        {inCart ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary text-primary-foreground">Dans panier</span>
-                        ) : (
-                          <button
-                            disabled={art.stockDisponible <= 0}
-                            onClick={() => {
-                              // Prefer stored UM from last order; fallback to base-unit math
-                              const hasUM = !!(habit.dernierQteUM && habit.dernierUM && art.um && habit.dernierUM === art.um)
-                              const dq = habit.dernierQte
-                              const prefillQty = hasUM
-                                ? String(habit.dernierQteUM)
-                                : String(dq > 0 ? dq : "")
-                              const prefillMode = hasUM ? art.um! : "base"
-                              const emptyIdx = lignes.findIndex(l => !l.articleId)
-                              const newLigne: LigneForm = { articleId: artId, quantite: prefillQty, prixVente: String(pv), uniteMode: prefillMode }
-                              if (emptyIdx >= 0) {
-                                const updated = [...lignes]
-                                updated[emptyIdx] = newLigne
-                                setLignes(updated)
-                              } else {
-                                setLignes(prev => [...prev, newLigne])
-                              }
-                              setCommTab("nouvelle")
-                            }}
-                            className="text-[10px] font-bold px-2.5 py-1.5 rounded-xl bg-primary text-primary-foreground disabled:opacity-40">
-                            Renouveler
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-            </div>
-          )}
-          {selectedClientId && Object.keys(clientHabits).length === 0 && (
-            <div className="bg-card rounded-xl border border-border p-8 flex flex-col items-center gap-3 text-center">
-              <svg className="w-10 h-10 text-muted-foreground/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p className="text-sm font-semibold text-muted-foreground">Aucune habitude enregistree</p>
-              <p className="text-xs text-muted-foreground">Les habitudes se creent automatiquement apres plusieurs commandes passees par ce client.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* placeholder to close previous structure */}
       {/* INLINE ARTICLE SELECTOR ─────────────────────────────────────────── */}
       <div className="bg-card rounded-xl border border-border flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -1711,6 +1569,141 @@ export default function MobileCommercial({ user }: Props) {
 
       {/* END nouvelle commande tab */}
       </>)}
+
+      {/* ── HABITUDES TAB ─────────────────────────────────────────────────── */}
+      {(commTab as string) === "habitudes" && (
+        <div className="flex flex-col gap-3">
+          {/* Header */}
+          <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Habitudes d&apos;achat / عادات الشراء</h3>
+                <p className="text-xs text-muted-foreground">
+                  {selectedClientId
+                    ? `${Object.keys(clientHabits).length} article(s) commandes regulierement`
+                    : "Selectionnez un client pour voir ses habitudes"}
+                </p>
+              </div>
+              {selectedClientId && Object.keys(clientHabits).length > 0 && (
+                <button
+                  onClick={() => { autoFillPanier(); setCommTab("nouvelle") }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Auto-panier
+                </button>
+              )}
+            </div>
+
+            {/* Search */}
+            {selectedClientId && Object.keys(clientHabits).length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-background">
+                <svg className="w-4 h-4 text-muted-foreground shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={habitudeSearch}
+                  onChange={e => setHabitudeSearch(e.target.value)}
+                  placeholder="Filtrer les articles..."
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                />
+                {habitudeSearch && (
+                  <button onClick={() => setHabitudeSearch("")} className="text-muted-foreground hover:text-foreground">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Habits list */}
+          {!selectedClientId ? (
+            <div className="bg-card rounded-xl border border-border p-10 text-center">
+              <svg className="w-10 h-10 mx-auto text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <p className="text-sm font-semibold text-muted-foreground">Selectionnez un client</p>
+              <p className="text-xs text-muted-foreground mt-1">Les habitudes d&apos;achat s&apos;affichent apres avoir choisi un client</p>
+            </div>
+          ) : Object.keys(clientHabits).length === 0 ? (
+            <div className="bg-card rounded-xl border border-border p-10 text-center">
+              <svg className="w-10 h-10 mx-auto text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p className="text-sm font-semibold text-muted-foreground">Aucune habitude enregistree</p>
+              <p className="text-xs text-muted-foreground mt-1">Ce client n&apos;a pas encore de commandes repetees</p>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="divide-y divide-border">
+                {Object.entries(clientHabits)
+                  .filter(([artId]) => {
+                    const art = articles.find(a => a.id === artId)
+                    if (!art) return false
+                    if (!habitudeSearch.trim()) return true
+                    const q = habitudeSearch.trim().toLowerCase()
+                    return art.nom.toLowerCase().includes(q) || art.nomAr.includes(q)
+                  })
+                  .sort(([, a], [, b]) => b.count - a.count)
+                  .map(([artId, hab]) => {
+                    const art = articles.find(a => a.id === artId)
+                    if (!art) return null
+                    const pv = store.computePV(art)
+                    const inCart = lignes.some(l => l.articleId === artId)
+                    const stockOk = art.stockDisponible > 0
+                    return (
+                      <div key={artId} className="flex items-center gap-3 px-4 py-3">
+                        <img
+                          src={art.photo || "https://placehold.co/40x40/e2e8f0/64748b?text=Art"}
+                          alt={`${art.nom} habitude`}
+                          className="w-10 h-10 rounded-xl object-cover border border-border shrink-0"
+                          onError={e => { e.currentTarget.src = "https://placehold.co/40x40/e2e8f0/64748b?text=Art" }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground truncate">{art.nom}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-lg bg-amber-100 text-amber-700">
+                              {hab.count}x commande(s)
+                            </span>
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-lg ${stockOk ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                              {stockOk ? `${art.stockDisponible} ${art.unite} dispo` : "Rupture"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              Derniere: {hab.lastDate}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className="text-sm font-bold text-primary">{pv} DH</span>
+                          <button
+                            onClick={() => {
+                              const hasUM = !!(hab.dernierQteUM && hab.dernierUM && art.um && hab.dernierUM === art.um)
+                              const dq = hab.dernierQte ?? 0
+                              const prefillQty = hasUM ? String(hab.dernierQteUM) : dq > 0 ? String(dq) : ""
+                              const prefillMode = hasUM ? art.um! : "base"
+                              if (inCart) {
+                                const idx = lignes.findIndex(l => l.articleId === artId)
+                                if (idx >= 0) setLignes(prev => prev.filter((_, j) => j !== idx))
+                              } else {
+                                setLignes(prev => [...prev, { articleId: artId, quantite: prefillQty, prixVente: String(pv), uniteMode: prefillMode }])
+                                setCommTab("nouvelle")
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${inCart ? "bg-red-50 text-red-600 border border-red-200" : "text-white"}`}
+                            style={inCart ? {} : { background: "oklch(0.65 0.17 145)" }}>
+                            {inCart ? "Retirer" : "Commander"}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── MES COMMANDES TAB ─────────────────────────────────────── */}
       {commTab === "mes_commandes" && (

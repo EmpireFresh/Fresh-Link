@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { store, type EmailConfig, type MotifRetour, type CompanyConfig, type WorkflowConfig, type WorkflowStep, type ContenantTare, DEFAULT_WORKFLOW_STEPS, type ProcessConfig, DEFAULT_PROCESS_CONFIG, type TransportCompany } from "@/lib/store"
+import { store, type EmailConfig, type MotifRetour, type CompanyConfig, type CompanyContacts, type WorkflowConfig, type WorkflowStep, type ContenantTare, DEFAULT_WORKFLOW_STEPS, type ProcessConfig, DEFAULT_PROCESS_CONFIG, type TransportCompany } from "@/lib/store"
+import { useRealtimeSync } from "@/lib/supabase/useRealtimeSync"
 import { seedDemoData } from "@/lib/seedData"
 import { saveEmailJSConfig, getEmailJSConfigPublic, testEmailJSConnection } from "@/lib/email"
 
@@ -25,10 +26,13 @@ function AccessDenied() {
 export default function BOSettings({ user }: { user: { id: string; name: string; role: string } }) {
   // --- ALL hooks MUST come before any conditional return (Rules of Hooks) ---
   const [config, setConfig] = useState<EmailConfig>(() => store.getEmailConfig())
+  const [contacts, setContacts] = useState<CompanyContacts>(() => store.getCompanyContacts())
+  const [contactsSaved, setContactsSaved] = useState("")
+  const { saveCompanyContacts: saveContactsToSupabase } = useRealtimeSync({ tables: ["contacts"] })
   const [motifs, setMotifs] = useState<MotifRetour[]>([])
   const [newMotif, setNewMotif] = useState({ label: "", labelAr: "" })
   const [saved, setSaved] = useState("")
-  const [tab, setTab] = useState<"entreprise" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "vercel" | "ai_config" | "alertes" | "transporteurs">("entreprise")
+  const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "vercel" | "ai_config" | "alertes" | "transporteurs">("entreprise")
   const [transporteurs, setTransporteurs] = useState<TransportCompany[]>([])
   const [editingTransport, setEditingTransport] = useState<TransportCompany | null>(null)
   const [showTransportForm, setShowTransportForm] = useState(false)
@@ -77,6 +81,8 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     } } catch { return {} }
   })
   const [alertSaved, setAlertSaved] = useState("")
+  const [alertInactivityDays, setAlertInactivityDays] = useState(() => store.getAlertConfig?.()?.inactivityDays ?? 30)
+  const [savedAlert, setSavedAlert] = useState(false)
   const [seedMsg, setSeedMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [seeding, setSeeding] = useState(false)
 
@@ -196,19 +202,27 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     reader.readAsDataURL(file)
   }
 
+  const handleSaveContacts = async () => {
+    store.saveCompanyContacts(contacts)
+    await saveContactsToSupabase(contacts)
+    setContactsSaved("Coordonnées sauvegardées et synchronisées")
+    setTimeout(() => setContactsSaved(""), 3000)
+  }
+
   const TABS = [
-    { id: "entreprise" as const, label: "Entreprise", labelAr: "معلومات الشركة" },
-    { id: "process" as const,    label: "Process", labelAr: "اختيار العملية" },
-    { id: "workflow" as const,   label: "Validation commandes", labelAr: "الموافقة على الطلبيات" },
-    { id: "emails" as const,     label: "Emails & Notifications", labelAr: "البريد الإلكتروني" },
-    { id: "emailjs" as const,    label: "EmailJS (SMTP)", labelAr: "إعداد البريد" },
-    { id: "motifs" as const,     label: "Motifs retour", labelAr: "أسباب الإرجاع" },
-    { id: "contenants" as const, label: "Poids contenants", labelAr: "أوزان الحاويات" },
-    { id: "dataguard" as const,  label: "DataGuard", labelAr: "حماية البيانات" },
-{ id: "vercel" as const,     label: "Deploiement Vercel", labelAr: "النشر على Vercel" },
-    { id: "ai_config" as const,  label: "IA & Modeles", labelAr: "الذكاء الاصطناعي" },
-    { id: "alertes" as const,        label: "Alertes Email",         labelAr: "تنبيهات البريد" },
-    { id: "transporteurs" as const,  label: "Transporteurs",          labelAr: "شركات النقل" },
+    { id: "entreprise" as const,  label: "Entreprise",               labelAr: "معلومات الشركة" },
+    { id: "contacts" as const,    label: "Contacts & Coordonnées",    labelAr: "أرقام التواصل والعناوين" },
+    { id: "process" as const,     label: "Process",                   labelAr: "اختيار العملية" },
+    { id: "workflow" as const,    label: "Validation commandes",      labelAr: "الموافقة على الطلبيات" },
+    { id: "emails" as const,      label: "Emails & Notifications",    labelAr: "البريد الإلكتروني" },
+    { id: "emailjs" as const,     label: "EmailJS (SMTP)",            labelAr: "إعداد البريد" },
+    { id: "motifs" as const,      label: "Motifs retour",             labelAr: "أسباب الإرجاع" },
+    { id: "contenants" as const,  label: "Poids contenants",          labelAr: "أوزان الحاويات" },
+    { id: "dataguard" as const,   label: "DataGuard",                 labelAr: "حماية البيانات" },
+    { id: "vercel" as const,      label: "Deploiement Vercel",        labelAr: "النشر على Vercel" },
+    { id: "ai_config" as const,   label: "IA & Modeles",              labelAr: "الذكاء الاصطناعي" },
+    { id: "alertes" as const,     label: "Alertes Email",             labelAr: "تنبيهات البريد" },
+    { id: "transporteurs" as const, label: "Transporteurs",           labelAr: "شركات النقل" },
   ]
 
   return (
@@ -400,6 +414,218 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
             Sauvegarder les informations entreprise
           </button>
+        </div>
+      )}
+
+      {/* === CONTACTS & COORDONNÉES === */}
+      {tab === "contacts" && (
+        <div className="flex flex-col gap-6">
+          {contactsSaved && (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              {contactsSaved}
+            </div>
+          )}
+
+          {/* Téléphones */}
+          <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Téléphones</p>
+                <p className="text-xs text-muted-foreground">Numéros affichés sur le site et documents</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {([
+                { key: "tel_principal", label: "Tél. principal", placeholder: "+212 6XX XXX XXX" },
+                { key: "tel_secondaire", label: "Tél. secondaire", placeholder: "+212 5XX XXX XXX" },
+                { key: "tel_urgence", label: "Tél. urgences", placeholder: "+212 6XX XXX XXX" },
+              ] as { key: keyof CompanyContacts; label: string; placeholder: string }[]).map(f => (
+                <div key={f.key} className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{f.label}</label>
+                  <input
+                    type="tel"
+                    value={(contacts[f.key] as string) ?? ""}
+                    onChange={e => setContacts(c => ({ ...c, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder}
+                    className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* WhatsApp */}
+          <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="font-bold text-foreground">WhatsApp</p>
+                <p className="text-xs text-muted-foreground">Numéros WhatsApp Business par canal</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {([
+                { key: "whatsapp_principal",  label: "Commandes clients",   placeholder: "+212 6XX XXX XXX" },
+                { key: "whatsapp_commercial", label: "Équipe commerciale",   placeholder: "+212 6XX XXX XXX" },
+                { key: "whatsapp_livraison",  label: "Suivi livraisons",     placeholder: "+212 6XX XXX XXX" },
+              ] as { key: keyof CompanyContacts; label: string; placeholder: string }[]).map(f => (
+                <div key={f.key} className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{f.label}</label>
+                  <input
+                    type="tel"
+                    value={(contacts[f.key] as string) ?? ""}
+                    onChange={e => setContacts(c => ({ ...c, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder}
+                    className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Emails */}
+          <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Adresses Email</p>
+                <p className="text-xs text-muted-foreground">Emails affichés sur le site et documents</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {([
+                { key: "email_principal",     label: "Email principal",         placeholder: "contact@empire-fresh.co.site" },
+                { key: "email_commercial",    label: "Email commercial",        placeholder: "commercial@empire-fresh.co.site" },
+                { key: "email_comptabilite",  label: "Email comptabilité",      placeholder: "compta@empire-fresh.co.site" },
+                { key: "email_rh",            label: "Email RH",                placeholder: "rh@empire-fresh.co.site" },
+              ] as { key: keyof CompanyContacts; label: string; placeholder: string }[]).map(f => (
+                <div key={f.key} className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{f.label}</label>
+                  <input
+                    type="email"
+                    value={(contacts[f.key] as string) ?? ""}
+                    onChange={e => setContacts(c => ({ ...c, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder}
+                    className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Adresse postale */}
+          <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Adresse Postale</p>
+                <p className="text-xs text-muted-foreground">Adresse du siège social / entrepôt principal</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Adresse ligne 1</label>
+                <input value={contacts.adresse_ligne1 ?? ""} onChange={e => setContacts(c => ({ ...c, adresse_ligne1: e.target.value }))} placeholder="N° de rue, nom de rue" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Adresse ligne 2</label>
+                <input value={contacts.adresse_ligne2 ?? ""} onChange={e => setContacts(c => ({ ...c, adresse_ligne2: e.target.value }))} placeholder="Quartier, résidence, étage…" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Code postal</label>
+                  <input value={contacts.code_postal ?? ""} onChange={e => setContacts(c => ({ ...c, code_postal: e.target.value }))} placeholder="20000" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ville</label>
+                  <input value={contacts.ville ?? ""} onChange={e => setContacts(c => ({ ...c, ville: e.target.value }))} placeholder="Casablanca" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pays</label>
+                  <input value={contacts.pays ?? ""} onChange={e => setContacts(c => ({ ...c, pays: e.target.value }))} placeholder="Maroc" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Réseaux sociaux */}
+          <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Réseaux Sociaux</p>
+                <p className="text-xs text-muted-foreground">Liens affichés sur le site web client</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {([
+                { key: "instagram", label: "Instagram", placeholder: "@empire.fresh" },
+                { key: "facebook",  label: "Facebook",  placeholder: "facebook.com/empirefresh" },
+                { key: "linkedin",  label: "LinkedIn",   placeholder: "linkedin.com/in/empirefresh" },
+                { key: "tiktok",    label: "TikTok",    placeholder: "@empirefresh" },
+              ] as { key: keyof CompanyContacts; label: string; placeholder: string }[]).map(f => (
+                <div key={f.key} className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{f.label}</label>
+                  <input
+                    type="text"
+                    value={(contacts[f.key] as string) ?? ""}
+                    onChange={e => setContacts(c => ({ ...c, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder}
+                    className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Horaires & Zone */}
+          <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Horaires & Zone de livraison</p>
+                <p className="text-xs text-muted-foreground">Affichés sur le site et le chatbot WhatsApp</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Horaires ouverture</label>
+                <input value={contacts.horaires_ouverture ?? ""} onChange={e => setContacts(c => ({ ...c, horaires_ouverture: e.target.value }))} placeholder="Lun-Sam : 06h00 - 20h00" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Horaires livraison</label>
+                <input value={contacts.horaires_livraison ?? ""} onChange={e => setContacts(c => ({ ...c, horaires_livraison: e.target.value }))} placeholder="Lun-Sam : 07h00 - 18h00" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Zone couverte</label>
+                <input value={contacts.zone_livraison ?? ""} onChange={e => setContacts(c => ({ ...c, zone_livraison: e.target.value }))} placeholder="Casablanca et région" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm" />
+              </div>
+            </div>
+          </div>
+
+          {/* Bouton Sauvegarder */}
+          <div className="flex justify-end">
+            <button onClick={handleSaveContacts} className="px-6 py-3 rounded-2xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition-colors flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+              Sauvegarder & Synchroniser
+            </button>
+          </div>
         </div>
       )}
 
@@ -1601,7 +1827,7 @@ To: {{to_email}}
               n: 5, title: "Configurer les variables d environnement",
               body: "Avant de deployer, ajoutez ces variables dans Settings > Environment Variables de votre projet Vercel :",
               envVars: [
-                { key: "NEXT_PUBLIC_SUPABASE_URL", value: "https://gcpcrnagyqiedouucmeq.supabase.co" },
+                { key: "NEXT_PUBLIC_SUPABASE_URL", value: "https://jwdrwapuetqoqnankgma.supabase.co" },
                 { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5waHJuY211eGJ3YWhxbnpkeXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NDUyNDUsImV4cCI6MjA5MDUyMTI0NX0._4bA9RtIVMUjNgxd2ojd9_3b6vzGRddpPPbioalRsMw" },
               ],
               tip: "Ces variables sont aussi requises pour que la synchronisation Supabase fonctionne en production.",
@@ -1939,6 +2165,32 @@ To: {{to_email}}
               <p className="text-xs text-muted-foreground">
                 Exemple : seuil 5% → alerte si (PV - PA) / PV &lt; 5% (risque de perte)
               </p>
+            </div>
+          </div>
+
+          {/* Alert inactivité */}
+          <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
+            <h3 className="font-bold text-sm text-foreground">Inactivité client (Habitudes mobile)</h3>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-foreground">Période d&apos;inactivité client (alertes)</label>
+              <p className="text-[11px] text-muted-foreground">Nombre de jours sans commande avant alerte dans l&apos;onglet Habitudes</p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={alertInactivityDays}
+                  onChange={e => setAlertInactivityDays(Number(e.target.value))}
+                  className="w-24 px-3 py-2 rounded-xl border border-border bg-background text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground">jours</span>
+                <button
+                  onClick={() => { store.saveAlertConfig({ inactivityDays: alertInactivityDays }); setSavedAlert(true); setTimeout(() => setSavedAlert(false), 2000) }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white"
+                  style={{ background: "oklch(0.38 0.2 260)" }}>
+                  {savedAlert ? "✓ Sauvegardé" : "Enregistrer"}
+                </button>
+              </div>
             </div>
           </div>
 

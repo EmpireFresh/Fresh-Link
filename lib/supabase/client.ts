@@ -2,14 +2,15 @@
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
-// ── Supabase Project: gcpcrnagyqiedouucmeq ─────────────────────────────────
-// Get your keys at: https://supabase.com/dashboard/project/gcpcrnagyqiedouucmeq/settings/api
+// ── Supabase Project: jwdrwapuetqoqnankgma ─────────────────────────────────
+// Get your keys at: https://supabase.com/dashboard/project/jwdrwapuetqoqnankgma/settings/api
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ??
-  "https://gcpcrnagyqiedouucmeq.supabase.co"
+  "https://jwdrwapuetqoqnankgma.supabase.co"
 
 const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3ZHJ3YXB1ZXRxb3FuYW5rZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDE1NzUsImV4cCI6MjA5NDAxNzU3NX0.9l0e2eE9milvCWg29TIoGXgWY-ULOmTVrPmWRCsIvtw"
 
 if (!SUPABASE_ANON_KEY && typeof window !== "undefined") {
   console.warn("[FreshLink] NEXT_PUBLIC_SUPABASE_ANON_KEY not set — running offline mode")

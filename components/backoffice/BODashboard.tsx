@@ -104,6 +104,17 @@ export default function BODashboard({ user }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Re-render when Supabase pushes fresh data to localStorage
+  useEffect(() => {
+    const WATCHED = new Set(["fl_commandes","fl_clients","fl_articles","fl_users","fl_retours","fl_bons_livraison","fl_visites","fl_bons_achat"])
+    const handler = (e: Event) => {
+      if (WATCHED.has((e as CustomEvent).detail as string)) refreshData()
+    }
+    window.addEventListener("fl_store_updated", handler)
+    return () => window.removeEventListener("fl_store_updated", handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const today = store.today()
   const yesterday = dateOffset(today, -1)
   const lastWeekSameDay = dateOffset(today, -7)

@@ -153,6 +153,7 @@ export interface Client {
   segment?: ClientSegment   // "standard" | "vip" | "grossiste" | "fidele"
   loyaltyPoints?: number    // cached total — updated by loyalty engine
   loyaltyOptIn?: boolean    // client opted into loyalty program
+  categorie?: "chr" | "marchand" | "particulier"   // category group for pricing
 }
 
 // ── Visite prevendeur ──────────────────────────────────────────────────────
@@ -246,6 +247,12 @@ export interface Article {
   marketplaceOrdre?: number           // ordre d'affichage sur le site
   marketplaceDescription?: string     // description publique longue
   marketplaceDescriptionAr?: string
+  prixCHR?: number        // prix spécifique CHR/HORECA
+  prixMarchand?: number   // prix spécifique marchand
+  prixParticulier?: number // prix spécifique particulier
+  promoCHR?: number       // remise % CHR
+  promoMarchand?: number  // remise % marchand
+  promoParticulier?: number // remise % particulier
 }
 
 // Gestion caisses vides
@@ -1004,6 +1011,41 @@ export interface CompanyConfig {
   appSlogan?: string           // Sub-label in sidebar (default: company nom)
 }
 
+// ── Coordonnées publiques — synchronisées avec Supabase ───────
+export interface CompanyContacts {
+  // Téléphones
+  tel_principal?: string
+  tel_secondaire?: string
+  tel_urgence?: string
+  // WhatsApp
+  whatsapp_principal?: string
+  whatsapp_commercial?: string
+  whatsapp_livraison?: string
+  // Emails
+  email_principal?: string
+  email_commercial?: string
+  email_comptabilite?: string
+  email_rh?: string
+  // Adresse postale
+  adresse_ligne1?: string
+  adresse_ligne2?: string
+  code_postal?: string
+  ville?: string
+  pays?: string
+  // Réseaux sociaux
+  instagram?: string
+  facebook?: string
+  linkedin?: string
+  tiktok?: string
+  // Horaires
+  horaires_ouverture?: string
+  horaires_livraison?: string
+  zone_livraison?: string
+  // GPS siège
+  gps_lat?: number
+  gps_lng?: number
+}
+
 // ── BPM Workflow Steps ────────────────────────────────────────────────────────
 // Each step can be enabled/disabled independently. Gate steps can be bypassed.
 export interface WorkflowStep {
@@ -1571,7 +1613,7 @@ const DEFAULT_USERS: User[] = [
   // === DEMO — CLIENT ===
   {
     id: "u_client", name: "Demo Client", email: "client.demo@freshlink.ma", password: "1234",
-    role: "client", actif: true,
+    role: "client", actif: true, phone: "0600000001",
     clientId: "c1",   // linked to Epicerie Al Baraka
   },
   // === DEMO — FOURNISSEUR ===
@@ -1880,6 +1922,7 @@ function getLS<T>(key: string, def: T): T {
 function setLS<T>(key: string, val: T): void {
   if (typeof window === "undefined") return
   localStorage.setItem(key, JSON.stringify(val))
+  window.dispatchEvent(new CustomEvent("fl_store_updated", { detail: key }))
 }
 
 // ============================================================
@@ -1971,14 +2014,26 @@ export const store = {
     return null
   },
 
-  // Client login — by name (case insensitive) for the portal
-  loginClient: (name: string): User | null => {
+  // Client login — by name (case insensitive) for the portal (legacy)
+  loginClient: (name: string): User | null => store.loginExternal(name, "client"),
+
+  // External login — by name, phone, or email; subtype filters role
+  loginExternal: (identifier: string, subtype?: "client" | "fournisseur" | "chr"): User | null => {
     const users = store.getUsers()
-    return users.find(u =>
-      u.role === "client" &&
-      u.name.toLowerCase() === name.toLowerCase().trim() &&
-      u.actif
-    ) || null
+    const raw = identifier.trim()
+    const lower = raw.toLowerCase()
+    const cleanPhone = raw.replace(/[\s\-\.\(\)]/g, "")
+    return users.find(u => {
+      if (!u.actif) return false
+      if (u.role !== "client" && u.role !== "fournisseur") return false
+      if (subtype === "fournisseur" && u.role !== "fournisseur") return false
+      if ((subtype === "client" || subtype === "chr") && u.role !== "client") return false
+      if (u.email && u.email.toLowerCase() === lower) return true
+      if (u.phone && u.phone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
+      if (u.telephone && u.telephone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
+      if (subtype !== "chr" && u.name.toLowerCase() === lower) return true
+      return false
+    }) || null
   },
 
   // --- Session ---
@@ -2029,12 +2084,17 @@ export const store = {
       store.saveArticles(articles)
     }
   },
-  computePV: (article: Article): number => {
+  computePV: (article: Article, clientCategorie?: "chr" | "marchand" | "particulier"): number => {
+    let pv: number
     switch (article.pvMethode) {
-      case "pourcentage": return Math.round((article.prixAchat * (1 + article.pvValeur / 100)) * 100) / 100
-      case "montant": return Math.round((article.prixAchat + article.pvValeur) * 100) / 100
-      case "manuel": default: return article.pvValeur
+      case "pourcentage": pv = Math.round((article.prixAchat * (1 + article.pvValeur / 100)) * 100) / 100; break
+      case "montant": pv = Math.round((article.prixAchat + article.pvValeur) * 100) / 100; break
+      case "manuel": default: pv = article.pvValeur; break
     }
+    if (clientCategorie === "chr" && article.prixCHR && article.prixCHR > 0) return article.prixCHR
+    if (clientCategorie === "marchand" && article.prixMarchand && article.prixMarchand > 0) return article.prixMarchand
+    if (clientCategorie === "particulier" && article.prixParticulier && article.prixParticulier > 0) return article.prixParticulier
+    return pv
   },
 
   // --- Non-achat signalements ---
@@ -2210,6 +2270,24 @@ export const store = {
     setLS("fl_company", c)
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("fl_company_updated"))
+    }
+  },
+
+  // --- Company contacts (coordonnées publiques + WhatsApp) ---
+  getCompanyContacts: (): CompanyContacts => getLS("fl_company_contacts", {
+    tel_principal: "",
+    whatsapp_principal: "",
+    email_principal: "",
+    ville: "Casablanca",
+    pays: "Maroc",
+    horaires_ouverture: "Lun-Sam : 06h00 - 20h00",
+    horaires_livraison: "Lun-Sam : 07h00 - 18h00",
+    zone_livraison: "Casablanca et région",
+  }),
+  saveCompanyContacts: (c: CompanyContacts) => {
+    setLS("fl_company_contacts", c)
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("fl_contacts_updated"))
     }
   },
 
@@ -2545,6 +2623,13 @@ export const store = {
   getMessages: (): Message[] => getLS("fl_messages", []),
   saveMessages: (m: Message[]) => setLS("fl_messages", m),
   addMessage: (m: Message) => { const msgs = store.getMessages(); msgs.push(m); store.saveMessages(msgs) },
+
+  // --- Alert inactivity config ---
+  getAlertConfig: (): { inactivityDays: number } =>
+    getLS("fl_alert_config", { inactivityDays: 30 }),
+  saveAlertConfig: (c: { inactivityDays: number }) => {
+    setLS("fl_alert_config", c)
+  },
 
   // --- Email config ---
   getEmailConfig: (): EmailConfig => getLS("fl_email_config", DEFAULT_EMAIL_CONFIG),

@@ -105,6 +105,8 @@ const BODemandesComptes      = dynamic(() => import("./BODemandesComptes"),     
 const BOWebIntegration       = dynamic(() => import("./BOWebIntegration"),       { ssr: false, loading: L("Chargement integration web...") })
 const BOPermissionsMatrix    = dynamic(() => import("./BOPermissionsMatrix"),    { ssr: false, loading: L("Chargement permissions...") })
 const BOMarketplace          = dynamic(() => import("./BOMarketplace"),          { ssr: false, loading: L("Chargement marketplace...") })
+const BODocuments            = dynamic(() => import("./BODocuments"),            { ssr: false, loading: L("Chargement documents...") })
+const BOCategoryPricing      = dynamic(() => import("./BOCategoryPricing"),      { ssr: false, loading: L("Chargement tarifs catégories...") })
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -132,6 +134,8 @@ export type Tab =
   | "investissement" | "sourcing" | "pricing" | "finance_cdg"
   | "demandes_comptes" | "web_integration" | "permissions_matrix"
   | "marketplace"
+  | "documents"
+  | "category_pricing"
 
 interface NavItem {
   id: Tab
@@ -220,8 +224,16 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Donnees", labelAr: "البيانات",
     items: [
       { id: "articles",        label: "Catalogue Produits",    labelAr: "الفواكه والخضر",      permKey: "canViewStock",    icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" /> },
+      { id: "category_pricing", label: "Tarifs Catégories",   labelAr: "أسعار الفئات",        permKey: "canViewDatabase", icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /> },
       { id: "marketplace",     label: "Marketplace & Web",     labelAr: "المتجر الإلكتروني",   permKey: "canViewCommercial", icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /> },
       { id: "comptes_externes", label: "Clients & Fournisseurs", labelAr: "الزبائن والموردون", permKey: "canViewExternal", icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
+    ],
+  },
+  // ── DOCUMENTS COMMERCIAUX ─────────────────────────────────────────────────
+  {
+    label: "Documents CHR", labelAr: "الوثائق التجارية",
+    items: [
+      { id: "documents", label: "Devis & Contrats CHR", labelAr: "عروض الأسعار والعقود", permKey: "canViewCommercial", icon: <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /> },
     ],
   },
   // ── PORTAIL EXTERNE ───────────────────────────────────────────────────────
@@ -350,6 +362,8 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   depots:            (u) => <BODepots user={u} />,
   database:          (u) => <BODatabase user={u} />,
   marketplace:       (u) => <BOMarketplace user={u} />,
+  category_pricing:  (_u) => <BOCategoryPricing />,
+  documents:         (u) => <BODocuments user={u} />,
   demandes_comptes:  (u) => <BODemandesComptes user={u} />,
   web_integration:   (u) => <BOWebIntegration user={u} />,
   permissions_matrix:(_u) => <BOPermissionsMatrix />,
@@ -400,6 +414,8 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isOnline, setIsOnline]         = useState(true)
   const [sbStatus, setSbStatus]         = useState<"checking" | "connected" | "error">("checking")
+  const [syncRunning, setSyncRunning]   = useState(false)
+  const [syncDone, setSyncDone]         = useState(false)
   const [showProfil, setShowProfil]     = useState(false)
   const [profilPhoto, setProfilPhoto]   = useState(user.photoUrl ?? "")
   const [navSearch, setNavSearch]       = useState("")
@@ -617,24 +633,51 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
               <span className="hidden sm:inline">{isOnline ? "En ligne" : "Hors ligne"}</span>
             </div>
 
-            {/* Supabase status */}
-            <div
-              title={sbStatus === "connected" ? "Supabase connecte" : sbStatus === "error" ? "Supabase non connecte" : "Verification Supabase..."}
+            {/* Supabase status — cliquable pour déclencher la sync */}
+            <button
+              onClick={async () => {
+                if (syncRunning) return
+                setSyncRunning(true)
+                setSyncDone(false)
+                try {
+                  const { resetSync, runFullSync } = await import("@/lib/supabase/syncManager")
+                  resetSync()
+                  await runFullSync(() => {})
+                  setSyncDone(true)
+                  setTimeout(() => setSyncDone(false), 3000)
+                } catch { /* offline */ }
+                setSyncRunning(false)
+              }}
+              disabled={syncRunning}
+              title="Cliquer pour synchroniser les données → Supabase"
               className={[
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border cursor-default select-none",
-                sbStatus === "connected"  ? "bg-sky-50   border-sky-200   text-sky-700"
-                : sbStatus === "error"    ? "bg-rose-50  border-rose-200  text-rose-700"
-                                          : "bg-slate-50 border-slate-200 text-slate-500"
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all",
+                syncDone      ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                : syncRunning ? "bg-blue-50    border-blue-200    text-blue-600"
+                : sbStatus === "connected" ? "bg-sky-50  border-sky-200  text-sky-700  hover:bg-sky-100"
+                : sbStatus === "error"     ? "bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100"
+                                           : "bg-slate-50 border-slate-200 text-slate-500"
               ].join(" ")}>
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                sbStatus === "connected"  ? "bg-sky-500 animate-pulse"
-                : sbStatus === "error"    ? "bg-rose-500"
-                                          : "bg-slate-400 animate-pulse"
-              }`} />
+              {syncRunning ? (
+                <svg className="w-3 h-3 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+              ) : syncDone ? (
+                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                </svg>
+              ) : (
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                  sbStatus === "connected" ? "bg-sky-500 animate-pulse"
+                  : sbStatus === "error"   ? "bg-rose-500"
+                                           : "bg-slate-400 animate-pulse"
+                }`} />
+              )}
               <span className="hidden sm:inline">
-                {sbStatus === "connected" ? "Supabase" : sbStatus === "error" ? "DB offline" : "DB..."}
+                {syncRunning ? "Sync..." : syncDone ? "Sync OK" : sbStatus === "connected" ? "Supabase" : sbStatus === "error" ? "DB offline" : "DB..."}
               </span>
-            </div>
+            </button>
 
             {/* Jawad crown badge */}
             {isJawad && (
