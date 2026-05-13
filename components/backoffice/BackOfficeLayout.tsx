@@ -106,6 +106,7 @@ const BOWebIntegration       = dynamic(() => import("./BOWebIntegration"),      
 const BOPermissionsMatrix    = dynamic(() => import("./BOPermissionsMatrix"),    { ssr: false, loading: L("Chargement permissions...") })
 const BOMarketplace          = dynamic(() => import("./BOMarketplace"),          { ssr: false, loading: L("Chargement marketplace...") })
 const BODocuments            = dynamic(() => import("./BODocuments"),            { ssr: false, loading: L("Chargement documents...") })
+const BOCategoryPricing      = dynamic(() => import("./BOCategoryPricing"),      { ssr: false, loading: L("Chargement tarifs catégories...") })
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -134,6 +135,7 @@ export type Tab =
   | "demandes_comptes" | "web_integration" | "permissions_matrix"
   | "marketplace"
   | "documents"
+  | "category_pricing"
 
 interface NavItem {
   id: Tab
@@ -222,6 +224,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Donnees", labelAr: "البيانات",
     items: [
       { id: "articles",        label: "Catalogue Produits",    labelAr: "الفواكه والخضر",      permKey: "canViewStock",    icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" /> },
+      { id: "category_pricing", label: "Tarifs Catégories",   labelAr: "أسعار الفئات",        permKey: "canViewDatabase", icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /> },
       { id: "marketplace",     label: "Marketplace & Web",     labelAr: "المتجر الإلكتروني",   permKey: "canViewCommercial", icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /> },
       { id: "comptes_externes", label: "Clients & Fournisseurs", labelAr: "الزبائن والموردون", permKey: "canViewExternal", icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
     ],
@@ -359,6 +362,7 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   depots:            (u) => <BODepots user={u} />,
   database:          (u) => <BODatabase user={u} />,
   marketplace:       (u) => <BOMarketplace user={u} />,
+  category_pricing:  (_u) => <BOCategoryPricing />,
   documents:         (u) => <BODocuments user={u} />,
   demandes_comptes:  (u) => <BODemandesComptes user={u} />,
   web_integration:   (u) => <BOWebIntegration user={u} />,

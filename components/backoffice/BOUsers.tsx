@@ -845,6 +845,9 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   const [saved, setSaved] = useState(false)
   const [genPwdState, setGenPwdState] = useState<{ userId: string; pwd: string; sending: boolean; sent: boolean } | null>(null)
   const [showRoles, setShowRoles] = useState(false)
+  const [showPurge, setShowPurge] = useState(false)
+  const [purging, setPurging] = useState(false)
+  const [purgeCount, setPurgeCount] = useState(0)
 
   // Access check — computed AFTER hooks
   const canAccess = currentUser.role === "super_super_admin" || currentUser.role === "admin" || currentUser.role === "super_admin" || currentUser.role === "rh_manager"
@@ -916,6 +919,19 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
       return true
     })
     setUsers(visible)
+  }
+
+  const handlePurge = async () => {
+    setPurging(true)
+    const all = store.getUsers()
+    // Keep only: JAWAD_ID + super_super_admin accounts
+    const toKeep = all.filter(u => u.id === JAWAD_ID || u.role === "super_super_admin")
+    const toDelete = all.filter(u => u.id !== JAWAD_ID && u.role !== "super_super_admin")
+    store.saveUsers(toKeep)
+    setPurgeCount(toDelete.length)
+    reload()
+    setShowPurge(false)
+    setPurging(false)
   }
 
   const filtered = users.filter(u => {
@@ -1147,6 +1163,45 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
               </svg>
               {isTeamLeader ? "Ajouter membre equipe" : "Nouvel utilisateur"}
             </button>
+          )}
+          {isJawadUser && (
+            <div className="relative">
+              <button
+                onClick={() => setShowPurge(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-all">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Purge
+              </button>
+              {showPurge && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl border border-red-200 shadow-2xl z-50 p-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                      <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-red-700">Purge des utilisateurs</p>
+                      <p className="text-xs text-red-500">Cette action est irréversible</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">Tous les comptes sauf <strong>Super Admin</strong> seront supprimés définitivement ({users.filter(u => u.role !== "super_super_admin").length} comptes).</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowPurge(false)} className="flex-1 py-2 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">Annuler</button>
+                    <button onClick={handlePurge} disabled={purging} className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50">
+                      {purging ? "Suppression..." : "Confirmer la purge"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {purgeCount > 0 && (
+                <div className="absolute right-0 top-full mt-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs font-semibold text-green-700 whitespace-nowrap">
+                  ✓ {purgeCount} compte(s) supprimé(s)
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

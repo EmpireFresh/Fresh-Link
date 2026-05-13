@@ -92,6 +92,7 @@ export default function MobileCommercial({ user }: Props) {
     typeProduits: "moyenne" as Client["typeProduits"],
     rotation: "journalier" as Client["rotation"],
     telephone: "", email: "", adresse: "",
+    categorie: undefined as "chr" | "marchand" | "particulier" | undefined,
   })
 
   // Proximity radius (km) — configurable by prevendeur
@@ -419,6 +420,7 @@ export default function MobileCommercial({ user }: Props) {
       createdBy: user.id,
       createdAt: store.today(),
       prevendeurId: user.id,
+      categorie: newClient.categorie,
     }
     store.addClient(client)
     setClients(store.getClients())
@@ -426,7 +428,7 @@ export default function MobileCommercial({ user }: Props) {
     setShowAddClient(false)
     setNewClient({ nom: "", secteur: user.secteur || "", zone: "", type: "epicerie", typeAutre: "",
       taille: "150-300kg", typeProduits: "moyenne", rotation: "journalier",
-      telephone: "", email: "", adresse: "" })
+      telephone: "", email: "", adresse: "", categorie: undefined })
   }
 
   // Returns the quantity in BASE units (kg/piece/...) regardless of input mode
@@ -933,6 +935,18 @@ export default function MobileCommercial({ user }: Props) {
                   className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
             )}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-foreground">Catégorie tarifaire</label>
+              <select
+                value={newClient.categorie ?? ""}
+                onChange={e => setNewClient({ ...newClient, categorie: (e.target.value as "chr"|"marchand"|"particulier") || undefined })}
+                className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="">Standard</option>
+                <option value="chr">CHR / HORECA</option>
+                <option value="marchand">Marchand</option>
+                <option value="particulier">Particulier</option>
+              </select>
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-foreground">Taille / capacité</label>
               <select value={newClient.taille} onChange={e => setNewClient({ ...newClient, taille: e.target.value as Client["taille"] })}

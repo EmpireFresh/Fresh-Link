@@ -153,6 +153,7 @@ export interface Client {
   segment?: ClientSegment   // "standard" | "vip" | "grossiste" | "fidele"
   loyaltyPoints?: number    // cached total — updated by loyalty engine
   loyaltyOptIn?: boolean    // client opted into loyalty program
+  categorie?: "chr" | "marchand" | "particulier"   // category group for pricing
 }
 
 // ── Visite prevendeur ──────────────────────────────────────────────────────
@@ -246,6 +247,12 @@ export interface Article {
   marketplaceOrdre?: number           // ordre d'affichage sur le site
   marketplaceDescription?: string     // description publique longue
   marketplaceDescriptionAr?: string
+  prixCHR?: number        // prix spécifique CHR/HORECA
+  prixMarchand?: number   // prix spécifique marchand
+  prixParticulier?: number // prix spécifique particulier
+  promoCHR?: number       // remise % CHR
+  promoMarchand?: number  // remise % marchand
+  promoParticulier?: number // remise % particulier
 }
 
 // Gestion caisses vides
@@ -2077,12 +2084,17 @@ export const store = {
       store.saveArticles(articles)
     }
   },
-  computePV: (article: Article): number => {
+  computePV: (article: Article, clientCategorie?: "chr" | "marchand" | "particulier"): number => {
+    let pv: number
     switch (article.pvMethode) {
-      case "pourcentage": return Math.round((article.prixAchat * (1 + article.pvValeur / 100)) * 100) / 100
-      case "montant": return Math.round((article.prixAchat + article.pvValeur) * 100) / 100
-      case "manuel": default: return article.pvValeur
+      case "pourcentage": pv = Math.round((article.prixAchat * (1 + article.pvValeur / 100)) * 100) / 100; break
+      case "montant": pv = Math.round((article.prixAchat + article.pvValeur) * 100) / 100; break
+      case "manuel": default: pv = article.pvValeur; break
     }
+    if (clientCategorie === "chr" && article.prixCHR && article.prixCHR > 0) return article.prixCHR
+    if (clientCategorie === "marchand" && article.prixMarchand && article.prixMarchand > 0) return article.prixMarchand
+    if (clientCategorie === "particulier" && article.prixParticulier && article.prixParticulier > 0) return article.prixParticulier
+    return pv
   },
 
   // --- Non-achat signalements ---
