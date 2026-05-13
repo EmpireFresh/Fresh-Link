@@ -13,6 +13,7 @@ import {
   type AccountRequest,
 } from "@/lib/store"
 import FreshLinkLogo from "@/components/ui/FreshLinkLogo"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -526,11 +527,13 @@ function ClientDashboard({ user, onLogout }: { user: User; onLogout: () => void 
               <h3 className="font-bold text-slate-800">Articles commandés</h3>
               {lignes.map((ligne, i) => (
                 <div key={i} className="flex gap-2">
-                  <select value={ligne.articleId} onChange={e => setLignes(prev => prev.map((l, j) => j === i ? { ...l, articleId: e.target.value } : l))}
-                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                    <option value="">— Choisir un article —</option>
-                    {articles.map(a => <option key={a.id} value={a.id}>{a.nom} ({a.unite})</option>)}
-                  </select>
+                  <ArticleCombobox
+                    articles={articles}
+                    value={ligne.articleId}
+                    onChange={(artId, _art) => setLignes(prev => prev.map((l, j) => j === i ? { ...l, articleId: artId } : l))}
+                    placeholder="— Choisir un article —"
+                    className="flex-1"
+                  />
                   <input type="number" min="0" step="0.5" value={ligne.quantite}
                     onChange={e => setLignes(prev => prev.map((l, j) => j === i ? { ...l, quantite: e.target.value } : l))}
                     className="w-24 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20"

@@ -11,6 +11,7 @@ import {
   type LoyaltyConfig,
   type LoyaltyTransaction,
 } from "@/lib/store"
+import ArticleCombobox from "@/components/ui/ArticleCombobox"
 
 // ─── Icon helper ─────────────────────────────────────────────────────────────
 function Icon({ d, className = "w-5 h-5" }: { d: string; className?: string }) {
@@ -243,13 +244,12 @@ export default function BOLoyalty({ user }: Props) {
                 {newRule.scope === "article" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-foreground uppercase tracking-wide">Article</label>
-                    <select value={newRule.articleId ?? ""} onChange={e => {
-                      const a = articles.find(x => x.id === e.target.value)
-                      setNewRule({ ...newRule, articleId: a?.id, articleNom: a?.nom })
-                    }} className="border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-background">
-                      <option value="">— Choisir un article —</option>
-                      {articles.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
-                    </select>
+                    <ArticleCombobox
+                      articles={articles}
+                      value={newRule.articleId ?? ""}
+                      onChange={(artId, art) => setNewRule({ ...newRule, articleId: art?.id, articleNom: art?.nom })}
+                      placeholder="— Choisir un article —"
+                    />
                   </div>
                 )}
                 {newRule.scope === "famille" && (
@@ -291,13 +291,12 @@ export default function BOLoyalty({ user }: Props) {
                 {newRule.type === "article_offert" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-foreground uppercase tracking-wide">Article offert</label>
-                    <select value={newRule.articleOffertId ?? ""} onChange={e => {
-                      const a = articles.find(x => x.id === e.target.value)
-                      setNewRule({ ...newRule, articleOffertId: a?.id, articleOffertNom: a?.nom })
-                    }} className="border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-background">
-                      <option value="">— Choisir —</option>
-                      {articles.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
-                    </select>
+                    <ArticleCombobox
+                      articles={articles}
+                      value={newRule.articleOffertId ?? ""}
+                      onChange={(artId, art) => setNewRule({ ...newRule, articleOffertId: art?.id, articleOffertNom: art?.nom })}
+                      placeholder="— Choisir —"
+                    />
                   </div>
                 )}
                 <div className="flex flex-col gap-1.5">
