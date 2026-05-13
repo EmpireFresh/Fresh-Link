@@ -141,31 +141,18 @@ const FEATURES = [
   { icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z", label: "Dashboard & KPIs avances" },
 ]
 
-const N_LEVELS = [
-  {
-    level: "Achat & Sourcing",
-    names: "IA 1 — Acheteur Expert · IA 2 — Vendeur Terrain",
-    sub: "Sourcing, négociation prix, prospection terrain",
-    color: "#10b981", bg: "#f0fdf4", border: "#bbf7d0"
-  },
-  {
-    level: "Supply Chain & Commercial",
-    names: "IA 3 — Supply Chain · IA 4 — CHR · IA 5 — Logistique",
-    sub: "Optimisation tournées, prospection clients, dispatch",
-    color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe"
-  },
-  {
-    level: "Finance & Qualité",
-    names: "IA 6 — Ctrl Gestion · IA 7 — Finance · IA 8-9 — Qualité",
-    sub: "P&L temps réel, marges, contrôle qualité produits",
-    color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe"
-  },
-  {
-    level: "RH & Qualité Système",
-    names: "IA 10 — RH & Paie",
-    sub: "Paie automatique, matricules, HACCP, processus",
-    color: "#f59e0b", bg: "#fffbeb", border: "#fde68a"
-  },
+const IA_AGENTS = [
+  { id: 1,  name: "Acheteur Expert",  dept: "Achat",      desc: "Sourcing & négociation prix",    color: "#10b981" },
+  { id: 2,  name: "Vendeur Terrain",  dept: "Commercial", desc: "Prospection & tournées terrain",  color: "#10b981" },
+  { id: 3,  name: "Supply Chain",     dept: "Logistique", desc: "Optimisation flux & stocks",      color: "#3b82f6" },
+  { id: 4,  name: "Expert CHR",       dept: "Commercial", desc: "Restauration, hôtels, traiteur",  color: "#3b82f6" },
+  { id: 5,  name: "Logistique IA",    dept: "Dispatch",   desc: "Affectation & livraisons",        color: "#0ea5e9" },
+  { id: 6,  name: "Ctrl Gestion",     dept: "Finance",    desc: "P&L & marges temps réel",         color: "#8b5cf6" },
+  { id: 7,  name: "Financier IA",     dept: "Finance",    desc: "Trésorerie & recouvrement",       color: "#8b5cf6" },
+  { id: 8,  name: "Qualité Produit",  dept: "Qualité",    desc: "DLC, fraîcheur, rotation",        color: "#f59e0b" },
+  { id: 9,  name: "Qualité Système",  dept: "Qualité",    desc: "HACCP & processus certifiés",     color: "#f59e0b" },
+  { id: 10, name: "RH & Paie",        dept: "RH",         desc: "Équipe, salaires, matricules",    color: "#ec4899" },
+  { id: 11, name: "Auditeur IA",      dept: "Audit",      desc: "Contrôle interne & risques",      color: "#06b6d4" },
 ]
 
 export default function LoginPage({ onLogin }: Props) {
@@ -420,7 +407,7 @@ export default function LoginPage({ onLogin }: Props) {
       <div className="flex flex-1 min-h-0">
 
       {/* ── Left brand panel — hidden on mobile, visible md+ ─────────────────── */}
-      <div className="hidden md:flex flex-col justify-between w-[260px] lg:w-[310px] shrink-0 px-5 py-7 lg:px-8 lg:py-9 relative overflow-hidden"
+      <div className="hidden md:flex flex-col justify-between w-[360px] lg:w-[420px] shrink-0 px-5 py-7 lg:px-8 lg:py-9 relative overflow-hidden"
         style={{ background: "linear-gradient(160deg, #0a1f14 0%, #0d2a1a 60%, #112d1c 100%)", borderRight: "1px solid rgba(74,222,128,0.08)" }}>
 
         {/* Grid texture */}
@@ -481,23 +468,53 @@ export default function LoginPage({ onLogin }: Props) {
             ))}
           </div>
 
-          {/* Agents IA — fade up last */}
+          {/* Agents IA — staggered individual cards */}
           <div style={{
             opacity: panelIn ? 1 : 0,
             transform: panelIn ? "translateY(0)" : "translateY(10px)",
-            transition: "opacity 0.5s ease 0.7s, transform 0.5s ease 0.7s",
+            transition: "opacity 0.5s ease 0.65s, transform 0.5s ease 0.65s",
           }}>
-            <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(74,222,128,0.1)" }}>
-              <p className="text-[9px] font-black tracking-widest uppercase mb-2.5" style={{ color: "#4ADE80" }}>11 Agents IA Experts — 24h/7j</p>
-              <div className="flex flex-col gap-2">
-                {N_LEVELS.map(l => (
-                  <div key={l.level} className="rounded-lg p-2" style={{ background: "rgba(255,255,255,0.04)" }}>
-                    <div className="flex items-start gap-1.5 mb-0.5">
-                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded-md text-white shrink-0 mt-0.5 leading-tight"
-                        style={{ background: l.color, maxWidth: "52px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.level}</span>
-                      <span className="text-[9px] font-bold leading-tight" style={{ color: "#d1fae5" }}>{l.names}</span>
+            <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(74,222,128,0.12)" }}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-3 py-2.5" style={{ borderBottom: "1px solid rgba(74,222,128,0.08)", background: "rgba(74,222,128,0.04)" }}>
+                <p className="text-[9px] font-black tracking-widest uppercase" style={{ color: "#4ADE80" }}>11 AGENTS IA EXPERTS — 24H/7J</p>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.2)" }}>
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#4ADE80" }} />
+                  <span className="text-[8px] font-black" style={{ color: "#4ADE80" }}>ACTIFS</span>
+                </div>
+              </div>
+              {/* Agent list */}
+              <div className="flex flex-col">
+                {IA_AGENTS.map((agent, i) => (
+                  <div key={agent.id}
+                    className="flex items-center gap-2.5 px-3 py-[7px]"
+                    style={{
+                      borderBottom: i < IA_AGENTS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : undefined,
+                      opacity: panelIn ? 1 : 0,
+                      transform: panelIn ? "translateX(0)" : "translateX(-10px)",
+                      transition: `opacity 0.35s ease ${0.7 + i * 0.04}s, transform 0.35s ease ${0.7 + i * 0.04}s`,
+                    }}>
+                    {/* Avatar */}
+                    <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-[8px] font-black text-white shrink-0"
+                      style={{ background: agent.color + "dd" }}>
+                      {agent.id}
                     </div>
-                    {l.sub && <p className="text-[7.5px] leading-snug ml-0.5" style={{ color: "#5a8a6a" }}>{l.sub}</p>}
+                    {/* Name + desc */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9.5px] font-bold leading-none truncate" style={{ color: "#c5f5e0" }}>
+                        IA {agent.id} — {agent.name}
+                      </p>
+                      <p className="text-[7.5px] leading-none mt-0.5 truncate" style={{ color: "#4a7a5a" }}>{agent.desc}</p>
+                    </div>
+                    {/* Dept badge + pulse */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[7px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ background: agent.color + "20", color: agent.color, border: `1px solid ${agent.color}35` }}>
+                        {agent.dept}
+                      </span>
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ background: "#4ADE80", opacity: 0.7, animation: `pulse ${1.2 + (i % 4) * 0.4}s ease-in-out infinite` }} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -511,7 +528,11 @@ export default function LoginPage({ onLogin }: Props) {
       </div>
 
       {/* ── Right — login form ─────────────────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center overflow-y-auto p-4 sm:p-6">
+      <div className="flex-1 flex items-center justify-center overflow-y-auto p-4 sm:p-6"
+        style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.035) 1px, transparent 0)",
+          backgroundSize: "22px 22px",
+        }}>
         <div className="w-full max-w-[390px] flex flex-col gap-3.5">
 
           {/* Mobile logo */}
@@ -853,6 +874,22 @@ export default function LoginPage({ onLogin }: Props) {
               </div>
             </div>
           )}
+
+          {/* Trust strip */}
+          <div className="flex items-center justify-center gap-4 pt-1">
+            {[
+              { d: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", label: "SSL sécurisé" },
+              { d: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", label: "Sync temps réel" },
+              { d: "M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z", label: "Cloud Maroc" },
+            ].map(t => (
+              <div key={t.label} className="flex items-center gap-1">
+                <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={t.d} />
+                </svg>
+                <span className="text-[9px] text-slate-400 font-semibold">{t.label}</span>
+              </div>
+            ))}
+          </div>
 
           {/* Footer */}
           <div className="flex items-center justify-center pt-0.5">
