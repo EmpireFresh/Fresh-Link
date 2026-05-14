@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { store, type PriceEntry, type PriceEntryType, type PriceSource, type Article, type User } from "@/lib/store"
+import ComboBox, { type ComboItem } from "@/components/ui/ComboBox"
 
 const GRADES   = ["A+", "A", "B", "C"]
 const UNITES   = ["kg", "tonne", "caisse", "palette", "unité", "lot", "sac"]
@@ -28,12 +29,13 @@ interface Props { user: User }
 
 export default function MobilePricing({ user }: Props) {
   const [screen, setScreen] = useState<"home" | "form" | "history">("home")
-  const [entries, setEntries] = useState<PriceEntry[]>([])
-  const [articles, setArticles] = useState<Article[]>([])
+  const [entries, setEntries]       = useState<PriceEntry[]>([])
+  const [articles, setArticles]     = useState<Article[]>([])
+  const [fourItems, setFourItems]   = useState<ComboItem[]>([])
+  const [clientItems, setClientItems] = useState<ComboItem[]>([])
   const [gpsLoading, setGpsLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<string>("")
-  const [artSearch, setArtSearch] = useState("")
   const photoRef = useRef<HTMLInputElement>(null)
 
   // Form
@@ -59,6 +61,26 @@ export default function MobilePricing({ user }: Props) {
   const load = useCallback(() => {
     setEntries(store.getPriceEntries())
     setArticles(store.getArticles())
+    setFourItems(
+      store.getFournisseurs().map(f => ({
+        id: f.id,
+        label: f.nom,
+        sublabel: f.telephone ?? f.ville ?? undefined,
+        badge: f.ville ?? undefined,
+        badgeColor: "bg-amber-100 text-amber-700",
+      }))
+    )
+    setClientItems(
+      store.getClients().map(c => ({
+        id: c.id,
+        label: c.nom,
+        sublabel: c.telephone ?? c.secteur ?? undefined,
+        badge: c.type?.toUpperCase() ?? undefined,
+        badgeColor: c.categorie === "chr"
+          ? "bg-purple-100 text-purple-700"
+          : "bg-blue-100 text-blue-700",
+      }))
+    )
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -69,7 +91,7 @@ export default function MobilePricing({ user }: Props) {
     setNom(""); setTel(""); setRegion(""); setMarche("")
     setPrixMin(""); setPrixMax(""); setNotes(""); setDate(today())
     setGpsLat(undefined); setGpsLng(undefined); setPhotoUrl(undefined)
-    setArtSearch(""); setSelectedArticle("")
+    setSelectedArticle("")
   }
 
   function openForm(t?: PriceEntryType) {
@@ -131,11 +153,6 @@ export default function MobilePricing({ user }: Props) {
 
   // Recent entries (last 20)
   const recent = entries.slice(0, 20)
-
-  // Articles search for autocomplete
-  const artSuggestions = artSearch.length >= 2
-    ? articles.filter(a => a.nom.toLowerCase().includes(artSearch.toLowerCase())).slice(0, 6)
-    : []
 
   // --- HOME ---
   if (screen === "home") {
@@ -354,30 +371,30 @@ export default function MobilePricing({ user }: Props) {
             <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Article *</h3>
           </div>
           <div className="p-4 flex flex-col gap-3">
-            <div className="relative">
-              <input
-                value={articleNom || artSearch}
-                onChange={e => {
-                  setArtSearch(e.target.value)
-                  setArticleNom(e.target.value)
-                  setSelectedArticle("")
-                }}
-                placeholder="Nom du produit ex: Tomates..."
-                className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:font-normal"
-              />
-              {artSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-30 bg-white rounded-xl border border-slate-200 shadow-lg mt-1 overflow-hidden">
-                  {artSuggestions.map(a => (
-                    <button key={a.id} type="button"
-                      onClick={() => { setArticleNom(a.nom); setCategorie(a.famille ?? categorie); setUnite(a.unite ?? unite); setArtSearch(""); setSelectedArticle(a.id) }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-amber-50 text-sm border-b border-slate-100 last:border-0">
-                      <span className="font-semibold">{a.nom}</span>
-                      {a.famille && <span className="text-slate-400 text-xs ml-2">{a.famille}</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ComboBox
+              variant="mobile"
+              items={articles.map(a => ({
+                id: a.id,
+                label: a.nom,
+                sublabel: a.famille,
+                badge: a.unite,
+                badgeColor: "bg-slate-100 text-slate-600",
+              }))}
+              value={selectedArticle}
+              inputValue={articleNom}
+              allowFreeText
+              onChange={(_id, label) => {
+                const art = articles.find(a => a.nom === label || a.id === _id)
+                setArticleNom(label)
+                setSelectedArticle(_id)
+                if (art) {
+                  setCategorie(art.famille ?? categorie)
+                  setUnite(art.unite ?? unite)
+                }
+              }}
+              onInputChange={txt => { setArticleNom(txt); setSelectedArticle("") }}
+              placeholder="Nom du produit ex: Tomates…"
+            />
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <p className="text-[10px] font-semibold text-slate-500 mb-1">Grade qualité</p>
@@ -451,9 +468,25 @@ export default function MobilePricing({ user }: Props) {
             </h3>
           </div>
           <div className="p-4 flex flex-col gap-3">
-            <input value={nom} onChange={e => setNom(e.target.value)}
+            <ComboBox
+              variant="mobile"
+              items={type === "fournisseur" ? fourItems : clientItems}
+              value=""
+              inputValue={nom}
+              allowFreeText
+              onChange={(_id, label) => {
+                setNom(label)
+                if (type === "fournisseur") {
+                  const f = store.getFournisseurs().find(f => f.id === _id)
+                  if (f) { setTel(f.telephone ?? ""); setRegion(f.ville ?? "") }
+                } else {
+                  const c = store.getClients().find(c => c.id === _id)
+                  if (c) { setTel(c.telephone ?? ""); setRegion(c.secteur ?? "") }
+                }
+              }}
+              onInputChange={txt => setNom(txt)}
               placeholder={type === "fournisseur" ? "Nom du fournisseur *" : "Nom du client *"}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:font-normal" />
+            />
             <input type="tel" inputMode="tel" value={tel} onChange={e => setTel(e.target.value)}
               placeholder="+212 6..."
               className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />

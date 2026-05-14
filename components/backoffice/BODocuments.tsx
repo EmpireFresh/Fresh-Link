@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { store, type CompanyConfig } from "@/lib/store"
+import ComboBox, { type ComboItem } from "@/components/ui/ComboBox"
 
 // ──────────────────────────────────────────────────────────────
 // TYPES
@@ -112,6 +113,23 @@ function DocumentForm({
   userName: string
   company: CompanyConfig
 }) {
+  // Articles du catalogue pour autocomplete des lignes
+  const articleItems: ComboItem[] = store.getArticles().map(a => ({
+    id: a.id,
+    label: a.nom,
+    sublabel: a.famille,
+    badge: a.unite,
+    badgeColor: "bg-slate-100 text-slate-600",
+  }))
+
+  // Clients CHR pour autocomplete
+  const clientItems: ComboItem[] = clients.map(c => ({
+    id: c.id,
+    label: c.nom,
+    sublabel: c.telephone ?? c.email ?? undefined,
+    badge: c.type === "chr" ? "CHR" : c.type === "marchand" ? "Marchand" : undefined,
+    badgeColor: c.type === "chr" ? "bg-purple-100 text-purple-700" : "bg-amber-100 text-amber-700",
+  }))
   const [form, setForm] = useState<Partial<Document>>({
     type_doc: "devis",
     client_nom: "",
@@ -220,11 +238,15 @@ function DocumentForm({
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Client</label>
-          <select value={form.client_id ?? ""} onChange={e => handleClientSelect(e.target.value)} className="px-3 py-2 rounded-xl border border-border bg-background text-sm">
-            <option value="">— Choisir un client —</option>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-          </select>
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Client CHR / HORECA
+          </label>
+          <ComboBox
+            items={clientItems}
+            value={form.client_id ?? ""}
+            onChange={(id, label) => { set("client_id", id); set("client_nom", label) }}
+            placeholder="Rechercher un client CHR…"
+          />
         </div>
       </div>
 
@@ -271,8 +293,22 @@ function DocumentForm({
             <tbody>
               {(form.lignes ?? []).map((l, i) => (
                 <tr key={i} className="border-t border-border">
-                  <td className="px-2 py-1.5">
-                    <input value={l.designation} onChange={e => updateLigne(i, "designation", e.target.value)} placeholder="Tomates, Légumes…" className="w-full px-2 py-1 rounded-lg border border-border bg-background text-sm" />
+                  <td className="px-2 py-1.5 min-w-[180px]">
+                    <ComboBox
+                      items={articleItems}
+                      value=""
+                      inputValue={l.designation}
+                      onChange={(_id, label) => {
+                        // Remplir désignation + unité depuis le catalogue
+                        const art = store.getArticles().find(a => a.nom === label)
+                        updateLigne(i, "designation", label)
+                        if (art?.unite) updateLigne(i, "unite", art.unite)
+                      }}
+                      onInputChange={txt => updateLigne(i, "designation", txt)}
+                      placeholder="Article…"
+                      allowFreeText
+                      className="px-2 py-1 text-sm rounded-lg"
+                    />
                   </td>
                   <td className="px-2 py-1.5">
                     <input type="number" value={l.qte} onChange={e => updateLigne(i, "qte", Number(e.target.value))} min={0} className="w-full px-2 py-1 rounded-lg border border-border bg-background text-sm text-right" />
