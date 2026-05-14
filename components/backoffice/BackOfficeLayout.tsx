@@ -390,11 +390,20 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
   // Supabase connectivity check
   useEffect(() => {
     let cancelled = false
+
+    // Écouter les events du LiveSyncProvider (JSONB v3)
+    const onStatus = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail
+      if (!cancelled) setSbStatus(detail === "connected" ? "connected" : "error")
+    }
+    window.addEventListener("fl_supabase_status", onStatus)
+
+    // Ping actif au démarrage et toutes les 60s
     async function ping() {
       try {
         const { createClient } = await import("@/lib/supabase/client")
         const sb = createClient()
-        const { error } = await sb.from("fl_config").select("id").limit(1).maybeSingle()
+        const { error } = await sb.from("fl_clients").select("id").limit(1)
         if (!cancelled) setSbStatus(error ? "error" : "connected")
       } catch {
         if (!cancelled) setSbStatus("error")
@@ -402,7 +411,11 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
     }
     ping()
     const timer = setInterval(ping, 60_000)
-    return () => { cancelled = true; clearInterval(timer) }
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+      window.removeEventListener("fl_supabase_status", onStatus)
+    }
   }, [])
 
   // Online / offline detection

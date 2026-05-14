@@ -187,8 +187,10 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
     channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
         console.log("[LiveSync] ✅ Realtime connecté — sync bidirectionnel actif (JSONB v3)")
+        window.dispatchEvent(new CustomEvent("fl_supabase_status", { detail: "connected" }))
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         console.warn("[LiveSync] ⚠️ Realtime:", status)
+        window.dispatchEvent(new CustomEvent("fl_supabase_status", { detail: "error" }))
       }
     })
 
