@@ -217,7 +217,7 @@ function AccountRequestForm({ onBack }: AccountRequestFormProps) {
       statut: "en_attente",
       createdAt: new Date().toISOString(),
     }
-    store.saveAccountRequest(req)
+    const reqs = JSON.parse(localStorage.getItem("fl_account_requests") ?? "[]"); reqs.push(req); localStorage.setItem("fl_account_requests", JSON.stringify(reqs))
     setSubmitted(true)
   }
 
@@ -389,27 +389,34 @@ function ClientDashboard({ user, onLogout }: { user: User; onLogout: () => void 
 
     const lignesToSave: LigneCommande[] = validLignes.map(l => {
       const art = articles.find(a => a.id === l.articleId)!
+      const prix = (art as any).prixVente ?? art.prixAchat ?? 0
       return {
         articleId: l.articleId,
         articleNom: art.nom,
         quantite: Number(l.quantite),
-        prixUnitaire: art.prixVente ?? 0,
+        prixUnitaire: prix,
+        prixVente: prix,
         unite: art.unite ?? "kg",
-        total: Number(l.quantite) * (art.prixVente ?? 0),
+        total: Number(l.quantite) * prix,
       }
     })
 
     const cmd: Commande = {
       id: store.genId(),
       date: store.today(),
-      dateLivraison,
       clientId: client.id,
       clientNom: client.nom,
+      commercialId: user.id,
+      commercialNom: user.name ?? "",
+      secteur: (client as any).secteur ?? "",
+      zone: (client as any).zone ?? "",
+      gpsLat: (client as any).gpsLat ?? 0,
+      gpsLng: (client as any).gpsLng ?? 0,
+      heurelivraison: "",
+      emailDestinataire: user.email ?? "",
       lignes: lignesToSave,
-      total: lignesToSave.reduce((s, l) => s + l.total, 0),
       statut: "en_attente",
-      notes,
-      createdBy: user.id,
+      notes: [notes, dateLivraison ? `Livraison souhaitée : ${dateLivraison}` : ""].filter(Boolean).join(" | ") || undefined,
     }
     store.saveCommandes([...store.getCommandes(), cmd])
     setLignes([{ articleId: "", quantite: "" }])
@@ -474,12 +481,12 @@ function ClientDashboard({ user, onLogout }: { user: User; onLogout: () => void 
                     <div className="flex items-center gap-3">
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-slate-800">Commande du {cmd.date}</span>
-                        <span className="text-xs text-slate-500">Livraison : {cmd.dateLivraison ?? "—"}</span>
+                        <span className="text-xs text-slate-500">Livraison : {cmd.date ?? "—"}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${cfg.cls}`}>{cfg.label}</span>
-                      <span className="text-sm font-bold text-slate-700">{(cmd.total ?? 0).toFixed(2)} DH</span>
+                      <span className="text-sm font-bold text-slate-700">{cmd.lignes.reduce((s, l) => s + l.total, 0).toFixed(2)} DH</span>
                       <svg className={`w-4 h-4 text-slate-400 transition-transform ${expandedId === cmd.id ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </div>
                   </button>
@@ -585,8 +592,8 @@ function ClientDashboard({ user, onLogout }: { user: User; onLogout: () => void 
                   <p className="font-bold text-sm text-slate-800">{a.nom}</p>
                   {a.nomAr && <p className="text-xs text-slate-400" dir="rtl">{a.nomAr}</p>}
                   <p className="text-xs text-slate-500">{a.unite} — {a.famille}</p>
-                  {a.prixVente != null && (
-                    <p className="text-sm font-black text-blue-700">{a.prixVente.toFixed(2)} DH / {a.unite}</p>
+                  {((a as any).prixVente ?? a.prixAchat) != null && (
+                    <p className="text-sm font-black text-blue-700">{((a as any).prixVente ?? a.prixAchat ?? 0).toFixed(2)} DH / {a.unite}</p>
                   )}
                   <button onClick={() => { setLignes(prev => { const empty = prev.findIndex(l => !l.articleId); if (empty >= 0) { const n = [...prev]; n[empty] = { articleId: a.id, quantite: "1" }; return n } return [...prev, { articleId: a.id, quantite: "1" }] }); setTab("commande") }}
                     className="mt-auto text-xs font-semibold py-1.5 px-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
@@ -683,11 +690,11 @@ function FournisseurDashboard({ user, onLogout }: { user: User; onLogout: () => 
                     onClick={() => setExpandedId(expandedId === o.id ? null : o.id)}>
                     <div>
                       <p className="text-sm font-bold text-slate-800">BC du {o.date}</p>
-                      <p className="text-xs text-slate-500">Livraison prévue : {o.dateLivraisonSouhaitee ?? "—"}</p>
+                      <p className="text-xs text-slate-500">Livraison prévue : {o.date ?? "—"}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cfg.cls}`}>{cfg.label}</span>
-                      <span className="text-sm font-bold text-slate-700">{(o.montantTotal ?? 0).toFixed(2)} DH</span>
+                      <span className="text-sm font-bold text-slate-700">{(o.total ?? 0).toFixed(2)} DH</span>
                       <svg className={`w-4 h-4 text-slate-400 transition-transform ${expandedId === o.id ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </div>
                   </button>
@@ -696,12 +703,12 @@ function FournisseurDashboard({ user, onLogout }: { user: User; onLogout: () => 
                       <table className="w-full text-xs">
                         <thead><tr className="text-slate-400 uppercase text-[10px]"><th className="text-left pb-1">Article</th><th className="text-right pb-1">Qté</th><th className="text-right pb-1">PU</th><th className="text-right pb-1">Total</th></tr></thead>
                         <tbody>
-                          {o.lignes?.map((l, i) => (
+                          {[{ articleNom: o.articleNom, quantite: o.quantite, prixUnitaire: o.prixUnitaire }].map((l, i) => (
                             <tr key={i} className="border-t border-slate-100">
                               <td className="py-1.5 text-slate-700 font-medium">{l.articleNom}</td>
-                              <td className="py-1.5 text-right text-slate-600">{l.quantiteCommandee} {l.unite}</td>
+                              <td className="py-1.5 text-right text-slate-600">{l.quantite}</td>
                               <td className="py-1.5 text-right text-slate-600">{(l.prixUnitaire ?? 0).toFixed(2)}</td>
-                              <td className="py-1.5 text-right font-semibold">{((l.quantiteCommandee ?? 0) * (l.prixUnitaire ?? 0)).toFixed(2)} DH</td>
+                              <td className="py-1.5 text-right font-semibold">{((l.quantite ?? 0) * (l.prixUnitaire ?? 0)).toFixed(2)} DH</td>
                             </tr>
                           ))}
                         </tbody>

@@ -135,7 +135,7 @@ export async function getCatalogue(): Promise<ArticleCatalogue[]> {
     `${SUPABASE_URL}/rest/v1/v_marketplace_catalogue?visible_web=eq.true&order=position_catalogue`,
     {
       headers: {
-        apikey: SUPABASE_ANON_KEY,
+        apikey: SUPABASE_ANON_KEY || "",
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
     }
@@ -152,7 +152,7 @@ export async function getCatalogueParFamille(famille: string): Promise<ArticleCa
     `${SUPABASE_URL}/rest/v1/v_marketplace_catalogue?famille=eq.${encodeURIComponent(famille)}&visible_web=eq.true`,
     {
       headers: {
-        apikey: SUPABASE_ANON_KEY,
+        apikey: SUPABASE_ANON_KEY || "",
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
     }

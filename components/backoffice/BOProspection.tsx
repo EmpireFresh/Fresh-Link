@@ -213,7 +213,6 @@ Génère une analyse complète en JSON avec exactement cette structure:
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Content-Type": "application/json",  // credentials via env
     },
     body: JSON.stringify({
       model: "openrouter/claude-sonnet-4",

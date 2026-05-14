@@ -83,12 +83,14 @@ function calcPL(cfg: PLConfig, jours = 22) {
 // ── Daily Report Email ────────────────────────────────────────────────────────
 async function sendDailyReport() {
   const today = new Date().toISOString().split("T")[0]
-  const commandes = store.getCommandes().filter(c => c.dateCommande === today)
-  const bonsAchat = store.getBonsAchat().filter(b => b.dateAchat === today)
-  const bls = store.getBonsLivraison ? store.getBonsLivraison().filter((b: {dateLivraison?: string}) => b.dateLivraison === today) : []
+  const commandes = store.getCommandes().filter((c: {date?: string}) => c.date === today)
+  const bonsAchat = store.getBonsAchat().filter((b: {date?: string}) => b.date === today)
+  const bls = store.getBonsLivraison ? store.getBonsLivraison().filter((b: {date?: string}) => b.date === today) : []
 
-  const totalVentes = commandes.reduce((s, c) => s + (c.montantNet || 0), 0)
-  const totalAchats = bonsAchat.reduce((s, b) => s + (b.montantTotal || 0), 0)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const totalVentes = commandes.reduce((s: number, c: any) => s + (c.lignes?.reduce((si: number, l: {total: number}) => si + l.total, 0) ?? 0), 0)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const totalAchats = bonsAchat.reduce((s: number, b: any) => s + (b.lignes?.reduce((si: number, l: {quantite: number, prixUnitaire: number}) => si + l.prixUnitaire * l.quantite, 0) ?? 0), 0)
   const margeJour = totalVentes - totalAchats
   const margePct = totalVentes > 0 ? (margeJour / totalVentes * 100) : 0
 
@@ -159,10 +161,12 @@ export default function BOFinanceControlGestion({ user }: { user: User }) {
   // Real daily data for dynamic axes
   const realData = useMemo(() => {
     const today = new Date().toISOString().split("T")[0]
-    const commandes = store.getCommandes().filter((c: {dateCommande?: string}) => c.dateCommande === today)
-    const bonsAchat = store.getBonsAchat().filter((b: {dateAchat?: string}) => b.dateAchat === today)
-    const caToday = commandes.reduce((s: number, c: {montantNet?: number}) => s + (c.montantNet || 0), 0)
-    const achatsToday = bonsAchat.reduce((s: number, b: {montantTotal?: number}) => s + (b.montantTotal || 0), 0)
+    const commandes = store.getCommandes().filter((c: {date?: string}) => c.date === today)
+    const bonsAchat = store.getBonsAchat().filter((b: {date?: string}) => b.date === today)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const caToday = commandes.reduce((s: number, c: any) => s + (c.lignes?.reduce((si: number, l: {total: number}) => si + l.total, 0) ?? 0), 0)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const achatsToday = bonsAchat.reduce((s: number, b: any) => s + (b.lignes?.reduce((si: number, l: {quantite: number, prixUnitaire: number}) => si + l.prixUnitaire * l.quantite, 0) ?? 0), 0)
     const margeReel = caToday > 0 ? ((caToday - achatsToday) / caToday * 100) : 0
     const margeDiff = margeReel - cfg.cm1_cible
     return { caToday, achatsToday, margeReel, margeDiff }

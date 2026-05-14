@@ -1905,6 +1905,11 @@ const DEFAULT_EMAIL_CONFIG: EmailConfig = {
   besoinHeure: "07:00",
   besoinDelaiMinutes: 0,
   besoinPushAuto: true,
+  tarifKmLivreur: 0.45,
+  tarifCaisseLivreur: 0.80,
+  tarifClientLivreur: 2.50,
+  primePonctualite: 30,
+  customPrimes: [],
 }
 
 // ============================================================

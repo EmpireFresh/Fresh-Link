@@ -28,7 +28,7 @@ export default function ArticleCombobox({ articles, value, onChange, placeholder
   const filtered = articles.filter(a => {
     if (!search) return true
     const q = search.toLowerCase()
-    return a.nom.toLowerCase().includes(q) || (a.reference ?? "").toLowerCase().includes(q)
+    return a.nom.toLowerCase().includes(q) || ((a as {reference?:string}).reference ?? "").toLowerCase().includes(q)
   }).slice(0, 40)
 
   return (

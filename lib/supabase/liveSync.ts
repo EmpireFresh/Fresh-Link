@@ -18,8 +18,13 @@ async function db() {
 }
 
 let _liveSyncDepth = 0
+let _realtimePulling = false
+
+// Call this before pulling from Supabase Realtime to prevent echo loops
+export function setRealtimePulling(v: boolean) { _realtimePulling = v }
+
 function fire(fn: () => Promise<void>) {
-  if (_liveSyncDepth > 0) return
+  if (_liveSyncDepth > 0 || _realtimePulling) return
   _liveSyncDepth++
   fn().catch(() => { /* never block UI — Supabase sync is best-effort */ })
     .finally(() => { _liveSyncDepth-- })

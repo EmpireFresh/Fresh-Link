@@ -162,41 +162,41 @@ export function useRealtimeSync(options?: {
 
       if (tables.includes("articles")) {
         fetches.push(
-          sb.from("v_marketplace_catalogue").select("*").order("position_catalogue")
+          Promise.resolve(sb.from("v_marketplace_catalogue").select("*").order("position_catalogue")
             .then(({ data, error }) => {
               if (error) { addError(`Articles: ${error.message}`); return }
               setState(s => ({ ...s, articles: (data ?? []) as ArticleWeb[] }))
-            })
+            }))
         )
       }
 
       if (tables.includes("prospects")) {
         fetches.push(
-          sb.from("fl_prospects").select("*").order("created_at", { ascending: false }).limit(100)
+          Promise.resolve(sb.from("fl_prospects").select("*").order("created_at", { ascending: false }).limit(100)
             .then(({ data, error }) => {
               if (error) { addError(`Prospects: ${error.message}`); return }
               setState(s => ({ ...s, prospects: (data ?? []) as Prospect[] }))
-            })
+            }))
         )
       }
 
       if (tables.includes("commandes_web")) {
         fetches.push(
-          sb.from("fl_commandes_web").select("*").order("created_at", { ascending: false }).limit(200)
+          Promise.resolve(sb.from("fl_commandes_web").select("*").order("created_at", { ascending: false }).limit(200)
             .then(({ data, error }) => {
               if (error) { addError(`Commandes web: ${error.message}`); return }
               setState(s => ({ ...s, commandesWeb: (data ?? []) as CommandeWeb[] }))
-            })
+            }))
         )
       }
 
       if (tables.includes("contacts")) {
         fetches.push(
-          sb.from("fl_company_contacts").select("*").eq("id", "main").single()
+          Promise.resolve(sb.from("fl_company_contacts").select("*").eq("id", "main").single()
             .then(({ data, error }) => {
               if (error && error.code !== "PGRST116") { addError(`Contacts: ${error.message}`); return }
               if (data) setState(s => ({ ...s, companyContacts: data as CompanyContacts }))
-            })
+            }))
         )
       }
 
@@ -348,7 +348,7 @@ export function useRealtimeSync(options?: {
     }
   ) => {
     const sb = createClient()
-    const { error } = await sb.from("fl_articles").update({ ...data, updated_at: new Date().toISOString() }).eq("id", articleId)
+    const { error } = await (sb as any).from("fl_articles").update({ ...data, updated_at: new Date().toISOString() }).eq("id", articleId)
     if (error) { addError(`Mise à jour article: ${error.message}`); return false }
     return true
   }, [addError])
@@ -359,7 +359,7 @@ export function useRealtimeSync(options?: {
     note?: string
   ) => {
     const sb = createClient()
-    const { error } = await sb.from("fl_prospects").update({ statut, note_interne: note, updated_at: new Date().toISOString() }).eq("id", prospectId)
+    const { error } = await (sb as any).from("fl_prospects").update({ statut, note_interne: note, updated_at: new Date().toISOString() }).eq("id", prospectId)
     if (error) { addError(`Mise à jour prospect: ${error.message}`); return false }
     return true
   }, [addError])
@@ -370,14 +370,14 @@ export function useRealtimeSync(options?: {
     note?: string
   ) => {
     const sb = createClient()
-    const { error } = await sb.from("fl_commandes_web").update({ statut, note_interne: note, updated_at: new Date().toISOString() }).eq("id", commandeId)
+    const { error } = await (sb as any).from("fl_commandes_web").update({ statut, note_interne: note, updated_at: new Date().toISOString() }).eq("id", commandeId)
     if (error) { addError(`Mise à jour commande: ${error.message}`); return false }
     return true
   }, [addError])
 
   const saveCompanyContacts = useCallback(async (contacts: Partial<CompanyContacts>) => {
     const sb = createClient()
-    const { error } = await sb.from("fl_company_contacts").upsert({ id: "main", ...contacts, updated_at: new Date().toISOString() })
+    const { error } = await (sb as any).from("fl_company_contacts").upsert({ id: "main", ...contacts, updated_at: new Date().toISOString() })
     if (error) { addError(`Contacts: ${error.message}`); return false }
     setState(s => ({ ...s, companyContacts: { ...(s.companyContacts ?? { id: "main" }), ...contacts } as CompanyContacts }))
     return true
@@ -407,7 +407,7 @@ export async function pushArticleStatusToWeb(
   const updates: Record<string, unknown> = { statut_web, updated_at: new Date().toISOString() }
   if (promo_active !== undefined) updates.promo_active = promo_active
   if (promo_taux !== undefined) updates.promo_taux = promo_taux
-  const { error } = await sb.from("fl_articles").update(updates).eq("id", articleId)
+  const { error } = await (sb as any).from("fl_articles").update(updates).eq("id", articleId)
   return !error
 }
 
