@@ -17,13 +17,14 @@ import FreshLinkLogo from "@/components/ui/FreshLinkLogo"
 import LangSwitcher from "@/components/ui/LangSwitcher"
 import MobilePricing from "./MobilePricing"
 import MobileBLValidation from "./MobileBLValidation"
+import MobileAlertes from "./MobileAlertes"
 
 interface Props {
   user: User
   onLogout: () => void
 }
 
-type MobileTab = "achat" | "commercial" | "logistique" | "bilan" | "preparation" | "ctrl_achat" | "ctrl_prep" | "ctrl_retour" | "agent_ia" | "avis" | "magasinier" | "pricing" | "bl_validation"
+type MobileTab = "achat" | "commercial" | "logistique" | "bilan" | "preparation" | "ctrl_achat" | "ctrl_prep" | "ctrl_retour" | "agent_ia" | "avis" | "magasinier" | "pricing" | "bl_validation" | "alertes"
 
 export default function MobileLayout({ user, onLogout }: Props) {
   const [isOnline, setIsOnline] = useState(true)
@@ -45,9 +46,9 @@ export default function MobileLayout({ user, onLogout }: Props) {
     ctrl_achat:       ["ctrl_achat", "agent_ia", "avis"],
     ctrl_prep:        ["ctrl_prep",  "agent_ia", "avis"],
     magasinier:       ["magasinier", "preparation", "ctrl_prep", "agent_ia", "avis"],
-    prevendeur:       ["commercial", "pricing", "bilan",      "agent_ia", "avis"],
-    team_leader:      ["commercial", "pricing", "bilan", "ctrl_retour", "agent_ia", "avis"],
-    resp_commercial:  ["commercial", "pricing", "bilan", "ctrl_retour", "agent_ia", "avis"],
+    prevendeur:       ["commercial", "pricing", "bilan", "alertes",     "agent_ia", "avis"],
+    team_leader:      ["commercial", "pricing", "bilan", "alertes", "ctrl_retour", "agent_ia", "avis"],
+    resp_commercial:  ["commercial", "pricing", "bilan", "alertes", "ctrl_retour", "agent_ia", "avis"],
     resp_logistique:  ["logistique", "preparation", "ctrl_prep", "ctrl_retour", "agent_ia", "avis"],
     dispatcheur:      ["logistique", "preparation", "ctrl_prep", "ctrl_retour", "agent_ia", "avis"],
     livreur:          ["bl_validation", "logistique", "ctrl_retour", "agent_ia", "avis"],
@@ -78,6 +79,7 @@ export default function MobileLayout({ user, onLogout }: Props) {
     { id: "avis",       label: "Avis",      labelAr: "تقييم",           icon: T("M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z") },
     { id: "pricing",       label: "Prix",     labelAr: "الأسعار",     icon: T("M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z") },
     { id: "bl_validation", label: "Mes BL",   labelAr: "وصولاتي",    icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4") },
+    { id: "alertes", label: "Alertes", labelAr: "التنبيهات", icon: T("M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9") },
   ]
 
   const allowedTabIds: MobileTab[] = ROLE_TAB_ACCESS[user.role] ?? ["achat"]
@@ -158,6 +160,7 @@ export default function MobileLayout({ user, onLogout }: Props) {
       {activeTab === "avis"         && <MobileFeedback user={user} />}
       {activeTab === "pricing"       && <MobilePricing user={user} />}
       {activeTab === "bl_validation" && <MobileBLValidation user={user} />}
+      {activeTab === "alertes"       && <MobileAlertes user={user} />}
       </main>
 
       {/* Bottom nav — simplified, max 5 visible, overflow becomes "Plus" */}

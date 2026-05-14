@@ -1095,6 +1095,14 @@ export interface ProcessConfig {
   enableControlExpedition: boolean  // Contrôle expédition (ctrl_exp vérifie avant départ camion)
   // Dispatch commandes — optionnel selon process
   enableDispatchCommandes: boolean  // Le dispatcheur affecte les commandes aux trips
+  // Camera toggles per stage
+  cameraReception?: boolean      // Camera autorisée pour réception
+  cameraPreparation?: boolean    // Camera autorisée pour préparation
+  cameraLivraison?: boolean      // Camera autorisée pour livraison
+  cameraControlAchat?: boolean   // Camera autorisée pour contrôle achat
+  cameraControlPrep?: boolean    // Camera autorisée pour contrôle préparation
+  cameraRetour?: boolean         // Camera autorisée pour retours
+  cameraSignature?: boolean      // Camera pour photo signature
   notes?: string
 }
 
@@ -1112,6 +1120,13 @@ export const DEFAULT_PROCESS_CONFIG: ProcessConfig = {
   enableControlPreparation: false,
   enableControlExpedition: false,
   enableDispatchCommandes: true,
+  cameraReception: true,
+  cameraPreparation: true,
+  cameraLivraison: true,
+  cameraControlAchat: true,
+  cameraControlPrep: true,
+  cameraRetour: true,
+  cameraSignature: true,
 }
 
 export const DEFAULT_WORKFLOW_STEPS: WorkflowStep[] = [

@@ -24,7 +24,97 @@ function AccessDenied() {
   )
 }
 
-export default function BOSettings({ user }: { user: { id: string; name: string; role: string } }) {
+function MonCompteContent({ user, monNom, setMonNom, monPwd, setMonPwd, monPwdConfirm, setMonPwdConfirm, monCompteMsg, setMonCompteMsg }: {
+  user: { id: string; name: string; role: string; email?: string; password?: string }
+  monNom: string; setMonNom: (v: string) => void
+  monPwd: string; setMonPwd: (v: string) => void
+  monPwdConfirm: string; setMonPwdConfirm: (v: string) => void
+  monCompteMsg: {ok:boolean;text:string}|null; setMonCompteMsg: (v: {ok:boolean;text:string}|null) => void
+}) {
+  return (
+    <div className="flex flex-col gap-5 max-w-xl">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-4">
+        <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-lg shrink-0">
+          {user.name.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <p className="font-bold text-slate-900">{user.name}</p>
+          <p className="text-xs text-blue-700 mt-0.5">{user.role} — {user.email ?? ""}</p>
+        </div>
+      </div>
+
+      {/* Modifier nom */}
+      <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
+        <h3 className="font-bold text-sm text-foreground">Informations personnelles</h3>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600">Nom affiché</label>
+          <input type="text" value={monNom} onChange={e => setMonNom(e.target.value)}
+            className="px-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600">Email (lecture seule)</label>
+          <input type="text" value={user.email ?? ""} readOnly
+            className="px-3 py-2.5 border border-border rounded-xl text-sm bg-muted text-muted-foreground cursor-not-allowed" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600">Rôle</label>
+          <input type="text" value={user.role} readOnly
+            className="px-3 py-2.5 border border-border rounded-xl text-sm bg-muted text-muted-foreground cursor-not-allowed" />
+        </div>
+      </div>
+
+      {/* Changer mot de passe */}
+      <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
+        <h3 className="font-bold text-sm text-foreground">Changer le mot de passe</h3>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600">Nouveau mot de passe</label>
+          <input type="password" value={monPwd} onChange={e => setMonPwd(e.target.value)}
+            placeholder="Nouveau mot de passe"
+            className="px-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600">Confirmer</label>
+          <input type="password" value={monPwdConfirm} onChange={e => setMonPwdConfirm(e.target.value)}
+            placeholder="Confirmer le mot de passe"
+            className="px-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+        </div>
+      </div>
+
+      {monCompteMsg && (
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm border ${monCompteMsg.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+          {monCompteMsg.text}
+        </div>
+      )}
+
+      <button
+        onClick={() => {
+          if (monPwd && monPwd !== monPwdConfirm) {
+            setMonCompteMsg({ ok: false, text: "Les mots de passe ne correspondent pas" }); return
+          }
+          if (monPwd && monPwd.length < 4) {
+            setMonCompteMsg({ ok: false, text: "Mot de passe trop court (min 4 caractères)" }); return
+          }
+          const users = store.getUsers()
+          const idx = users.findIndex(u => u.id === user.id)
+          if (idx < 0) { setMonCompteMsg({ ok: false, text: "Utilisateur introuvable" }); return }
+          users[idx] = {
+            ...users[idx],
+            name: monNom || users[idx].name,
+            ...(monPwd ? { password: monPwd } : {}),
+          }
+          store.saveUsers(users)
+          setMonPwd(""); setMonPwdConfirm("")
+          setMonCompteMsg({ ok: true, text: "Profil mis à jour avec succès !" })
+          setTimeout(() => setMonCompteMsg(null), 3000)
+        }}
+        className="self-start px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
+        Enregistrer les modifications
+      </button>
+    </div>
+  )
+}
+
+export default function BOSettings({ user }: { user: { id: string; name: string; role: string; email?: string } }) {
   // --- ALL hooks MUST come before any conditional return (Rules of Hooks) ---
   const [config, setConfig] = useState<EmailConfig>(() => store.getEmailConfig())
   const [contacts, setContacts] = useState<CompanyContacts>(() => store.getCompanyContacts())
@@ -33,7 +123,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [motifs, setMotifs] = useState<MotifRetour[]>([])
   const [newMotif, setNewMotif] = useState({ label: "", labelAr: "" })
   const [saved, setSaved] = useState("")
-  const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "ai_config" | "alertes" | "transporteurs">("entreprise")
+  const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "ai_config" | "alertes" | "transporteurs" | "moncompte">("entreprise")
   const [transporteurs, setTransporteurs] = useState<TransportCompany[]>([])
   const [editingTransport, setEditingTransport] = useState<TransportCompany | null>(null)
   const [showTransportForm, setShowTransportForm] = useState(false)
@@ -90,6 +180,12 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [seedMsg, setSeedMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [seeding, setSeeding] = useState(false)
 
+  // ── Mon Compte state ────────────────────────────────────────────────────────
+  const [monNom, setMonNom] = useState(user.name)
+  const [monPwd, setMonPwd] = useState("")
+  const [monPwdConfirm, setMonPwdConfirm] = useState("")
+  const [monCompteMsg, setMonCompteMsg] = useState<{ok:boolean;text:string}|null>(null)
+
   // Access check — computed AFTER hooks
   const canAccess = user.role === "super_super_admin" || user.role === "admin" || user.role === "super_admin"
   const canEditEmails = canAccess
@@ -108,7 +204,18 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   }, [canAccess])
 
   // Guard AFTER hooks — safe conditional render
-  if (!canAccess) return <AccessDenied />
+  // Non-admin users can only access "moncompte"
+  if (!canAccess) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Mon Compte <span className="text-muted-foreground font-normal text-base mr-1">/ حسابي</span></h2>
+          <p className="text-sm text-muted-foreground">Gérez vos informations personnelles</p>
+        </div>
+        <MonCompteContent user={user} monNom={monNom} setMonNom={setMonNom} monPwd={monPwd} setMonPwd={setMonPwd} monPwdConfirm={monPwdConfirm} setMonPwdConfirm={setMonPwdConfirm} monCompteMsg={monCompteMsg} setMonCompteMsg={setMonCompteMsg} />
+      </div>
+    )
+  }
 
   const handleSaveConfig = () => {
     store.saveEmailConfig(config)
@@ -279,6 +386,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   }
 
   const TABS = [
+    { id: "moncompte" as const,   label: "Mon Compte",               labelAr: "حسابي" },
     { id: "entreprise" as const,  label: "Entreprise",               labelAr: "معلومات الشركة" },
     { id: "contacts" as const,    label: "Contacts & Coordonnées",    labelAr: "أرقام التواصل والعناوين" },
     { id: "process" as const,     label: "Process",                   labelAr: "اختيار العملية" },
@@ -816,6 +924,45 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
                     onClick={() => setProcessCfg(p => ({ ...p, [item.key]: !p[item.key as keyof ProcessConfig] }))}
                     className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer shrink-0 mt-0.5 ${processCfg[item.key] ? "bg-teal-500" : "bg-slate-200"}`}>
                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${processCfg[item.key] ? "left-5" : "left-1"}`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Camera per stage */}
+          <div className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <h3 className="font-bold text-sm text-slate-900">Caméra par étape / الكاميرا حسب المرحلة</h3>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-2">Activez ou désactivez l&apos;accès caméra pour chaque étape du process</p>
+            <div className="flex flex-col gap-3">
+              {([
+                { key: "cameraReception"     as const, label: "Réception marchandise",    desc: "Photo à la réception des marchandises" },
+                { key: "cameraPreparation"   as const, label: "Préparation commandes",     desc: "Photo lors de la préparation des colis" },
+                { key: "cameraLivraison"     as const, label: "Livraison client",          desc: "Photo preuve de livraison chez le client" },
+                { key: "cameraControlAchat"  as const, label: "Contrôle achat",            desc: "Photo pendant le contrôle de la marchandise achetée" },
+                { key: "cameraControlPrep"   as const, label: "Contrôle préparation",      desc: "Photo pendant le contrôle des colis préparés" },
+                { key: "cameraRetour"        as const, label: "Retours marchandise",       desc: "Photo des produits retournés par le client" },
+                { key: "cameraSignature"     as const, label: "Signature & confirmation",  desc: "Photo de la signature client ou document signé" },
+              ] as { key: keyof ProcessConfig; label: string; desc: string }[]).map(item => (
+                <div key={item.key} className="flex items-start justify-between gap-3 py-2 border-b border-border last:border-0">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <svg className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{item.label}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setProcessCfg(p => ({ ...p, [item.key]: !(p[item.key] ?? true) }))}
+                    className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer shrink-0 mt-0.5 ${(processCfg[item.key] ?? true) ? "bg-teal-500" : "bg-slate-200"}`}>
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${(processCfg[item.key] ?? true) ? "left-5" : "left-1"}`} />
                   </button>
                 </div>
               ))}
@@ -2250,6 +2397,11 @@ To: {{to_email}}
             Sauvegarder les seuils d&apos;alerte
           </button>
         </div>
+      )}
+
+      {/* ══ MON COMPTE ════════════════════════════════════════════════════════ */}
+      {tab === "moncompte" && (
+        <MonCompteContent user={user} monNom={monNom} setMonNom={setMonNom} monPwd={monPwd} setMonPwd={setMonPwd} monPwdConfirm={monPwdConfirm} setMonPwdConfirm={setMonPwdConfirm} monCompteMsg={monCompteMsg} setMonCompteMsg={setMonCompteMsg} />
       )}
 
       {/* === TRANSPORTEURS === */}
