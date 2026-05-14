@@ -86,6 +86,7 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
 
   useEffect(() => {
     const sb = sbRef.current
+    console.log("[LiveSync] ✅ Intercepteur localStorage actif — sync vers Supabase en route")
 
     // ── 0. Initialiser le shadow des valeurs actuelles ──────────────────────
     for (const key of Object.keys(ERP_KEYS)) {
@@ -109,34 +110,39 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
       prevRef.current[key] = value
 
       try {
-        const newItems  = JSON.parse(value) as Array<Record<string, unknown>>
-        const prevItems: Array<Record<string, unknown>> = prevValue ? JSON.parse(prevValue) : []
+        // Gérer à la fois les tableaux et les objets uniques
+        const parsed = JSON.parse(value)
+        const newItems: Array<Record<string, unknown>> = Array.isArray(parsed) ? parsed : [parsed]
+        const prevItems: Array<Record<string, unknown>> = prevValue
+          ? (Array.isArray(JSON.parse(prevValue)) ? JSON.parse(prevValue) : [JSON.parse(prevValue)])
+          : []
 
         // Diff : trouver items ajoutés ou modifiés
         const prevMap = new Map(prevItems.map(i => [i.id, JSON.stringify(i)]))
         const newSet  = new Set(newItems.map(i => i.id))
 
         const upserted = newItems.filter(item =>
-          !prevMap.has(item.id) || prevMap.get(item.id) !== JSON.stringify(item)
+          item.id && (!prevMap.has(item.id) || prevMap.get(item.id) !== JSON.stringify(item))
         )
-        const deleted = prevItems.filter(i => !newSet.has(i.id))
+        const deleted = prevItems.filter(i => i.id && !newSet.has(i.id))
 
         if (upserted.length > 0) {
-          // Envoyer { id, payload: item } — schéma JSONB universel
           const rows = upserted.map(toRow)
+          console.log(`[LiveSync↑] Envoi ${sbTable} — ${upserted.length} item(s)`)
           void sb.from(sbTable).upsert(rows, { onConflict: "id" }).then(({ error }) => {
-            if (error) console.warn(`[LiveSync↑] upsert ${sbTable}:`, error.message)
-            else console.log(`[LiveSync↑] ${sbTable} — ${upserted.length} envoyé(s)`)
+            if (error) console.error(`[LiveSync↑] ERREUR ${sbTable}:`, error.message, error)
+            else console.log(`[LiveSync↑] ✅ ${sbTable} — ${upserted.length} sauvegardé(s) dans Supabase`)
           })
         }
 
         for (const item of deleted) {
           void sb.from(sbTable).delete().eq("id", item.id as string).then(({ error }) => {
-            if (error) console.warn(`[LiveSync↑] delete ${sbTable}:`, error.message)
+            if (error) console.error(`[LiveSync↑] ERREUR delete ${sbTable}:`, error.message)
+            else console.log(`[LiveSync↑] 🗑️ ${sbTable} — supprimé ${item.id}`)
           })
         }
       } catch {
-        // JSON invalide — ignorer
+        // JSON invalide (ex: valeur non-array) — ignorer silencieusement
       }
     }
 
@@ -194,45 +200,70 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
       }
     })
 
-    // ── 3. Bootstrap : charger Supabase → localStorage au démarrage ─────────
-    // Si Supabase a des données (d'un autre appareil), les charger localement
+    // ── 3. Bootstrap : sync bidirectionnel au démarrage ────────────────────
     void (async () => {
+      let tablesFromSupabase = 0
+      let itemsPushedToSupabase = 0
+
       try {
         for (const [lsKey, sbTable] of Object.entries(ERP_KEYS)) {
-          const { data, error } = await sb.from(sbTable).select("id, payload").limit(500)
-          if (error || !data || data.length === 0) continue
+          try {
+            const { data, error } = await sb.from(sbTable).select("id, payload").limit(1000)
 
-          // Convertir les rows Supabase en objets localStorage
-          const sbItems = data.map(fromRow).filter(r => r && r.id)
+            // Table n'existe pas encore → créer depuis localStorage
+            if (error) {
+              console.warn(`[LiveSync] Bootstrap — table ${sbTable} inaccessible:`, error.message)
+              // Pousser les données locales vers Supabase
+              const raw = localStorage.getItem(lsKey)
+              if (raw) {
+                const localItems: Array<Record<string, unknown>> = JSON.parse(raw)
+                if (localItems.length > 0) {
+                  const rows = localItems.filter(i => i.id).map(toRow)
+                  const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
+                  if (!pushErr) itemsPushedToSupabase += rows.length
+                }
+              }
+              continue
+            }
 
-          // Fusionner avec localStorage : priorité aux données Supabase
-          const raw = localStorage.getItem(lsKey)
-          const localItems: Array<Record<string, unknown>> = raw ? JSON.parse(raw) : []
-          const localMap = new Map(localItems.map(i => [i.id, i]))
+            const sbItems = (data ?? []).map(fromRow).filter(r => r && r.id)
+            const raw = localStorage.getItem(lsKey)
+            const localItems: Array<Record<string, unknown>> = raw ? JSON.parse(raw) : []
 
-          // Items de Supabase écrasent le local (source de vérité = Supabase)
-          for (const item of sbItems) {
-            localMap.set(item.id as string, item)
+            // Merge : Supabase gagne en cas de conflit (source de vérité multi-appareils)
+            const localMap = new Map(localItems.map(i => [i.id as string, i]))
+            for (const item of sbItems) localMap.set(item.id as string, item)
+
+            // Pousser vers Supabase les items locaux absents
+            const sbIds = new Set(sbItems.map(i => i.id as string))
+            const localOnly = localItems.filter(i => i.id && !sbIds.has(i.id as string))
+            if (localOnly.length > 0) {
+              const rows = localOnly.filter(i => i.id).map(toRow)
+              const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
+              if (!pushErr) itemsPushedToSupabase += rows.length
+            }
+
+            if (sbItems.length > 0) {
+              const merged = Array.from(localMap.values())
+              const json = JSON.stringify(merged)
+              originalSetItem(lsKey, json)
+              prevRef.current[lsKey] = json
+              tablesFromSupabase++
+            } else if (localItems.length > 0) {
+              // Supabase vide, pousser tout le local
+              const rows = localItems.filter(i => i.id).map(toRow)
+              const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
+              if (!pushErr) itemsPushedToSupabase += rows.length
+            }
+          } catch (tableErr) {
+            console.warn(`[LiveSync] Bootstrap erreur ${sbTable}:`, tableErr)
           }
-
-          // Aussi pousser les items locaux absents de Supabase
-          const sbIds = new Set(sbItems.map(i => i.id as string))
-          const localOnly = localItems.filter(i => !sbIds.has(i.id as string))
-          if (localOnly.length > 0) {
-            const rows = localOnly.map(toRow)
-            void sb.from(sbTable).upsert(rows, { onConflict: "id" })
-          }
-
-          const merged = Array.from(localMap.values())
-          const json = JSON.stringify(merged)
-          originalSetItem(lsKey, json)
-          prevRef.current[lsKey] = json
         }
 
         window.dispatchEvent(new CustomEvent("fl_store_updated", { detail: { table: "all" } }))
-        console.log("[LiveSync] ✅ Bootstrap sync terminé")
+        console.log(`[LiveSync] ✅ Bootstrap terminé — ${tablesFromSupabase} tables depuis Supabase, ${itemsPushedToSupabase} items poussés vers Supabase`)
       } catch (e) {
-        console.warn("[LiveSync] Bootstrap sync:", e)
+        console.error("[LiveSync] Bootstrap erreur globale:", e)
       }
     })()
 

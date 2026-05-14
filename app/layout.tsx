@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import PWAInstall from '@/components/PWAInstall'
-import LiveSyncProvider from '@/components/LiveSyncProvider'
+import LiveSyncProvider from '@/components/providers/LiveSyncProvider'
 
 const inter = Inter({
   subsets: ["latin"],
@@ -92,9 +92,10 @@ export default function RootLayout({
         <meta name="msapplication-TileImage" content="/icon-192.png" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
-        {children}
-        <PWAInstall />
-        <LiveSyncProvider />
+        <LiveSyncProvider>
+          {children}
+          <PWAInstall />
+        </LiveSyncProvider>
       </body>
     </html>
   )

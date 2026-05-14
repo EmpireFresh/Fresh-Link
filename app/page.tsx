@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { store, type User, getUserInterface } from "@/lib/store"
 import dynamic from "next/dynamic"
-import LiveSyncProvider from "@/components/providers/LiveSyncProvider"
 
 // All heavy components loaded dynamically — never crash the initial bundle
 const LoginPage        = dynamic(() => import("@/components/auth/LoginPage"),             { ssr: false, loading: () => <Spinner /> })
@@ -118,17 +117,17 @@ export default function App() {
     const needsGuard    = !isSuperAdmin && !isDemoAccount && user.requireCameraAuth === true
     const content = <MobileLayout user={user} onLogout={handleLogout} />
     return (
-      <LiveSyncProvider>
+      <>
         {needsGuard ? <SecurityGuard skipGps={false}>{content}</SecurityGuard> : content}
         {bothSwitcher}
-      </LiveSyncProvider>
+      </>
     )
   }
 
   return (
-    <LiveSyncProvider>
+    <>
       <BackOfficeLayout user={user} onLogout={handleLogout} />
       {bothSwitcher}
-    </LiveSyncProvider>
+    </>
   )
 }
