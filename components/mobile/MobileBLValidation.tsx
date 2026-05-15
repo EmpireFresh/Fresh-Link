@@ -306,7 +306,7 @@ export default function MobileBLValidation({ user }: { user: { id: string; name:
       updates.gps_lng_livraison = gpsCaptured.lng
     }
 
-    const { error } = await sb.from("fl_bons_livraison").update(updates).eq("id", selected.id)
+    const { error } = await (sb as any).from("fl_bons_livraison").update(updates).eq("id", selected.id)
     if (error) {
       setMsg({ ok: false, text: `Erreur: ${error.message}` })
     } else {
@@ -322,7 +322,7 @@ export default function MobileBLValidation({ user }: { user: { id: string; name:
   const handlePartiel = async () => {
     if (!selected) return
     setSaving(true)
-    const { error } = await sb.from("fl_bons_livraison").update({ statut: "partiel", montant_encaisse: Number(encaisse) || 0, notes, updated_at: new Date().toISOString() }).eq("id", selected.id)
+    const { error } = await (sb as any).from("fl_bons_livraison").update({ statut: "partiel", montant_encaisse: Number(encaisse) || 0, notes, updated_at: new Date().toISOString() }).eq("id", selected.id)
     if (!error) {
       setBls(b => b.map(x => x.id === selected.id ? { ...x, statut: "partiel" } as BonLivraison : x))
       setSelected(s => s ? { ...s, statut: "partiel" } as BonLivraison : null)
@@ -335,7 +335,7 @@ export default function MobileBLValidation({ user }: { user: { id: string; name:
   const handleRetour = async () => {
     if (!selected || !confirm("Confirmer le retour de cette livraison ?")) return
     setSaving(true)
-    const { error } = await sb.from("fl_bons_livraison").update({ statut: "retour", notes, updated_at: new Date().toISOString() }).eq("id", selected.id)
+    const { error } = await (sb as any).from("fl_bons_livraison").update({ statut: "retour", notes, updated_at: new Date().toISOString() }).eq("id", selected.id)
     if (!error) {
       setBls(b => b.map(x => x.id === selected.id ? { ...x, statut: "retour" } as BonLivraison : x))
       setSelected(s => s ? { ...s, statut: "retour" } as BonLivraison : null)

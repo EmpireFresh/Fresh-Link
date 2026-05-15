@@ -307,8 +307,8 @@ export function printBL(bl: BonLivraison, company?: CompanyConfig) {
   </tr></thead>
   <tbody>
   ${bl.lignes.map(l => `<tr><td class="bold">${l.articleNom}</td><td>${l.unite ?? "kg"}</td>
-    <td class="r">${l.qteLivree ?? (l as unknown as {quantite?:number}).quantite ?? 0}</td>
-    <td class="r">${fmtDH(l.prixUnit ?? l.prixUnitaire ?? 0)}</td>
+    <td class="r">${(l as any).qteLivree ?? (l as unknown as {quantite?:number}).quantite ?? 0}</td>
+    <td class="r">${fmtDH((l as any).prixUnit ?? (l as any).prixUnitaire ?? 0)}</td>
     <td class="r bold">${fmtDH(l.total)}</td></tr>`).join("")}
   <tr class="subtotal"><td colspan="4" class="r">Sous-total HT</td><td class="r">${fmtDH(subtotal)}</td></tr>
   ${caisses > 0 ? `<tr><td colspan="4" class="r">Caisses / Emballages</td><td class="r">${fmtDH(caisses)}</td></tr>` : ""}
@@ -377,8 +377,8 @@ export function printFacture(bl: BonLivraison, factureNum: string, company?: Com
   </tr></thead>
   <tbody>
   ${bl.lignes.map((l, i) => `<tr><td><strong>${l.articleNom}</strong></td><td>${l.unite ?? "kg"}</td>
-    <td class="r">${l.qteLivree ?? (l as unknown as {quantite?:number}).quantite ?? 0}</td>
-    <td class="r">${fmtDH(l.prixUnit ?? l.prixUnitaire ?? 0)}</td>
+    <td class="r">${(l as any).qteLivree ?? (l as unknown as {quantite?:number}).quantite ?? 0}</td>
+    <td class="r">${fmtDH((l as any).prixUnit ?? (l as any).prixUnitaire ?? 0)}</td>
     <td class="r bold">${fmtDH(l.total)}</td></tr>`).join("")}
   ${caisses > 0 ? `<tr><td>Emballages / Caisses</td><td>—</td><td class="r">1</td><td class="r">${fmtDH(caisses)}</td><td class="r bold">${fmtDH(caisses)}</td></tr>` : ""}
   </tbody>
@@ -639,6 +639,8 @@ interface BOBonLivraison {
   statut?:               string
   clientIce?:            string
   clientModalitePaiement?: string
+  clientCreditSolde?:    number
+  clientCreditAutorise?: boolean
   notesBL?:              string
 }
 

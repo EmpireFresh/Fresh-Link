@@ -36,7 +36,14 @@ export default function BODemandesComptes({ user }: Props) {
   const [rejectReason, setRejectReason] = useState("")
   const [showReject, setShowReject] = useState(false)
 
-  const refresh = () => setRequests(store.getAccountRequests())
+  const getAccountRequests = (): AccountRequest[] => {
+    try { return JSON.parse(localStorage.getItem("fl_account_requests") ?? "[]") } catch { return [] }
+  }
+  const saveAccountRequests = (arr: AccountRequest[]) => {
+    try { localStorage.setItem("fl_account_requests", JSON.stringify(arr)) } catch {}
+  }
+
+  const refresh = () => setRequests(getAccountRequests())
 
   useEffect(() => { refresh() }, [])
 
@@ -104,14 +111,17 @@ export default function BODemandesComptes({ user }: Props) {
       const client: Client = {
         id: store.genId(),
         nom: selected.societe || selected.nom,
+        secteur: "",
+        zone: "",
+        type: "autre",
+        taille: "50-100kg",
+        typeProduits: "moyenne",
+        rotation: "journalier",
         telephone: selected.telephone,
         email: selected.email,
-        ville: selected.ville,
-        adresse: "",
-        actif: true,
-        credit: 0,
-        creditAutorise: false,
-        loyaltyOptIn: false,
+        adresse: selected.ville ?? "",
+        createdBy: user.id,
+        createdAt: new Date().toISOString(),
       }
       store.saveClients([...store.getClients(), client])
       newUser.clientId = client.id
@@ -122,11 +132,13 @@ export default function BODemandesComptes({ user }: Props) {
       const fourn: Fournisseur = {
         id: store.genId(),
         nom: selected.societe || selected.nom,
+        contact: selected.nom,
         telephone: selected.telephone,
         email: selected.email,
         ville: selected.ville,
         ice: selected.ice,
-        actif: true,
+        specialites: [],
+        itineraires: [],
       }
       store.saveFournisseurs([...store.getFournisseurs(), fourn])
       newUser.fournisseurId = fourn.id
@@ -141,7 +153,7 @@ export default function BODemandesComptes({ user }: Props) {
         ? { ...r, statut: "approuve" as const, approvedAt: new Date().toISOString(), approvedBy: user.id }
         : r
     )
-    store.saveAccountRequests(updated)
+    saveAccountRequests(updated)
     setRequests(updated)
     setShowApprove(false)
     setSelected(null)
@@ -156,7 +168,7 @@ export default function BODemandesComptes({ user }: Props) {
         ? { ...r, statut: "rejete" as const, rejectedAt: new Date().toISOString(), rejectedBy: user.id, rejectReason }
         : r
     )
-    store.saveAccountRequests(updated)
+    saveAccountRequests(updated)
     setRequests(updated)
     setShowReject(false)
     setSelected(null)

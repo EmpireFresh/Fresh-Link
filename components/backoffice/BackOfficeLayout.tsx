@@ -107,6 +107,7 @@ const BOPermissionsMatrix    = dynamic(() => import("./BOPermissionsMatrix"),   
 const BOMarketplace          = dynamic(() => import("./BOMarketplace"),          { ssr: false, loading: L("Chargement marketplace...") })
 const BODocuments            = dynamic(() => import("./BODocuments"),            { ssr: false, loading: L("Chargement documents...") })
 const BOCategoryPricing      = dynamic(() => import("./BOCategoryPricing"),      { ssr: false, loading: L("Chargement tarifs catégories...") })
+const BOFirebaseArchive      = dynamic(() => import("./BOFirebaseArchive"),      { ssr: false, loading: L("Chargement archivage Firebase...") })
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -136,6 +137,7 @@ export type Tab =
   | "marketplace"
   | "documents"
   | "category_pricing"
+  | "firebase_archive"
 
 interface NavItem {
   id: Tab
@@ -266,7 +268,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   // ── 8. ADMINISTRATION ────────────────────────────────────────────────────
   {
-    label: "Administration", labelAr: "الإدارة",
+    label: "Administration", labelAr: "الإدارة والإعدادات",
     items: [
       { id: "users",            label: "Utilisateurs & Roles",   labelAr: "المستخدمون",        permKey: "canViewDatabase", icon: <Icon d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /> },
       { id: "depots",           label: "Multi-Depots",           labelAr: "المستودعات",        permKey: "canViewDatabase", icon: <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /> },
@@ -275,6 +277,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "camera_perms",     label: "Droits Camera",          labelAr: "صلاحيات الكاميرا",  permKey: "canViewDatabase", icon: <Icon d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" /> },
       { id: "cutoffs",          label: "Notifications Cut-off",  labelAr: "إشعارات الإيقاف",   permKey: "canViewDatabase", icon: <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> },
       { id: "database",         label: "Base de donnees",        labelAr: "قاعدة البيانات",    permKey: "canViewDatabase", icon: <Icon d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /> },
+      { id: "firebase_archive", label: "Archivage Firebase",     labelAr: "أرشفة Firebase",    permKey: "canViewDatabase", icon: <Icon d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /> },
       { id: "settings",         label: "Parametres",             labelAr: "الإعدادات",         permKey: "canViewDatabase", icon: <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> },
       {
         id: "gsheets", label: "Google Sheets", labelAr: "جوجل شيتس", permKey: "canViewDatabase" as keyof User,
@@ -318,6 +321,7 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   marketplace:       (u) => <BOMarketplace user={u} />,
   category_pricing:  (_u) => <BOCategoryPricing />,
   documents:         (u) => <BODocuments user={u} />,
+  firebase_archive:  (_u) => <BOFirebaseArchive />,
   demandes_comptes:  (u) => <BODemandesComptes user={u} />,
   web_integration:   (u) => <BOWebIntegration user={u} />,
   permissions_matrix:(_u) => <BOPermissionsMatrix />,
@@ -441,7 +445,7 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
     if (user.role === "super_super_admin") return true
     if (!item.permKey) return true
     // Investisseur dashboard — permission spéciale super confidentielle
-    if (item.permKey === "canViewInvestisseur") return (user as Record<string,unknown>)["canViewInvestisseur"] === true
+    if (item.permKey === "canViewInvestisseur") return (user as unknown as Record<string,unknown>)["canViewInvestisseur"] === true
     // database / settings / gsheets / users (canViewDatabase): only admin + super_admin
     if (item.permKey === "canViewDatabase") return isAdminOrAbove
     // All other permKeys: super_admin + admin bypass, others check their flag
@@ -617,8 +621,8 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
               className={[
                 "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all",
                 syncDone      ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                : syncRunning ? "bg-blue-50    border-blue-200    text-blue-600"
-                : sbStatus === "connected" ? "bg-sky-50  border-sky-200  text-sky-700  hover:bg-sky-100"
+                : syncRunning ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                : sbStatus === "connected" ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
                 : sbStatus === "error"     ? "bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100"
                                            : "bg-slate-50 border-slate-200 text-slate-500"
               ].join(" ")}>
@@ -633,7 +637,7 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
                 </svg>
               ) : (
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                  sbStatus === "connected" ? "bg-sky-500 animate-pulse"
+                  sbStatus === "connected" ? "bg-emerald-500 animate-pulse"
                   : sbStatus === "error"   ? "bg-rose-500"
                                            : "bg-slate-400 animate-pulse"
                 }`} />

@@ -596,7 +596,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
     }
     const key = poste.toLowerCase().trim()
     const code = Object.entries(codeMap).find(([k]) => key.includes(k))?.[1] ?? "EMP"
-    const existing = store.getSalaries?.().filter((s: {matricule?: string}) => s.matricule?.startsWith(`FLP-${year}-${code}-`)) ?? []
+    const existing = store.getSalaries?.().filter((s: {cin?: string}) => s.cin?.startsWith(`FLP-${year}-${code}-`)) ?? []
     const seq = (existing.length + 1).toString().padStart(3, "0")
     return `FLP-${year}-${code}-${seq}`
   }
@@ -617,7 +617,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
       const s: Salarie = {
         ...salForm,
         id: genId(),
-        matricule,
+        cin: matricule,
         createdBy: user.name,
         createdAt: now,
         dossierComplet: Boolean(salForm.cin && salForm.cnss && salForm.adresse && salForm.salaireBrut > 0),

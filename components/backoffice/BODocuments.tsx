@@ -618,10 +618,10 @@ export default function BODocuments({ user }: { user: { id: string; name: string
   const handleSave = async (doc: Document) => {
     setSaving(true)
     try {
-      const { data: numData } = await sb.rpc("generate_document_number", { p_type: doc.type_doc })
+      const { data: numData } = await sb.rpc("generate_document_number", { p_type: doc.type_doc } as any)
       const saveDoc = { ...doc, numero: doc.numero.startsWith("TEMP") ? (numData ?? doc.numero) : doc.numero }
 
-      const { error } = await sb.from("fl_documents").upsert(saveDoc)
+      const { error } = await sb.from("fl_documents").upsert(saveDoc as any)
       if (error) throw error
       setMsg({ ok: true, text: "Document enregistré." })
       await load()
@@ -647,7 +647,8 @@ export default function BODocuments({ user }: { user: { id: string; name: string
       created_at: new Date().toISOString(),
     }
     // Marquer l'original comme transformé
-    await sb.from("fl_documents").update({ statut: "transforme", transforme_en: newDoc.id }).eq("id", doc.id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (sb as any).from("fl_documents").update({ statut: "transforme", transforme_en: newDoc.id }).eq("id", doc.id)
     setEditing(newDoc)
     setView("form")
   }
