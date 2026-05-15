@@ -5,7 +5,19 @@ import { store, type User, type Client, type Fournisseur } from "@/lib/store"
 
 interface Props { user: User }
 
-const ALLOWED_ROLES = ["super_super_admin", "super_admin", "admin", "resp_commercial", "ctrl_achat"]
+const ALLOWED_ROLES = ["super_super_admin", "super_admin", "admin", "resp_commercial", "resp_achat", "ctrl_achat", "team_leader"]
+
+const EMPTY_CLIENT = (): Omit<Client, "id" | "createdBy" | "createdAt"> => ({
+  nom: "", secteur: "Épicerie", zone: "Casablanca", type: "marchand",
+  taille: "50-100kg", typeProduits: "moyenne", rotation: "4j/6",
+  telephone: "", email: "", adresse: "", ice: "", notes: "",
+})
+
+const EMPTY_FOURNISSEUR = (): Omit<Fournisseur, "id"> => ({
+  nom: "", contact: "", telephone: "", email: "", adresse: "", ville: "Casablanca",
+  region: "Casablanca-Settat", specialites: [], modalitePaiement: "cash",
+  delaiPaiement: 0, ice: "", rc: "", notes: "", itineraires: [],
+})
 
 function genPassword(len = 10) {
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#"
@@ -21,6 +33,12 @@ export default function BOComptesExternes({ user }: Props) {
   const [search, setSearch] = useState("")
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [resetPwd, setResetPwd] = useState<{ userId: string; pwd: string } | null>(null)
+  const [showAddClient, setShowAddClient] = useState(false)
+  const [showAddFour, setShowAddFour] = useState(false)
+  const [clientForm, setClientForm] = useState<Omit<Client, "id" | "createdBy" | "createdAt">>(EMPTY_CLIENT())
+  const [fourForm, setFourForm] = useState<Omit<Fournisseur, "id">>(EMPTY_FOURNISSEUR())
+
+  const canAdd = ALLOWED_ROLES.includes(user.role) || !!user.canViewExternal
 
   const reload = useCallback(() => {
     setClients(store.getClients())
@@ -55,6 +73,24 @@ export default function BOComptesExternes({ user }: Props) {
     setUsers([...all])
     setResetPwd({ userId, pwd })
     flash(true, "Mot de passe réinitialisé.")
+  }
+
+  const handleSaveClient = () => {
+    if (!clientForm.nom.trim()) { flash(false, "Le nom est obligatoire."); return }
+    store.addClient({ ...clientForm, id: store.genId(), createdBy: user.id, createdAt: new Date().toISOString() })
+    setClientForm(EMPTY_CLIENT())
+    setShowAddClient(false)
+    reload()
+    flash(true, `Client "${clientForm.nom}" ajouté.`)
+  }
+
+  const handleSaveFour = () => {
+    if (!fourForm.nom.trim()) { flash(false, "Le nom est obligatoire."); return }
+    store.addFournisseur({ ...fourForm, id: store.genId() })
+    setFourForm(EMPTY_FOURNISSEUR())
+    setShowAddFour(false)
+    reload()
+    flash(true, `Fournisseur "${fourForm.nom}" ajouté.`)
   }
 
   if (!ALLOWED_ROLES.includes(user.role) && !user.canViewExternal) {
@@ -102,13 +138,123 @@ export default function BOComptesExternes({ user }: Props) {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground">
-            Comptes Externes <span className="text-muted-foreground font-normal text-base mr-1">/ الحسابات الخارجية</span>
+            Clients & Fournisseurs <span className="text-muted-foreground font-normal text-base mr-1">/ الزبائن والموردون</span>
           </h2>
           <p className="text-sm text-muted-foreground">
-            Portails client et fournisseur — accès restreint aux administrateurs et commerciaux
+            Gestion des comptes clients et fournisseurs + accès portail externe
           </p>
         </div>
+        {canAdd && (
+          <div className="flex gap-2">
+            <button onClick={() => { setShowAddClient(true); setShowAddFour(false) }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Ajouter Client
+            </button>
+            <button onClick={() => { setShowAddFour(true); setShowAddClient(false) }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Ajouter Fournisseur
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* ── ADD CLIENT FORM ── */}
+      {showAddClient && (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-blue-900">Nouveau Client / زبون جديد</h3>
+            <button onClick={() => setShowAddClient(false)} className="text-blue-400 hover:text-blue-700">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { label: "Nom *", key: "nom", type: "text", placeholder: "Nom du client" },
+              { label: "Téléphone", key: "telephone", type: "tel", placeholder: "06 XX XX XX XX" },
+              { label: "Email", key: "email", type: "email", placeholder: "email@example.com" },
+              { label: "Secteur", key: "secteur", type: "text", placeholder: "Épicerie, Restauration…" },
+              { label: "Zone", key: "zone", type: "text", placeholder: "Casablanca, Hay Hassani…" },
+              { label: "Adresse", key: "adresse", type: "text", placeholder: "Adresse complète" },
+              { label: "ICE", key: "ice", type: "text", placeholder: "ICE (entreprise)" },
+            ].map(f => (
+              <div key={f.key} className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-blue-800">{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder}
+                  value={(clientForm as Record<string, unknown>)[f.key] as string ?? ""}
+                  onChange={e => setClientForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="px-3 py-2 rounded-xl border border-blue-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              </div>
+            ))}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-blue-800">Type</label>
+              <select value={clientForm.type} onChange={e => setClientForm(p => ({ ...p, type: e.target.value as Client["type"] }))}
+                className="px-3 py-2 rounded-xl border border-blue-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                {["chr","marchand","grande_surface","grossiste","export","autre"].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
+              <label className="text-xs font-semibold text-blue-800">Notes</label>
+              <textarea rows={2} placeholder="Notes optionnelles…" value={clientForm.notes ?? ""}
+                onChange={e => setClientForm(p => ({ ...p, notes: e.target.value }))}
+                className="px-3 py-2 rounded-xl border border-blue-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setShowAddClient(false)} className="px-4 py-2 rounded-xl border border-blue-200 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors">Annuler</button>
+            <button onClick={handleSaveClient} className="px-5 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow">
+              Enregistrer le client
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD FOURNISSEUR FORM ── */}
+      {showAddFour && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-emerald-900">Nouveau Fournisseur / مورد جديد</h3>
+            <button onClick={() => setShowAddFour(false)} className="text-emerald-400 hover:text-emerald-700">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { label: "Nom *", key: "nom", placeholder: "Nom du fournisseur" },
+              { label: "Contact", key: "contact", placeholder: "Nom du contact" },
+              { label: "Téléphone", key: "telephone", placeholder: "06 XX XX XX XX" },
+              { label: "Email", key: "email", placeholder: "email@example.com" },
+              { label: "Adresse", key: "adresse", placeholder: "Adresse" },
+              { label: "Ville", key: "ville", placeholder: "Casablanca" },
+              { label: "ICE", key: "ice", placeholder: "ICE" },
+              { label: "RC", key: "rc", placeholder: "Registre du commerce" },
+            ].map(f => (
+              <div key={f.key} className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-emerald-800">{f.label}</label>
+                <input type="text" placeholder={f.placeholder}
+                  value={(fourForm as Record<string, unknown>)[f.key] as string ?? ""}
+                  onChange={e => setFourForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="px-3 py-2 rounded-xl border border-emerald-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+              </div>
+            ))}
+            <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
+              <label className="text-xs font-semibold text-emerald-800">Notes</label>
+              <textarea rows={2} placeholder="Notes optionnelles…" value={fourForm.notes ?? ""}
+                onChange={e => setFourForm(p => ({ ...p, notes: e.target.value }))}
+                className="px-3 py-2 rounded-xl border border-emerald-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none" />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setShowAddFour(false)} className="px-4 py-2 rounded-xl border border-emerald-200 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">Annuler</button>
+            <button onClick={handleSaveFour} className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow">
+              Enregistrer le fournisseur
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
