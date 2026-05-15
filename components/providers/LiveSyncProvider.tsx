@@ -83,6 +83,7 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
   const isRealtimeRef = useRef(false)
   const prevRef       = useRef<Record<string, string>>({})
   const sbRef         = useRef(createClient())
+  const syncErrors    = useRef<Array<{ table: string; error: string; code?: string; ts: string }>>([])
 
   useEffect(() => {
     const sb = sbRef.current
@@ -130,8 +131,14 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
           const rows = upserted.map(toRow)
           console.log(`[LiveSync↑] Envoi ${sbTable} — ${upserted.length} item(s)`)
           void sb.from(sbTable).upsert(rows, { onConflict: "id" }).then(({ error }) => {
-            if (error) console.error(`[LiveSync↑] ERREUR ${sbTable}:`, error.message, error)
-            else console.log(`[LiveSync↑] ✅ ${sbTable} — ${upserted.length} sauvegardé(s) dans Supabase`)
+            if (error) {
+              console.error(`[LiveSync↑] ERREUR ${sbTable}:`, error.message, error)
+              syncErrors.current.push({ table: sbTable, error: error.message, code: error.code, ts: new Date().toISOString() })
+              window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: error.message, code: error.code } }))
+            } else {
+              console.log(`[LiveSync↑] ✅ ${sbTable} — ${upserted.length} sauvegardé(s) dans Supabase`)
+              window.dispatchEvent(new CustomEvent("fl_sync_success", { detail: { table: sbTable, count: upserted.length } }))
+            }
           })
         }
 
@@ -213,6 +220,7 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
             // Table n'existe pas encore → créer depuis localStorage
             if (error) {
               console.warn(`[LiveSync] Bootstrap — table ${sbTable} inaccessible:`, error.message)
+              window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: error.message, code: error.code } }))
               // Pousser les données locales vers Supabase
               const raw = localStorage.getItem(lsKey)
               if (raw) {
@@ -220,7 +228,12 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
                 if (localItems.length > 0) {
                   const rows = localItems.filter(i => i.id).map(toRow)
                   const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
-                  if (!pushErr) itemsPushedToSupabase += rows.length
+                  if (pushErr) {
+                    syncErrors.current.push({ table: sbTable, error: pushErr.message, code: pushErr.code, ts: new Date().toISOString() })
+                    window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: pushErr.message, code: pushErr.code } }))
+                  } else {
+                    itemsPushedToSupabase += rows.length
+                  }
                 }
               }
               continue
@@ -240,7 +253,12 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
             if (localOnly.length > 0) {
               const rows = localOnly.filter(i => i.id).map(toRow)
               const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
-              if (!pushErr) itemsPushedToSupabase += rows.length
+              if (pushErr) {
+                syncErrors.current.push({ table: sbTable, error: pushErr.message, code: pushErr.code, ts: new Date().toISOString() })
+                window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: pushErr.message, code: pushErr.code } }))
+              } else {
+                itemsPushedToSupabase += rows.length
+              }
             }
 
             if (sbItems.length > 0) {
@@ -253,7 +271,13 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
               // Supabase vide, pousser tout le local
               const rows = localItems.filter(i => i.id).map(toRow)
               const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
-              if (!pushErr) itemsPushedToSupabase += rows.length
+              if (pushErr) {
+                syncErrors.current.push({ table: sbTable, error: pushErr.message, code: pushErr.code, ts: new Date().toISOString() })
+                window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: pushErr.message, code: pushErr.code } }))
+              } else {
+                itemsPushedToSupabase += rows.length
+                window.dispatchEvent(new CustomEvent("fl_sync_success", { detail: { table: sbTable, count: rows.length } }))
+              }
             }
           } catch (tableErr) {
             console.warn(`[LiveSync] Bootstrap erreur ${sbTable}:`, tableErr)
