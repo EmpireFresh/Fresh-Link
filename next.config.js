@@ -29,6 +29,17 @@ const nextConfig = {
         ? [...config.externals, 'leaflet']
         : ['leaflet']
     }
+
+    // Firebase est optionnel — ignorer si non installé
+    try {
+      require.resolve('firebase/app')
+    } catch {
+      const webpack = require('webpack')
+      config.plugins.push(
+        new webpack.IgnorePlugin({ resourceRegExp: /^firebase/ })
+      )
+    }
+
     return config
   },
 
