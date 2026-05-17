@@ -154,6 +154,10 @@ export interface Client {
   loyaltyPoints?: number    // cached total — updated by loyalty engine
   loyaltyOptIn?: boolean    // client opted into loyalty program
   categorie?: "chr" | "marchand" | "particulier"   // category group for pricing
+  // Remises & Promotions
+  remisePct?: number        // remise globale % accordée à ce client (ex: 5 = 5%)
+  remiseActive?: boolean    // true = la remise est appliquée sur ses achats
+  promotions?: string[]     // codes / libellés de promotions actives
 }
 
 // ── Visite prevendeur ──────────────────────────────────────────────────────
