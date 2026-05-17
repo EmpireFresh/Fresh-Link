@@ -34,6 +34,7 @@ CREATE TABLE public.fl_transferts_stock  (id TEXT PRIMARY KEY, payload JSONB NOT
 CREATE TABLE public.fl_demandes_achat    (id TEXT PRIMARY KEY, payload JSONB NOT NULL DEFAULT '{}', updated_at TIMESTAMPTZ DEFAULT now());
 CREATE TABLE public.fl_notices           (id TEXT PRIMARY KEY, payload JSONB NOT NULL DEFAULT '{}', updated_at TIMESTAMPTZ DEFAULT now());
 CREATE TABLE public.fl_non_achats        (id TEXT PRIMARY KEY, payload JSONB NOT NULL DEFAULT '{}', updated_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE public.fl_demandes_acces    (id TEXT PRIMARY KEY, payload JSONB NOT NULL DEFAULT '{}', updated_at TIMESTAMPTZ DEFAULT now());
 
 DO $$ DECLARE t TEXT;
 BEGIN
@@ -50,14 +51,14 @@ ALTER PUBLICATION supabase_realtime ADD TABLE
   public.fl_purchase_orders, public.fl_bons_livraison, public.fl_bons_preparation,
   public.fl_receptions, public.fl_trips, public.fl_retours, public.fl_visites,
   public.fl_messages, public.fl_transferts_stock, public.fl_demandes_achat,
-  public.fl_notices, public.fl_non_achats;`
+  public.fl_notices, public.fl_non_achats, public.fl_demandes_acces;`
 
 const ERP_TABLES = [
   "fl_depots","fl_users","fl_clients","fl_fournisseurs","fl_articles",
   "fl_livreurs","fl_commandes","fl_bons_achat","fl_purchase_orders",
   "fl_bons_livraison","fl_bons_preparation","fl_receptions","fl_trips",
   "fl_retours","fl_visites","fl_messages","fl_transferts_stock",
-  "fl_demandes_achat","fl_notices","fl_non_achats",
+  "fl_demandes_achat","fl_notices","fl_non_achats","fl_demandes_acces",
 ]
 
 export async function GET() {
