@@ -126,7 +126,7 @@ const DEMO_EXTERNAL = [
   },
 ]
 
-type ExternalType = "client" | "fournisseur" | "chr"
+type ExternalType = "particulier" | "marchand" | "chr" | "fournisseur"
 
 function generatePassword(len = 10): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#"
@@ -293,21 +293,23 @@ export default function LoginPage({ onLogin }: Props) {
     setLoading(true); setError("")
     await new Promise(r => setTimeout(r, 300))
     if (clientMode) {
-      if (!identifier.trim()) { setError("Veuillez entrer votre identifiant"); setLoading(false); return }
+      if (!identifier.trim()) { setError("Veuillez entrer votre identifiant / دخل اسمك أو رقمك"); setLoading(false); return }
       const raw = identifier.trim()
       const isPhone = /^[\+0]/.test(raw) && raw.replace(/[\s\-\.]/g, "").length >= 8
       const isEmail = raw.includes("@")
+      // Map UI type to store login type
+      const loginSubtype = externalType === "chr" ? "chr" : externalType === "fournisseur" ? "fournisseur" : "client"
       if (externalType === "chr" && !isPhone && !isEmail) {
-        setError("CHR : utilisez votre adresse email ou numéro de téléphone")
+        setError("CHR : utilisez votre email ou téléphone / CHR: دير الإيميل ولا الهاتف")
         setLoading(false); return
       }
-      const extUser = store.loginExternal(raw, externalType)
-      if (!extUser) { setError("Identifiant non trouvé. Contactez votre commercial FreshLink."); setLoading(false); return }
+      const extUser = store.loginExternal(raw, loginSubtype)
+      if (!extUser) { setError("Identifiant non trouvé — contactez votre commercial / ما لقيناكش — تواصل مع المسؤول"); setLoading(false); return }
       // CHR clients require a password
       if (externalType === "chr") {
-        if (!chrPwd.trim()) { setError("Mot de passe requis pour les clients CHR"); setLoading(false); return }
+        if (!chrPwd.trim()) { setError("Mot de passe requis pour les clients CHR / كلمة السر ضرورية"); setLoading(false); return }
         if (extUser.password && extUser.password !== chrPwd.trim()) {
-          setError("Mot de passe incorrect"); setLoading(false); return
+          setError("Mot de passe incorrect / كلمة السر خاطئة"); setLoading(false); return
         }
       }
       onLogin(extUser)
@@ -580,6 +582,7 @@ export default function LoginPage({ onLogin }: Props) {
                   <span className="text-xl">🌿</span>
                 </div>
                 <span className="text-[8px] font-bold text-green-700 uppercase tracking-wide">Ferme</span>
+                <span className="text-[8px] text-green-600 font-semibold" dir="rtl">الزرع</span>
               </div>
 
               {/* Animated dots left */}
@@ -597,6 +600,7 @@ export default function LoginPage({ onLogin }: Props) {
                   <span className="text-xl">🚛</span>
                 </div>
                 <span className="text-[8px] font-bold text-emerald-700 uppercase tracking-wide">Livraison</span>
+                <span className="text-[8px] text-emerald-600 font-semibold" dir="rtl">التوصيل</span>
               </div>
 
               {/* Animated dots right */}
@@ -614,13 +618,19 @@ export default function LoginPage({ onLogin }: Props) {
                   <span className="text-xl">🏪</span>
                 </div>
                 <span className="text-[8px] font-bold text-teal-700 uppercase tracking-wide">Vous</span>
+                <span className="text-[8px] text-teal-600 font-semibold" dir="rtl">ليكم</span>
               </div>
             </div>
 
-            {/* Tagline */}
-            <p className="text-center text-[10px] font-semibold text-green-700 mt-3 opacity-80">
-              ✨ Fraîcheur garantie — de la récolte à votre table
-            </p>
+            {/* Tagline FR + Darija */}
+            <div className="text-center mt-3 space-y-0.5">
+              <p className="text-[10px] font-semibold text-green-700 opacity-90">
+                ✨ Fraîcheur garantie — de la récolte à votre table
+              </p>
+              <p className="text-[10px] font-semibold text-green-600 opacity-70" dir="rtl">
+                🌟 طازج ومضمون — من الزرع حتى لعندكم
+              </p>
+            </div>
           </div>
         </div>
 
@@ -635,29 +645,59 @@ export default function LoginPage({ onLogin }: Props) {
           <div>
             <h1 className="text-xl font-black text-slate-800">Connexion</h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              {clientMode
-                ? externalType === "chr" ? "Portail CHR — email ou téléphone" : `Portail ${externalType} — nom, téléphone ou email`
-                : "Email ou nom d'utilisateur"}
+              {clientMode ? "Espace Clients & Fournisseurs / فضاء الزبائن والموردين" : "Email ou nom d'utilisateur"}
             </p>
           </div>
 
-          {/* Mode switcher — accès interne uniquement (portail externe sur le site Netlify) */}
+          {/* ── Tab switcher: Personnel | Externe ── */}
+          <div className="flex rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 p-1 gap-1">
+            <button type="button"
+              onClick={() => { setClientMode(false); setIdentifier(""); setPassword(""); setError("") }}
+              className={`flex-1 py-2.5 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center gap-0.5 ${
+                !clientMode ? "bg-white text-green-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}>
+              <span>👔 Personnel / Équipe</span>
+              <span className="text-[9px] font-medium opacity-60">فريق العمل</span>
+            </button>
+            <button type="button"
+              onClick={() => { setClientMode(true); setExternalType("particulier"); setIdentifier(""); setChrPwd(""); setError("") }}
+              className={`flex-1 py-2.5 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center gap-0.5 ${
+                clientMode ? "bg-white text-purple-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}>
+              <span>🌐 Externe / خارجي</span>
+              <span className="text-[9px] font-medium opacity-60">زبائن وموردين</span>
+            </button>
+          </div>
 
           {/* Login form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-2.5" autoComplete="off">
 
-            {/* External sub-type selector */}
+            {/* ── External type selector — Particulier / Marchand / CHR / Fournisseur ── */}
             {clientMode && (
-              <div className="flex rounded-xl overflow-hidden p-1 bg-slate-100 border border-slate-200">
-                {(["client", "fournisseur", "chr"] as ExternalType[]).map(t => (
-                  <button key={t} type="button"
-                    onClick={() => { setExternalType(t); setIdentifier(""); setError("") }}
-                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
-                      externalType === t ? "bg-white text-green-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                    }`}>
-                    {t === "client" ? "🛒 Client" : t === "fournisseur" ? "🚚 Fournisseur" : "🏨 CHR"}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { type: "particulier" as ExternalType, icon: "🛒", label: "Particulier", labelDarija: "زبون عادي", color: "blue" },
+                  { type: "marchand"    as ExternalType, icon: "🏪", label: "Marchand",    labelDarija: "تاجر",       color: "amber" },
+                  { type: "chr"        as ExternalType, icon: "🏨", label: "CHR / HORECA", labelDarija: "فنادق وماكلة", color: "purple" },
+                  { type: "fournisseur" as ExternalType, icon: "🚚", label: "Fournisseur",  labelDarija: "مورد",       color: "emerald" },
+                ] satisfies { type: ExternalType; icon: string; label: string; labelDarija: string; color: string }[]).map(opt => {
+                  const isSelected = externalType === opt.type
+                  const colors: Record<string, string> = {
+                    blue:    isSelected ? "border-blue-400 bg-blue-50 text-blue-700"    : "border-slate-200 bg-white text-slate-500",
+                    amber:   isSelected ? "border-amber-400 bg-amber-50 text-amber-700"  : "border-slate-200 bg-white text-slate-500",
+                    purple:  isSelected ? "border-purple-400 bg-purple-50 text-purple-700": "border-slate-200 bg-white text-slate-500",
+                    emerald: isSelected ? "border-emerald-400 bg-emerald-50 text-emerald-700": "border-slate-200 bg-white text-slate-500",
+                  }
+                  return (
+                    <button key={opt.type} type="button"
+                      onClick={() => { setExternalType(opt.type); setIdentifier(""); setChrPwd(""); setError("") }}
+                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-center ${colors[opt.color]} ${isSelected ? "shadow-sm" : "hover:border-slate-300"}`}>
+                      <span className="text-xl">{opt.icon}</span>
+                      <span className="text-[10px] font-bold leading-tight">{opt.label}</span>
+                      <span className="text-[9px] opacity-60 leading-tight" dir="rtl">{opt.labelDarija}</span>
+                    </button>
+                  )
+                })}
               </div>
             )}
 

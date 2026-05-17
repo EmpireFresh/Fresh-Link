@@ -244,13 +244,13 @@ function DocumentForm({
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Client
+            Client CHR / HORECA
           </label>
           <ComboBox
             items={clientItems}
             value={form.client_id ?? ""}
             onChange={(id, label) => { set("client_id", id); set("client_nom", label) }}
-            placeholder="Rechercher un client…"
+            placeholder="Rechercher un client CHR…"
           />
         </div>
       </div>
@@ -637,7 +637,9 @@ export default function BODocuments({ user }: { user: { id: string; name: string
       setDocs((data ?? []) as Document[])
     } catch { /* offline */ }
 
-    // Load ALL clients — local store + Supabase simultaneously, merge and deduplicate
+    // Load CHR clients — local store + Supabase simultaneously, merge and deduplicate
+    // CHR = type==="chr" OR categorie==="chr"
+    const isChr = (rec: Record<string,unknown>) => rec.type === "chr" || rec.categorie === "chr"
     try {
       // 1. Local store immediately (fast)
       const localAll = store.getClients()
@@ -649,29 +651,30 @@ export default function BODocuments({ user }: { user: { id: string; name: string
         email: c.email,
         adresse: c.adresse,
       })
-      if (localAll.length > 0) {
-        setClients([...localAll].map(toRecord).sort((a, b) => a.nom.localeCompare(b.nom, "fr")))
+      const localChr = localAll.filter(c => isChr(c as unknown as Record<string,unknown>))
+      if (localChr.length > 0) {
+        setClients(localChr.map(toRecord).sort((a, b) => a.nom.localeCompare(b.nom, "fr")))
       }
 
       // 2. Supabase in parallel — always try to get fresh data
       const { data } = await sb.from("fl_clients").select("id, payload")
       if (data && data.length > 0) {
-        const sbClients = (data as { id: string; payload: Record<string, unknown> }[])
-          .filter(r => r.payload?.nom)
+        const sbChr = (data as { id: string; payload: Record<string, unknown> }[])
+          .filter(r => r.payload?.nom && isChr(r.payload))
           .map(r => ({
             id: r.id,
             nom: String(r.payload?.nom ?? ""),
-            type: String(r.payload?.type ?? r.payload?.categorie ?? ""),
+            type: String(r.payload?.type ?? r.payload?.categorie ?? "chr"),
             telephone: r.payload?.telephone as string | undefined,
             email: r.payload?.email as string | undefined,
             adresse: r.payload?.adresse as string | undefined,
             ville: r.payload?.ville as string | undefined,
           } as ClientRecord))
           .sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
-        // Merge: Supabase wins (more up-to-date), fill gaps with local
-        const ids = new Set(sbClients.map(c => c.id))
-        const localExtra = localAll.map(toRecord).filter(c => !ids.has(c.id))
-        const merged = [...sbClients, ...localExtra].sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
+        // Merge: Supabase wins, fill gaps with local CHR
+        const ids = new Set(sbChr.map(c => c.id))
+        const localExtra = localChr.map(toRecord).filter(c => !ids.has(c.id))
+        const merged = [...sbChr, ...localExtra].sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
         if (merged.length > 0) setClients(merged)
       }
     } catch { /* offline — local store data already shown */ }
