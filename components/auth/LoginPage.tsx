@@ -171,6 +171,30 @@ export default function LoginPage({ onLogin }: Props) {
   const [selectedGroup, setSelectedGroup] = useState<DemoGroup>("Direction")
   const [externalType, setExternalType] = useState<ExternalType>("client")
 
+  // ── Must-change-password flow ────────────────────────────────────────────────
+  const [mustChangePwd, setMustChangePwd]     = useState<User | null>(null)
+  const [newPwd1, setNewPwd1]                 = useState("")
+  const [newPwd2, setNewPwd2]                 = useState("")
+  const [changePwdError, setChangePwdError]   = useState("")
+  const [changePwdLoading, setChangePwdLoading] = useState(false)
+
+  const handleChangePassword = async () => {
+    if (!mustChangePwd) return
+    if (newPwd1.length < 6) { setChangePwdError("Minimum 6 caractères requis"); return }
+    if (newPwd1 !== newPwd2) { setChangePwdError("Les mots de passe ne correspondent pas"); return }
+    setChangePwdLoading(true)
+    const users = store.getUsers()
+    const idx = users.findIndex(u => u.id === mustChangePwd.id)
+    if (idx >= 0) {
+      users[idx] = { ...users[idx], password: newPwd1, mustChangePassword: false }
+      store.saveUsers(users)
+    }
+    const updatedUser = { ...mustChangePwd, password: newPwd1, mustChangePassword: false }
+    setChangePwdLoading(false)
+    setMustChangePwd(null)
+    await offerBiometricAfterLogin(updatedUser)
+  }
+
   // ── Entrance animations ──────────────────────────────────────────────────────
   const [companyBrand, setCompanyBrand] = useState(() => store.getCompanyConfig())
   const [panelIn, setPanelIn] = useState(false)
@@ -318,6 +342,19 @@ export default function LoginPage({ onLogin }: Props) {
     if (!identifier.trim() || !password.trim()) { setError("Remplissez tous les champs"); setLoading(false); return }
     const user = store.login(identifier.trim(), password)
     if (user) {
+      // First-login: must change password before continuing
+      if (user.mustChangePassword) {
+        setMustChangePwd(user)
+        setLoading(false)
+        return
+      }
+      // Offer biometric enrollment after first successful password login
+      setLoggedInUser(user)
+      if (biometricSupported && !getStoredCreds().some(c => c.userId === user.id)) {
+        setShowBiometricTip(true)
+        setLoading(false)
+        return
+      }
       const iface = getUserInterface(user)
       if (iface === "both") {
         const forcedView = store.loginGetForcedView(identifier.trim(), password)
@@ -341,6 +378,75 @@ export default function LoginPage({ onLogin }: Props) {
     if (idx >= 0) { users[idx] = { ...users[idx], password: newPwd }; store.saveUsers(users) }
     await sendEmail({ to_email: found.email, subject: "FreshLink Pro — Nouveau mot de passe", body: `Bonjour ${found.name},\n\nVotre nouveau mot de passe FreshLink Pro :\n  Email : ${found.email}\n  Mot de passe : ${newPwd}\n\nMerci de le changer lors de votre prochaine connexion.` })
     setForgotStatus("sent")
+  }
+
+  // ── Must-change-password screen ──────────────────────────────────────────────
+  if (mustChangePwd) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
+        <div className="w-full max-w-sm bg-white rounded-2xl border border-amber-200 shadow-lg p-8 flex flex-col gap-6">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center">
+              <svg className="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-base font-black text-slate-800">Changement de mot de passe requis</p>
+              <p className="text-xs text-slate-500 mt-1">Bonjour <strong>{mustChangePwd.name}</strong> — créez votre mot de passe personnel avant de continuer.</p>
+              <p className="text-[10px] text-amber-600 mt-1 font-semibold" dir="rtl">مرحبا — يرجى تغيير كلمة السر الخاصة بك</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-600">Nouveau mot de passe</label>
+              <input
+                type="password"
+                value={newPwd1}
+                onChange={e => { setNewPwd1(e.target.value); setChangePwdError("") }}
+                placeholder="Min. 6 caractères"
+                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-600">Confirmer le mot de passe</label>
+              <input
+                type="password"
+                value={newPwd2}
+                onChange={e => { setNewPwd2(e.target.value); setChangePwdError("") }}
+                placeholder="Répétez le mot de passe"
+                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+
+            {changePwdError && (
+              <p className="text-xs text-red-600 font-medium px-1">{changePwdError}</p>
+            )}
+
+            {/* Password strength indicator */}
+            <div className="flex gap-1">
+              {[4, 6, 8, 10].map(min => (
+                <div key={min} className={`h-1 flex-1 rounded-full transition-colors ${
+                  newPwd1.length >= min ? "bg-green-500" : "bg-slate-200"
+                }`} />
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-400 text-center">
+              {newPwd1.length < 4 ? "Trop court" : newPwd1.length < 6 ? "Faible" : newPwd1.length < 8 ? "Bon" : "Fort ✓"}
+            </p>
+
+            <button
+              onClick={handleChangePassword}
+              disabled={changePwdLoading || newPwd1.length < 6}
+              className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-colors disabled:opacity-50"
+            >
+              {changePwdLoading ? "Enregistrement..." : "Confirmer mon mot de passe"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // ── Interface picker ─────────────────────────────────────────────────────────

@@ -3,11 +3,14 @@
 import { useState, useEffect } from "react"
 import { getLang, setLang, applyStoredLang, type AppLang } from "@/lib/lang"
 
-interface Props {
-  compact?: boolean
-}
+const LANG_OPTIONS: { value: AppLang; flag: string; label: string }[] = [
+  { value: "fr-ar", flag: "🇫🇷🇲🇦", label: "FR / AR" },
+  { value: "fr",    flag: "🇫🇷",    label: "Français" },
+  { value: "ar",    flag: "🇲🇦",    label: "العربية"  },
+  { value: "en",    flag: "🇬🇧",    label: "English"  },
+]
 
-export default function LangSwitcher({ compact = false }: Props) {
+export default function LangSwitcher({ compact = false }: { compact?: boolean }) {
   const [lang, setLangState] = useState<AppLang>("fr-ar")
 
   useEffect(() => {
@@ -18,59 +21,43 @@ export default function LangSwitcher({ compact = false }: Props) {
     return () => window.removeEventListener("fl_lang_change", handler)
   }, [])
 
-  function select(which: "fr" | "ar" | "en") {
-    let next: AppLang
-    if (which === "en") {
-      next = "en"
-    } else if (lang === "en") {
-      // Coming from EN → activate the clicked language in bilingual default
-      next = which === "fr" ? "fr-ar" : "ar"
-    } else if (which === "fr") {
-      next = lang === "fr-ar" ? "ar" : lang === "fr" ? "fr-ar" : "fr"
-    } else {
-      next = lang === "fr-ar" ? "fr" : lang === "ar" ? "fr-ar" : "ar"
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = e.target.value as AppLang
     setLang(next)
     setLangState(next)
   }
 
-  const frOn = lang === "fr" || lang === "fr-ar"
-  const arOn = lang === "ar" || lang === "fr-ar"
-  const enOn = lang === "en"
+  const current = LANG_OPTIONS.find(o => o.value === lang) ?? LANG_OPTIONS[0]
 
   if (compact) {
     return (
-      <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
-        <button onClick={() => select("fr")} title="Français"
-          className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold transition-all ${frOn ? "bg-white shadow-sm text-blue-700 border border-blue-200" : "text-slate-400 hover:text-slate-600"}`}>
-          🇫🇷
-        </button>
-        <button onClick={() => select("ar")} title="العربية"
-          className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold transition-all ${arOn ? "bg-white shadow-sm text-emerald-700 border border-emerald-200" : "text-slate-400 hover:text-slate-600"}`}>
-          🇲🇦
-        </button>
-        <button onClick={() => select("en")} title="English"
-          className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold transition-all ${enOn ? "bg-white shadow-sm text-violet-700 border border-violet-200" : "text-slate-400 hover:text-slate-600"}`}>
-          🇬🇧
-        </button>
-      </div>
+      <select
+        value={lang}
+        onChange={handleChange}
+        title="Langue / Language"
+        className="text-[11px] font-bold rounded-lg border border-slate-200 bg-slate-100 px-1.5 py-1 cursor-pointer hover:bg-white transition-colors focus:outline-none focus:ring-1 focus:ring-slate-300"
+        style={{ maxWidth: 70 }}
+      >
+        {LANG_OPTIONS.map(o => (
+          <option key={o.value} value={o.value}>{o.flag} {o.label}</option>
+        ))}
+      </select>
     )
   }
 
   return (
-    <div className="flex items-center gap-0.5 p-0.5 rounded-xl bg-slate-100 border border-slate-200">
-      <button onClick={() => select("fr")} title="Français"
-        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${frOn ? "bg-white shadow-sm text-blue-700 border border-blue-200" : "text-slate-400 hover:text-slate-600"}`}>
-        🇫🇷 <span>FR</span>
-      </button>
-      <button onClick={() => select("ar")} title="العربية"
-        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${arOn ? "bg-white shadow-sm text-emerald-700 border border-emerald-200" : "text-slate-400 hover:text-slate-600"}`}>
-        🇲🇦 <span>AR</span>
-      </button>
-      <button onClick={() => select("en")} title="English"
-        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${enOn ? "bg-white shadow-sm text-violet-700 border border-violet-200" : "text-slate-400 hover:text-slate-600"}`}>
-        🇬🇧 <span>EN</span>
-      </button>
+    <div className="flex items-center gap-1.5">
+      <span className="text-base leading-none">{current.flag}</span>
+      <select
+        value={lang}
+        onChange={handleChange}
+        title="Langue / Language"
+        className="text-[11px] font-bold rounded-xl border border-slate-200 bg-slate-100 px-2 py-1.5 cursor-pointer hover:bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
+      >
+        {LANG_OPTIONS.map(o => (
+          <option key={o.value} value={o.value}>{o.flag} {o.label}</option>
+        ))}
+      </select>
     </div>
   )
 }

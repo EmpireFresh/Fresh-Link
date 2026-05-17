@@ -135,19 +135,36 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
     })
   }, [canAccess])
 
+  // Détecter si l'utilisateur courant est un compte démo
+  const isCurrentUserDemo = (() => {
+    try {
+      const session = store.getSession()
+      if (!session) return false
+      const demoEmails = new Set(["livreur@freshlink.ma","client.demo@freshlink.ma","fournisseur.demo@freshlink.ma"])
+      return demoEmails.has(session.email?.toLowerCase() ?? "") || (session.name?.toLowerCase().startsWith("demo") ?? false)
+    } catch { return false }
+  })()
+
   useEffect(() => {
     if (!canAccess) return
     setSbStatus("syncing")
     fetchClients().then(({ clients, source }) => {
-      setSbStatus(source === "supabase" ? "ok" : "local")
-      setSbMsg(source === "supabase"
-        ? `${clients.length} clients synchronisés depuis Supabase`
-        : `Mode local — ${clients.length} clients (Supabase non connecté)`)
+      if (source === "supabase") {
+        setSbStatus("ok")
+        setSbMsg(`✅ ${clients.length} clients synchronisés depuis Supabase`)
+      } else {
+        setSbStatus("local")
+        if (isCurrentUserDemo) {
+          setSbMsg(`📱 Mode démo — ${clients.length} clients (données de démonstration)`)
+        } else {
+          setSbMsg(`⚠️ Mode hors-ligne — données en cache local (Supabase non connecté)`)
+        }
+      }
     }).catch(() => {
       setSbStatus("local")
-      setSbMsg("Mode local (Supabase inaccessible)")
+      setSbMsg("⚠️ Mode hors-ligne (Supabase inaccessible)")
     })
-  }, [canAccess])
+  }, [canAccess, isCurrentUserDemo])
 
   // fl_sync_error listener — must be before guard
   useEffect(() => {
@@ -163,22 +180,33 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
   // 3rd useEffect: reload table data when section changes — must also be before guard
   useEffect(() => {
     if (!canAccess) return
+    // Pour les comptes non-démo : filtrer les entrées de seed/démo
+    // Une entrée est "démo" si createdBy est un compte démo ou si le nom commence par "Demo_"
+    const demoCreators = new Set(["u_com_demo","u_liv_demo","demo_admin","demo_seed"])
+    const filterDemo = <T extends Record<string,unknown>>(arr: T[]): T[] => {
+      if (isCurrentUserDemo) return arr // démo voit tout
+      return arr.filter(item => {
+        const cb = String(item.createdBy ?? item.created_by ?? "")
+        const nom = String(item.nom ?? item.name ?? item.libelle ?? "").toLowerCase()
+        return !demoCreators.has(cb) && !nom.startsWith("demo_") && !nom.startsWith("__test")
+      })
+    }
     const loaders: Record<Section, () => unknown[]> = {
-      achats:       () => store.getBonsAchat(),
-      commandes:    () => store.getCommandes(),
-      receptions:   () => store.getReceptions(),
-      stock:        () => store.getArticles(),
-      livraisons:   () => store.getBonsLivraison(),
-      retours:      () => store.getRetours(),
-      trips:        () => store.getTrips(),
-      trip_charges: () => store.getTripCharges(),
-      caisses_mvt:  () => store.getCaissesMovements(),
-      clients:      () => store.getClients(),
-      users:        () => store.getUsers().map(u => ({ ...u, password: "***" })),
+      achats:       () => filterDemo(store.getBonsAchat() as Record<string,unknown>[]),
+      commandes:    () => filterDemo(store.getCommandes() as Record<string,unknown>[]),
+      receptions:   () => filterDemo(store.getReceptions() as Record<string,unknown>[]),
+      stock:        () => filterDemo(store.getArticles() as Record<string,unknown>[]),
+      livraisons:   () => filterDemo(store.getBonsLivraison() as Record<string,unknown>[]),
+      retours:      () => filterDemo(store.getRetours() as Record<string,unknown>[]),
+      trips:        () => filterDemo(store.getTrips() as Record<string,unknown>[]),
+      trip_charges: () => filterDemo(store.getTripCharges() as Record<string,unknown>[]),
+      caisses_mvt:  () => filterDemo(store.getCaissesMovements() as Record<string,unknown>[]),
+      clients:      () => filterDemo(store.getClients() as Record<string,unknown>[]),
+      users:        () => filterDemo(store.getUsers().map(u => ({ ...u, password: "***" })) as Record<string,unknown>[]),
     }
     setData(loaders[section]())
     setSearch("")
-  }, [section, canAccess])
+  }, [section, canAccess, isCurrentUserDemo])
 
   // Guard AFTER all hooks — safe conditional render
   if (!canAccess) return <AccessDenied />
