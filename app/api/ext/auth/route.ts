@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { createHmac } from "crypto"
 
 // ══════════════════════════════════════════════════════════════
-// POST /api/ext/auth — Authentification externe (clients du site)
-// Utilisé par empire-fresh.netlify.app pour connecter les clients
-// Retourne un token de session (24h) + profil client complet
+// POST /api/ext/auth — Authentification par numéro de téléphone
+// Utilisé par empire-fresh.netlify.app
+// Accepte: { phone, password }  OU  { email, password } (fallback)
 // ══════════════════════════════════════════════════════════════
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  ?? "https://jwdrwapuetqoqnankgma.supabase.co"
@@ -19,14 +19,12 @@ function cors(origin: string | null): HeadersInit {
   }
 }
 
-/** Génère un token simple signé HMAC-SHA256 */
-function signToken(payload: object): string {
+export function signToken(payload: object): string {
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url")
   const sig  = createHmac("sha256", AUTH_SECRET).update(data).digest("base64url")
   return `${data}.${sig}`
 }
 
-/** Vérifie et décode un token — null si invalide */
 export function verifyToken(token: string): Record<string, unknown> | null {
   try {
     const [data, sig] = token.split(".")
@@ -36,59 +34,87 @@ export function verifyToken(token: string): Record<string, unknown> | null {
     const payload = JSON.parse(Buffer.from(data, "base64url").toString())
     if (payload.exp && payload.exp < Date.now()) return null
     return payload
-  } catch {
-    return null
-  }
+  } catch { return null }
 }
 
-async function sbGet(table: string, filter: string): Promise<unknown[]> {
-  const res = await fetch(`${SB_URL}/rest/v1/${table}?${filter}`, {
-    headers: {
-      apikey: SB_ANON,
-      Authorization: `Bearer ${SB_ANON}`,
-      "Content-Type": "application/json",
-    },
+/**
+ * Normalise un numéro marocain en format court 06XXXXXXXX ou long 212XXXXXXXX
+ * Accepte : 06..., 07..., +212..., 00212..., 212...
+ */
+function normalizePhone(raw: string): { local: string; intl: string } {
+  const d = raw.replace(/[\s\-\.\(\)\+]/g, "")
+  let base = d
+  if (base.startsWith("00212")) base = base.slice(5)
+  else if (base.startsWith("212")) base = base.slice(3)
+  else if (base.startsWith("0"))  base = base.slice(1)
+  const local = "0" + base       // 0661234567
+  const intl  = "212" + base     // 212661234567
+  return { local, intl }
+}
+
+async function sbQuery(filter: string): Promise<any[]> {
+  const res = await fetch(`${SB_URL}/rest/v1/fl_users?${filter}`, {
+    headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` },
   })
   if (!res.ok) return []
   return res.json()
 }
 
+async function sbGetClient(clientId: string): Promise<any | null> {
+  const res = await fetch(`${SB_URL}/rest/v1/fl_clients?id=eq.${encodeURIComponent(clientId)}&limit=1`, {
+    headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` },
+  })
+  if (!res.ok) return null
+  const rows = await res.json()
+  return rows?.[0] ?? null
+}
+
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin")
   try {
-    const { email, password } = await req.json()
+    const body = await req.json()
+    const { phone, email, password } = body
 
-    if (!email?.trim() || !password?.trim()) {
+    if ((!phone?.trim() && !email?.trim()) || !password?.trim()) {
       return NextResponse.json(
-        { error: "Email et mot de passe requis." },
+        { error: "Numéro de téléphone et mot de passe requis." },
         { status: 400, headers: cors(origin) }
       )
     }
 
-    // 1. Chercher l'utilisateur dans fl_users
-    const emailLower = email.trim().toLowerCase()
-    const users = await sbGet("fl_users", `email=eq.${encodeURIComponent(emailLower)}&select=*&limit=1`) as any[]
+    let users: any[] = []
+
+    if (phone?.trim()) {
+      // ── Auth par téléphone (mode principal) ──
+      const { local, intl } = normalizePhone(phone.trim())
+      // On cherche dans les colonnes telephone ET phone, en format local ET international
+      users = await sbQuery(
+        `or=(telephone.eq.${encodeURIComponent(local)},telephone.eq.${encodeURIComponent(intl)},phone.eq.${encodeURIComponent(local)},phone.eq.${encodeURIComponent(intl)})&select=*&limit=1`
+      )
+    } else if (email?.trim()) {
+      // ── Fallback email (admin/test) ──
+      users = await sbQuery(
+        `email=eq.${encodeURIComponent(email.trim().toLowerCase())}&select=*&limit=1`
+      )
+    }
 
     if (!users || users.length === 0) {
       return NextResponse.json(
-        { error: "Identifiants incorrects." },
+        { error: "Numéro ou mot de passe incorrect." },
         { status: 401, headers: cors(origin) }
       )
     }
 
     const user = users[0]
 
-    // 2. Vérification du mot de passe (stocké en clair dans l'app)
-    const isValid = user.password === password || user.passwordMobile === password
-
-    if (!isValid) {
+    // Vérification mot de passe
+    if (user.password !== password && user.passwordMobile !== password) {
       return NextResponse.json(
-        { error: "Identifiants incorrects." },
+        { error: "Numéro ou mot de passe incorrect." },
         { status: 401, headers: cors(origin) }
       )
     }
 
-    // 3. Vérifier que le compte est actif + rôle autorisé pour l'accès externe
     if (!user.actif) {
       return NextResponse.json(
         { error: "Compte désactivé. Contactez votre commercial." },
@@ -96,56 +122,40 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const ALLOWED_ROLES = ["client", "fournisseur", "resp_commercial", "admin", "super_admin", "super_super_admin"]
-    if (!ALLOWED_ROLES.includes(user.role)) {
+    const ALLOWED = ["client", "fournisseur", "resp_commercial", "admin", "super_admin", "super_super_admin"]
+    if (!ALLOWED.includes(user.role)) {
       return NextResponse.json(
         { error: "Accès non autorisé pour ce type de compte." },
         { status: 403, headers: cors(origin) }
       )
     }
 
-    // 4. Récupérer le profil client si lié
+    // Récupérer le profil client si lié
     let client: any = null
-    if (user.clientId) {
-      const clients = await sbGet("fl_clients", `id=eq.${encodeURIComponent(user.clientId)}&select=*&limit=1`) as any[]
-      if (clients && clients.length > 0) client = clients[0]
-    }
+    if (user.clientId) client = await sbGetClient(user.clientId)
 
-    // 5. Générer le token (24h)
-    const token = signToken({
-      userId:   user.id,
-      email:    emailLower,
-      role:     user.role,
-      clientId: user.clientId ?? null,
-      categorie: client?.categorie ?? null,
-      iat: Date.now(),
-      exp: Date.now() + 86_400_000, // 24h
-    })
+    const exp = Date.now() + 86_400_000
+    const token = signToken({ userId: user.id, email: user.email, role: user.role, clientId: user.clientId ?? null, exp })
 
-    // 6. Réponse
-    const profile = {
-      id:       user.id,
-      name:     user.name,
-      email:    emailLower,
-      role:     user.role,
-      phone:    user.phone ?? user.telephone ?? null,
-      clientId: user.clientId ?? null,
-      // Infos client
-      categorie:      client?.categorie ?? null,
-      loyaltyPoints:  client?.loyaltyPoints ?? 0,
-      remisePct:      client?.remisePct ?? 0,
-      remiseActive:   client?.remiseActive ?? false,
-      promotions:     client?.promotions ?? [],
-      segment:        client?.segment ?? "standard",
-      // Société
-      nomSociete:     client?.nom ?? user.name,
-      ville:          client?.ville ?? client?.zone ?? null,
-    }
+    return NextResponse.json({
+      token,
+      user: {
+        id:           user.id,
+        name:         user.name,
+        email:        user.email ?? null,
+        role:         user.role,
+        phone:        user.telephone ?? user.phone ?? null,
+        clientId:     user.clientId ?? null,
+        categorie:    client?.categorie ?? null,
+        loyaltyPoints: client?.loyaltyPoints ?? 0,
+        remisePct:    client?.remisePct ?? 0,
+        remiseActive: client?.remiseActive ?? false,
+        promotions:   client?.promotions ?? [],
+        segment:      client?.segment ?? "standard",
+        nomSociete:   client?.nom ?? user.name,
+      },
+    }, { status: 200, headers: cors(origin) })
 
-    return NextResponse.json(
-      { token, user: profile },
-      { status: 200, headers: cors(origin) }
-    )
   } catch (e: any) {
     console.error("[POST /api/ext/auth]", e)
     return NextResponse.json({ error: e.message ?? "Erreur serveur." }, { status: 500, headers: cors(origin) })

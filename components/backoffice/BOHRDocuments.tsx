@@ -141,9 +141,19 @@ function generateDoc(
   const ville = extra.ville ?? "Casablanca"
   const dateEmb = extra.dateDebut ?? salarie?.dateEmbauche ?? date
 
+  const header = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        ${company}
+              Distribution Alimentaire Professionnelle
+            Zone Industrielle, Casablanca, Maroc
+            Tél : +212 5XX-XXXXXX  |  contact@empire-fresh.ma
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`
+
+  let body = ""
   switch (type) {
     case "contrat":
-      return `CONTRAT DE TRAVAIL À DURÉE INDÉTERMINÉE (CDI)
+      body = `CONTRAT DE TRAVAIL À DURÉE INDÉTERMINÉE (CDI)
 Loi 65-99 — Code du Travail Marocain
 
 ENTRE : ${company} (Employeur)
@@ -176,10 +186,12 @@ Loi 65-99 — Juridiction de ${ville}.
 
 Fait à ${ville}, le ${date}
 
-${company} — Signature & Cachet :          ${civ} ${nom} — Signature (Lu et approuvé) :`
+Empire Fresh — Direction des Ressources Humaines
+Signature & Cachet :          ${civ} ${nom} — Signature (Lu et approuvé) :`
+      break
 
     case "contrat_cdd":
-      return `CONTRAT DE TRAVAIL À DURÉE DÉTERMINÉE (CDD)
+      body = `CONTRAT DE TRAVAIL À DURÉE DÉTERMINÉE (CDD)
 Arts. 16-20 — Loi 65-99 — Code du Travail Marocain
 
 ENTRE : ${company} (Employeur)
@@ -195,10 +207,12 @@ Indemnité de fin de CDD: 5% du total du salaire brut perçu (si non renouvellem
 
 Fait à ${ville}, le ${date}
 
-${company} — Signature & Cachet :          ${civ} ${nom} — Signature :`
+${company} — Direction des Ressources Humaines
+Signature & Cachet :          ${civ} ${nom} — Signature :`
+      break
 
     case "attestation_travail":
-      return `ATTESTATION DE TRAVAIL
+      body = `ATTESTATION DE TRAVAIL
 
 Je soussigné(e), Directeur(rice) Général(e) de ${company}, atteste que :
 
@@ -213,11 +227,12 @@ Délivrée à la demande de l'intéressé(e) pour faire valoir ce que de droit.
 
 Fait à ${ville}, le ${date}
 
-Directeur(rice) Général(e) — ${company}
+Empire Fresh — Direction des Ressources Humaines
 Signature & Cachet :`
+      break
 
     case "attestation_salaire":
-      return `ATTESTATION DE SALAIRE ET DE TRAVAIL
+      body = `ATTESTATION DE SALAIRE ET DE TRAVAIL
 
 Je soussigné(e), Directeur(rice) Général(e) de ${company}, atteste que :
 
@@ -233,11 +248,12 @@ Cotisations légales prélevées à la source (CNSS 4,48% + AMO 2,26% + IR barè
 
 Fait à ${ville}, le ${date}
 
-Directeur(rice) Général(e) — ${company}
+Empire Fresh — Direction des Ressources Humaines
 Signature & Cachet :`
+      break
 
     case "avertissement":
-      return `LETTRE D'AVERTISSEMENT
+      body = `LETTRE D'AVERTISSEMENT
 Réf: AV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}
 
 À : ${civ} ${nom} — Poste: ${roleUp}
@@ -257,10 +273,11 @@ Vous disposez de 48h pour nous faire parvenir vos observations écrites (Art. 62
 
 Fait à ${ville}, le ${date}
 
-Direction RH — ${company} — Signature & Cachet :`
+Empire Fresh — Direction des Ressources Humaines — Signature & Cachet :`
+      break
 
     case "mise_en_demeure":
-      return `MISE EN DEMEURE FORMELLE (RAR)
+      body = `MISE EN DEMEURE FORMELLE (RAR)
 Réf: MED-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}
 
 À : ${civ} ${nom} — CIN: ${cin} — Poste: ${roleUp}
@@ -279,15 +296,17 @@ Délai de réponse: 72 heures à compter de la réception du présent courrier.
 
 Fait à ${ville}, le ${date}
 
-Directeur(rice) Général(e) — ${company} — Signature & Cachet :
+Empire Fresh — Direction des Ressources Humaines — Signature & Cachet :
 
 Accusé de réception (date & signature du salarié) :`
+      break
 
     case "fiche_paie":
-      return "[Généré via le moteur d'impression — utilisez le bouton Imprimer Bulletin]"
+      body = "[Généré via le moteur d'impression — utilisez le bouton Imprimer Bulletin]"
+      break
 
     case "solde_tout_compte":
-      return `REÇU POUR SOLDE DE TOUT COMPTE
+      body = `REÇU POUR SOLDE DE TOUT COMPTE
 Art. 73-75 — Loi 65-99 — Code du Travail Marocain
 
 Je soussigné(e), ${civ} ${nom}
@@ -309,10 +328,12 @@ Le salarié dispose de 60 jours pour dénoncer ce reçu par lettre recommandée 
 
 Fait à ${ville}, le ${date}
 
-${company} — Signature & Cachet :       ${civ} ${nom} — "Reçu pour solde de tout compte" :`
+Empire Fresh — Direction des Ressources Humaines
+Signature & Cachet :       ${civ} ${nom} — "Reçu pour solde de tout compte" :`
+      break
 
     case "rupture_conventionnelle":
-      return `CONVENTION DE RUPTURE DU CONTRAT
+      body = `CONVENTION DE RUPTURE DU CONTRAT
 D'un commun accord — Art. 36 — Loi 65-99
 
 ENTRE : ${company} (Employeur)
@@ -325,10 +346,12 @@ Art. 4 — Renonciation mutuelle à tout recours ultérieur
 
 Fait à ${ville}, le ${date}
 
-${company} — Signature & Cachet :       ${civ} ${nom} — Signature :`
+Empire Fresh — Direction des Ressources Humaines
+Signature & Cachet :       ${civ} ${nom} — Signature :`
+      break
 
     case "conge_sans_solde":
-      return `AUTORISATION DE CONGÉ SANS SOLDE
+      body = `AUTORISATION DE CONGÉ SANS SOLDE
 Réf: CSS-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}
 
 À : ${civ} ${nom} — Poste: ${roleUp}
@@ -344,11 +367,14 @@ Conditions:
 
 Fait à ${ville}, le ${date}
 
-Direction — ${company} — Signature & Cachet :`
+Empire Fresh — Direction des Ressources Humaines — Signature & Cachet :`
+      break
 
     default:
-      return ""
+      body = ""
   }
+
+  return body ? header + body : ""
 }
 
 
@@ -657,8 +683,8 @@ export default function BOHRDocuments({ user }: { user: User }) {
   const company = useMemo(() => {
     try {
       const cfg = JSON.parse(localStorage.getItem("fl_company_config") ?? "{}")
-      return cfg.nom ?? "FreshLink Pro"
-    } catch { return "FreshLink Pro" }
+      return cfg.nom ?? "Empire Fresh"
+    } catch { return "Empire Fresh" }
   }, [])
 
   const companyConfig = useMemo(() => {

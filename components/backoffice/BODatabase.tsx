@@ -151,18 +151,18 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
     fetchClients().then(({ clients, source }) => {
       if (source === "supabase") {
         setSbStatus("ok")
-        setSbMsg(`✅ ${clients.length} clients synchronisés depuis Supabase`)
+        setSbMsg(`${clients.length} clients — Supabase actif`)
       } else {
         setSbStatus("local")
         if (isCurrentUserDemo) {
-          setSbMsg(`📱 Mode démo — ${clients.length} clients (données de démonstration)`)
+          setSbMsg(`${clients.length} entrées — compte démo`)
         } else {
-          setSbMsg(`⚠️ Mode hors-ligne — données en cache local (Supabase non connecté)`)
+          setSbMsg(`${clients.length} entrées locales — Supabase non joignable`)
         }
       }
     }).catch(() => {
       setSbStatus("local")
-      setSbMsg("⚠️ Mode hors-ligne (Supabase inaccessible)")
+      setSbMsg("Supabase inaccessible — données locales affichées")
     })
   }, [canAccess, isCurrentUserDemo])
 
@@ -427,12 +427,18 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
           <p className="text-sm text-muted-foreground">Consultation de toutes les données — synchronisation Supabase</p>
         </div>
         {/* Supabase status pill */}
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${sbStatus === "ok" ? "bg-green-50 border-green-200 text-green-700" : sbStatus === "local" ? "bg-amber-50 border-amber-200 text-amber-700" : sbStatus === "syncing" ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-muted border-border text-muted-foreground"}`}>
-          {sbStatus === "syncing"
-            ? <div className="w-2.5 h-2.5 border border-blue-500 border-t-transparent rounded-full animate-spin" />
-            : <div className={`w-2 h-2 rounded-full ${sbStatus === "ok" ? "bg-green-500" : sbStatus === "local" ? "bg-amber-500" : "bg-gray-400"}`} />}
-          {sbStatus === "syncing" ? "Sync Supabase..." : sbStatus === "ok" ? "Supabase connecte" : sbStatus === "local" ? "Mode local" : "—"}
-          {sbMsg && <span className="hidden sm:inline text-[10px] opacity-70 ml-1">— {sbMsg}</span>}
+        <div className="flex flex-col items-end gap-1">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${sbStatus === "ok" ? "bg-green-50 border-green-200 text-green-700" : sbStatus === "local" ? "bg-amber-50 border-amber-200 text-amber-700" : sbStatus === "syncing" ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-muted border-border text-muted-foreground"}`}>
+            {sbStatus === "syncing"
+              ? <div className="w-2.5 h-2.5 border border-blue-500 border-t-transparent rounded-full animate-spin" />
+              : <div className={`w-2 h-2 rounded-full ${sbStatus === "ok" ? "bg-green-500" : sbStatus === "local" ? "bg-amber-500" : "bg-gray-400"}`} />}
+            {sbStatus === "syncing" ? "Synchronisation Supabase..." : sbStatus === "ok" ? "✅ Supabase connecté" : sbStatus === "local" ? "🔵 Données locales" : "—"}
+          </div>
+          {sbMsg && (
+            <span className={`text-[11px] font-medium px-2 ${sbStatus === "ok" ? "text-green-600" : sbStatus === "local" ? "text-amber-600" : "text-muted-foreground"}`}>
+              {sbMsg}
+            </span>
+          )}
         </div>
       </div>
 

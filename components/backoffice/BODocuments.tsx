@@ -439,8 +439,9 @@ function generateDocumentHTML(doc: Document, company: CompanyConfig): string {
   .page { max-width: 900px; margin: 0 auto; padding: 40px; }
   .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; border-bottom:3px solid #1a4f2a; padding-bottom:20px; }
   .logo-block { display:flex; flex-direction:column; gap:4px; }
-  .company-name { font-size:24px; font-weight:900; color:#1a4f2a; letter-spacing:-0.5px; }
-  .company-sub { font-size:12px; color:#6b7280; }
+  .company-name { font-size:28px; font-weight:900; color:#1a4f2a; letter-spacing:-0.5px; }
+  .company-tagline { font-size:11px; font-weight:700; color:#15803d; letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+  .company-sub { font-size:11px; color:#6b7280; margin-top:1px; }
   .doc-block { text-align:right; }
   .doc-type { font-size:22px; font-weight:800; color:#1a4f2a; text-transform:uppercase; }
   .doc-num { font-size:14px; color:#374151; font-weight:600; margin-top:4px; }
@@ -481,9 +482,10 @@ function generateDocumentHTML(doc: Document, company: CompanyConfig): string {
     <div class="logo-block">
       ${company.logo ? `<img src="${company.logo}" style="height:60px;object-fit:contain;margin-bottom:8px" alt="Logo" />` : ""}
       <div class="company-name">${company.nom || "Empire Fresh"}</div>
-      <div class="company-sub">${company.adresse ? company.adresse + " — " : ""}${company.ville || "Casablanca"}, ${company.pays || "Maroc"}</div>
-      ${company.telephone ? `<div class="company-sub">Tél : ${company.telephone}</div>` : ""}
-      ${company.email ? `<div class="company-sub">Email : ${company.email}</div>` : ""}
+      <div class="company-tagline">Distribution Alimentaire Professionnelle</div>
+      <div class="company-sub" style="margin-top:6px;font-style:italic;color:#6b7280">Qualité • Fiabilité • Fraîcheur</div>
+      <div class="company-sub" style="margin-top:6px">${company.adresse || "Zone Industrielle"}${company.ville ? " — " + company.ville : ", Casablanca"}, ${company.pays || "Maroc"}</div>
+      <div class="company-sub">Tél : ${company.telephone || "+212 5XX-XXXXXX"}  |  ${company.email || "contact@empire-fresh.ma"}</div>
       ${company.ice ? `<div class="company-sub">ICE : ${company.ice}</div>` : ""}
     </div>
     <div class="doc-block">
@@ -561,7 +563,9 @@ function generateDocumentHTML(doc: Document, company: CompanyConfig): string {
       <div class="signature-block">
         <div class="sig-label">Fournisseur</div>
         <div class="sig-line"></div>
-        <div style="font-size:11px;color:#6b7280">${company.nom || "Empire Fresh"}</div>
+        <div style="font-size:11px;font-weight:700;color:#1a4f2a">${company.nom || "Empire Fresh"}</div>
+        <div style="font-size:10px;color:#6b7280">Distribution Alimentaire Professionnelle</div>
+        <div style="font-size:10px;color:#6b7280">${company.email || "contact@empire-fresh.ma"}</div>
       </div>
       <div class="signature-block">
         <div class="sig-label">Client — Lu et approuvé</div>
@@ -605,7 +609,7 @@ function shareWhatsApp(doc: Document) {
 function shareEmail(doc: Document, company: CompanyConfig) {
   const total = doc.tva_pct > 0 ? doc.montant_ttc : doc.montant_net
   const subject = `${TYPE_LABELS[doc.type_doc]} N° ${doc.numero} — ${doc.client_nom}`
-  const body = `Bonjour,\n\nVeuillez trouver ci-joint le ${TYPE_LABELS[doc.type_doc].toLowerCase()} N° ${doc.numero}.\n\nClient : ${doc.client_nom}\nMontant total TTC : ${total.toFixed(2)} DH\nDate : ${new Date(doc.date_doc).toLocaleDateString("fr-FR")}${doc.date_validite ? `\nValidité : ${new Date(doc.date_validite).toLocaleDateString("fr-FR")}` : ""}\n\nCordialement,\n${company.nom || "Empire Fresh"}`
+  const body = `Bonjour,\n\nVeuillez trouver ci-joint le ${TYPE_LABELS[doc.type_doc].toLowerCase()} N° ${doc.numero}.\n\nClient : ${doc.client_nom}\nMontant total TTC : ${total.toFixed(2)} DH\nDate : ${new Date(doc.date_doc).toLocaleDateString("fr-FR")}${doc.date_validite ? `\nValidité : ${new Date(doc.date_validite).toLocaleDateString("fr-FR")}` : ""}\n\nCordialement,\n${company.nom || "Empire Fresh"}\nDistribution Alimentaire Professionnelle\n${company.email || "contact@empire-fresh.ma"}`
   window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank")
 }
 

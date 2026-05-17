@@ -1,2919 +1,1400 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FreshLink — Distribution Alimentaire Professionnelle</title>
-  <meta name="description" content="Distribution de produits frais et alimentaires pour professionnels CHR. Qualité premium, livraison fiable." />
+  <title>Empire Fresh — Distribution Alimentaire Professionnelle</title>
+  <meta name="description" content="Empire Fresh — Fruits, légumes et produits frais livrés à Casablanca. CHR, marchands et particuliers." />
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       CONFIGURATION — À MODIFIER AVANT DÉPLOIEMENT
-       1. Remplacez NOM_SOCIETE par le nom de votre entreprise
-       2. Remplacez API_URL par votre URL Cloudflare (ex: https://xxx.trycloudflare.com)
-       3. Remplacez YOUTUBE_ID par l'ID de votre vidéo YouTube (ex: dQw4w9WgXcQ)
-       4. Remplacez les infos de contact (téléphone, email, adresse)
-  ═══════════════════════════════════════════════════════════════ -->
-
+  <!-- FONTS -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
-    /* ═══ RESET & BASE ═══════════════════════════════════════════════ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; font-size: 16px; }
-
     :root {
-      --green-900: #0D2518;
-      --green-800: #1B4332;
-      --green-700: #2D6A4F;
-      --green-600: #40916C;
-      --green-400: #74C69D;
-      --green-100: #D8F3DC;
-      --green-50:  #F0FBF3;
-      --gold:      #C9963A;
-      --gold-light:#E8B84B;
-      --cream:     #FAF7F2;
-      --white:     #FFFFFF;
-      --gray-900:  #111827;
-      --gray-700:  #374151;
-      --gray-500:  #6B7280;
-      --gray-300:  #D1D5DB;
-      --gray-100:  #F3F4F6;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-      --shadow-md: 0 4px 16px rgba(0,0,0,.10);
-      --shadow-lg: 0 12px 40px rgba(0,0,0,.14);
-      --radius:    12px;
+      --green:       #16a34a;
+      --green-dark:  #15803d;
+      --green-light: #dcfce7;
+      --orange:      #ea580c;
+      --orange-light:#fff7ed;
+      --gray-50:     #f9fafb;
+      --gray-100:    #f3f4f6;
+      --gray-200:    #e5e7eb;
+      --gray-300:    #d1d5db;
+      --gray-500:    #6b7280;
+      --gray-700:    #374151;
+      --gray-900:    #111827;
+      --white:       #ffffff;
+      --radius:      12px;
+      --shadow:      0 4px 24px rgba(0,0,0,.08);
+      --shadow-lg:   0 8px 40px rgba(0,0,0,.14);
     }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      color: var(--gray-700);
-      background: var(--white);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
+      font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+      color: var(--gray-900); background: var(--white);
+      line-height: 1.6; overflow-x: hidden;
     }
+    /* RTL */
+    html[dir="rtl"] body        { font-family: 'Noto Sans Arabic', 'Inter', sans-serif; }
+    html[dir="rtl"]             { text-align: right; }
+    html[dir="rtl"] .nav-links  { flex-direction: row-reverse; }
+    html[dir="rtl"] .hero-content { text-align: right; }
+    html[dir="rtl"] .section-header { text-align: right; }
+    html[dir="rtl"] .form-group input,
+    html[dir="rtl"] .form-group select,
+    html[dir="rtl"] .form-group textarea { text-align: right; direction: rtl; }
+    html[dir="rtl"] .footer-cols { flex-direction: row-reverse; }
+    html[dir="rtl"] .phone-flag { left: auto; right: 12px; }
+    html[dir="rtl"] .phone-input-wrap input { padding-left: 14px !important; padding-right: 42px !important; }
+    html[dir="rtl"] .hero-ctas  { flex-direction: row-reverse; }
+    html[dir="rtl"] .pro-perk   { flex-direction: row-reverse; text-align: right; }
+    html[dir="rtl"] .order-item { flex-direction: row-reverse; }
 
-    img { display: block; max-width: 100%; }
-    a { color: inherit; text-decoration: none; }
-    ul { list-style: none; }
-    button, input, textarea, select {
-      font-family: inherit;
-      font-size: inherit;
-      border: none;
-      outline: none;
-      background: none;
-    }
+    /* Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    .section { padding: 100px 0; }
-    .section-sm { padding: 60px 0; }
-
-    .label {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 16px;
-    }
-    .label::before {
-      content: '';
-      display: block;
-      width: 24px;
-      height: 2px;
-      background: var(--gold);
-    }
-
-    h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; line-height: 1.2; color: var(--gray-900); }
-    h1 { font-size: clamp(36px, 5vw, 64px); font-weight: 700; }
-    h2 { font-size: clamp(28px, 3.5vw, 44px); font-weight: 600; }
-    h3 { font-size: clamp(18px, 2vw, 24px); font-weight: 600; }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 28px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: box-shadow .2s, transform .15s;
-    }
-    .btn:hover { transform: translateY(-1px); }
-    .btn-primary {
-      background: var(--green-800);
-      color: var(--white);
-      box-shadow: 0 4px 14px rgba(27,67,50,.3);
-    }
-    .btn-primary:hover { box-shadow: 0 8px 24px rgba(27,67,50,.4); }
-    .btn-gold {
-      background: var(--gold);
-      color: var(--white);
-      box-shadow: 0 4px 14px rgba(201,150,58,.3);
-    }
-    .btn-gold:hover { box-shadow: 0 8px 24px rgba(201,150,58,.4); }
-    .btn-outline {
-      background: transparent;
-      color: var(--white);
-      border: 2px solid rgba(255,255,255,.5);
-    }
-    .btn-outline:hover { border-color: var(--white); background: rgba(255,255,255,.1); }
-    .btn-outline-dark {
-      background: transparent;
-      color: var(--green-800);
-      border: 2px solid var(--green-800);
-    }
-    .btn-outline-dark:hover { background: var(--green-50); }
-
-    /* ═══ NAVIGATION ═══════════════════════════════════════════════ */
-    #navbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 1000;
-      background: rgba(11,29,19,.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      transition: background .3s;
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(255,255,255,.97); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--gray-200); height: 68px;
+      display: flex; align-items: center;
     }
     .nav-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 72px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px;
     }
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
     .nav-logo-icon {
-      width: 40px; height: 40px;
-      background: var(--gold);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
     }
-    .nav-logo-text {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--white);
-    }
-    .nav-logo-text span { color: var(--gold-light); }
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 36px;
-    }
+    .nav-brand-text { line-height: 1.1; }
+    .nav-brand-name { font-size: 17px; font-weight: 800; color: var(--green-dark); display: block; }
+    .nav-brand-sub  { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: .8px; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
     .nav-links a {
-      font-size: 14px;
-      font-weight: 500;
-      color: rgba(255,255,255,.75);
-      letter-spacing: .02em;
-      transition: color .2s;
+      padding: 7px 12px; border-radius: 8px; font-size: 14px; font-weight: 500;
+      color: var(--gray-700); text-decoration: none; transition: all .2s;
     }
-    .nav-links a:hover { color: var(--white); }
-    .nav-cta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .btn-nav {
-      padding: 10px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .btn-nav-outline {
-      background: transparent;
-      color: var(--white);
-      border: 1.5px solid rgba(255,255,255,.35);
-    }
-    .btn-nav-outline:hover { border-color: var(--white); }
-    .btn-nav-solid {
-      background: var(--gold);
-      color: var(--white);
-      border: 1.5px solid var(--gold);
-    }
-    .btn-nav-solid:hover { background: var(--gold-light); }
-    .nav-burger {
-      display: none;
-      flex-direction: column;
-      gap: 5px;
-      cursor: pointer;
-      padding: 8px;
-    }
-    .nav-burger span {
-      display: block;
-      width: 24px; height: 2px;
-      background: var(--white);
-      border-radius: 2px;
-      transition: all .25s;
-    }
-    .mobile-menu {
-      display: none;
-      position: fixed;
-      top: 72px; left: 0; right: 0;
-      background: rgba(11,29,19,.97);
-      backdrop-filter: blur(16px);
-      padding: 24px;
-      z-index: 999;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-    .mobile-menu.open { display: block; }
-    .mobile-menu a {
-      display: block;
-      padding: 14px 0;
-      font-size: 17px;
-      font-weight: 500;
-      color: rgba(255,255,255,.8);
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-    .mobile-menu a:last-child { border-bottom: none; }
-    .mobile-menu a:hover { color: var(--white); }
-    .mobile-btns { display: flex; gap: 12px; margin-top: 20px; }
-    .mobile-btns button { flex: 1; }
+    .nav-links a:hover { background: var(--gray-100); color: var(--green); }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
 
-    /* ═══ HERO ═══════════════════════════════════════════════════════ */
-    #hero {
-      position: relative;
+    /* Language switcher */
+    .lang-switcher {
+      display: flex; align-items: center; gap: 2px;
+      background: var(--gray-100); border-radius: 8px; padding: 3px;
+    }
+    .lang-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 5px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      color: var(--gray-500); transition: all .2s; line-height: 1; white-space: nowrap;
+    }
+    .lang-btn:hover { background: var(--white); color: var(--gray-700); }
+    .lang-btn.active { background: var(--white); color: var(--green); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+    .btn-login {
+      background: var(--green); color: var(--white); border: none;
+      padding: 9px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background .2s; white-space: nowrap;
+    }
+    .btn-login:hover { background: var(--green-dark); }
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px;
+    }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--gray-700); border-radius: 2px; }
+    .mobile-menu {
+      display: none; position: fixed; top: 68px; left: 0; right: 0;
+      background: var(--white); border-bottom: 1px solid var(--gray-200);
+      padding: 12px 20px; z-index: 999; flex-direction: column; gap: 6px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      padding: 10px 14px; border-radius: 8px; font-size: 15px;
+      color: var(--gray-700); text-decoration: none; display: block;
+    }
+    .mobile-menu a:hover { background: var(--gray-100); }
+
+    /* ── HERO ── */
+    .hero {
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      background: var(--green-900);
-      overflow: hidden;
+      background: linear-gradient(135deg, #052e16 0%, #14532d 40%, #166534 70%, #15803d 100%);
+      display: flex; align-items: center; padding-top: 68px; position: relative; overflow: hidden;
     }
-    .hero-bg {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, #0D2518 0%, #1B4332 45%, #0D2518 100%);
-    }
-    .hero-pattern {
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle at 20% 50%, rgba(64,145,108,.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(201,150,58,.08) 0%, transparent 40%),
-                        radial-gradient(circle at 60% 80%, rgba(64,145,108,.1) 0%, transparent 40%);
-    }
-    .hero-grid {
-      position: absolute;
-      inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
-      background-size: 64px 64px;
-    }
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
-      padding: 120px 0 80px;
+    .hero-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+      width: 100%; max-width: 1200px; margin: 0 auto; padding: 60px 20px; position: relative; z-index: 1;
     }
     .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      background: rgba(201,150,58,.15);
-      border: 1px solid rgba(201,150,58,.3);
-      border-radius: 100px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gold-light);
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      margin-bottom: 24px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+      border-radius: 30px; padding: 6px 16px; margin-bottom: 24px;
+      font-size: 13px; color: rgba(255,255,255,.9); font-weight: 500;
     }
-    .hero-badge::before {
-      content: '';
-      width: 6px; height: 6px;
-      background: var(--gold-light);
-      border-radius: 50%;
+    .hero-badge .dot { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; flex-shrink: 0; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    .hero h1 {
+      font-size: clamp(30px, 4.5vw, 54px); font-weight: 800;
+      color: var(--white); line-height: 1.1; margin-bottom: 20px;
     }
-    .hero-title {
-      font-size: clamp(38px, 4.5vw, 62px);
-      font-weight: 700;
-      color: var(--white);
-      line-height: 1.15;
-      margin-bottom: 24px;
+    .hero-sub { font-size: 17px; color: rgba(255,255,255,.8); margin-bottom: 36px; max-width: 480px; }
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-hero-primary {
+      background: var(--white); color: var(--green-dark);
+      padding: 14px 26px; border-radius: 10px; font-size: 15px; font-weight: 700;
+      border: none; cursor: pointer; text-decoration: none; transition: all .2s;
+      display: inline-flex; align-items: center; gap: 8px;
     }
-    .hero-title em {
-      font-style: normal;
-      color: var(--gold-light);
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+    .btn-hero-whatsapp {
+      background: #25d366; color: var(--white);
+      padding: 14px 26px; border-radius: 10px; font-size: 15px; font-weight: 700;
+      border: none; cursor: pointer; text-decoration: none; transition: all .2s;
+      display: inline-flex; align-items: center; gap: 8px;
     }
-    .hero-desc {
-      font-size: 18px;
-      color: rgba(255,255,255,.65);
-      line-height: 1.7;
-      margin-bottom: 40px;
-      max-width: 480px;
+    .btn-hero-whatsapp:hover { background: #128c7e; transform: translateY(-2px); }
+    .hero-card {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+      border-radius: 20px; padding: 28px; backdrop-filter: blur(10px);
     }
-    .hero-btns {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
+    .hero-card-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.7); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px; }
+    .hero-card-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px; background: rgba(255,255,255,.08); border-radius: 10px; margin-bottom: 10px;
     }
-    .hero-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-top: 56px;
-      padding-top: 40px;
-      border-top: 1px solid rgba(255,255,255,.1);
-    }
-    .hero-stat-num {
-      font-family: 'Playfair Display', serif;
-      font-size: 36px;
-      font-weight: 700;
-      color: var(--white);
-    }
-    .hero-stat-num span { color: var(--gold-light); }
-    .hero-stat-label {
-      font-size: 13px;
-      color: rgba(255,255,255,.5);
-      margin-top: 2px;
-    }
-    .hero-visual {
-      position: relative;
-    }
-    .hero-card-main {
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 20px;
-      padding: 32px;
-      backdrop-filter: blur(8px);
-    }
-    .hero-card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: rgba(255,255,255,.5);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      margin-bottom: 20px;
-    }
-    .hero-product-list { display: flex; flex-direction: column; gap: 12px; }
-    .hero-product-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      background: rgba(255,255,255,.05);
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.06);
-    }
-    .hero-product-left { display: flex; align-items: center; gap: 12px; }
-    .hero-product-icon {
-      width: 36px; height: 36px;
-      background: rgba(64,145,108,.25);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    .hero-product-name { font-size: 14px; font-weight: 500; color: var(--white); }
-    .hero-product-cat { font-size: 12px; color: rgba(255,255,255,.4); }
-    .hero-product-price { font-size: 15px; font-weight: 700; color: var(--gold-light); }
+    .hero-card-icon { font-size: 22px; flex-shrink: 0; }
+    .hero-card-label { font-size: 12px; color: rgba(255,255,255,.6); }
+    .hero-card-value { font-size: 14px; font-weight: 700; color: var(--white); }
     .hero-card-badge {
-      position: absolute;
-      top: -16px; right: 24px;
-      background: var(--gold);
-      color: var(--white);
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      box-shadow: 0 4px 16px rgba(201,150,58,.4);
+      margin-top: 14px; text-align: center;
+      background: rgba(74,222,128,.15); border: 1px solid rgba(74,222,128,.3);
+      border-radius: 8px; padding: 10px; font-size: 13px; color: #4ade80; font-weight: 600;
     }
 
-    /* ═══ ABOUT / CHIFFRES ═══════════════════════════════════════════ */
-    #about {
-      background: var(--cream);
+    /* ── SECTIONS ── */
+    section { padding: 80px 0; }
+    .section-header { text-align: center; margin-bottom: 52px; }
+    html[dir="rtl"] .section-header { text-align: right; }
+    .section-tag {
+      display: inline-block; background: var(--green-light); color: var(--green-dark);
+      padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px;
     }
-    .about-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
-    }
-    .about-visual {
-      position: relative;
-    }
-    .about-img-placeholder {
-      width: 100%;
-      aspect-ratio: 4/3;
-      background: linear-gradient(135deg, var(--green-100) 0%, var(--green-50) 100%);
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      border: 2px dashed var(--green-400);
-      color: var(--green-700);
-    }
-    .about-img-placeholder-icon { font-size: 64px; }
-    .about-img-placeholder-text { font-size: 14px; font-weight: 500; opacity: .7; }
-    .about-floating-card {
-      position: absolute;
-      bottom: -24px; left: -24px;
-      background: var(--white);
-      border-radius: 16px;
-      padding: 20px 24px;
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .about-fc-icon {
-      width: 48px; height: 48px;
-      background: var(--green-100);
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 24px;
-    }
-    .about-fc-num {
-      font-family: 'Playfair Display', serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--green-800);
-    }
-    .about-fc-label { font-size: 12px; color: var(--gray-500); }
-    .about-text h2 { margin-bottom: 20px; }
-    .about-text p { color: var(--gray-500); line-height: 1.8; margin-bottom: 16px; }
-    .about-features { display: flex; flex-direction: column; gap: 16px; margin: 32px 0; }
-    .about-feature {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .about-feature-icon {
-      width: 42px; height: 42px;
-      min-width: 42px;
-      background: var(--green-100);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
-    .about-feature-title { font-size: 15px; font-weight: 600; color: var(--gray-900); }
-    .about-feature-desc { font-size: 14px; color: var(--gray-500); }
+    .section-title { font-size: clamp(22px, 3vw, 36px); font-weight: 800; color: var(--gray-900); margin-bottom: 12px; }
+    .section-sub   { font-size: 16px; color: var(--gray-500); max-width: 540px; margin: 0 auto; }
+    html[dir="rtl"] .section-sub { margin: 0; }
 
-    /* ═══ SERVICES ════════════════════════════════════════════════════ */
-    #services { background: var(--white); }
-    .services-header { text-align: center; max-width: 600px; margin: 0 auto 60px; }
-    .services-header p { color: var(--gray-500); margin-top: 16px; font-size: 17px; }
-    .services-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-    }
+    /* ── STATS BAR ── */
+    .stats-bar { background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); padding: 28px 0; }
+    .stats-inner { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 24px; }
+    .stat-item { text-align: center; }
+    .stat-num  { font-size: 32px; font-weight: 800; color: var(--green); display: block; }
+    .stat-lbl  { font-size: 13px; color: var(--gray-500); font-weight: 500; }
+
+    /* ── SERVICES ── */
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
     .service-card {
-      border: 1.5px solid var(--gray-100);
-      border-radius: var(--radius);
-      padding: 36px 28px;
-      transition: border-color .2s, box-shadow .2s;
-      position: relative;
-      overflow: hidden;
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius); padding: 28px 24px; transition: all .25s;
     }
-    .service-card:hover {
-      border-color: var(--green-400);
-      box-shadow: var(--shadow-md);
-    }
-    .service-card-accent {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--green-600), var(--green-400));
-      opacity: 0;
-      transition: opacity .2s;
-    }
-    .service-card:hover .service-card-accent { opacity: 1; }
+    .service-card:hover { border-color: var(--green); box-shadow: var(--shadow); transform: translateY(-3px); }
     .service-icon {
-      width: 56px; height: 56px;
-      background: var(--green-50);
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
-      margin-bottom: 20px;
+      width: 52px; height: 52px; border-radius: 12px;
+      background: var(--green-light); display: flex; align-items: center;
+      justify-content: center; font-size: 26px; margin-bottom: 16px;
     }
-    .service-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--gray-900); }
-    .service-desc { font-size: 14px; color: var(--gray-500); line-height: 1.7; }
+    .service-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .service-desc  { font-size: 14px; color: var(--gray-500); line-height: 1.6; }
 
-    /* ═══ VIDÉOS ═════════════════════════════════════════════════════ */
-    #videos { background: var(--green-900); }
-    .videos-header { text-align: center; margin-bottom: 60px; }
-    .videos-header .label { color: var(--gold-light); }
-    .videos-header h2 { color: var(--white); }
-    .videos-header p { color: rgba(255,255,255,.55); margin-top: 16px; font-size: 17px; }
-    .videos-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 24px;
+    /* ── LIVRAISON ── */
+    #livraison { background: var(--gray-50); }
+    .zone-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 32px; }
+    .zone-card {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 12px;
     }
-    .video-frame-wrap {
-      border-radius: 16px;
-      overflow: hidden;
-      background: #000;
-      position: relative;
-    }
-    .video-frame-wrap iframe {
-      width: 100%;
-      aspect-ratio: 16/9;
-      display: block;
-      border: none;
-    }
-    .video-placeholder {
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: rgba(255,255,255,.04);
-      border: 2px dashed rgba(255,255,255,.15);
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      color: rgba(255,255,255,.4);
-      cursor: pointer;
-    }
-    .video-placeholder-icon { font-size: 48px; }
-    .video-placeholder-text { font-size: 14px; font-weight: 500; }
-    .videos-side {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .video-card-side {
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color .2s;
-    }
-    .video-card-side:hover { border-color: rgba(201,150,58,.5); }
-    .video-card-side-thumb {
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: rgba(64,145,108,.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      position: relative;
-    }
-    .video-play-btn {
-      position: absolute;
-      width: 40px; height: 40px;
-      background: rgba(201,150,58,.9);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
-      color: white;
-    }
-    .video-card-side-info { padding: 14px 16px; }
-    .video-card-side-title { font-size: 14px; font-weight: 600; color: var(--white); }
-    .video-card-side-sub { font-size: 12px; color: rgba(255,255,255,.45); margin-top: 4px; }
+    .zone-icon  { font-size: 22px; flex-shrink: 0; }
+    .zone-name  { font-size: 14px; font-weight: 600; }
+    .zone-delay { font-size: 12px; color: var(--gray-500); }
+    .delivery-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 680px; margin: 0 auto; }
+    .delivery-mode-card { border-radius: var(--radius); padding: 22px; display: flex; align-items: flex-start; gap: 14px; }
+    .delivery-mode-card.standard { background: var(--green-light); border: 1.5px solid #bbf7d0; }
+    .delivery-mode-card.express  { background: var(--orange-light); border: 1.5px solid #fed7aa; }
+    .dm-icon  { font-size: 28px; flex-shrink: 0; }
+    .dm-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .delivery-mode-card.standard .dm-title { color: var(--green-dark); }
+    .delivery-mode-card.express  .dm-title { color: var(--orange); }
+    .dm-desc  { font-size: 13px; color: var(--gray-600, #4b5563); }
 
-    /* ═══ CATALOGUE ══════════════════════════════════════════════════ */
-    #catalogue { background: var(--cream); }
-    .cat-header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-      gap: 20px;
+    /* ── CATALOGUE ── */
+    .catalogue-info {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      border-radius: 16px; padding: 32px 36px; color: var(--white);
+      display: flex; align-items: center; gap: 24px; margin-bottom: 40px; flex-wrap: wrap;
     }
-    .cat-filters {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+    .catalogue-info-icon { font-size: 48px; flex-shrink: 0; }
+    .catalogue-info h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .catalogue-info p  { font-size: 14px; opacity: .85; }
+    .catalogue-info .btn-wa {
+      margin-left: auto; background: #25d366; color: var(--white);
+      padding: 12px 22px; border-radius: 10px; font-size: 14px; font-weight: 700;
+      border: none; cursor: pointer; text-decoration: none; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 8px; transition: background .2s;
     }
-    .cat-filter-btn {
-      padding: 8px 18px;
-      border-radius: 100px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .2s;
-      border: 1.5px solid var(--gray-300);
-      color: var(--gray-700);
-      background: var(--white);
-    }
-    .cat-filter-btn.active {
-      background: var(--green-800);
-      color: var(--white);
-      border-color: var(--green-800);
-    }
-    .cat-search {
-      position: relative;
-      margin-bottom: 32px;
-    }
-    .cat-search-icon {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--gray-500);
-      font-size: 16px;
-      pointer-events: none;
-    }
-    .cat-search input {
-      width: 100%;
-      max-width: 400px;
-      padding: 12px 16px 12px 44px;
-      border: 1.5px solid var(--gray-300);
-      border-radius: 10px;
-      font-size: 14px;
-      background: var(--white);
-      color: var(--gray-900);
-      transition: border-color .2s;
-    }
-    .cat-search input:focus { border-color: var(--green-600); }
-    #products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 20px;
-    }
-    .product-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-      border: 1.5px solid transparent;
-      transition: box-shadow .2s, border-color .2s, transform .2s;
-    }
-    .product-card:hover {
-      box-shadow: var(--shadow-md);
-      border-color: var(--green-400);
-      transform: translateY(-2px);
-    }
-    .product-img {
-      width: 100%;
-      aspect-ratio: 4/3;
-      background: linear-gradient(135deg, var(--green-50), var(--green-100));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 52px;
-      position: relative;
-    }
-    .product-badge {
-      position: absolute;
-      top: 10px; right: 10px;
-      padding: 4px 10px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 700;
-      background: var(--green-800);
-      color: var(--white);
-    }
-    .product-body { padding: 16px; }
-    .product-cat {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--green-600);
-      margin-bottom: 6px;
-    }
-    .product-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--gray-900);
-      margin-bottom: 12px;
-    }
-    .product-price-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    .product-price {
-      font-family: 'Playfair Display', serif;
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--green-800);
-    }
-    .product-unite {
-      font-size: 12px;
-      color: var(--gray-500);
-    }
-    .product-order-btn {
-      width: 100%;
-      margin-top: 14px;
-      padding: 10px;
-      background: var(--green-50);
-      color: var(--green-800);
-      border: 1.5px solid var(--green-200, #a7f3d0);
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .2s, color .2s;
-    }
-    .product-order-btn:hover {
-      background: var(--green-800);
-      color: var(--white);
-      border-color: var(--green-800);
-    }
-    .products-loading {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 80px 0;
-      color: var(--gray-500);
-      font-size: 15px;
-    }
-    .products-loading .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--gray-300);
-      border-top-color: var(--green-700);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .products-empty {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 60px 0;
-      color: var(--gray-500);
-    }
-    .products-empty-icon { font-size: 48px; margin-bottom: 12px; }
+    html[dir="rtl"] .catalogue-info .btn-wa { margin-left: 0; margin-right: auto; }
+    .catalogue-info .btn-wa:hover { background: #128c7e; }
+    .price-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .tier-card { border-radius: var(--radius); padding: 22px 20px; border: 1.5px solid var(--gray-200); text-align: center; }
+    .tier-card.chr        { border-color: #bfdbfe; background: #eff6ff; }
+    .tier-card.marchand   { border-color: #fde68a; background: #fffbeb; }
+    .tier-card.particulier{ border-color: var(--gray-200); background: var(--gray-50); }
+    .tier-icon  { font-size: 28px; margin-bottom: 10px; }
+    .tier-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .tier-card.chr      .tier-label { color: #1d4ed8; }
+    .tier-card.marchand .tier-label { color: #92400e; }
+    .tier-card.particulier .tier-label { color: var(--gray-700); }
+    .tier-desc { font-size: 13px; color: var(--gray-500); }
 
-    /* ═══ COMMANDE CTA ════════════════════════════════════════════════ */
-    #commander { background: var(--green-800); }
-    .cta-inner {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
+    /* ── ESPACE PRO ── */
+    #espace-pro { background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%); }
+    .pro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+    .pro-left p  { font-size: 15px; color: var(--gray-500); margin-bottom: 24px; }
+    .pro-perks { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .pro-perk {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px; background: var(--white);
+      border: 1.5px solid var(--gray-200); border-radius: 10px;
     }
-    .cta-text .label { color: var(--gold-light); }
-    .cta-text h2 { color: var(--white); }
-    .cta-text p { color: rgba(255,255,255,.65); margin-top: 16px; font-size: 17px; line-height: 1.7; }
-    .cta-steps { margin-top: 32px; display: flex; flex-direction: column; gap: 20px; }
-    .cta-step { display: flex; align-items: flex-start; gap: 16px; }
-    .cta-step-num {
-      width: 36px; height: 36px;
-      min-width: 36px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.1);
-      border: 1.5px solid rgba(255,255,255,.2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700;
-      color: var(--gold-light);
+    .pro-perk-icon  { font-size: 20px; flex-shrink: 0; }
+    .pro-perk-title { font-size: 14px; font-weight: 700; }
+    .pro-perk-desc  { font-size: 13px; color: var(--gray-500); }
+    .pro-form-box {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 20px; padding: 36px 32px; box-shadow: var(--shadow);
     }
-    .cta-step-title { font-size: 15px; font-weight: 600; color: var(--white); }
-    .cta-step-desc { font-size: 13px; color: rgba(255,255,255,.5); margin-top: 2px; }
-    .cta-form-card {
-      background: var(--white);
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: var(--shadow-lg);
+    .pro-form-box h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .pro-form-box .form-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; }
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 11px 14px; border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-size: 14px; font-family: inherit; color: var(--gray-900);
+      transition: border-color .2s; outline: none; background: var(--white);
     }
-    .cta-form-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: 6px;
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+    .form-group textarea { resize: vertical; min-height: 90px; }
+    .form-group select  { appearance: none; cursor: pointer; }
+    .btn-submit {
+      width: 100%; background: var(--green); color: var(--white);
+      border: none; border-radius: 10px; padding: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: background .2s; font-family: inherit; margin-top: 4px;
     }
-    .cta-form-sub {
-      font-size: 14px;
-      color: var(--gray-500);
-      margin-bottom: 28px;
-    }
-    .form-group { margin-bottom: 18px; }
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--gray-700);
-      margin-bottom: 8px;
-    }
-    .form-label sup { color: #EF4444; }
-    .form-input {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1.5px solid var(--gray-300);
-      border-radius: 8px;
-      font-size: 14px;
-      color: var(--gray-900);
-      background: var(--white);
-      transition: border-color .2s;
-    }
-    .form-input:focus { border-color: var(--green-600); }
-    .form-input::placeholder { color: var(--gray-500); }
-    textarea.form-input { min-height: 100px; resize: vertical; }
-    .form-submit {
-      width: 100%;
-      padding: 14px;
-      background: var(--green-800);
-      color: var(--white);
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .2s;
-      margin-top: 4px;
-    }
-    .form-submit:hover { background: var(--green-700); }
-    .form-submit:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-submit:hover    { background: var(--green-dark); }
+    .btn-submit:disabled { background: var(--gray-300); cursor: not-allowed; }
     .form-msg {
-      margin-top: 12px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      display: none;
+      margin-top: 12px; padding: 12px 14px; border-radius: 8px;
+      font-size: 14px; font-weight: 500; display: none; text-align: center;
     }
-    .form-msg.success { background: #D1FAE5; color: #065F46; display: block; }
-    .form-msg.error { background: #FEE2E2; color: #991B1B; display: block; }
+    .form-msg.success { background: var(--green-light); color: var(--green-dark); display: block; }
+    .form-msg.error   { background: #fef2f2; color: #dc2626; display: block; }
 
-    /* ═══ CONTACT ════════════════════════════════════════════════════ */
-    #contact { background: var(--white); }
-    .contact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1.6fr;
-      gap: 80px;
-      align-items: start;
+    /* Contact direct */
+    .contact-box {
+      margin-top: 28px; padding: 20px; background: var(--white);
+      border: 1.5px solid var(--gray-200); border-radius: 12px;
     }
-    .contact-info h2 { margin-bottom: 20px; }
-    .contact-info p { color: var(--gray-500); line-height: 1.8; margin-bottom: 36px; }
-    .contact-items { display: flex; flex-direction: column; gap: 24px; }
-    .contact-item { display: flex; align-items: flex-start; gap: 16px; }
-    .contact-item-icon {
-      width: 46px; height: 46px;
-      min-width: 46px;
-      background: var(--green-50);
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
+    .contact-box-title { font-size: 12px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+    .contact-box a {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--gray-700); text-decoration: none; font-size: 14px; margin-bottom: 8px;
     }
-    .contact-item-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--green-600); }
-    .contact-item-value { font-size: 15px; font-weight: 500; color: var(--gray-900); margin-top: 4px; }
-    .contact-form-wrap {
-      background: var(--cream);
-      border-radius: 20px;
-      padding: 40px;
-    }
-    .contact-form-title { font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
-    .contact-form-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 28px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    html[dir="rtl"] .contact-box a { flex-direction: row-reverse; }
 
-    /* ═══ FOOTER ═════════════════════════════════════════════════════ */
-    #footer { background: var(--green-900); color: rgba(255,255,255,.65); }
-    .footer-top {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-      gap: 40px;
-      padding: 72px 0 48px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+    /* ── MON ESPACE ── */
+    #mon-espace { background: var(--gray-50); display: none; }
+    #mon-espace.visible { display: block; }
+    .portal-header {
+      background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%);
+      border-radius: 16px; padding: 28px 32px; margin-bottom: 28px;
+      display: flex; align-items: center; gap: 20px; color: var(--white); flex-wrap: wrap;
     }
-    .footer-brand p {
-      font-size: 14px;
-      line-height: 1.7;
-      margin-top: 16px;
-      max-width: 280px;
+    .portal-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,255,255,.2); display: flex; align-items: center;
+      justify-content: center; font-size: 24px; flex-shrink: 0;
     }
-    .footer-col-title {
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--white);
-      margin-bottom: 20px;
+    .portal-name { font-size: 20px; font-weight: 800; }
+    .portal-meta { font-size: 14px; opacity: .8; }
+    .portal-logout {
+      margin-left: auto; background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3); color: var(--white);
+      padding: 8px 16px; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: background .2s;
     }
-    .footer-col ul { display: flex; flex-direction: column; gap: 12px; }
-    .footer-col ul li a {
-      font-size: 14px;
-      color: rgba(255,255,255,.55);
-      transition: color .2s;
+    html[dir="rtl"] .portal-logout { margin-left: 0; margin-right: auto; }
+    .portal-logout:hover { background: rgba(255,255,255,.25); }
+    .portal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .portal-stat-card { background: var(--white); border: 1.5px solid var(--gray-200); border-radius: var(--radius); padding: 20px; }
+    .portal-stat-label { font-size: 12px; color: var(--gray-500); font-weight: 500; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+    .portal-stat-value { font-size: 24px; font-weight: 800; }
+    .portal-stat-value.green { color: var(--green); }
+    .portal-section-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .order-list { display: flex; flex-direction: column; gap: 10px; }
+    .order-item {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 10px; padding: 14px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
     }
-    .footer-col ul li a:hover { color: var(--white); }
-    .footer-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 24px 0;
-      font-size: 13px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .footer-bottom-right { display: flex; gap: 20px; }
-    .footer-bottom-right a:hover { color: var(--white); }
+    .order-ref  { font-size: 14px; font-weight: 600; }
+    .order-date { font-size: 12px; color: var(--gray-500); }
+    .order-amt  { font-size: 15px; font-weight: 700; color: var(--green); white-space: nowrap; }
+    .order-status { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+    .order-status.livree    { background: var(--green-light); color: var(--green-dark); }
+    .order-status.en_cours  { background: #fef9c3; color: #854d0e; }
+    .order-status.annulee   { background: #fef2f2; color: #dc2626; }
 
-    /* ═══ MODAL COMMANDE ═════════════════════════════════════════════ */
+    /* ── VIDEOS ── */
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .video-wrap { border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); aspect-ratio: 16/9; background: var(--gray-900); }
+    .video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+
+    /* ── FOOTER ── */
+    footer { background: var(--gray-900); color: rgba(255,255,255,.7); padding: 56px 0 28px; }
+    .footer-cols { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
+    .footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .footer-brand-icon { width: 38px; height: 38px; background: var(--green); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .footer-brand-name { font-size: 16px; font-weight: 800; color: var(--white); }
+    .footer-desc { font-size: 13px; line-height: 1.7; max-width: 240px; }
+    .footer-heading { font-size: 13px; font-weight: 700; color: var(--white); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-links a { font-size: 13px; color: rgba(255,255,255,.6); text-decoration: none; transition: color .2s; }
+    .footer-links a:hover { color: var(--white); }
+    .footer-divider { border: none; border-top: 1px solid rgba(255,255,255,.1); margin-bottom: 24px; }
+    .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; }
+
+    /* ── MODAL LOGIN ── */
     .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.6);
-      backdrop-filter: blur(4px);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      display: none; position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 20px;
     }
     .modal-overlay.open { display: flex; }
     .modal-box {
-      background: var(--white);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 520px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: var(--shadow-lg);
+      background: var(--white); border-radius: 20px; padding: 36px 32px;
+      width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); position: relative;
     }
-    .modal-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 28px;
-    }
-    .modal-title { font-size: 22px; font-weight: 700; color: var(--gray-900); }
-    .modal-sub { font-size: 14px; color: var(--gray-500); margin-top: 4px; }
     .modal-close {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      background: var(--gray-100);
-      cursor: pointer;
+      position: absolute; top: 16px; right: 16px;
+      background: var(--gray-100); border: none; border-radius: 8px;
+      width: 32px; height: 32px; cursor: pointer; font-size: 16px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      color: var(--gray-500);
-      border: none;
-      transition: background .2s;
     }
-    .modal-close:hover { background: var(--gray-300); }
-    .modal-product-info {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px;
-      background: var(--green-50);
-      border-radius: 12px;
-      margin-bottom: 24px;
+    html[dir="rtl"] .modal-close { right: auto; left: 16px; }
+    .modal-logo {
+      width: 52px; height: 52px; background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      border-radius: 14px; display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin: 0 auto 20px;
     }
-    .modal-product-emoji { font-size: 36px; }
-    .modal-product-name { font-size: 16px; font-weight: 600; color: var(--gray-900); }
-    .modal-product-price { font-size: 14px; color: var(--green-600); font-weight: 500; margin-top: 4px; }
+    .modal-box h2 { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 6px; }
+    .modal-box .modal-sub { font-size: 14px; color: var(--gray-500); text-align: center; margin-bottom: 24px; }
+    .login-error { background: #fef2f2; color: #dc2626; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; display: none; }
+    .login-error.show { display: block; }
 
-    /* ═══ SCROLL TO TOP ══════════════════════════════════════════════ */
-    #scroll-top {
-      position: fixed;
-      bottom: 32px; right: 32px;
-      width: 44px; height: 44px;
-      background: var(--green-800);
-      color: var(--white);
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      box-shadow: var(--shadow-md);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .3s;
-      z-index: 500;
-      font-size: 18px;
-      border: none;
-    }
-    #scroll-top.visible { opacity: 1; pointer-events: auto; }
+    /* ── PHONE INPUT ── */
+    .phone-input-wrap { position: relative; }
+    .phone-flag { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; }
+    .phone-input-wrap input { padding-left: 42px !important; }
 
-    /* ═══ BANNER OFFLINE ═════════════════════════════════════════════ */
-    #offline-banner {
-      display: none;
-      position: fixed;
-      bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: #1F2937;
-      color: var(--white);
-      padding: 12px 24px;
-      border-radius: 100px;
-      font-size: 14px;
-      font-weight: 500;
-      z-index: 999;
-      box-shadow: var(--shadow-lg);
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: var(--gray-900); color: var(--white);
+      padding: 14px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
+      box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0;
+      transition: all .3s; pointer-events: none; max-width: 340px;
     }
+    html[dir="rtl"] .toast { right: auto; left: 24px; }
+    .toast.show  { transform: translateY(0); opacity: 1; }
+    .toast.green { background: var(--green); }
+    .toast.red   { background: #dc2626; }
 
-    /* ═══ RESPONSIVE ════════════════════════════════════════════════ */
-    @media (max-width: 1024px) {
-      .hero-content { grid-template-columns: 1fr; gap: 48px; }
-      .hero-visual { display: none; }
-      .about-grid { grid-template-columns: 1fr; }
-      .about-visual { display: none; }
-      .services-grid { grid-template-columns: repeat(2, 1fr); }
-      .videos-grid { grid-template-columns: 1fr; }
-      .videos-side { flex-direction: row; }
-      .cta-inner { grid-template-columns: 1fr; }
-      .cta-text h2 { font-size: 30px; }
-      .contact-grid { grid-template-columns: 1fr; }
-      .footer-top { grid-template-columns: 1fr 1fr; }
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .nav-links  { display: none; }
+      .hamburger  { display: flex; }
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-card  { display: none; }
+      .pro-grid   { grid-template-columns: 1fr; }
+      .footer-cols { grid-template-columns: 1fr 1fr; }
+      .delivery-modes { grid-template-columns: 1fr; }
     }
-
-    @media (max-width: 768px) {
-      .section { padding: 72px 0; }
-      .nav-links, .nav-cta { display: none; }
-      .nav-burger { display: flex; }
-      .services-grid { grid-template-columns: 1fr; }
-      .hero-stats { grid-template-columns: 1fr 1fr; }
-      .form-row { grid-template-columns: 1fr; }
-      .footer-top { grid-template-columns: 1fr; gap: 32px; }
-      .videos-side { flex-direction: column; }
-      #products-grid { grid-template-columns: repeat(2, 1fr); }
-      .cta-form-card { padding: 28px 20px; }
-      .modal-box { padding: 28px 20px; }
-      #zones-grid { grid-template-columns: 1fr 1fr !important; }
-    }
-
-    @media (max-width: 480px) {
-      .container { padding: 0 16px; }
-      #products-grid { grid-template-columns: 1fr; }
-      .hero-btns { flex-direction: column; }
-      .hero-btns .btn { width: 100%; justify-content: center; }
-      #zones-grid { grid-template-columns: 1fr !important; }
-      .hero-card-badge { position: relative !important; top: auto !important; right: auto !important; margin-bottom: 12px; }
-    }
-
-    /* ═══ AUTH MODAL ════════════════════════════════════════════════ */
-    #auth-modal {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(4px);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    #auth-modal.open { display: flex; }
-    .auth-box {
-      background: var(--white);
-      border-radius: 20px;
-      width: 100%; max-width: 460px;
-      box-shadow: 0 24px 64px rgba(0,0,0,.2);
-      overflow: hidden;
-    }
-    .auth-header {
-      background: var(--green-900);
-      padding: 28px 32px 0;
-    }
-    .auth-brand {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 24px;
-    }
-    .auth-brand-icon {
-      width: 36px; height: 36px;
-      background: var(--gold);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    .auth-brand-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 18px; font-weight: 700;
-      color: var(--white);
-    }
-    .auth-brand-name span { color: var(--gold-light); }
-    .auth-tabs {
-      display: flex; gap: 0;
-    }
-    .auth-tab {
-      flex: 1; padding: 12px 0;
-      font-size: 14px; font-weight: 600;
-      color: rgba(255,255,255,.5);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      text-align: center;
-      transition: all .2s;
-      background: none; border-top: none; border-left: none; border-right: none;
-    }
-    .auth-tab.active { color: var(--white); border-bottom-color: var(--gold); }
-    .auth-body { padding: 28px 32px 32px; }
-    .auth-pane { display: none; }
-    .auth-pane.active { display: block; }
-    .auth-title { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
-    .auth-sub { font-size: 13px; color: var(--gray-500); margin-bottom: 24px; }
-    .auth-close {
-      position: absolute; top: 20px; right: 20px;
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      background: rgba(255,255,255,.15);
-      color: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 16px;
-      border: none;
-    }
-    .auth-close:hover { background: rgba(255,255,255,.25); }
-    #auth-modal .auth-header { position: relative; }
-
-    /* ═══ USER AVATAR NAVBAR ════════════════════════════════════════ */
-    .nav-user {
-      display: flex; align-items: center; gap: 8px;
-      cursor: pointer; position: relative;
-    }
-    .nav-avatar {
-      width: 36px; height: 36px;
-      background: var(--gold);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700;
-      color: var(--white);
-      border: 2px solid rgba(255,255,255,.3);
-    }
-    .nav-user-name {
-      font-size: 13px; font-weight: 600;
-      color: rgba(255,255,255,.85);
-      max-width: 100px;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .nav-user-dropdown {
-      display: none;
-      position: absolute; top: calc(100% + 12px); right: 0;
-      background: var(--white);
-      border-radius: 12px;
-      box-shadow: var(--shadow-lg);
-      min-width: 180px;
-      overflow: hidden;
-      z-index: 1100;
-    }
-    .nav-user:hover .nav-user-dropdown,
-    .nav-user.open .nav-user-dropdown { display: block; }
-    .nav-user-dropdown a, .nav-user-dropdown button {
-      display: block; width: 100%;
-      padding: 12px 16px;
-      font-size: 14px; font-weight: 500;
-      color: var(--gray-700);
-      text-align: left;
-      cursor: pointer;
-      background: none;
-      border: none;
-      border-bottom: 1px solid var(--gray-100);
-      transition: background .15s;
-    }
-    .nav-user-dropdown a:last-child,
-    .nav-user-dropdown button:last-child { border-bottom: none; }
-    .nav-user-dropdown a:hover, .nav-user-dropdown button:hover { background: var(--gray-100); }
-    .nav-user-dropdown .logout-btn { color: #DC2626; }
-    [data-hide-logged-out] { display: none !important; }
-    [data-hide-logged-in] { }
-    body.fl-logged-in [data-hide-logged-in] { display: none !important; }
-    body.fl-logged-in [data-hide-logged-out] { display: flex !important; }
-
-    /* ═══ CLIENT PORTAL SECTION ════════════════════════════════════ */
-    #mon-espace {
-      display: none;
-      background: linear-gradient(135deg, var(--green-900) 0%, var(--green-800) 100%);
-    }
-    body.fl-logged-in #mon-espace { display: block; }
-    .portal-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      margin-bottom: 40px;
-    }
-    .portal-card {
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 16px;
-      padding: 24px;
-      text-align: center;
-    }
-    .portal-card-icon { font-size: 32px; margin-bottom: 12px; }
-    .portal-card-value {
-      font-family: 'Playfair Display', serif;
-      font-size: 32px; font-weight: 700;
-      color: var(--gold-light);
-      line-height: 1;
-    }
-    .portal-card-label {
-      font-size: 13px; color: rgba(255,255,255,.6);
-      margin-top: 6px;
-    }
-    .portal-commandes-title {
-      font-size: 16px; font-weight: 600;
-      color: var(--white);
-      margin-bottom: 16px;
-    }
-    .portal-commande-item {
-      display: flex; align-items: center; justify-content: space-between;
-      background: rgba(255,255,255,.07);
-      border-radius: 10px;
-      padding: 14px 18px;
-      margin-bottom: 10px;
-    }
-    .portal-commande-num { font-size: 14px; font-weight: 600; color: var(--white); }
-    .portal-commande-date { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 2px; }
-    .portal-commande-montant { font-size: 15px; font-weight: 700; color: var(--gold-light); }
-    .portal-statut {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 100px;
-      font-size: 11px; font-weight: 600;
-    }
-    .portal-statut.livre { background: #D1FAE5; color: #065F46; }
-    .portal-statut.en_cours { background: #FEF3C7; color: #92400E; }
-    .portal-statut.annule { background: #FEE2E2; color: #991B1B; }
-    .portal-promo-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--gold);
-      color: var(--white);
-      padding: 8px 16px;
-      border-radius: 100px;
-      font-size: 13px; font-weight: 600;
-      margin-right: 8px;
-      margin-bottom: 8px;
-    }
-    @media (max-width: 768px) {
-      .portal-grid { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 480px) {
-      .portal-grid { grid-template-columns: 1fr; }
-    }
-
-    /* ═══ WHATSAPP BUTTON ══════════════════════════════════════════ */
-    #whatsapp-btn {
-      position: fixed;
-      bottom: 88px; right: 28px;
-      width: 52px; height: 52px;
-      background: #25D366;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 26px;
-      box-shadow: 0 4px 16px rgba(37,211,102,.4);
-      cursor: pointer;
-      z-index: 500;
-      text-decoration: none;
-      transition: transform .2s, box-shadow .2s;
-      border: none;
-    }
-    #whatsapp-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 8px 24px rgba(37,211,102,.5);
-    }
-
-    /* ═══ PRIX PERSONNALISÉ BADGE ═══════════════════════════════════ */
-    .price-badge {
-      display: inline-block;
-      font-size: 10px; font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 100px;
-      background: var(--gold);
-      color: var(--white);
-      vertical-align: middle;
-      margin-left: 4px;
-    }
-    .price-original {
-      text-decoration: line-through;
-      color: var(--gray-500);
-      font-size: 14px;
-      font-weight: 400;
-      margin-left: 4px;
+    @media (max-width: 600px) {
+      section { padding: 52px 0; }
+      .footer-cols { grid-template-columns: 1fr; }
+      .form-row    { grid-template-columns: 1fr; }
+      .pro-form-box { padding: 24px 16px; }
+      .hero-ctas  { flex-direction: column; }
+      .btn-hero-primary, .btn-hero-whatsapp { justify-content: center; }
+      .catalogue-info { flex-direction: column; text-align: center; }
+      .catalogue-info .btn-wa { margin: 0 auto; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  NAVIGATION                                                     -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<nav id="navbar">
-  <div class="container">
-    <div class="nav-inner">
-      <a href="#" class="nav-logo">
-        <div class="nav-logo-icon">🌿</div>
-        <!-- ✏️ Remplacez le nom ci-dessous -->
-        <span class="nav-logo-text">Fresh<span>Link</span></span>
-      </a>
+<!-- ═══════════════════════════════════════════════════════
+     CONFIG — MODIFIEZ ICI TOUTES LES INFOS DU SITE
+════════════════════════════════════════════════════════ -->
+<script>
+const CONFIG = {
+  /* Identité */
+  COMPANY_NAME:    "Empire Fresh",
+  COMPANY_TAGLINE: "Distribution Alimentaire Professionnelle",
+  COMPANY_EMAIL:   "contact@empire-fresh.ma",
+  COMPANY_ADDRESS: "Zone Industrielle, Casablanca, Maroc",
 
-      <ul class="nav-links">
-        <li><a href="#about">À Propos</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#livraison">Livraison</a></li>
-        <li><a href="#catalogue">Catalogue</a></li>
-        <li><a href="#contact">Contact</a></li>
-      </ul>
+  /* Contacts */
+  PHONE:           "+212 6 00 00 00 00",
+  WHATSAPP:        "212600000000",          // sans + ni espaces
+  WHATSAPP_GROUP:  "https://chat.whatsapp.com/D11jvGbbWd5Kc2pyXl79SK",
 
-      <div class="nav-cta">
-        <!-- Non connecté -->
-        <button class="btn-nav btn-nav-outline" data-hide-logged-in onclick="openAuth('login')">Se connecter</button>
-        <button class="btn-nav btn-nav-solid" data-hide-logged-in onclick="openAuth('register')">Espace Pro</button>
-        <!-- Connecté -->
-        <div class="nav-user" data-hide-logged-out id="nav-user-widget" style="display:none">
-          <div class="nav-avatar" id="nav-avatar">?</div>
-          <span class="nav-user-name" id="nav-user-name">…</span>
-          <div class="nav-user-dropdown">
-            <a href="#mon-espace" onclick="scrollToSection('mon-espace')">🏠 Mon espace</a>
-            <button onclick="refreshMonCompte()">🔄 Actualiser</button>
-            <button class="logout-btn" onclick="doLogout()">🚪 Déconnexion</button>
-          </div>
-        </div>
+  /* API Vercel (votre application Next.js) */
+  API_URL: "https://fresh-link-ef.vercel.app",
+
+  /* Horaires */
+  HOURS: "Lun–Sam : 06h00 – 18h00",
+
+  /* IDs YouTube — remplacez par vos vrais IDs */
+  VIDEO_IDS: [
+    /* "votre_id_yt_1", "votre_id_yt_2" */
+  ],
+
+  /* Zones de livraison Casablanca */
+  ZONES: [
+    { icon:"🏙️", fr:"Casablanca Centre",       ar:"الدار البيضاء الوسط",  en:"Casablanca Centre",       del_fr:"Express 2–4h", del_ar:"سريع 2–4 ساعات", del_en:"Express 2–4h" },
+    { icon:"🏘️", fr:"Hay Hassani",              ar:"حي الحسني",            en:"Hay Hassani",              del_fr:"Standard 24h", del_ar:"عادي 24 ساعة",   del_en:"Standard 24h" },
+    { icon:"🏭", fr:"Sidi Moumen",               ar:"سيدي مومن",            en:"Sidi Moumen",              del_fr:"Standard 24h", del_ar:"عادي 24 ساعة",   del_en:"Standard 24h" },
+    { icon:"🌆", fr:"Ain Sebaa",                 ar:"عين السبع",            en:"Ain Sebaa",                del_fr:"Standard 24h", del_ar:"عادي 24 ساعة",   del_en:"Standard 24h" },
+    { icon:"🏗️", fr:"Bernoussi",                 ar:"برنوصي",              en:"Bernoussi",                del_fr:"Express 2–4h", del_ar:"سريع 2–4 ساعات", del_en:"Express 2–4h" },
+    { icon:"🛣️", fr:"Bouskoura / Route Azemmour",ar:"بوسكورة",            en:"Bouskoura",                del_fr:"Standard 24h", del_ar:"عادي 24 ساعة",   del_en:"Standard 24h" },
+  ],
+
+  /* Stats hero */
+  STATS: [
+    { num:"500+", fr:"Clients actifs",        ar:"عميل نشيط",        en:"Active clients" },
+    { num:"98%",  fr:"Taux de satisfaction",  ar:"نسبة الرضا",        en:"Satisfaction rate" },
+    { num:"24h",  fr:"Délai de livraison",    ar:"مدة التوصيل",       en:"Delivery time" },
+    { num:"6",    fr:"Zones couvertes",        ar:"مناطق مغطاة",       en:"Zones covered" },
+  ],
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     TEXTES TRILINGUES — FR / AR-DARIJA / EN
+════════════════════════════════════════════════════════ -->
+<script>
+const TEXTS = {
+  /* ─────── FRANÇAIS ─────── */
+  fr: {
+    nav_services:"Services", nav_delivery:"Livraison", nav_catalogue:"Catalogue",
+    nav_pro:"Espace Pro", nav_contact:"Contact", btn_login:"Mon Espace",
+    hero_badge:"En ligne — Commandes ouvertes",
+    hero_h1a:"Fruits &amp; Légumes", hero_h1b:"Frais", hero_h1c:"livrés chez vous",
+    hero_sub:"Distribution professionnelle à Casablanca. Tarifs personnalisés pour CHR, marchands et particuliers.",
+    btn_catalogue:"Voir le catalogue", btn_wa_order:"Commander sur WhatsApp",
+    card_title:"Pourquoi Empire Fresh ?",
+    card_qual:"Qualité garantie", card_qual_v:"Produits sélectionnés chaque matin",
+    card_deliv:"Livraison rapide",  card_deliv_v:"Standard 24h / Express 2–4h",
+    card_price:"Tarifs pros",       card_price_v:"CHR, marchands, particuliers",
+    card_online:"🟢 En ligne — Commandes ouvertes",
+    svc_tag:"Nos services", svc_title:"Tout ce dont vous avez besoin", svc_sub:"Des solutions adaptées à chaque profil client",
+    svc1_title:"Livraison Standard 24h",   svc1_desc:"Commandez avant 18h, livré le lendemain matin pour tous les professionnels.",
+    svc2_title:"Livraison Express 2–4h",   svc2_desc:"Besoin urgent ? Livraison en 2 à 4 heures dans les zones prioritaires.",
+    svc3_title:"Commande en ligne",         svc3_desc:"Gérez vos commandes via l'application ou WhatsApp, 24h/24.",
+    svc4_title:"Tarifs CHR & Pro",          svc4_desc:"Prix négociés pour restaurants, hôtels, cafés et marchands professionnels.",
+    svc5_title:"Espace Client",             svc5_desc:"Suivez vos commandes, points fidélité et remises depuis votre compte.",
+    svc6_title:"Conseil & Qualité",         svc6_desc:"Notre équipe qualité sélectionne les meilleurs produits chaque matin.",
+    del_tag:"Zones", del_title:"Livraison à Casablanca", del_sub:"Nous livrons dans toute la métropole casablancaise",
+    dm_std_title:"Standard 24h", dm_std_desc:"Commandez avant 18h00 — livré le lendemain dès 7h00.",
+    dm_exp_title:"Express 2–4h", dm_exp_desc:"Disponible dans les zones prioritaires — livraison en 2 à 4 heures.",
+    cat_tag:"Catalogue", cat_title:"Nos produits", cat_sub:"Des prix adaptés à chaque profil client",
+    cat_info_h:"Prix personnalisés selon votre profil",
+    cat_info_p:"Connectez-vous pour voir vos tarifs. Demandez l'accès pro pour bénéficier des prix CHR et marchands.",
+    cat_wa:"📦 Commander par WhatsApp",
+    tier_chr_l:"CHR",       tier_chr_d:"Hôtels, restaurants, cafés — meilleurs tarifs",
+    tier_mar_l:"Marchand",  tier_mar_d:"Épiceries, supérettes — tarifs grossiste",
+    tier_par_l:"Particulier",tier_par_d:"Particuliers et familles — prix public",
+    pro_tag:"Espace Pro", pro_title:"Rejoignez notre réseau", pro_sub:"Créez votre compte professionnel et accédez aux tarifs exclusifs.",
+    pro_p1_title:"Tarifs négociés",   pro_p1_desc:"Prix CHR et marchands selon votre profil et volume.",
+    pro_p2_title:"Livraison dédiée",  pro_p2_desc:"Tournée fixe selon votre zone, créneau garanti.",
+    pro_p3_title:"Suivi commandes",   pro_p3_desc:"Application mobile + espace web pour gérer vos achats.",
+    pro_p4_title:"Programme fidélité",pro_p4_desc:"Points cumulés, remises et promotions personnalisées.",
+    form_title:"Demande d'accès professionnel", form_sub:"Notre équipe commerciale vous contactera sous 24h.",
+    lbl_nom:"Nom complet", lbl_societe:"Nom de la société", lbl_tel:"Téléphone (WhatsApp)",
+    lbl_email:"Email (optionnel)", lbl_type:"Type d'activité", lbl_ville:"Ville / Zone",
+    lbl_msg:"Message (optionnel)", lbl_volume:"Volume mensuel estimé",
+    opt_type_0:"Choisir...", opt_type_1:"Restaurant / Hôtel / Café (CHR)",
+    opt_type_2:"Épicerie / Supérette", opt_type_3:"Marché / Grossiste",
+    opt_type_4:"Traiteur / Restauration collective", opt_type_5:"Particulier",
+    opt_vol_0:"Choisir...", opt_vol_1:"< 500 DH / mois", opt_vol_2:"500 – 2 000 DH",
+    opt_vol_3:"2 000 – 10 000 DH", opt_vol_4:"> 10 000 DH",
+    btn_submit:"Envoyer ma demande",
+    form_ok:"✅ Demande envoyée ! Nous vous contacterons sous 24h.",
+    form_err:"❌ Erreur lors de l'envoi. Merci de réessayer.",
+    login_title:"Connexion", login_sub:"Accédez à votre espace client",
+    lbl_phone:"Numéro de téléphone", ph_phone:"06 XX XX XX XX",
+    lbl_pass:"Mot de passe", ph_pass:"Votre mot de passe",
+    btn_login_ok:"Se connecter",
+    login_no_acc:"Pas encore de compte ?", login_signup:"Faire une demande d'accès",
+    login_err_fields:"Téléphone et mot de passe requis.", login_err_api:"Numéro ou mot de passe incorrect.",
+    portal_welcome:"Bonjour", portal_logout:"Se déconnecter",
+    portal_pts:"Points fidélité", portal_remise:"Remise", portal_credit:"Crédit disponible",
+    portal_orders:"Mes commandes récentes", portal_no_orders:"Aucune commande pour le moment.",
+    portal_wa:"📦 Passer une commande",
+    vid_tag:"Vidéos", vid_title:"Découvrez Empire Fresh", vid_sub:"Nos produits, nos équipes, notre savoir-faire",
+    ft_links:"Liens rapides", ft_contact:"Contact", ft_legal:"Légal",
+    ft_copy:"© 2026 Empire Fresh. Tous droits réservés.", ft_made:"Fait avec ❤️ à Casablanca",
+    contact_direct:"Contact direct",
+  },
+
+  /* ─────── ARABE DARIJA ─────── */
+  ar: {
+    nav_services:"خدماتنا", nav_delivery:"التوصيل", nav_catalogue:"الكتالوج",
+    nav_pro:"الفضاء المهني", nav_contact:"اتصل بنا", btn_login:"حسابي",
+    hero_badge:"خدمة مفتوحة — قبّل طلبياتك",
+    hero_h1a:"فواكه وخضر", hero_h1b:"طازجة", hero_h1c:"كتوصل لعندك",
+    hero_sub:"توزيع مهني بالدار البيضاء. أثمنة خاصة للمطاعم، التجار والأفراد.",
+    btn_catalogue:"شوف الكتالوج", btn_wa_order:"اطلب عبر واتساب",
+    card_title:"علاش Empire Fresh؟",
+    card_qual:"جودة مضمونة", card_qual_v:"منتجات مختارة كل صباح",
+    card_deliv:"توصيل سريع",  card_deliv_v:"عادي 24 ساعة / سريع 2–4 ساعات",
+    card_price:"أثمنة مهنية", card_price_v:"CHR، التجار، الأفراد",
+    card_online:"🟢 خدمة مفتوحة",
+    svc_tag:"خدماتنا", svc_title:"كل ما تحتاجه", svc_sub:"حلول مناسبة لكل نوع من الزبناء",
+    svc1_title:"توصيل عادي 24 ساعة",    svc1_desc:"اطلب قبل 18h، يوصلك الصباح الجاي.",
+    svc2_title:"توصيل سريع 2–4 ساعات",  svc2_desc:"محتاج بزربة؟ التوصيل في 2 لـ4 ساعات في المناطق الأولوية.",
+    svc3_title:"الطلبية أونلاين",         svc3_desc:"دير طلبيتك من التطبيق أو واتساب، 24/24.",
+    svc4_title:"أثمنة CHR والمهنيين",    svc4_desc:"أثمنة مفاوضة للمطاعم، الفنادق، المقاهي والتجار.",
+    svc5_title:"الفضاء الشخصي",          svc5_desc:"تابع طلبياتك، نقاط الولاء والتخفيضات من حسابك.",
+    svc6_title:"الجودة والنصيحة",         svc6_desc:"فريق الجودة ديالنا كيختار أحسن المنتجات كل صباح.",
+    del_tag:"المناطق", del_title:"التوصيل بالدار البيضاء", del_sub:"كنوصلو فجميع أرجاء الدار البيضاء الكبرى",
+    dm_std_title:"عادي 24 ساعة", dm_std_desc:"اطلب قبل 18h00 — التوصيل من 7h00 صباح اليوم الجاي.",
+    dm_exp_title:"سريع 2–4 ساعات", dm_exp_desc:"متاح في المناطق الأولوية — التوصيل في 2 لـ4 ساعات.",
+    cat_tag:"الكتالوج", cat_title:"منتجاتنا", cat_sub:"أثمنة مناسبة لكل نوع من الزبناء",
+    cat_info_h:"أثمنة شخصية حسب ملفك",
+    cat_info_p:"دخل لحسابك باش تشوف أثمنتك. اطلب الوصول المهني باش تستفيد من أثمنة CHR والتجار.",
+    cat_wa:"📦 اطلب عبر واتساب",
+    tier_chr_l:"CHR",      tier_chr_d:"الفنادق، المطاعم، المقاهي — أحسن الأثمنة",
+    tier_mar_l:"التاجر",   tier_mar_d:"الحانوتيين والدكاكين — أثمنة الجملة",
+    tier_par_l:"الفرد",    tier_par_d:"الأفراد والعائلات — الثمن العادي",
+    pro_tag:"الفضاء المهني", pro_title:"انضم لشبكتنا", pro_sub:"دير حسابك المهني وستفيد من الأثمنة الخاصة.",
+    pro_p1_title:"أثمنة مفاوضة",  pro_p1_desc:"أثمنة CHR والتجار حسب ملفك وحجم الشراء.",
+    pro_p2_title:"توصيل مخصص",    pro_p2_desc:"دوارة ثابتة حسب منطقتك، موعد مضمون.",
+    pro_p3_title:"تتبع الطلبيات", pro_p3_desc:"تطبيق موبايل + فضاء ويب لتسيير مشترياتك.",
+    pro_p4_title:"برنامج الولاء", pro_p4_desc:"نقاط مجمعة، تخفيضات وعروض شخصية.",
+    form_title:"طلب الوصول المهني", form_sub:"فريق المبيعات ديالنا غيتواصل معاك في أقل من 24 ساعة.",
+    lbl_nom:"الاسم الكامل", lbl_societe:"اسم الشركة", lbl_tel:"الهاتف (واتساب)",
+    lbl_email:"الإيميل (اختياري)", lbl_type:"نوع النشاط", lbl_ville:"المدينة / المنطقة",
+    lbl_msg:"رسالة (اختياري)", lbl_volume:"الحجم الشهري المقدر",
+    opt_type_0:"اختار...", opt_type_1:"مطعم / فندق / مقهى (CHR)",
+    opt_type_2:"حانوت / دكان", opt_type_3:"جملية / تاجر",
+    opt_type_4:"تقديم طعام جماعي", opt_type_5:"فرد",
+    opt_vol_0:"اختار...", opt_vol_1:"أقل من 500 درهم / شهر",
+    opt_vol_2:"500 – 2,000 درهم", opt_vol_3:"2,000 – 10,000 درهم", opt_vol_4:"أكثر من 10,000 درهم",
+    btn_submit:"إرسال الطلب",
+    form_ok:"✅ تم إرسال الطلب! غنتواصلو معاك في أقل من 24 ساعة.",
+    form_err:"❌ مشكل فالإرسال. عاود المحاولة.",
+    login_title:"الدخول", login_sub:"دخل لحسابك الشخصي",
+    lbl_phone:"رقم الهاتف", ph_phone:"06 XX XX XX XX",
+    lbl_pass:"كلمة السر", ph_pass:"كلمة السر ديالك",
+    btn_login_ok:"دخل",
+    login_no_acc:"ماعندكش حساب؟", login_signup:"اطلب الوصول",
+    login_err_fields:"الهاتف وكلمة السر مطلوبين.", login_err_api:"الرقم أو كلمة السر غلط.",
+    portal_welcome:"مرحبا", portal_logout:"خرج",
+    portal_pts:"نقاط الولاء", portal_remise:"التخفيض", portal_credit:"الرصيد المتاح",
+    portal_orders:"طلبياتي الأخيرة", portal_no_orders:"ماكاين طلبيات للحين.",
+    portal_wa:"📦 اطلب دبا",
+    vid_tag:"الفيديوهات", vid_title:"اكتشف Empire Fresh", vid_sub:"منتجاتنا، فريقنا، خبرتنا",
+    ft_links:"روابط سريعة", ft_contact:"التواصل", ft_legal:"قانوني",
+    ft_copy:"© 2026 Empire Fresh. جميع الحقوق محفوظة.", ft_made:"صُنع بـ❤️ في الدار البيضاء",
+    contact_direct:"التواصل المباشر",
+  },
+
+  /* ─────── ENGLISH ─────── */
+  en: {
+    nav_services:"Services", nav_delivery:"Delivery", nav_catalogue:"Catalogue",
+    nav_pro:"Pro Space", nav_contact:"Contact", btn_login:"My Account",
+    hero_badge:"Online — Orders open",
+    hero_h1a:"Fresh Fruits", hero_h1b:"& Vegetables", hero_h1c:"delivered to you",
+    hero_sub:"Professional distribution in Casablanca. Personalised pricing for CHR, merchants and individuals.",
+    btn_catalogue:"View catalogue", btn_wa_order:"Order on WhatsApp",
+    card_title:"Why Empire Fresh?",
+    card_qual:"Guaranteed quality", card_qual_v:"Products selected every morning",
+    card_deliv:"Fast delivery",      card_deliv_v:"Standard 24h / Express 2–4h",
+    card_price:"Pro pricing",        card_price_v:"CHR, merchants, individuals",
+    card_online:"🟢 Online — Orders open",
+    svc_tag:"Our services", svc_title:"Everything you need", svc_sub:"Solutions tailored to every client profile",
+    svc1_title:"Standard 24h delivery",  svc1_desc:"Order before 6pm, delivered next morning for all professionals.",
+    svc2_title:"Express 2–4h delivery",  svc2_desc:"Urgent need? Delivery in 2 to 4 hours in priority zones.",
+    svc3_title:"Online ordering",         svc3_desc:"Manage your orders via the app or WhatsApp, 24/7.",
+    svc4_title:"CHR & Pro pricing",       svc4_desc:"Negotiated prices for restaurants, hotels, cafés and professional merchants.",
+    svc5_title:"Client portal",           svc5_desc:"Track orders, loyalty points and discounts from your account.",
+    svc6_title:"Quality & advice",        svc6_desc:"Our quality team selects the best products every morning.",
+    del_tag:"Zones", del_title:"Delivery in Casablanca", del_sub:"We deliver across the entire Casablanca metropolitan area",
+    dm_std_title:"Standard 24h", dm_std_desc:"Order before 6pm — delivered next morning from 7am.",
+    dm_exp_title:"Express 2–4h", dm_exp_desc:"Available in priority zones — delivery in 2 to 4 hours.",
+    cat_tag:"Catalogue", cat_title:"Our products", cat_sub:"Prices adapted to each client profile",
+    cat_info_h:"Personalised prices by profile",
+    cat_info_p:"Log in to see your prices. Request pro access for CHR and merchant rates.",
+    cat_wa:"📦 Order via WhatsApp",
+    tier_chr_l:"CHR",       tier_chr_d:"Hotels, restaurants, cafés — best rates",
+    tier_mar_l:"Merchant",  tier_mar_d:"Grocers, shops — wholesale rates",
+    tier_par_l:"Individual",tier_par_d:"Individuals and families — public price",
+    pro_tag:"Pro Space", pro_title:"Join our network", pro_sub:"Create your professional account and access exclusive pricing.",
+    pro_p1_title:"Negotiated pricing",   pro_p1_desc:"CHR and merchant rates based on your profile and volume.",
+    pro_p2_title:"Dedicated delivery",   pro_p2_desc:"Fixed route for your zone, guaranteed time slot.",
+    pro_p3_title:"Order tracking",       pro_p3_desc:"Mobile app + web portal to manage your purchases.",
+    pro_p4_title:"Loyalty programme",    pro_p4_desc:"Accumulated points, discounts and personalised promotions.",
+    form_title:"Professional access request", form_sub:"Our sales team will contact you within 24 hours.",
+    lbl_nom:"Full name", lbl_societe:"Company name", lbl_tel:"Phone (WhatsApp)",
+    lbl_email:"Email (optional)", lbl_type:"Activity type", lbl_ville:"City / Zone",
+    lbl_msg:"Message (optional)", lbl_volume:"Estimated monthly volume",
+    opt_type_0:"Choose...", opt_type_1:"Restaurant / Hotel / Café (CHR)",
+    opt_type_2:"Grocery / Mini-market", opt_type_3:"Market / Wholesaler",
+    opt_type_4:"Catering / Group catering", opt_type_5:"Individual",
+    opt_vol_0:"Choose...", opt_vol_1:"< 500 MAD / month", opt_vol_2:"500 – 2,000 MAD",
+    opt_vol_3:"2,000 – 10,000 MAD", opt_vol_4:"> 10,000 MAD",
+    btn_submit:"Send my request",
+    form_ok:"✅ Request sent! We will contact you within 24 hours.",
+    form_err:"❌ Sending error. Please try again.",
+    login_title:"Sign in", login_sub:"Access your client portal",
+    lbl_phone:"Phone number", ph_phone:"06 XX XX XX XX",
+    lbl_pass:"Password", ph_pass:"Your password",
+    btn_login_ok:"Sign in",
+    login_no_acc:"No account yet?", login_signup:"Request access",
+    login_err_fields:"Phone and password are required.", login_err_api:"Incorrect phone or password.",
+    portal_welcome:"Hello", portal_logout:"Sign out",
+    portal_pts:"Loyalty points", portal_remise:"Discount", portal_credit:"Available credit",
+    portal_orders:"My recent orders", portal_no_orders:"No orders yet.",
+    portal_wa:"📦 Place an order",
+    vid_tag:"Videos", vid_title:"Discover Empire Fresh", vid_sub:"Our products, our team, our know-how",
+    ft_links:"Quick links", ft_contact:"Contact", ft_legal:"Legal",
+    ft_copy:"© 2026 Empire Fresh. All rights reserved.", ft_made:"Made with ❤️ in Casablanca",
+    contact_direct:"Direct contact",
+  },
+}
+
+/* ── Langue active ── */
+let currentLang = localStorage.getItem("fl_lang") || "fr"
+
+function t(key) { return TEXTS[currentLang]?.[key] ?? TEXTS.fr[key] ?? key }
+
+function setLang(lang) {
+  if (!TEXTS[lang]) return
+  currentLang = lang
+  localStorage.setItem("fl_lang", lang)
+
+  const dir = lang === "ar" ? "rtl" : "ltr"
+  document.documentElement.setAttribute("dir", dir)
+  document.documentElement.setAttribute("lang", lang === "ar" ? "ar" : lang)
+
+  /* boutons actifs */
+  document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("active", b.dataset.lang === lang))
+
+  /* tous les data-i18n */
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const v = t(el.dataset.i18n)
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") el.placeholder = v
+    else el.innerHTML = v
+  })
+
+  /* placeholders séparés */
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh) })
+
+  /* options select */
+  document.querySelectorAll("option[data-i18n]").forEach(opt => { opt.textContent = t(opt.dataset.i18n) })
+
+  /* rendus dynamiques */
+  renderZones()
+  renderStats()
+}
+</script>
+
+<!-- ═══════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════════ -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <div class="nav-logo-icon">🌿</div>
+      <div class="nav-brand-text">
+        <span class="nav-brand-name">Empire Fresh</span>
+        <span class="nav-brand-sub">Distribution Alimentaire</span>
       </div>
+    </a>
 
-      <div class="nav-burger" id="burger" onclick="toggleMenu()">
+    <ul class="nav-links">
+      <li><a href="#services"   data-i18n="nav_services">Services</a></li>
+      <li><a href="#livraison"  data-i18n="nav_delivery">Livraison</a></li>
+      <li><a href="#catalogue"  data-i18n="nav_catalogue">Catalogue</a></li>
+      <li><a href="#espace-pro" data-i18n="nav_pro">Espace Pro</a></li>
+      <li><a href="#contact"    data-i18n="nav_contact">Contact</a></li>
+    </ul>
+
+    <div class="nav-right">
+      <div class="lang-switcher">
+        <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">🇫🇷&nbsp;FR</button>
+        <button class="lang-btn" data-lang="ar" onclick="setLang('ar')">🇲🇦&nbsp;عر</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">🇬🇧&nbsp;EN</button>
+      </div>
+      <button class="btn-login" id="btnLogin" onclick="openLogin()">
+        <span data-i18n="btn_login">Mon Espace</span>
+      </button>
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()">
         <span></span><span></span><span></span>
-      </div>
+      </button>
     </div>
   </div>
 </nav>
 
-<div class="mobile-menu" id="mobile-menu">
-  <a href="#about" onclick="toggleMenu()">À Propos</a>
-  <a href="#services" onclick="toggleMenu()">Nos Services</a>
-  <a href="#videos" onclick="toggleMenu()">Vidéos</a>
-  <a href="#catalogue" onclick="toggleMenu()">Catalogue</a>
-  <a href="#mon-espace" onclick="toggleMenu()" class="fl-show-logged-in" style="display:none">🏠 Mon Espace</a>
-  <a href="#contact" onclick="toggleMenu()">Contact</a>
-  <div class="mobile-btns">
-    <button class="btn-nav btn-nav-outline fl-hide-logged-in" style="flex:1;text-align:center" onclick="openAuth('login');toggleMenu()">Se connecter</button>
-    <button class="btn-nav btn-nav-solid fl-hide-logged-in" style="flex:1;text-align:center" onclick="openAuth('register');toggleMenu()">Espace Pro</button>
-    <button class="btn-nav btn-nav-outline fl-show-logged-in" style="flex:1;text-align:center;display:none" onclick="doLogout();toggleMenu()">Déconnexion</button>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#services"   onclick="closeMobileMenu()" data-i18n="nav_services">Services</a>
+  <a href="#livraison"  onclick="closeMobileMenu()" data-i18n="nav_delivery">Livraison</a>
+  <a href="#catalogue"  onclick="closeMobileMenu()" data-i18n="nav_catalogue">Catalogue</a>
+  <a href="#espace-pro" onclick="closeMobileMenu()" data-i18n="nav_pro">Espace Pro</a>
+  <a href="#contact"    onclick="closeMobileMenu()" data-i18n="nav_contact">Contact</a>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<section class="hero" id="accueil">
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        <span data-i18n="hero_badge">En ligne — Commandes ouvertes</span>
+      </div>
+      <h1>
+        <span data-i18n="hero_h1a">Fruits &amp; Légumes</span><br>
+        <span data-i18n="hero_h1b" style="color:#4ade80">Frais</span><br>
+        <span data-i18n="hero_h1c">livrés chez vous</span>
+      </h1>
+      <p class="hero-sub" data-i18n="hero_sub">Distribution professionnelle à Casablanca.</p>
+      <div class="hero-ctas">
+        <a href="#catalogue" class="btn-hero-primary">
+          🥦 <span data-i18n="btn_catalogue">Voir le catalogue</span>
+        </a>
+        <a href="#" class="btn-hero-whatsapp" onclick="orderWhatsApp(event)">
+          📲 <span data-i18n="btn_wa_order">Commander sur WhatsApp</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-card">
+      <div class="hero-card-title" data-i18n="card_title">Pourquoi Empire Fresh ?</div>
+      <div class="hero-card-row">
+        <span class="hero-card-icon">🥦</span>
+        <div>
+          <div class="hero-card-label" data-i18n="card_qual">Qualité garantie</div>
+          <div class="hero-card-value" data-i18n="card_qual_v">Produits sélectionnés chaque matin</div>
+        </div>
+      </div>
+      <div class="hero-card-row">
+        <span class="hero-card-icon">🚚</span>
+        <div>
+          <div class="hero-card-label" data-i18n="card_deliv">Livraison rapide</div>
+          <div class="hero-card-value" data-i18n="card_deliv_v">Standard 24h / Express 2–4h</div>
+        </div>
+      </div>
+      <div class="hero-card-row">
+        <span class="hero-card-icon">💰</span>
+        <div>
+          <div class="hero-card-label" data-i18n="card_price">Tarifs pros</div>
+          <div class="hero-card-value" data-i18n="card_price_v">CHR, marchands, particuliers</div>
+        </div>
+      </div>
+      <div class="hero-card-badge" data-i18n="card_online">🟢 En ligne — Commandes ouvertes</div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="container">
+    <div class="stats-inner" id="statsInner"></div>
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  HERO                                                           -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-pattern"></div>
-  <div class="hero-grid"></div>
+<!-- ═══════════════════════════════════════════
+     SERVICES
+════════════════════════════════════════════ -->
+<section id="services">
   <div class="container">
-    <div class="hero-content">
-      <div class="hero-left">
-        <div class="hero-badge">Distribution Alimentaire Professionnelle</div>
-        <!-- ✏️ Personnalisez votre slogan -->
-        <h1 class="hero-title">
-          La <em>fraîcheur</em>,<br>livrée à temps.
-        </h1>
-        <p class="hero-desc">
-          <!-- ✏️ Personnalisez votre description -->
-          Votre partenaire de confiance pour l'approvisionnement en produits frais.
-          Qualité garantie, livraison fiable, tarifs adaptés aux professionnels CHR.
-        </p>
-        <div class="hero-btns">
-          <button class="btn btn-gold" onclick="scrollToSection('catalogue')">
-            📦 Voir le catalogue
-          </button>
-          <button class="btn btn-outline" onclick="scrollToSection('commander')">
-            Passer une commande
-          </button>
-        </div>
-        <div class="hero-stats">
-          <!-- ✏️ Personnalisez vos chiffres clés -->
-          <div>
-            <div class="hero-stat-num">500<span>+</span></div>
-            <div class="hero-stat-label">Clients actifs</div>
-          </div>
-          <div>
-            <div class="hero-stat-num">98<span>%</span></div>
-            <div class="hero-stat-label">Taux de satisfaction</div>
-          </div>
-          <div>
-            <div class="hero-stat-num">24<span>h</span></div>
-            <div class="hero-stat-label">Délai de livraison</div>
-          </div>
-          <div>
-            <div class="hero-stat-num">10<span>+</span></div>
-            <div class="hero-stat-label">Années d'expérience</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-visual">
-        <div class="hero-card-badge">🟢 En ligne — Commandes ouvertes</div>
-        <div class="hero-card-main">
-          <div class="hero-card-title">Produits disponibles aujourd'hui</div>
-          <div class="hero-product-list" id="hero-preview">
-            <div class="hero-product-item">
-              <div class="hero-product-left">
-                <div class="hero-product-icon">🥦</div>
-                <div>
-                  <div class="hero-product-name">Brocoli Premium</div>
-                  <div class="hero-product-cat">Légumes verts</div>
-                </div>
-              </div>
-              <div class="hero-product-price">12.50 DH</div>
-            </div>
-            <div class="hero-product-item">
-              <div class="hero-product-left">
-                <div class="hero-product-icon">🍅</div>
-                <div>
-                  <div class="hero-product-name">Tomates grappe</div>
-                  <div class="hero-product-cat">Légumes fruits</div>
-                </div>
-              </div>
-              <div class="hero-product-price">8.00 DH</div>
-            </div>
-            <div class="hero-product-item">
-              <div class="hero-product-left">
-                <div class="hero-product-icon">🍋</div>
-                <div>
-                  <div class="hero-product-name">Citrons bio</div>
-                  <div class="hero-product-cat">Agrumes</div>
-                </div>
-              </div>
-              <div class="hero-product-price">15.00 DH</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  À PROPOS                                                       -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="about" class="section">
-  <div class="container">
-    <div class="about-grid">
-      <div class="about-visual">
-        <!-- ✏️ Remplacez par une vraie photo (décommentez l'img, supprimez le placeholder) -->
-        <!-- <img src="images/entrepot.jpg" alt="Entrepôt FreshLink" style="width:100%;border-radius:20px"> -->
-        <div class="about-img-placeholder">
-          <div class="about-img-placeholder-icon">📸</div>
-          <div class="about-img-placeholder-text">Ajoutez votre photo ici</div>
-        </div>
-        <div class="about-floating-card">
-          <div class="about-fc-icon">📦</div>
-          <div>
-            <div class="about-fc-num">1 200+</div>
-            <div class="about-fc-label">Commandes / mois</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="about-text">
-        <div class="label">Notre histoire</div>
-        <!-- ✏️ Personnalisez votre présentation -->
-        <h2>Un engagement qualité depuis le premier jour</h2>
-        <p>
-          Spécialiste de la distribution alimentaire professionnelle, nous accompagnons
-          restaurants, hôtels, cafés et collectivités avec des produits frais sélectionnés
-          directement auprès des meilleurs producteurs.
-        </p>
-        <p>
-          Notre réseau logistique nous permet d'assurer des livraisons rapides, fiables
-          et adaptées aux exigences de la restauration professionnelle.
-        </p>
-        <div class="about-features">
-          <div class="about-feature">
-            <div class="about-feature-icon">🌱</div>
-            <div>
-              <div class="about-feature-title">Produits frais garantis</div>
-              <div class="about-feature-desc">Sélection rigoureuse, traçabilité complète, fraîcheur assurée à chaque livraison.</div>
-            </div>
-          </div>
-          <div class="about-feature">
-            <div class="about-feature-icon">🚚</div>
-            <div>
-              <div class="about-feature-title">Livraison sous 24h</div>
-              <div class="about-feature-desc">Réseau de livraison optimisé pour répondre aux besoins quotidiens des professionnels.</div>
-            </div>
-          </div>
-          <div class="about-feature">
-            <div class="about-feature-icon">💼</div>
-            <div>
-              <div class="about-feature-title">Tarifs professionnels CHR</div>
-              <div class="about-feature-desc">Grilles tarifaires dédiées selon votre activité et votre volume de commande.</div>
-            </div>
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="scrollToSection('contact')">
-          Devenir partenaire →
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  SERVICES                                                       -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="services" class="section" style="background: var(--white);">
-  <div class="container">
-    <div class="services-header">
-      <div class="label">Ce que nous offrons</div>
-      <h2>Des services pensés pour les professionnels</h2>
-      <p>Une offre complète pour couvrir tous vos besoins d'approvisionnement alimentaire.</p>
+    <div class="section-header">
+      <span class="section-tag" data-i18n="svc_tag">Nos services</span>
+      <h2 class="section-title" data-i18n="svc_title">Tout ce dont vous avez besoin</h2>
+      <p class="section-sub"   data-i18n="svc_sub">Des solutions adaptées à chaque profil client</p>
     </div>
     <div class="services-grid">
-      <div class="service-card">
-        <div class="service-card-accent"></div>
-        <div class="service-icon">🥬</div>
-        <div class="service-title">Fruits & Légumes Frais</div>
-        <div class="service-desc">Large gamme de fruits et légumes de saison, sélectionnés chaque matin pour garantir la meilleure fraîcheur.</div>
+      <div class="service-card"><div class="service-icon">🚚</div><div class="service-title" data-i18n="svc1_title">Livraison Standard 24h</div><div class="service-desc" data-i18n="svc1_desc">Commandez avant 18h, livré le lendemain matin.</div></div>
+      <div class="service-card"><div class="service-icon">⚡</div><div class="service-title" data-i18n="svc2_title">Livraison Express 2–4h</div><div class="service-desc" data-i18n="svc2_desc">Besoin urgent ? Livraison en 2 à 4 heures.</div></div>
+      <div class="service-card"><div class="service-icon">📱</div><div class="service-title" data-i18n="svc3_title">Commande en ligne</div><div class="service-desc" data-i18n="svc3_desc">Via l'application ou WhatsApp, 24h/24.</div></div>
+      <div class="service-card"><div class="service-icon">🏨</div><div class="service-title" data-i18n="svc4_title">Tarifs CHR &amp; Pro</div><div class="service-desc" data-i18n="svc4_desc">Prix négociés pour restaurants, hôtels et marchands.</div></div>
+      <div class="service-card"><div class="service-icon">👤</div><div class="service-title" data-i18n="svc5_title">Espace Client</div><div class="service-desc" data-i18n="svc5_desc">Suivez commandes, points fidélité et remises.</div></div>
+      <div class="service-card"><div class="service-icon">🌿</div><div class="service-title" data-i18n="svc6_title">Conseil &amp; Qualité</div><div class="service-desc" data-i18n="svc6_desc">Sélection quotidienne par notre équipe qualité.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     LIVRAISON
+════════════════════════════════════════════ -->
+<section id="livraison">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag" data-i18n="del_tag">Zones</span>
+      <h2 class="section-title" data-i18n="del_title">Livraison à Casablanca</h2>
+      <p class="section-sub"   data-i18n="del_sub">Nous livrons dans toute la métropole casablancaise</p>
+    </div>
+    <div class="zone-grid" id="zonesGrid"></div>
+    <div class="delivery-modes">
+      <div class="delivery-mode-card standard">
+        <span class="dm-icon">🚚</span>
+        <div><div class="dm-title" data-i18n="dm_std_title">Standard 24h</div><div class="dm-desc" data-i18n="dm_std_desc">Commandez avant 18h00 — livré le lendemain dès 7h00.</div></div>
       </div>
-      <div class="service-card">
-        <div class="service-card-accent"></div>
-        <div class="service-icon">🚚</div>
-        <div class="service-title">Livraison Standard — 24h</div>
-        <div class="service-desc">Commandez avant 18h, livré le lendemain matin. Gratuit dès 150 MAD. Couverture complète de Casablanca.</div>
-      </div>
-      <div class="service-card">
-        <div class="service-card-accent" style="background:var(--gold)"></div>
-        <div class="service-icon">⚡</div>
-        <div class="service-title">Livraison Express — 2 à 4h</div>
-        <div class="service-desc">Besoin urgent ? Livraison express disponible en 2 à 4 heures sur Casablanca. Idéal pour les professionnels CHR.</div>
-        <div style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:#fff;padding:5px 12px;border-radius:100px;font-size:12px;font-weight:700">⚡ RAPIDE</div>
-      </div>
-      <div class="service-card">
-        <div class="service-card-accent"></div>
-        <div class="service-icon">📱</div>
-        <div class="service-title">Commande en ligne 24h/24</div>
-        <div class="service-desc">Passez vos commandes à tout moment via notre portail ou groupe WhatsApp. Simple, rapide, sans téléphone.</div>
-      </div>
-      <div class="service-card">
-        <div class="service-card-accent"></div>
-        <div class="service-icon">💼</div>
-        <div class="service-title">Tarifs Professionnels CHR</div>
-        <div class="service-desc">Grilles tarifaires dédiées selon votre activité : restaurant, hôtel, épicerie, grossiste. Prix transparents.</div>
-      </div>
-      <div class="service-card">
-        <div class="service-card-accent"></div>
-        <div class="service-icon">📊</div>
-        <div class="service-title">Suivi & Espace Client</div>
-        <div class="service-desc">Historique complet de vos commandes, factures et devis. Points fidélité et remises depuis votre espace.</div>
+      <div class="delivery-mode-card express">
+        <span class="dm-icon">⚡</span>
+        <div><div class="dm-title" data-i18n="dm_exp_title">Express 2–4h</div><div class="dm-desc" data-i18n="dm_exp_desc">Disponible dans les zones prioritaires.</div></div>
       </div>
     </div>
   </div>
 </section>
 
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  LIVRAISON — ZONES & MODES                                      -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="livraison" class="section-sm" style="background:var(--green-50);">
+<!-- ═══════════════════════════════════════════
+     CATALOGUE
+════════════════════════════════════════════ -->
+<section id="catalogue">
   <div class="container">
-    <div style="text-align:center;margin-bottom:48px">
-      <div class="label">Livraison</div>
-      <h2>Nous livrons partout à Casablanca</h2>
-      <p style="color:var(--gray-500);margin-top:12px;font-size:17px">Standard sous 24h ou Express en 2 à 4 heures selon votre quartier</p>
+    <div class="section-header">
+      <span class="section-tag" data-i18n="cat_tag">Catalogue</span>
+      <h2 class="section-title" data-i18n="cat_title">Nos produits</h2>
+      <p class="section-sub"   data-i18n="cat_sub">Des prix adaptés à chaque profil client</p>
     </div>
-
-    <!-- Modes de livraison -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:640px;margin:0 auto 48px">
-      <div style="background:#fff;border:2px solid var(--green-400);border-radius:16px;padding:24px;">
-        <div style="font-size:32px;margin-bottom:12px">🚚</div>
-        <div style="font-size:17px;font-weight:700;color:var(--gray-900)">Standard</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Livraison sous 24h</div>
-        <div style="margin-top:16px;font-size:15px;font-weight:700;color:var(--green-800)">Gratuit dès 150 MAD</div>
+    <div class="catalogue-info">
+      <span class="catalogue-info-icon">🥦</span>
+      <div>
+        <h3 data-i18n="cat_info_h">Prix personnalisés selon votre profil</h3>
+        <p  data-i18n="cat_info_p">Connectez-vous pour voir vos tarifs.</p>
       </div>
-      <div style="background:#FFFBEB;border:2px solid var(--gold);border-radius:16px;padding:24px;position:relative">
-        <div style="position:absolute;top:12px;right:12px;background:var(--gold);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700">RAPIDE</div>
-        <div style="font-size:32px;margin-bottom:12px">⚡</div>
-        <div style="font-size:17px;font-weight:700;color:var(--gray-900)">Express</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Livraison 2–4 heures</div>
-        <div style="margin-top:16px;font-size:15px;font-weight:700;color:var(--gold)">+20 MAD</div>
-      </div>
-    </div>
-
-    <!-- Zones de livraison -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="zones-grid">
-      <div class="zone-card" style="background:#fff;border-radius:14px;padding:20px;border:1.5px solid var(--gray-300);">
-        <div style="font-size:24px;margin-bottom:10px">🏙️</div>
-        <div style="font-weight:700;color:var(--gray-900);font-size:15px">Centre-ville / Maarif</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Quartiers centraux, accès facile</div>
-        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="background:var(--green-100);color:var(--green-800);padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Standard 24h</span>
-          <span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Express 2h</span>
-        </div>
-        <div style="margin-top:10px;font-size:13px;font-weight:700;color:var(--green-800)">Gratuit dès 150 MAD</div>
-      </div>
-      <div class="zone-card" style="background:#fff;border-radius:14px;padding:20px;border:1.5px solid var(--gold);">
-        <div style="font-size:24px;margin-bottom:10px">🌊</div>
-        <div style="font-weight:700;color:var(--gray-900);font-size:15px">Ain Diab / Anfa</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Corniche, quartiers résidentiels</div>
-        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="background:var(--green-100);color:var(--green-800);padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Standard 24h</span>
-          <span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Express 2h30</span>
-        </div>
-        <div style="margin-top:10px;font-size:13px;font-weight:700;color:var(--gold)">Express +20 MAD</div>
-      </div>
-      <div class="zone-card" style="background:#fff;border-radius:14px;padding:20px;border:1.5px solid var(--gray-300);">
-        <div style="font-size:24px;margin-bottom:10px">🍸</div>
-        <div style="font-weight:700;color:var(--gray-900);font-size:15px">Hay Mohammadi / Sidi Bernoussi</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Quartiers est de Casablanca</div>
-        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="background:var(--green-100);color:var(--green-800);padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Standard 24h</span>
-          <span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Express 3h</span>
-        </div>
-        <div style="margin-top:10px;font-size:13px;font-weight:700;color:var(--green-800)">Gratuit dès 200 MAD</div>
-      </div>
-      <div class="zone-card" style="background:#fff;border-radius:14px;padding:20px;border:1.5px solid var(--gray-300);">
-        <div style="font-size:24px;margin-bottom:10px">🏘️</div>
-        <div style="font-weight:700;color:var(--gray-900);font-size:15px">Derb Sultan / Moulay Rachid</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Médina et quartiers historiques</div>
-        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="background:var(--green-100);color:var(--green-800);padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Standard 24h</span>
-          <span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Express 2h30</span>
-        </div>
-        <div style="margin-top:10px;font-size:13px;font-weight:700;color:var(--green-800)">Gratuit dès 150 MAD</div>
-      </div>
-      <div class="zone-card" style="background:#fff;border-radius:14px;padding:20px;border:1.5px solid var(--gold);">
-        <div style="font-size:24px;margin-bottom:10px">🏢</div>
-        <div style="font-weight:700;color:var(--gray-900);font-size:15px">Ain Sebaa / Hay Hassani</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Zones industrielles et résidentielles</div>
-        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="background:var(--green-100);color:var(--green-800);padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Standard 24h</span>
-          <span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Express 3h</span>
-        </div>
-        <div style="margin-top:10px;font-size:13px;font-weight:700;color:var(--gold)">Express +25 MAD</div>
-      </div>
-      <div class="zone-card" style="background:#fff;border-radius:14px;padding:20px;border:1.5px solid var(--gray-300);">
-        <div style="font-size:24px;margin-bottom:10px">📍</div>
-        <div style="font-weight:700;color:var(--gray-900);font-size:15px">Autres quartiers</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Bouskoura, Dar Bouazza, périphérie</div>
-        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="background:var(--green-100);color:var(--green-800);padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600">Standard 24h</span>
-        </div>
-        <div style="margin-top:10px;font-size:13px;font-weight:700;color:var(--gray-500)">Tarif sur demande</div>
-      </div>
-    </div>
-
-    <!-- CTA WhatsApp groupe commandes -->
-    <div style="text-align:center;margin-top:40px">
-      <a href="https://chat.whatsapp.com/D11jvGbbWd5Kc2pyXl79SK" target="_blank"
-         style="display:inline-flex;align-items:center;gap:12px;background:#25D366;color:#fff;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:700;box-shadow:0 4px 16px rgba(37,211,102,.35);text-decoration:none;transition:transform .2s"
-         onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        💬 Rejoindre le groupe de commandes WhatsApp
+      <a href="#" class="btn-wa" onclick="orderWhatsApp(event)">
+        <span data-i18n="cat_wa">📦 Commander par WhatsApp</span>
       </a>
-      <p style="margin-top:12px;font-size:13px;color:var(--gray-500)">Passez vos commandes directement via le groupe — réponse en moins d'une heure</p>
+    </div>
+    <div class="price-tiers">
+      <div class="tier-card chr">        <div class="tier-icon">🏨</div><div class="tier-label" data-i18n="tier_chr_l">CHR</div>       <div class="tier-desc" data-i18n="tier_chr_d">Hôtels, restaurants, cafés — meilleurs tarifs</div></div>
+      <div class="tier-card marchand">   <div class="tier-icon">🛒</div><div class="tier-label" data-i18n="tier_mar_l">Marchand</div>  <div class="tier-desc" data-i18n="tier_mar_d">Épiceries, supérettes — tarifs grossiste</div></div>
+      <div class="tier-card particulier"><div class="tier-icon">👤</div><div class="tier-label" data-i18n="tier_par_l">Particulier</div><div class="tier-desc" data-i18n="tier_par_d">Particuliers et familles — prix public</div></div>
     </div>
   </div>
 </section>
 
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  VIDÉOS                                                         -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="videos" class="section">
+<!-- ═══════════════════════════════════════════
+     MON ESPACE — portail client
+════════════════════════════════════════════ -->
+<section id="mon-espace">
   <div class="container">
-    <div class="videos-header">
-      <div class="label">Découvrez-nous</div>
-      <h2>Voir pour croire</h2>
-      <p>Plongez dans notre univers — entrepôt, sélection des produits, livraison.</p>
-    </div>
-
-    <div class="videos-grid">
-      <!-- Vidéo principale -->
+    <div class="portal-header">
+      <div class="portal-avatar">👤</div>
       <div>
-        <div class="video-frame-wrap" id="main-video-wrap">
-          <!--
-            ✏️ POUR AJOUTER VOTRE VIDÉO YOUTUBE :
-            1. Allez sur votre vidéo YouTube
-            2. Copiez l'ID (exemple: pour https://www.youtube.com/watch?v=dQw4w9WgXcQ → l'ID est dQw4w9WgXcQ)
-            3. Remplacez VOTRE_VIDEO_ID ci-dessous
-          -->
-          <div class="video-placeholder" id="main-video-placeholder" onclick="loadMainVideo('VOTRE_VIDEO_ID_ICI')">
-            <div class="video-placeholder-icon">▶️</div>
-            <div class="video-placeholder-text">Vidéo de présentation — Cliquez pour lancer</div>
-            <div style="font-size:12px;opacity:.6;margin-top:4px">Remplacez VOTRE_VIDEO_ID_ICI dans le code HTML</div>
-          </div>
-        </div>
-        <div style="margin-top:20px">
-          <div style="font-size:18px;font-weight:700;color:var(--white)">
-            <!-- ✏️ Titre de la vidéo principale -->
-            Notre entreprise en 3 minutes
-          </div>
-          <div style="font-size:14px;color:rgba(255,255,255,.5);margin-top:6px">
-            Découvrez notre entrepôt, notre équipe et notre engagement qualité
-          </div>
-        </div>
+        <div class="portal-name" id="portalName">—</div>
+        <div class="portal-meta" id="portalMeta">—</div>
       </div>
-
-      <!-- Vidéos secondaires -->
-      <div class="videos-side">
-        <!-- ✏️ Vidéo 2 — Remplacez VIDEO_ID_2 -->
-        <div class="video-card-side" onclick="switchVideo('VIDEO_ID_2', 'Nos produits du jour')">
-          <div class="video-card-side-thumb">
-            🥦
-            <div class="video-play-btn">▶</div>
-          </div>
-          <div class="video-card-side-info">
-            <div class="video-card-side-title">Nos produits du jour</div>
-            <div class="video-card-side-sub">Sélection fraîcheur — tous les matins</div>
-          </div>
-        </div>
-
-        <!-- ✏️ Vidéo 3 — Remplacez VIDEO_ID_3 -->
-        <div class="video-card-side" onclick="switchVideo('VIDEO_ID_3', 'Notre livraison')">
-          <div class="video-card-side-thumb">
-            🚚
-            <div class="video-play-btn">▶</div>
-          </div>
-          <div class="video-card-side-info">
-            <div class="video-card-side-title">Notre circuit de livraison</div>
-            <div class="video-card-side-sub">De l'entrepôt à votre cuisine</div>
-          </div>
-        </div>
-
-        <!-- ✏️ Vidéo 4 — Remplacez VIDEO_ID_4 -->
-        <div class="video-card-side" onclick="switchVideo('VIDEO_ID_4', 'Témoignages clients')">
-          <div class="video-card-side-thumb">
-            ⭐
-            <div class="video-play-btn">▶</div>
-          </div>
-          <div class="video-card-side-info">
-            <div class="video-card-side-title">Témoignages clients</div>
-            <div class="video-card-side-sub">Ce que disent nos partenaires CHR</div>
-          </div>
-        </div>
-      </div>
+      <button class="portal-logout" onclick="logout()" data-i18n="portal_logout">Se déconnecter</button>
     </div>
-  </div>
-</section>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  CATALOGUE                                                      -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="catalogue" class="section">
-  <div class="container">
-    <div class="cat-header">
-      <div>
-        <div class="label">Nos produits</div>
-        <h2>Catalogue en ligne</h2>
-      </div>
-      <div class="cat-filters" id="cat-filters">
-        <button class="cat-filter-btn active" data-cat="all" onclick="filterCat('all', this)">Tous</button>
-      </div>
-    </div>
-
-    <div class="cat-search">
-      <span class="cat-search-icon">🔍</span>
-      <input type="text" placeholder="Rechercher un produit..." id="search-input" oninput="filterSearch(this.value)" />
-    </div>
-
-    <div id="products-grid">
-      <div class="products-loading">
-        <div class="spinner"></div>
-        Chargement du catalogue...
-      </div>
-    </div>
-
-    <div style="text-align:center;margin-top:40px;display:none" id="load-more-wrap">
-      <button class="btn btn-outline-dark" id="load-more-btn" onclick="loadMore()">
-        Voir plus de produits
-      </button>
-    </div>
-  </div>
-</section>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  MON ESPACE CLIENT (affiché uniquement si connecté)             -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="mon-espace" class="section">
-  <div class="container">
-    <div class="label" style="color:var(--gold-light)">Mon espace</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px">
-      <div>
-        <h2 style="color:var(--white)" id="portal-welcome">Bonjour 👋</h2>
-        <p style="color:rgba(255,255,255,.6);margin-top:6px;font-size:15px" id="portal-categorie"></p>
-      </div>
-      <div id="portal-promos"></div>
-    </div>
-
-    <!-- Cartes KPI -->
     <div class="portal-grid">
-      <div class="portal-card">
-        <div class="portal-card-icon">⭐</div>
-        <div class="portal-card-value" id="portal-points">0</div>
-        <div class="portal-card-label">Points fidélité</div>
-      </div>
-      <div class="portal-card">
-        <div class="portal-card-icon">🎁</div>
-        <div class="portal-card-value" id="portal-remise">0%</div>
-        <div class="portal-card-label">Remise accordée</div>
-      </div>
-      <div class="portal-card">
-        <div class="portal-card-icon">📦</div>
-        <div class="portal-card-value" id="portal-nb-commandes">—</div>
-        <div class="portal-card-label">Commandes récentes</div>
-      </div>
+      <div class="portal-stat-card"><div class="portal-stat-label" data-i18n="portal_pts">Points fidélité</div><div class="portal-stat-value green" id="portalPts">—</div></div>
+      <div class="portal-stat-card"><div class="portal-stat-label" data-i18n="portal_remise">Remise</div><div class="portal-stat-value" id="portalRemise">—</div></div>
+      <div class="portal-stat-card"><div class="portal-stat-label" data-i18n="portal_credit">Crédit disponible</div><div class="portal-stat-value" id="portalCredit">—</div></div>
     </div>
-
-    <!-- Commandes récentes -->
-    <div class="portal-commandes-title">📋 Mes commandes récentes</div>
-    <div id="portal-commandes-list">
-      <div style="color:rgba(255,255,255,.4);font-size:14px;text-align:center;padding:24px 0">
-        Chargement…
-      </div>
+    <div class="portal-section-title" data-i18n="portal_orders">Mes commandes récentes</div>
+    <div class="order-list" id="orderList">
+      <p style="color:var(--gray-500);font-size:14px" data-i18n="portal_no_orders">Aucune commande pour le moment.</p>
+    </div>
+    <div style="margin-top:24px;text-align:center">
+      <a href="#" class="btn-hero-whatsapp" onclick="orderWhatsApp(event)" style="display:inline-flex">
+        <span data-i18n="portal_wa">📦 Passer une commande</span>
+      </a>
     </div>
   </div>
 </section>
 
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  PASSER COMMANDE                                                -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="commander" class="section">
+<!-- ═══════════════════════════════════════════
+     ESPACE PRO — section dédiée (pas de modal)
+════════════════════════════════════════════ -->
+<section id="espace-pro">
   <div class="container">
-    <div class="cta-inner">
-      <div class="cta-text">
-        <div class="label">Espace pro</div>
-        <h2>Prêt à commander ?</h2>
-        <p>
-          Remplissez ce formulaire de demande et notre équipe commerciale vous recontacte
-          sous 24h avec une proposition adaptée à votre activité.
-        </p>
-        <div class="cta-steps">
-          <div class="cta-step">
-            <div class="cta-step-num">1</div>
-            <div>
-              <div class="cta-step-title">Envoyez votre demande</div>
-              <div class="cta-step-desc">Formulaire ci-contre ou directement sur WhatsApp</div>
-            </div>
-          </div>
-          <div class="cta-step">
-            <div class="cta-step-num">2</div>
-            <div>
-              <div class="cta-step-title">Confirmation rapide</div>
-              <div class="cta-step-desc">Notre équipe confirme disponibilités et tarifs</div>
-            </div>
-          </div>
-          <div class="cta-step">
-            <div class="cta-step-num">3</div>
-            <div>
-              <div class="cta-step-title">Livraison Standard ou Express</div>
-              <div class="cta-step-desc">Sous 24h ou en 2–4h selon votre quartier</div>
-            </div>
-          </div>
-        </div>
+    <div class="section-header">
+      <span class="section-tag" data-i18n="pro_tag">Espace Pro</span>
+      <h2 class="section-title" data-i18n="pro_title">Rejoignez notre réseau</h2>
+      <p class="section-sub"   data-i18n="pro_sub">Créez votre compte professionnel et accédez aux tarifs exclusifs.</p>
+    </div>
 
-        <!-- Groupe WhatsApp -->
-        <div style="margin-top:32px;padding:16px;background:rgba(37,211,102,.12);border-radius:12px;border:1px solid rgba(37,211,102,.3)">
-          <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:10px">💬 Commandez directement via WhatsApp</div>
-          <a href="https://chat.whatsapp.com/D11jvGbbWd5Kc2pyXl79SK" target="_blank"
-             style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;padding:11px 20px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">
-            📲 Rejoindre le groupe commandes
-          </a>
-          <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:8px">Réponse en moins d'une heure</div>
+    <div class="pro-grid">
+      <!-- Avantages -->
+      <div class="pro-left">
+        <ul class="pro-perks">
+          <li class="pro-perk"><span class="pro-perk-icon">💰</span><div><div class="pro-perk-title" data-i18n="pro_p1_title">Tarifs négociés</div><div class="pro-perk-desc" data-i18n="pro_p1_desc">Prix CHR et marchands selon votre profil et volume.</div></div></li>
+          <li class="pro-perk"><span class="pro-perk-icon">🚚</span><div><div class="pro-perk-title" data-i18n="pro_p2_title">Livraison dédiée</div><div class="pro-perk-desc" data-i18n="pro_p2_desc">Tournée fixe selon votre zone, créneau garanti.</div></div></li>
+          <li class="pro-perk"><span class="pro-perk-icon">📱</span><div><div class="pro-perk-title" data-i18n="pro_p3_title">Suivi commandes</div><div class="pro-perk-desc" data-i18n="pro_p3_desc">Application mobile + espace web pour gérer vos achats.</div></div></li>
+          <li class="pro-perk"><span class="pro-perk-icon">🎁</span><div><div class="pro-perk-title" data-i18n="pro_p4_title">Programme fidélité</div><div class="pro-perk-desc" data-i18n="pro_p4_desc">Points cumulés, remises et promotions personnalisées.</div></div></li>
+        </ul>
+
+        <div class="contact-box">
+          <div class="contact-box-title" data-i18n="contact_direct">Contact direct</div>
+          <a href="#" id="contactWaLink"><span style="font-size:20px">📲</span><span id="contactPhone">+212 6 00 00 00 00</span></a>
+          <a href="#" id="contactEmailLink"><span style="font-size:20px">📧</span><span id="contactEmail">contact@empire-fresh.ma</span></a>
         </div>
       </div>
 
-      <div class="cta-form-card">
-        <div class="cta-form-title">Faire une demande</div>
-        <div class="cta-form-sub">Nous vous recontactons sous 24h</div>
+      <!-- Formulaire d'inscription -->
+      <div class="pro-form-box">
+        <h3 data-i18n="form_title">Demande d'accès professionnel</h3>
+        <p class="form-sub" data-i18n="form_sub">Notre équipe commerciale vous contactera sous 24h.</p>
 
-        <form id="order-form" onsubmit="submitOrderForm(event)">
+        <form id="proForm" onsubmit="submitProForm(event)" novalidate>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Prénom & Nom <sup>*</sup></label>
-              <input class="form-input" type="text" id="of-nom" placeholder="Mohammed Alami" required />
+              <label data-i18n="lbl_nom">Nom complet</label>
+              <input type="text" id="fNom" data-i18n-ph="lbl_nom" placeholder="Nom complet" required />
             </div>
             <div class="form-group">
-              <label class="form-label">Téléphone <sup>*</sup></label>
-              <input class="form-input" type="tel" id="of-tel" placeholder="06 00 00 00 00" required />
+              <label data-i18n="lbl_societe">Nom de la société</label>
+              <input type="text" id="fSociete" data-i18n-ph="lbl_societe" placeholder="Société" />
             </div>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Nom de votre établissement <sup>*</sup></label>
-            <input class="form-input" type="text" id="of-etablissement" placeholder="Restaurant Al Baraka" required />
+            <label data-i18n="lbl_tel">Téléphone (WhatsApp)</label>
+            <div class="phone-input-wrap">
+              <span class="phone-flag">🇲🇦</span>
+              <input type="tel" id="fTel" data-i18n-ph="ph_phone" placeholder="06 XX XX XX XX" required />
+            </div>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Type d'activité</label>
-            <select class="form-input" id="of-type">
-              <option value="">Sélectionner...</option>
-              <option value="restaurant">Restaurant</option>
-              <option value="hotel">Hôtel</option>
-              <option value="cafe">Café / Snack</option>
-              <option value="traiteur">Traiteur</option>
-              <option value="collectivite">Collectivité</option>
-              <option value="autre">Autre</option>
+            <label data-i18n="lbl_email">Email (optionnel)</label>
+            <input type="email" id="fEmail" data-i18n-ph="lbl_email" placeholder="email@exemple.com" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="lbl_type">Type d'activité</label>
+              <select id="fType" required>
+                <option value="" data-i18n="opt_type_0">Choisir...</option>
+                <option value="chr"         data-i18n="opt_type_1">Restaurant / Hôtel / Café (CHR)</option>
+                <option value="epicerie"    data-i18n="opt_type_2">Épicerie / Supérette</option>
+                <option value="marche"      data-i18n="opt_type_3">Marché / Grossiste</option>
+                <option value="traiteur"    data-i18n="opt_type_4">Traiteur / Restauration collective</option>
+                <option value="particulier" data-i18n="opt_type_5">Particulier</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lbl_ville">Ville / Zone</label>
+              <input type="text" id="fVille" data-i18n-ph="lbl_ville" placeholder="Casablanca" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="lbl_volume">Volume mensuel estimé</label>
+            <select id="fVolume">
+              <option value="" data-i18n="opt_vol_0">Choisir...</option>
+              <option value="lt500"  data-i18n="opt_vol_1">&lt; 500 DH / mois</option>
+              <option value="500_2k" data-i18n="opt_vol_2">500 – 2 000 DH</option>
+              <option value="2k_10k" data-i18n="opt_vol_3">2 000 – 10 000 DH</option>
+              <option value="gt10k"  data-i18n="opt_vol_4">&gt; 10 000 DH</option>
             </select>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Votre demande / Produits souhaités <sup>*</sup></label>
-            <textarea class="form-input" id="of-message" placeholder="Ex: Tomates 50kg, carottes 30kg, pommes de terre 100kg par semaine..." required></textarea>
+            <label data-i18n="lbl_msg">Message (optionnel)</label>
+            <textarea id="fMsg" data-i18n-ph="lbl_msg" placeholder="Votre message..."></textarea>
           </div>
-          <button type="submit" class="form-submit" id="order-submit-btn">
-            📨 Envoyer ma demande
-          </button>
-          <div class="form-msg" id="order-form-msg"></div>
+
+          <button type="submit" class="btn-submit" id="btnSubmit" data-i18n="btn_submit">Envoyer ma demande</button>
+          <div class="form-msg" id="formMsg"></div>
         </form>
       </div>
     </div>
   </div>
 </section>
 
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  CONTACT                                                        -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="contact" class="section" style="background: var(--white);">
+<!-- ═══════════════════════════════════════════
+     VIDEOS
+════════════════════════════════════════════ -->
+<section id="videos" style="background:var(--gray-50)">
   <div class="container">
-    <div class="contact-grid">
-      <div class="contact-info">
-        <div class="label">Nous joindre</div>
-        <h2>Parlons de votre projet</h2>
-        <p>
-          Une question, un partenariat, un devis personnalisé ?
-          Notre équipe est disponible pour vous accompagner.
-        </p>
-        <div class="contact-items">
-          <div class="contact-item">
-            <div class="contact-item-icon">📞</div>
-            <div>
-              <div class="contact-item-label">Téléphone</div>
-              <div class="contact-item-value" id="cfg-phone">+212 6 00 00 00 00</div>
-            </div>
-          </div>
-          <div class="contact-item">
-            <div class="contact-item-icon">✉️</div>
-            <div>
-              <div class="contact-item-label">Email</div>
-              <div class="contact-item-value" id="cfg-email">contact@votreentreprise.ma</div>
-            </div>
-          </div>
-          <div class="contact-item">
-            <div class="contact-item-icon">📍</div>
-            <div>
-              <div class="contact-item-label">Adresse</div>
-              <div class="contact-item-value" id="cfg-address">Zone Industrielle, Casablanca, Maroc</div>
-            </div>
-          </div>
-          <div class="contact-item">
-            <div class="contact-item-icon">🕐</div>
-            <div>
-              <div class="contact-item-label">Horaires</div>
-              <div class="contact-item-value" id="cfg-horaires">Lun – Sam : 6h00 – 18h00</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="contact-form-wrap">
-        <div class="contact-form-title">Envoyez-nous un message</div>
-        <div class="contact-form-sub">Réponse garantie sous 24h ouvrées</div>
-
-        <form id="contact-form" onsubmit="submitContactForm(event)">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Nom complet <sup>*</sup></label>
-              <input class="form-input" type="text" id="cf-nom" placeholder="Votre nom" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Téléphone <sup>*</sup></label>
-              <input class="form-input" type="tel" id="cf-tel" placeholder="06 XX XX XX XX" required />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input class="form-input" type="email" id="cf-email" placeholder="votre@email.com" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Sujet</label>
-            <select class="form-input" id="cf-sujet">
-              <option value="">Choisir un sujet...</option>
-              <option value="devis">Demande de devis</option>
-              <option value="partenariat">Partenariat</option>
-              <option value="information">Information produit</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Message <sup>*</sup></label>
-            <textarea class="form-input" id="cf-message" style="min-height:120px" placeholder="Décrivez votre besoin..." required></textarea>
-          </div>
-          <button type="submit" class="form-submit" id="cf-submit-btn">
-            Envoyer le message →
-          </button>
-          <div class="form-msg" id="contact-form-msg"></div>
-        </form>
-      </div>
+    <div class="section-header">
+      <span class="section-tag" data-i18n="vid_tag">Vidéos</span>
+      <h2 class="section-title" data-i18n="vid_title">Découvrez Empire Fresh</h2>
+      <p class="section-sub"   data-i18n="vid_sub">Nos produits, nos équipes, notre savoir-faire</p>
+    </div>
+    <div class="video-grid" id="videoGrid">
+      <p style="color:var(--gray-500);font-size:14px;text-align:center">Ajoutez vos IDs YouTube dans CONFIG.VIDEO_IDS</p>
     </div>
   </div>
 </section>
 
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  FOOTER                                                         -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<footer id="footer">
+<!-- ═══════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════ -->
+<footer id="contact">
   <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <div class="nav-logo">
-          <div class="nav-logo-icon">🌿</div>
-          <span class="nav-logo-text">Fresh<span>Link</span></span>
+    <div class="footer-cols">
+      <div>
+        <div class="footer-brand">
+          <div class="footer-brand-icon">🌿</div>
+          <span class="footer-brand-name">Empire Fresh</span>
         </div>
-        <p>
-          <!-- ✏️ Slogan footer -->
-          Votre partenaire pour la distribution alimentaire professionnelle.
-          Fraîcheur, fiabilité et service depuis plus de 10 ans.
-        </p>
+        <p class="footer-desc">Distribution alimentaire professionnelle à Casablanca. Fruits, légumes et produits frais.</p>
       </div>
-
-      <div class="footer-col">
-        <div class="footer-col-title">Navigation</div>
-        <ul>
-          <li><a href="#about">À Propos</a></li>
-          <li><a href="#services">Nos Services</a></li>
-          <li><a href="#videos">Vidéos</a></li>
-          <li><a href="#catalogue">Catalogue</a></li>
-          <li><a href="#contact">Contact</a></li>
+      <div>
+        <div class="footer-heading" data-i18n="ft_links">Liens rapides</div>
+        <ul class="footer-links">
+          <li><a href="#services"   data-i18n="nav_services">Services</a></li>
+          <li><a href="#livraison"  data-i18n="nav_delivery">Livraison</a></li>
+          <li><a href="#catalogue"  data-i18n="nav_catalogue">Catalogue</a></li>
+          <li><a href="#espace-pro" data-i18n="nav_pro">Espace Pro</a></li>
         </ul>
       </div>
-
-      <div class="footer-col">
-        <div class="footer-col-title">Services</div>
-        <ul>
-          <li><a href="#services">Fruits & Légumes</a></li>
-          <li><a href="#services">Produits Laitiers</a></li>
-          <li><a href="#services">Viandes</a></li>
-          <li><a href="#services">Épicerie Fine</a></li>
-          <li><a href="#commander">Commande Pro</a></li>
+      <div>
+        <div class="footer-heading" data-i18n="ft_contact">Contact</div>
+        <ul class="footer-links">
+          <li><a id="ftPhone"   href="#">+212 6 00 00 00 00</a></li>
+          <li><a id="ftEmail"   href="#">contact@empire-fresh.ma</a></li>
+          <li><a id="ftAddress" href="#">Zone Industrielle, Casablanca</a></li>
+          <li><a id="ftHours"   href="#">Lun–Sam : 06h00 – 18h00</a></li>
         </ul>
       </div>
-
-      <div class="footer-col">
-        <div class="footer-col-title">Contact</div>
-        <ul>
-          <li><a id="cfg-footer-phone-link" href="tel:+212600000000"><span id="cfg-footer-phone">+212 6 00 00 00 00</span></a></li>
-          <li><a id="cfg-footer-email-link" href="mailto:contact@votreentreprise.ma"><span id="cfg-footer-email">contact@votreentreprise.ma</span></a></li>
-          <li><a href="#contact">Zone Industrielle, Casablanca</a></li>
-          <li><a href="#contact">Lun–Sam : 6h – 18h</a></li>
+      <div>
+        <div class="footer-heading" data-i18n="ft_legal">Légal</div>
+        <ul class="footer-links">
+          <li><a href="#">Mentions légales</a></li>
+          <li><a href="#">Confidentialité</a></li>
+          <li><a href="#">CGV</a></li>
         </ul>
       </div>
     </div>
-
+    <hr class="footer-divider" />
     <div class="footer-bottom">
-      <div id="cfg-copyright">© 2026 FreshLink. Tous droits réservés.</div>
-      <div class="footer-bottom-right">
-        <a href="#">Mentions légales</a>
-        <a href="#">Politique de confidentialité</a>
-      </div>
+      <span data-i18n="ft_copy">© 2026 Empire Fresh. Tous droits réservés.</span>
+      <span data-i18n="ft_made">Fait avec ❤️ à Casablanca</span>
     </div>
   </div>
 </footer>
 
-<!-- Scroll to top -->
-<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
-
-<!-- Offline banner -->
-<div id="offline-banner">⚡ Mode hors ligne — catalogue non disponible</div>
-
-<!-- WhatsApp flottant -->
-<a id="whatsapp-btn" href="#" target="_blank" title="Nous contacter sur WhatsApp">💬</a>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  MODAL AUTH (Connexion / Espace Pro)                            -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div id="auth-modal" onclick="authModalOutsideClick(event)">
-  <div class="auth-box">
-    <div class="auth-header">
-      <div class="auth-brand">
-        <div class="auth-brand-icon" id="auth-modal-icon">🌿</div>
-        <span class="auth-brand-name" id="auth-modal-brand">Fresh<span>Link</span></span>
-      </div>
-      <button class="auth-close" onclick="closeAuth()">✕</button>
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Connexion</button>
-        <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Demande d'accès</button>
-      </div>
-    </div>
-
-    <div class="auth-body">
-
-      <!-- PANE LOGIN -->
-      <div class="auth-pane active" id="pane-login">
-        <div class="auth-title">Bienvenue 👋</div>
-        <div class="auth-sub">Connectez-vous à votre espace professionnel</div>
-        <form onsubmit="doLogin(event)">
-          <div class="form-group">
-            <label class="form-label">Adresse email <sup>*</sup></label>
-            <input class="form-input" type="email" id="auth-email" placeholder="votre@email.com" required autocomplete="email" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Mot de passe <sup>*</sup></label>
-            <input class="form-input" type="password" id="auth-password" placeholder="••••••••" required autocomplete="current-password" />
-          </div>
-          <button type="submit" class="form-submit" id="login-btn">Se connecter →</button>
-          <div class="form-msg" id="login-msg"></div>
-        </form>
-        <p style="font-size:12px;color:var(--gray-500);margin-top:16px;text-align:center">
-          Pas encore de compte ?
-          <a href="#" onclick="switchAuthTab('register')" style="color:var(--green-700);font-weight:600">Faire une demande d'accès</a>
-        </p>
-      </div>
-
-      <!-- PANE REGISTER -->
-      <div class="auth-pane" id="pane-register">
-        <div class="auth-title">Devenir partenaire 🤝</div>
-        <div class="auth-sub">Complétez ce formulaire — notre équipe vous contactera sous 24h</div>
-        <form onsubmit="doRegister(event)">
-          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            <div class="form-group" style="margin-bottom:0">
-              <label class="form-label">Nom complet <sup>*</sup></label>
-              <input class="form-input" type="text" id="reg-nom" placeholder="Votre nom" required />
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label class="form-label">Téléphone <sup>*</sup></label>
-              <input class="form-input" type="tel" id="reg-tel" placeholder="06 XX XX XX XX" required />
-            </div>
-          </div>
-          <div class="form-group" style="margin-top:16px">
-            <label class="form-label">Établissement</label>
-            <input class="form-input" type="text" id="reg-etablissement" placeholder="Nom de votre restaurant / magasin..." />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input class="form-input" type="email" id="reg-email" placeholder="votre@email.com" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Type d'activité</label>
-            <select class="form-input" id="reg-type">
-              <option value="restaurant">Restaurant / Hôtel / Café</option>
-              <option value="epicerie">Épicerie / Superette</option>
-              <option value="boucherie">Boucherie / Traiteur</option>
-              <option value="grossiste">Grossiste</option>
-              <option value="particulier">Particulier</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Message (optionnel)</label>
-            <textarea class="form-input" id="reg-message" style="min-height:80px" placeholder="Produits souhaités, volumes estimés…"></textarea>
-          </div>
-          <button type="submit" class="form-submit" id="register-btn">Envoyer ma demande 📨</button>
-          <div class="form-msg" id="register-msg"></div>
-        </form>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  MODAL COMMANDE RAPIDE                                          -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="order-modal">
+<!-- ═══════════════════════════════════════════
+     MODAL LOGIN — connexion par téléphone
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="loginModal" onclick="closeLoginOutside(event)">
   <div class="modal-box">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">Commander ce produit</div>
-        <div class="modal-sub">Envoyez votre demande — réponse sous 24h</div>
-      </div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-product-info" id="modal-product-info">
-      <div class="modal-product-emoji" id="modal-emoji">🥦</div>
-      <div>
-        <div class="modal-product-name" id="modal-name">Produit</div>
-        <div class="modal-product-price" id="modal-price">Prix public</div>
-      </div>
-    </div>
-    <form onsubmit="submitModalOrder(event)">
+    <button class="modal-close" onclick="closeLogin()">✕</button>
+    <div class="modal-logo">🌿</div>
+    <h2 data-i18n="login_title">Connexion</h2>
+    <p class="modal-sub" data-i18n="login_sub">Accédez à votre espace client</p>
+    <div class="login-error" id="loginError"></div>
+    <form onsubmit="doLogin(event)" novalidate>
       <div class="form-group">
-        <label class="form-label">Nom / Établissement <sup>*</sup></label>
-        <input class="form-input" type="text" id="mo-nom" placeholder="Votre nom ou établissement" required />
+        <label data-i18n="lbl_phone">Numéro de téléphone</label>
+        <div class="phone-input-wrap">
+          <span class="phone-flag">🇲🇦</span>
+          <input type="tel" id="loginPhone" data-i18n-ph="ph_phone" placeholder="06 XX XX XX XX" autocomplete="tel" required />
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Téléphone <sup>*</sup></label>
-        <input class="form-input" type="tel" id="mo-tel" placeholder="06 XX XX XX XX" required />
+        <label data-i18n="lbl_pass">Mot de passe</label>
+        <input type="password" id="loginPass" data-i18n-ph="ph_pass" placeholder="Votre mot de passe" autocomplete="current-password" required />
       </div>
-      <div class="form-group">
-        <label class="form-label">Quantité souhaitée</label>
-        <input class="form-input" type="text" id="mo-qte" placeholder="Ex: 50 kg, 2 caisses..." />
-      </div>
-      <button type="submit" class="form-submit">Envoyer la demande 📨</button>
-      <div class="form-msg" id="modal-form-msg"></div>
+      <button type="submit" class="btn-submit" id="btnLoginSubmit" data-i18n="btn_login_ok">Se connecter</button>
     </form>
+    <p style="margin-top:16px;text-align:center;font-size:13px;color:var(--gray-500)">
+      <span data-i18n="login_no_acc">Pas encore de compte ?</span>
+      <a href="#espace-pro" onclick="closeLogin()" style="color:var(--green);font-weight:600;margin-left:6px" data-i18n="login_signup">Faire une demande d'accès</a>
+    </p>
   </div>
 </div>
 
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
 
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!--  JAVASCRIPT                                                     -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
 <script>
-  // ╔══════════════════════════════════════════════════════════════╗
-  // ║  ✏️  CONFIGURATION — MODIFIER ICI AVANT DÉPLOIEMENT         ║
-  // ╚══════════════════════════════════════════════════════════════╝
-  const CONFIG = {
-    // ── Backend ──────────────────────────────────────────────────
-    // URL du backend Vercel (toutes les API /api/ext/* passent par là)
-    API_URL: "https://fresh-link-ef.vercel.app",
+/* ── applyConfig ── */
+function applyConfig() {
+  document.title = CONFIG.COMPANY_NAME + " — " + CONFIG.COMPANY_TAGLINE
 
-    // ── Entreprise ───────────────────────────────────────────────
-    // ✏️ Remplacez par les vraies infos de votre société
-    COMPANY_NAME:    "Empire Fresh",
-    COMPANY_SLOGAN:  "La fraîcheur, livrée à temps.",
-    FOOTER_SLOGAN:   "Votre partenaire pour la distribution alimentaire professionnelle au Maroc.",
-    COMPANY_YEARS:   "10",          // Années d'expérience affiché dans la section About
-    LOGO_EMOJI:      "🌿",          // Emoji logo (ou "" si LOGO_URL défini)
-    LOGO_URL:        "",            // URL image logo (ex: https://…/logo.png) — si vide, utilise LOGO_EMOJI
+  const p = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val }
+  const h = (id, attr, val) => { const e = document.getElementById(id); if (e) e[attr] = val }
 
-    // ── Contact ───────────────────────────────────────────────────
-    PHONE:           "+212 6 00 00 00 00",    // Affiché
-    PHONE_LINK:      "+212600000000",         // Pour href="tel:…"
-    WHATSAPP:        "212600000000",          // Numéro WhatsApp sans + (ex: 212661234567)
-    WHATSAPP_MSG:    "Bonjour Empire Fresh, je souhaite obtenir un devis.",
-    EMAIL:           "contact@empire-fresh.ma",
-    ADDRESS:         "Zone Industrielle, Casablanca, Maroc",
-    HORAIRES:        "Lun – Sam : 6h00 – 18h00",
+  p("contactPhone", CONFIG.PHONE)
+  p("contactEmail", CONFIG.COMPANY_EMAIL)
+  p("ftPhone",      CONFIG.PHONE)
+  p("ftEmail",      CONFIG.COMPANY_EMAIL)
+  p("ftAddress",    CONFIG.COMPANY_ADDRESS)
+  p("ftHours",      CONFIG.HOURS)
 
-    // ── Vidéos YouTube ────────────────────────────────────────────
-    // Remplacez les ID par vos vrais ID YouTube (ex: dQw4w9WgXcQ)
-    VIDEO_MAIN_ID:   "VOTRE_VIDEO_ID_ICI",
-    VIDEO_2_ID:      "VIDEO_ID_2",    VIDEO_2_TITLE:  "Notre entrepôt",
-    VIDEO_3_ID:      "VIDEO_ID_3",    VIDEO_3_TITLE:  "Processus qualité",
-    VIDEO_4_ID:      "VIDEO_ID_4",    VIDEO_4_TITLE:  "Livraison",
+  h("contactWaLink",    "href", "https://wa.me/" + CONFIG.WHATSAPP)
+  h("contactEmailLink", "href", "mailto:" + CONFIG.COMPANY_EMAIL)
+  h("ftPhone",    "href", "tel:" + CONFIG.PHONE.replace(/\s/g,""))
+  h("ftEmail",    "href", "mailto:" + CONFIG.COMPANY_EMAIL)
 
-    // ── Catalogue ─────────────────────────────────────────────────
-    PAGE_SIZE: 12,
+  renderVideos()
+}
 
-    // ── Footer ────────────────────────────────────────────────────
-    LEGAL_NAME: "Empire Fresh SARL",   // Nom légal pour les mentions © et mentions légales
-  };
-  // ╚══════════════════════════════════════════════════════════════╝
+/* ── Stats ── */
+function renderStats() {
+  const el = document.getElementById("statsInner")
+  if (!el) return
+  const lk = currentLang === "ar" ? "ar" : currentLang === "en" ? "en" : "fr"
+  el.innerHTML = CONFIG.STATS.map(s => `
+    <div class="stat-item">
+      <span class="stat-num">${s.num}</span>
+      <span class="stat-lbl">${s[lk]}</span>
+    </div>`).join("")
+}
 
-  // ─── applyConfig : injecte CONFIG dans le DOM ──────────────────
-  function applyConfig() {
-    // Logo
-    const logoIcons = document.querySelectorAll('.nav-logo-icon, .auth-brand-icon, .footer-logo-icon');
-    logoIcons.forEach(el => {
-      if (CONFIG.LOGO_URL) {
-        el.innerHTML = `<img src="${CONFIG.LOGO_URL}" style="width:100%;height:100%;object-fit:contain;border-radius:8px" alt="logo"/>`;
-      } else {
-        el.textContent = CONFIG.LOGO_EMOJI;
-      }
-    });
-    // Nom société
-    document.querySelectorAll('.nav-logo-text, .auth-brand-name').forEach(el => {
-      const parts = CONFIG.COMPANY_NAME.split(' ');
-      el.innerHTML = parts.slice(0, -1).join(' ') + ' <span>' + parts[parts.length - 1] + '</span>';
-    });
-    // Contact items
-    const setId = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    const setHref = (id, val) => { const el = document.getElementById(id); if (el) el.href = val; };
-    setId('cfg-phone', CONFIG.PHONE);
-    setId('cfg-email', CONFIG.EMAIL);
-    setId('cfg-address', CONFIG.ADDRESS);
-    setId('cfg-horaires', CONFIG.HORAIRES);
-    setId('cfg-footer-phone', CONFIG.PHONE);
-    setId('cfg-footer-email', CONFIG.EMAIL);
-    setHref('cfg-footer-phone-link', 'tel:' + CONFIG.PHONE_LINK);
-    setHref('cfg-footer-email-link', 'mailto:' + CONFIG.EMAIL);
-    // WhatsApp
-    const waBtn = document.getElementById('whatsapp-btn');
-    if (waBtn && CONFIG.WHATSAPP) {
-      waBtn.href = `https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(CONFIG.WHATSAPP_MSG)}`;
-    } else if (waBtn) {
-      waBtn.style.display = 'none';
-    }
-    // Copyright
-    const copy = document.getElementById('cfg-copyright');
-    if (copy) copy.textContent = `© ${new Date().getFullYear()} ${CONFIG.LEGAL_NAME}. Tous droits réservés.`;
-    // Vidéos : remplacer les onclick/title des vignettes
-    const v2 = document.getElementById('vid-thumb-2'); if (v2 && CONFIG.VIDEO_2_ID !== 'VIDEO_ID_2') { v2.setAttribute('onclick', `switchVideo('${CONFIG.VIDEO_2_ID}','${CONFIG.VIDEO_2_TITLE}')`); }
-    const v3 = document.getElementById('vid-thumb-3'); if (v3 && CONFIG.VIDEO_3_ID !== 'VIDEO_ID_3') { v3.setAttribute('onclick', `switchVideo('${CONFIG.VIDEO_3_ID}','${CONFIG.VIDEO_3_TITLE}')`); }
-    const v4 = document.getElementById('vid-thumb-4'); if (v4 && CONFIG.VIDEO_4_ID !== 'VIDEO_ID_4') { v4.setAttribute('onclick', `switchVideo('${CONFIG.VIDEO_4_ID}','${CONFIG.VIDEO_4_TITLE}')`); }
+/* ── Zones ── */
+function renderZones() {
+  const el = document.getElementById("zonesGrid")
+  if (!el) return
+  const lk = currentLang === "ar" ? "ar" : currentLang === "en" ? "en" : "fr"
+  el.innerHTML = CONFIG.ZONES.map(z => `
+    <div class="zone-card">
+      <span class="zone-icon">${z.icon}</span>
+      <div>
+        <div class="zone-name">${z[lk]}</div>
+        <div class="zone-delay">${z["del_"+lk]}</div>
+      </div>
+    </div>`).join("")
+}
+
+/* ── Videos ── */
+function renderVideos() {
+  const el = document.getElementById("videoGrid")
+  if (!el || !CONFIG.VIDEO_IDS.length) return
+  el.innerHTML = CONFIG.VIDEO_IDS.map(id => `
+    <div class="video-wrap">
+      <iframe src="https://www.youtube.com/embed/${id}" title="Empire Fresh" allowfullscreen loading="lazy"></iframe>
+    </div>`).join("")
+}
+
+/* ── Nav hamburger ── */
+function toggleMenu()      { document.getElementById("mobileMenu").classList.toggle("open") }
+function closeMobileMenu() { document.getElementById("mobileMenu").classList.remove("open") }
+
+/* ── WhatsApp ── */
+function orderWhatsApp(e) { e.preventDefault(); window.open(CONFIG.WHATSAPP_GROUP, "_blank") }
+
+/* ── Modal Login ── */
+function openLogin() {
+  const sess = getSession()
+  if (sess) {
+    showPortal(sess)
+    setTimeout(() => document.getElementById("mon-espace").scrollIntoView({ behavior:"smooth" }), 100)
+    return
   }
+  document.getElementById("loginModal").classList.add("open")
+  setTimeout(() => document.getElementById("loginPhone")?.focus(), 120)
+}
+function closeLogin() {
+  document.getElementById("loginModal").classList.remove("open")
+  document.getElementById("loginError").classList.remove("show")
+  document.getElementById("loginPhone").value = ""
+  document.getElementById("loginPass").value  = ""
+}
+function closeLoginOutside(e) { if (e.target.id === "loginModal") closeLogin() }
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeLogin() })
 
-  // ─── Navigation ───────────────────────────────────────────────
-  function scrollToSection(id) {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+/* ── Authentification par téléphone ── */
+async function doLogin(e) {
+  e.preventDefault()
+  const phone = document.getElementById("loginPhone").value.trim()
+  const pass  = document.getElementById("loginPass").value.trim()
+  const errEl = document.getElementById("loginError")
+  const btnEl = document.getElementById("btnLoginSubmit")
+  errEl.classList.remove("show")
 
-  function toggleMenu() {
-    const m = document.getElementById('mobile-menu');
-    m.classList.toggle('open');
-  }
+  if (!phone || !pass) { errEl.textContent = t("login_err_fields"); errEl.classList.add("show"); return }
 
-  document.addEventListener('click', e => {
-    const m = document.getElementById('mobile-menu');
-    const burger = document.getElementById('burger');
-    if (m && m.classList.contains('open') && !m.contains(e.target) && !burger.contains(e.target)) {
-      m.classList.remove('open');
-    }
-  });
+  btnEl.disabled = true; btnEl.textContent = "⏳"
 
-  window.addEventListener('scroll', () => {
-    const btn = document.getElementById('scroll-top');
-    if (btn) {
-      if (window.scrollY > 400) btn.classList.add('visible');
-      else btn.classList.remove('visible');
-    }
-  });
+  try {
+    const res  = await fetch(CONFIG.API_URL + "/api/ext/auth", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password: pass }),
+    })
+    const data = await res.json()
 
-  // ─── Vidéos YouTube ────────────────────────────────────────────
-  function loadMainVideo(videoId) {
-    const id = videoId || CONFIG.VIDEO_MAIN_ID;
-    if (!id || id === 'VOTRE_VIDEO_ID_ICI') {
-      alert('⚠️ Remplacez VIDEO_MAIN_ID dans la CONFIG par l\'ID de votre vidéo YouTube.');
-      return;
-    }
-    const wrap = document.getElementById('main-video-wrap');
-    wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-  }
-
-  function switchVideo(videoId, title) {
-    if (!videoId || videoId.startsWith('VIDEO_ID_')) {
-      alert('⚠️ Remplacez ' + videoId + ' dans CONFIG par l\'ID réel YouTube.');
-      return;
-    }
-    const wrap = document.getElementById('main-video-wrap');
-    wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-    wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // SESSION — stockée dans localStorage sous la clé "fl_session"
-  // ═══════════════════════════════════════════════════════════════
-  const SESSION_KEY = 'fl_session';
-
-  function getSession() {
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; }
-  }
-
-  function saveSession(data) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-  }
-
-  function clearSession() {
-    localStorage.removeItem(SESSION_KEY);
-  }
-
-  function isLoggedIn() {
-    const s = getSession();
-    if (!s) return false;
-    if (s.exp && s.exp < Date.now()) { clearSession(); return false; }
-    return true;
-  }
-
-  function applyLoginState() {
-    const logged = isLoggedIn();
-    document.body.classList.toggle('fl-logged-in', logged);
-
-    // Éléments natifs [data-hide-*]
-    document.querySelectorAll('[data-hide-logged-in]').forEach(el => {
-      el.style.display = logged ? 'none' : '';
-    });
-    document.querySelectorAll('[data-hide-logged-out]').forEach(el => {
-      el.style.display = logged ? 'flex' : 'none';
-    });
-
-    // Éléments mobiles
-    document.querySelectorAll('.fl-hide-logged-in').forEach(el => {
-      el.style.display = logged ? 'none' : '';
-    });
-    document.querySelectorAll('.fl-show-logged-in').forEach(el => {
-      el.style.display = logged ? 'block' : 'none';
-    });
-
-    if (logged) {
-      const s = getSession();
-      // Avatar
-      const avatar = document.getElementById('nav-avatar');
-      const nameEl = document.getElementById('nav-user-name');
-      if (avatar) avatar.textContent = (s.user?.name || '?').slice(0, 2).toUpperCase();
-      if (nameEl) nameEl.textContent = (s.user?.name || '').split(' ')[0];
-      // Portail
-      renderPortal(s);
-    }
-  }
-
-  // ─── MODAL AUTH ────────────────────────────────────────────────
-  function openAuth(tab) {
-    document.getElementById('auth-modal').classList.add('open');
-    document.body.style.overflow = 'hidden';
-    switchAuthTab(tab || 'login');
-  }
-
-  function closeAuth() {
-    document.getElementById('auth-modal').classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  function authModalOutsideClick(e) {
-    if (e.target === document.getElementById('auth-modal')) closeAuth();
-  }
-
-  function switchAuthTab(tab) {
-    document.getElementById('pane-login').classList.toggle('active', tab === 'login');
-    document.getElementById('pane-register').classList.toggle('active', tab === 'register');
-    document.getElementById('tab-login-btn').classList.toggle('active', tab === 'login');
-    document.getElementById('tab-register-btn').classList.toggle('active', tab === 'register');
-  }
-
-  // ─── LOGIN ─────────────────────────────────────────────────────
-  async function doLogin(e) {
-    e.preventDefault();
-    const btn = document.getElementById('login-btn');
-    const msg = document.getElementById('login-msg');
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value;
-
-    btn.disabled = true; btn.textContent = 'Connexion…';
-    msg.className = 'form-msg';
-
-    try {
-      if (!CONFIG.API_URL) throw new Error('Backend non configuré.');
-      const res = await fetch(`${CONFIG.API_URL}/api/ext/auth`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Identifiants incorrects.');
-
-      // Sauvegarder session
-      saveSession({ token: data.token, user: data.user, exp: data.user?.exp || (Date.now() + 86400000) });
-      closeAuth();
-      applyLoginState();
-      // Recharger catalogue avec prix perso
-      renderCatalogue();
-      // Charger données portail
-      refreshMonCompte();
-    } catch (err) {
-      msg.className = 'form-msg error';
-      msg.textContent = '❌ ' + (err.message || 'Erreur de connexion.');
-    }
-
-    btn.disabled = false; btn.textContent = 'Se connecter →';
-  }
-
-  // ─── LOGOUT ────────────────────────────────────────────────────
-  function doLogout() {
-    clearSession();
-    applyLoginState();
-    renderCatalogue(); // repasser en prix publics
-  }
-
-  // ─── REGISTER (Demande d'accès) ─────────────────────────────────
-  async function doRegister(e) {
-    e.preventDefault();
-    const btn = document.getElementById('register-btn');
-    const msg = document.getElementById('register-msg');
-    btn.disabled = true; btn.textContent = 'Envoi…';
-    msg.className = 'form-msg';
-
-    try {
-      const result = await submitProspect({
-        nom:           document.getElementById('reg-nom').value,
-        telephone:     document.getElementById('reg-tel').value,
-        etablissement: document.getElementById('reg-etablissement').value,
-        email:         document.getElementById('reg-email').value,
-        type:          document.getElementById('reg-type').value,
-        message:       document.getElementById('reg-message').value,
-        source:        'modal_inscription',
-      });
-      if (result.ok) {
-        msg.className = 'form-msg success';
-        msg.textContent = '✅ Demande envoyée ! Notre équipe vous contacte sous 24h.';
-        document.getElementById('reg-nom').closest('form').reset();
-      } else throw new Error();
-    } catch {
-      msg.className = 'form-msg error';
-      msg.textContent = '❌ Erreur lors de l\'envoi. Appelez-nous directement.';
-    }
-
-    btn.disabled = false; btn.textContent = 'Envoyer ma demande 📨';
-  }
-
-  // ─── MON COMPTE — Actualiser depuis l'API ──────────────────────
-  async function refreshMonCompte() {
-    const s = getSession();
-    if (!s?.token || !CONFIG.API_URL) return;
-    try {
-      const res = await fetch(`${CONFIG.API_URL}/api/ext/mon-compte`, {
-        headers: { Authorization: 'Bearer ' + s.token },
-      });
-      if (!res.ok) { if (res.status === 401) { clearSession(); applyLoginState(); } return; }
-      const data = await res.json();
-      // Mettre à jour la session locale avec les données fraîches
-      const updated = { ...s, user: { ...s.user, ...data.user, ...data.client }, commandes: data.commandes };
-      saveSession(updated);
-      renderPortal(updated);
-    } catch { /* silencieux */ }
-  }
-
-  // ─── PORTAIL CLIENT ────────────────────────────────────────────
-  function renderPortal(session) {
-    const u = session?.user || {};
-    const commandes = session?.commandes || [];
-
-    // Welcome
-    const welcome = document.getElementById('portal-welcome');
-    if (welcome) welcome.textContent = `Bonjour ${u.name || ''} 👋`;
-
-    // Catégorie
-    const catEl = document.getElementById('portal-categorie');
-    if (catEl) {
-      const catLabels = { chr: '🏨 Compte CHR / HORECA', marchand: '🛒 Compte Marchand', particulier: '👤 Particulier' };
-      catEl.textContent = catLabels[u.categorie] || (u.nomSociete || '');
-    }
-
-    // Points
-    const pts = document.getElementById('portal-points');
-    if (pts) pts.textContent = (u.loyaltyPoints || 0).toLocaleString('fr-MA');
-
-    // Remise
-    const rem = document.getElementById('portal-remise');
-    if (rem) rem.textContent = (u.remiseActive && u.remisePct > 0) ? u.remisePct + '%' : '—';
-
-    // Nombre commandes
-    const nb = document.getElementById('portal-nb-commandes');
-    if (nb) nb.textContent = commandes.length;
-
-    // Promotions
-    const promoEl = document.getElementById('portal-promos');
-    if (promoEl && u.promotions?.length) {
-      promoEl.innerHTML = u.promotions.map(p =>
-        `<span class="portal-promo-badge">🎁 ${p}</span>`
-      ).join('');
-    }
-
-    // Liste commandes
-    const listEl = document.getElementById('portal-commandes-list');
-    if (listEl) {
-      if (commandes.length === 0) {
-        listEl.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:14px;text-align:center;padding:24px 0">Aucune commande récente</div>';
-      } else {
-        listEl.innerHTML = commandes.map(c => {
-          const statut = c.statut === 'livré' || c.statut === 'livre' ? 'livre' : (c.statut === 'annulé' || c.statut === 'annule' ? 'annule' : 'en_cours');
-          const statutLabel = { livre: 'Livré', en_cours: 'En cours', annule: 'Annulé' }[statut] || c.statut;
-          const dateStr = c.date ? new Date(c.date).toLocaleDateString('fr-MA', { day:'2-digit', month:'short', year:'numeric' }) : '';
-          return `<div class="portal-commande-item">
-            <div>
-              <div class="portal-commande-num">Commande #${c.numero || c.id}</div>
-              <div class="portal-commande-date">${dateStr}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px">
-              <span class="portal-statut ${statut}">${statutLabel}</span>
-              <div class="portal-commande-montant">${c.montant > 0 ? c.montant.toFixed(2) + ' DH' : '—'}</div>
-            </div>
-          </div>`;
-        }).join('');
-      }
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // CATALOGUE PRODUITS
-  // ═══════════════════════════════════════════════════════════════
-  let allProducts = [];
-  let filteredProducts = [];
-  let currentPage = 0;
-  let activeCategory = 'all';
-  let searchQuery = '';
-
-  const FAMILY_EMOJI = {
-    'légumes': '🥦', 'legumes': '🥦', 'fruits': '🍊',
-    'viandes': '🥩', 'viande': '🥩',
-    'laitiers': '🧀', 'lait': '🥛',
-    'poissons': '🐟', 'poisson': '🐟',
-    'épicerie': '🫙', 'epicerie': '🫙', 'condiments': '🧄',
-    'boissons': '🧃', 'boisson': '🧃',
-    'boulangerie': '🥖',
-    'surgelés': '❄️', 'surgeles': '❄️',
-    'default': '📦',
-  };
-
-  function getEmoji(famille) {
-    if (!famille) return FAMILY_EMOJI.default;
-    const f = famille.toLowerCase();
-    for (const [k, v] of Object.entries(FAMILY_EMOJI)) {
-      if (f.includes(k)) return v;
-    }
-    return FAMILY_EMOJI.default;
-  }
-
-  /** Calcule le prix à afficher selon le profil de session */
-  function calcPrix(art) {
-    const s = getSession();
-    const categorie = s?.user?.categorie;
-    const remisePct  = (s?.user?.remiseActive && s?.user?.remisePct > 0) ? s.user.remisePct : 0;
-
-    let prix = 0;
-    let badge = '';
-    let isPersonalized = false;
-
-    if (categorie === 'chr' && art.prixCHR > 0) {
-      prix = art.prixCHR; badge = 'CHR'; isPersonalized = true;
-    } else if (categorie === 'marchand' && art.prixMarchand > 0) {
-      prix = art.prixMarchand; badge = 'Marchand'; isPersonalized = true;
-    } else if (categorie === 'particulier' && art.prixParticulier > 0) {
-      prix = art.prixParticulier; badge = 'Particulier'; isPersonalized = true;
+    if (!res.ok) {
+      errEl.textContent = data.error || t("login_err_api")
+      errEl.classList.add("show")
     } else {
-      // Prix moyen public
-      const prices = [art.pv, art.prixCHR, art.prixMarchand].filter(p => p && p > 0);
-      prix = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : (art.pv || 0);
+      saveSession(data)
+      closeLogin()
+      showPortal(data)
+      showToast("✅ " + (data.user?.name || t("portal_welcome") + " !"), "green")
+      setTimeout(() => document.getElementById("mon-espace").scrollIntoView({ behavior:"smooth" }), 200)
     }
-
-    // Appliquer remise client
-    let prixFinal = prix;
-    let prixOriginal = 0;
-    if (remisePct > 0 && prix > 0) {
-      prixOriginal = prix;
-      prixFinal = prix * (1 - remisePct / 100);
-    }
-
-    return { prix: prixFinal, prixOriginal, badge: isPersonalized ? badge : '', remise: remisePct };
+  } catch {
+    errEl.textContent = t("login_err_api"); errEl.classList.add("show")
   }
 
-  async function loadCatalogue() {
-    if (!CONFIG.API_URL) {
-      allProducts = getDemoProducts();
-      filteredProducts = allProducts;
-      renderCatalogue(); buildFilters(); return;
-    }
-    try {
-      const res = await fetch(`${CONFIG.API_URL}/api/ext/catalogue`);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      allProducts = (data.articles || data || []).map(a => ({
-        id: a.id || a.ref,
-        nom: a.nom || a.designation || '',
-        famille: a.famille || a.categorie || '',
-        unite: a.unite || 'kg',
-        pv: a.pv || 0,
-        prixCHR: a.prixCHR || 0,
-        prixMarchand: a.prixMarchand || 0,
-        prixParticulier: a.prixParticulier || 0,
-      }));
-      filteredProducts = allProducts;
-      renderCatalogue(); buildFilters();
-    } catch {
-      document.getElementById('offline-banner').style.display = 'block';
-      setTimeout(() => { document.getElementById('offline-banner').style.display = 'none'; }, 4000);
-      allProducts = getDemoProducts();
-      filteredProducts = allProducts;
-      renderCatalogue(); buildFilters();
-    }
+  btnEl.disabled = false; btnEl.textContent = t("btn_login_ok")
+}
+
+/* ── Portail Client ── */
+function showPortal(data) {
+  document.getElementById("mon-espace").classList.add("visible")
+  const user   = data.user   || {}
+  const client = data.client || {}
+
+  document.getElementById("portalName").textContent   = t("portal_welcome") + " " + (user.name || "")
+  document.getElementById("portalMeta").textContent   = [user.role, client.segment].filter(Boolean).join(" · ")
+  document.getElementById("portalPts").textContent    = (client.loyaltyPoints ?? user.loyaltyPoints ?? 0) + " pts"
+  document.getElementById("portalRemise").textContent = (client.remisePct ?? user.remisePct ?? 0) + "%"
+  document.getElementById("portalCredit").textContent = (client.creditSolde ?? 0) + " DH"
+
+  const orders = data.commandes || []
+  const listEl = document.getElementById("orderList")
+  if (!orders.length) {
+    listEl.innerHTML = `<p style="color:var(--gray-500);font-size:14px">${t("portal_no_orders")}</p>`
+  } else {
+    listEl.innerHTML = orders.map(o => {
+      const sc  = o.statut === "livree" ? "livree" : o.statut === "annulee" ? "annulee" : "en_cours"
+      const loc = currentLang === "ar" ? "ar-MA" : currentLang === "en" ? "en-GB" : "fr-FR"
+      const dt  = o.date ? new Date(o.date).toLocaleDateString(loc) : "—"
+      return `<div class="order-item">
+        <div><div class="order-ref">#${o.numero || (o.id||"").slice(0,8) || "—"}</div><div class="order-date">${dt}</div></div>
+        <span class="order-status ${sc}">${o.statut || "—"}</span>
+        <div class="order-amt">${(o.montant||0).toLocaleString()} DH</div>
+      </div>`
+    }).join("")
   }
 
-  function getDemoProducts() {
-    return [
-      { id:'1', nom:'Tomates grappe',   famille:'Légumes', unite:'kg',    pv:8,  prixCHR:6.5, prixMarchand:7,  prixParticulier:8.5 },
-      { id:'2', nom:'Carottes',          famille:'Légumes', unite:'kg',    pv:4,  prixCHR:3.2, prixMarchand:3.6, prixParticulier:4.2 },
-      { id:'3', nom:'Pommes de terre',   famille:'Légumes', unite:'kg',    pv:5,  prixCHR:4,   prixMarchand:4.5, prixParticulier:5.5 },
-      { id:'4', nom:'Oignons',           famille:'Légumes', unite:'kg',    pv:3.5,prixCHR:2.8, prixMarchand:3.2, prixParticulier:3.8 },
-      { id:'5', nom:'Citrons',           famille:'Fruits',  unite:'kg',    pv:10, prixCHR:8,   prixMarchand:9,   prixParticulier:11 },
-      { id:'6', nom:'Oranges Navel',     famille:'Fruits',  unite:'kg',    pv:7,  prixCHR:5.5, prixMarchand:6.5, prixParticulier:7.5 },
-      { id:'7', nom:'Pommes Golden',     famille:'Fruits',  unite:'kg',    pv:12, prixCHR:10,  prixMarchand:11,  prixParticulier:13 },
-      { id:'8', nom:'Salade Iceberg',    famille:'Légumes', unite:'pièce', pv:6,  prixCHR:4.5, prixMarchand:5.5, prixParticulier:6.5 },
-      { id:'9', nom:'Concombres',        famille:'Légumes', unite:'kg',    pv:5,  prixCHR:4,   prixMarchand:4.5, prixParticulier:5.5 },
-      { id:'10',nom:'Poivrons rouges',   famille:'Légumes', unite:'kg',    pv:14, prixCHR:11,  prixMarchand:13,  prixParticulier:15 },
-      { id:'11',nom:'Courgettes',        famille:'Légumes', unite:'kg',    pv:7,  prixCHR:5.5, prixMarchand:6.5, prixParticulier:7.5 },
-      { id:'12',nom:'Brocoli',           famille:'Légumes', unite:'kg',    pv:16, prixCHR:13,  prixMarchand:15,  prixParticulier:17 },
-    ];
+  /* nom dans navbar */
+  const nb = document.getElementById("btnLogin")
+  if (nb) nb.querySelector("[data-i18n]").textContent = (user.name||"").split(" ")[0] || t("btn_login")
+}
+
+function logout() {
+  clearSession()
+  document.getElementById("mon-espace").classList.remove("visible")
+  const nb = document.getElementById("btnLogin")
+  if (nb) nb.querySelector("[data-i18n]").textContent = t("btn_login")
+  showToast("👋 " + (currentLang==="ar"?"خرجتي بسلامة":"Déconnecté"), "")
+}
+
+/* ── Session localStorage ── */
+function saveSession(d) { localStorage.setItem("fl_session", JSON.stringify({ ...d, _savedAt: Date.now() })) }
+function getSession() {
+  try {
+    const raw = localStorage.getItem("fl_session"); if (!raw) return null
+    const s = JSON.parse(raw)
+    const exp = (s.user?.exp) || (s._savedAt + 86_400_000)
+    if (Date.now() > exp) { clearSession(); return null }
+    return s
+  } catch { return null }
+}
+function clearSession() { localStorage.removeItem("fl_session") }
+
+/* ── Formulaire Espace Pro ── */
+async function submitProForm(e) {
+  e.preventDefault()
+  const nom  = document.getElementById("fNom").value.trim()
+  const tel  = document.getElementById("fTel").value.trim()
+  const type = document.getElementById("fType").value
+  const msg  = document.getElementById("formMsg")
+  const btn  = document.getElementById("btnSubmit")
+  msg.className = "form-msg"
+
+  if (!nom || !tel || !type) { msg.textContent = t("form_err"); msg.classList.add("error"); return }
+
+  btn.disabled = true; btn.textContent = "⏳"
+
+  const payload = {
+    nom, telephone: tel, type,
+    societe: document.getElementById("fSociete").value.trim(),
+    email:   document.getElementById("fEmail").value.trim(),
+    ville:   document.getElementById("fVille").value.trim(),
+    volume:  document.getElementById("fVolume").value,
+    message: document.getElementById("fMsg").value.trim(),
+    source: "site-web", lang: currentLang,
   }
 
-  function buildFilters() {
-    const families = [...new Set(allProducts.map(p => p.famille).filter(Boolean))].sort();
-    const container = document.getElementById('cat-filters');
-    // Supprimer les anciens filtres dynamiques
-    container.querySelectorAll('[data-cat]:not([data-cat="all"])').forEach(b => b.remove());
-    families.forEach(f => {
-      const btn = document.createElement('button');
-      btn.className = 'cat-filter-btn';
-      btn.dataset.cat = f;
-      btn.textContent = getEmoji(f) + ' ' + f;
-      btn.onclick = function() { filterCat(f, this); };
-      container.appendChild(btn);
-    });
+  let ok = false
+  try {
+    const r = await fetch(CONFIG.API_URL + "/api/ext/demande-acces", {
+      method: "POST", headers: { "Content-Type":"application/json" }, body: JSON.stringify(payload)
+    })
+    ok = r.ok
+  } catch { ok = false }
+
+  if (!ok) {
+    /* Fallback WhatsApp */
+    const wa = encodeURIComponent(
+      `📋 *Demande Accès Pro — Empire Fresh*\n\n` +
+      `👤 ${payload.nom}\n🏢 ${payload.societe||"—"}\n📱 ${payload.telephone}\n` +
+      `📧 ${payload.email||"—"}\n🏷️ ${payload.type}\n📍 ${payload.ville||"—"}\n` +
+      `💰 ${payload.volume||"—"}\n💬 ${payload.message||"—"}`
+    )
+    window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${wa}`, "_blank")
   }
 
-  function filterCat(cat, btn) {
-    activeCategory = cat;
-    currentPage = 0;
-    document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    applyFilters();
+  msg.textContent = t("form_ok"); msg.classList.add("success")
+  document.getElementById("proForm").reset()
+  btn.disabled = false; btn.textContent = t("btn_submit")
+}
+
+/* ── Toast ── */
+function showToast(msg, type) {
+  const el = document.getElementById("toast")
+  el.textContent = msg
+  el.className   = "toast" + (type ? " " + type : "")
+  el.classList.add("show")
+  setTimeout(() => el.classList.remove("show"), 3500)
+}
+
+/* ── INIT ── */
+document.addEventListener("DOMContentLoaded", () => {
+  applyConfig()
+  setLang(currentLang)
+
+  /* Restaurer session existante */
+  const sess = getSession()
+  if (sess) showPortal(sess)
+
+  /* Rafraîchir le profil depuis l'API */
+  if (sess?.token) {
+    fetch(CONFIG.API_URL + "/api/ext/mon-compte", {
+      headers: { Authorization: "Bearer " + sess.token }
+    }).then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) { saveSession({ ...sess, ...d }); showPortal({ ...sess, ...d }) } })
+      .catch(() => {})
   }
-
-  function filterSearch(q) {
-    searchQuery = q.toLowerCase();
-    currentPage = 0;
-    applyFilters();
-  }
-
-  function applyFilters() {
-    filteredProducts = allProducts.filter(p => {
-      const matchCat = activeCategory === 'all' || p.famille === activeCategory;
-      const matchSearch = !searchQuery || p.nom.toLowerCase().includes(searchQuery) || (p.famille||'').toLowerCase().includes(searchQuery);
-      return matchCat && matchSearch;
-    });
-    renderCatalogue();
-  }
-
-  function renderCatalogue() {
-    const grid = document.getElementById('products-grid');
-    const toShow = filteredProducts.length > 0 ? filteredProducts : allProducts;
-    const pageItems = toShow.slice(0, (currentPage + 1) * CONFIG.PAGE_SIZE);
-
-    if (toShow.length === 0) {
-      grid.innerHTML = `<div class="products-empty"><div class="products-empty-icon">🔍</div><div>Aucun produit trouvé</div></div>`;
-      document.getElementById('load-more-wrap').style.display = 'none';
-      return;
-    }
-
-    const logged = isLoggedIn();
-    const session = getSession();
-    const prixLabel = logged && session?.user?.categorie
-      ? { chr:'Prix CHR', marchand:'Prix Marchand', particulier:'Prix Particulier' }[session.user.categorie] || 'Prix'
-      : 'Prix public';
-
-    grid.innerHTML = pageItems.map(p => {
-      const emoji = getEmoji(p.famille);
-      const { prix, prixOriginal, badge, remise } = calcPrix(p);
-      const prixDisplay = prix > 0 ? prix.toFixed(2) + ' DH' : 'Sur devis';
-      const badgeHtml  = badge ? `<span class="price-badge">${badge}</span>` : '';
-      const origHtml   = prixOriginal > 0 ? `<span class="price-original">${prixOriginal.toFixed(2)} DH</span>` : '';
-      const remiseHtml = remise > 0 ? `<div style="font-size:11px;color:var(--green-600);margin-top:2px">-${remise}% remise client</div>` : '';
-      const prixModal  = prix > 0 ? prix.toFixed(2) + ' DH / ' + (p.unite || 'kg') : 'Sur devis';
-      return `
-        <div class="product-card">
-          <div class="product-img">
-            ${emoji}
-            ${p.famille ? `<div class="product-badge">${p.famille}</div>` : ''}
-          </div>
-          <div class="product-body">
-            <div class="product-cat">${p.famille || 'Produit'}</div>
-            <div class="product-name">${p.nom}</div>
-            <div class="product-price-row">
-              <div>
-                <div class="product-price">${prixDisplay}${badgeHtml}${origHtml}</div>
-                ${remiseHtml}
-              </div>
-              <div class="product-unite">/ ${p.unite || 'kg'}</div>
-            </div>
-            <button class="product-order-btn" onclick="openOrderModal('${p.id}','${p.nom.replace(/'/g,"\\'")}','${emoji}','${prixModal}')">
-              Commander →
-            </button>
-          </div>
-        </div>`;
-    }).join('');
-
-    const lmw = document.getElementById('load-more-wrap');
-    if (pageItems.length < toShow.length) lmw.style.display = 'block';
-    else lmw.style.display = 'none';
-  }
-
-  function loadMore() {
-    currentPage++;
-    renderCatalogue();
-    window.scrollBy({ top: 400, behavior: 'smooth' });
-  }
-
-  // ─── Modal commande rapide ─────────────────────────────────────
-  let modalProductId = '';
-  let modalProductName = '';
-
-  function openOrderModal(id, nom, emoji, prix) {
-    modalProductId = id;
-    modalProductName = nom;
-    document.getElementById('modal-emoji').textContent = emoji;
-    document.getElementById('modal-name').textContent = nom;
-    document.getElementById('modal-price').textContent = 'Prix indicatif : ' + prix;
-    document.getElementById('modal-form-msg').className = 'form-msg';
-    // Pré-remplir si connecté
-    const s = getSession();
-    if (s?.user) {
-      const moNom = document.getElementById('mo-nom');
-      const moTel = document.getElementById('mo-tel');
-      if (moNom && !moNom.value) moNom.value = s.user.name || '';
-      if (moTel && !moTel.value) moTel.value = s.user.phone || '';
-    }
-    document.getElementById('order-modal').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal() {
-    document.getElementById('order-modal').classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
-  document.getElementById('order-modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('order-modal')) closeModal();
-  });
-
-  // ─── Formulaires ───────────────────────────────────────────────
-  async function submitProspect(data) {
-    if (!CONFIG.API_URL) {
-      await new Promise(r => setTimeout(r, 800));
-      return { ok: true };
-    }
-    const res = await fetch(`${CONFIG.API_URL}/api/ext/prospects`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return res.ok ? { ok: true } : { ok: false };
-  }
-
-  async function submitOrderForm(e) {
-    e.preventDefault();
-    const btn = document.getElementById('order-submit-btn');
-    const msg = document.getElementById('order-form-msg');
-    btn.disabled = true; btn.textContent = 'Envoi en cours...';
-    msg.className = 'form-msg';
-    try {
-      const s = getSession();
-      const result = await submitProspect({
-        nom:           document.getElementById('of-nom').value,
-        telephone:     document.getElementById('of-tel').value,
-        etablissement: document.getElementById('of-etablissement').value,
-        type:          document.getElementById('of-type').value,
-        message:       document.getElementById('of-message').value,
-        email:         s?.user?.email || '',
-        source:        'formulaire_commande',
-      });
-      if (result.ok) {
-        msg.className = 'form-msg success';
-        msg.textContent = '✅ Demande envoyée ! Nous vous contactons sous 24h.';
-        document.getElementById('order-form').reset();
-      } else throw new Error();
-    } catch {
-      msg.className = 'form-msg error';
-      msg.textContent = '❌ Erreur lors de l\'envoi. Veuillez nous appeler directement.';
-    }
-    btn.disabled = false; btn.textContent = '📨 Envoyer ma demande';
-  }
-
-  async function submitContactForm(e) {
-    e.preventDefault();
-    const btn = document.getElementById('cf-submit-btn');
-    const msg = document.getElementById('contact-form-msg');
-    btn.disabled = true; btn.textContent = 'Envoi...';
-    msg.className = 'form-msg';
-    try {
-      const result = await submitProspect({
-        nom:     document.getElementById('cf-nom').value,
-        telephone: document.getElementById('cf-tel').value,
-        email:   document.getElementById('cf-email').value,
-        sujet:   document.getElementById('cf-sujet').value,
-        message: document.getElementById('cf-message').value,
-        source:  'formulaire_contact',
-      });
-      if (result.ok) {
-        msg.className = 'form-msg success';
-        msg.textContent = '✅ Message envoyé ! Nous vous répondons sous 24h.';
-        document.getElementById('contact-form').reset();
-      } else throw new Error();
-    } catch {
-      msg.className = 'form-msg error';
-      msg.textContent = '❌ Erreur. Contactez-nous par téléphone.';
-    }
-    btn.disabled = false; btn.textContent = 'Envoyer le message →';
-  }
-
-  async function submitModalOrder(e) {
-    e.preventDefault();
-    const msg = document.getElementById('modal-form-msg');
-    msg.className = 'form-msg';
-    try {
-      const s = getSession();
-      const result = await submitProspect({
-        nom:      document.getElementById('mo-nom').value,
-        telephone: document.getElementById('mo-tel').value,
-        email:    s?.user?.email || '',
-        message:  `Commande rapide : ${modalProductName} — Quantité: ${document.getElementById('mo-qte').value || 'À préciser'}`,
-        produit_id: modalProductId,
-        source:   'modal_catalogue',
-      });
-      if (result.ok) {
-        msg.className = 'form-msg success';
-        msg.textContent = '✅ Demande envoyée ! Nous vous contactons rapidement.';
-        setTimeout(() => closeModal(), 2500);
-      } else throw new Error();
-    } catch {
-      msg.className = 'form-msg error';
-      msg.textContent = '❌ Erreur. Veuillez nous appeler directement.';
-    }
-  }
-
-  // ─── Init ───────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
-    applyConfig();
-    applyLoginState();
-    loadCatalogue();
-    if (isLoggedIn()) refreshMonCompte();
-  });
+})
 </script>
 </body>
 </html>

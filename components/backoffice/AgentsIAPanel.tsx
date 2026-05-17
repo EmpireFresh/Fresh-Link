@@ -13,9 +13,9 @@ const AGENTS = [
 
   // ── N1 — TERRAIN ────────────────────────────────────────────────────────────
   {
-    id: "mustapha",
-    name: "MUSTAPHA",
-    fullName: "Mustapha — Commercial Terrain",
+    id: "jariri",
+    name: "JARIRI",
+    fullName: "Jariri — Expert Vente Terrain",
     role: "Vente, Up-sell & Encaissement",
     level: "N1",
     levelColor: "#10b981",
@@ -24,13 +24,13 @@ const AGENTS = [
     bgColor: "#f0fdf4",
     borderColor: "#bbf7d0",
     badge: "N1 · Vente",
-    greeting: `Salam ! Je suis MUSTAPHA, ton expert vente terrain.\n\nJe connais chaque client par son prénom, je propose les bons articles au bon moment, et je ferme chaque visite avec une commande. Dis-moi : quel client tu visites ou quelle question tu as ?`,
+    greeting: `Salam ! Je suis JARIRI, ton expert vente terrain.\n\nJe connais chaque client par son prénom, je propose les bons articles au bon moment, et je ferme chaque visite avec une commande. Dis-moi : quel client tu visites ou quelle question tu as ?`,
     tasks: [
       { label: "Panier habituel client", desc: "Rappeler les articles commandés régulièrement par ce client" },
       { label: "Up-sell intelligent", desc: "2 articles en stock non commandés depuis 3+ jours — argument fraîcheur" },
       { label: "Gérer demande crédit", desc: "Proposer remise 3% pour paiement cash immédiat" },
     ],
-    systemPrompt: `Tu es MUSTAPHA, commercial terrain EXPERT de FreshLink Pro — distribution fruits & légumes frais à Casablanca, Maroc.
+    systemPrompt: `Tu es JARIRI, commercial terrain EXPERT de FreshLink Pro — distribution fruits & légumes frais à Casablanca, Maroc.
 
 IDENTITÉ : Tu connais chaque client par son prénom, tu mémorises ses habitudes d'achat, tu sens l'humeur du marché. Tu n'es pas un simple vendeur — tu es un partenaire business du client.
 
@@ -350,9 +350,9 @@ SIGNAL : [CREDIT_VALIDÉ], [CREDIT_REFUSÉ], [ALERTE_FRAUDE], [AUDIT_REQUIS]`,
   },
 
   {
-    id: "hicham",
-    name: "HICHAM",
-    fullName: "HICHAM — Contrôle & Qualité",
+    id: "thomas",
+    name: "THOMAS",
+    fullName: "Thomas — Contrôle de Gestion",
     role: "Audit Chargement, Marges & Retours",
     level: "N2",
     levelColor: "#3b82f6",
@@ -361,13 +361,13 @@ SIGNAL : [CREDIT_VALIDÉ], [CREDIT_REFUSÉ], [ALERTE_FRAUDE], [AUDIT_REQUIS]`,
     bgColor: "#fef2f2",
     borderColor: "#fecaca",
     badge: "N2 · Contrôle",
-    greeting: `Salam ! Je suis HICHAM, Contrôleur Qualité de FreshLink Pro.\n\nJe vérifie chaque chargement, chaque retour, chaque marge. Aucun écart ne m'échappe. Envoie-moi les données du chargement ou une photo de retour produit.`,
+    greeting: `Bonjour ! Je suis THOMAS, ton expert contrôle de gestion.\n\nJe vérifie chaque chargement, chaque retour, chaque marge. Aucun écart ne m'échappe. Envoie-moi les données du chargement ou une photo de retour produit.`,
     tasks: [
       { label: "Audit chargement BL", desc: "Chargement scanné vs facturation — écart avant départ" },
       { label: "Marge brute en temps réel", desc: "Alerte si marge < 15% sur n'importe quel SKU" },
       { label: "Valider retour produit", desc: "Photo livraison vs retour — détecter substitution ou fraude" },
     ],
-    systemPrompt: `Tu es HICHAM, Contrôleur de Gestion & Responsable Qualité EXPERT de FreshLink Pro. Rigueur absolue, chiffres précis, zéro approximation.
+    systemPrompt: `Tu es THOMAS, Contrôleur de Gestion & Responsable Qualité EXPERT de FreshLink Pro. Rigueur absolue, chiffres précis, zéro approximation.
 
 IDENTITÉ : Auditeur interne avec 8 ans d'expérience en agroalimentaire. Tu détectes les anomalies que les autres ne voient pas — sur les chargements, les marges et les retours.
 
@@ -647,12 +647,12 @@ CONTEXTE SESSION :
 
   // Quick actions per agent
   const quickActions: Record<string, string[]> = {
-    mustapha:    ["Panier habituel du client", "Proposer 2 articles non commandés", "Gérer demande crédit client"],
+    jariri:      ["Panier habituel du client", "Proposer 2 articles non commandés", "Gérer demande crédit client"],
     simohammed: ["Analyser qualité via photo", "Proposer prix compétitif pour tomates", "Comparer 3 fournisseurs Casablanca"],
     jawad:       ["Calculer PR pour cette commande", "Optimiser tournée LIFO du jour", "Choisir le meilleur transporteur"],
     zizi:        ["Cibler les CHR du quartier Maarif", "Préparer offre pour restaurant 3 étoiles", "Pipeline top 5 contrats > 50K DH"],
     azmi:        ["Valider crédit client 8 000 DH", "Détecter anomalies transactions du jour", "Rapport encours crédit"],
-    hicham:      ["Auditer chargement camion #3", "Calculer marge brute SKU tomate ronde", "Valider retour produit photo"],
+    thomas:      ["Auditer chargement camion #3", "Calculer marge brute SKU tomate ronde", "Valider retour produit photo"],
     ourai:       ["Calculer paie livreur — salaire 4500 DH", "Générer matricule nouveau prévendeur", "KPIs productivité équipe ce mois"],
     ashel:       ["War Plan : marge tomates < 20%", "Comparer fournisseurs poivrons Derb Omar", "Calculer PO optimal semaine prochaine"],
   }
@@ -885,7 +885,7 @@ export default function AgentsIAPanel({ user, initialAgent }: Props) {
 
         {/* N1 */}
         <div className="px-3 pt-3 pb-1">
-          <SectionLabel level="N1" title="Terrain" sub="Mustapha · Si-Mohammed" color="#10b981" />
+          <SectionLabel level="N1" title="Terrain" sub="Jariri · Si-Mohammed" color="#10b981" />
           {N1_AGENTS.map(a => (
             <AgentBtn key={a.id} a={a} isActive={selected === a.id} onSelect={() => setSelected(a.id)} />
           ))}
@@ -895,7 +895,7 @@ export default function AgentsIAPanel({ user, initialAgent }: Props) {
 
         {/* N2 */}
         <div className="px-3 py-2">
-          <SectionLabel level="N2" title="Back Office" sub="Jawad · Zizi · Azmi · Hicham · Ourai · Ashel" color="#3b82f6" />
+          <SectionLabel level="N2" title="Back Office" sub="Jawad · Zizi · Azmi · Thomas · Ourai · Ashel" color="#3b82f6" />
           {N2_AGENTS.map(a => (
             <AgentBtn key={a.id} a={a} isActive={selected === a.id} onSelect={() => setSelected(a.id)} />
           ))}

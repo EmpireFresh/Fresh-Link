@@ -22,52 +22,52 @@ interface Phase {
 const PHASES: Phase[] = [
   {
     id:1, label:'Phase 1 — 1.5T/jour | Fondation', capital:1_500_000, autofinancement:600_000, externe:900_000,
-    period:'Mois 1–12', status:'complete', roi:28, payback:36, ca_cible:4_200_000, marge:18,
+    period:'Mars – Juin 2025 (Mois 1–3)', status:'complete', roi:28, payback:36, ca_cible:4_200_000, marge:18,
     tonnage_jour:1.5, tonnage_mois:39, prix_moyen_kg:4.5,
-    objectifs:["Lancement FreshLink Pro (MVP)", "3 camions frigos opérationnels", "50 clients actifs (restaurants + marchands)", "Certification halal & normes ONSSA", "Recrutement équipe fondatrice (Jariri, Thomas, S.Abdelilah)"],
+    objectifs:["Lancement FreshLink Pro (MVP) — pilotage Jariri", "3 camions frigos opérationnels", "50 clients actifs (restaurants + marchands)", "Certification halal & normes ONSSA", "Thomas : contrôle de gestion", "S.Abdelilah : expert qualité", "Abdelali : contrôle qualité", "Ayoub : responsable affectation transport"],
     risques:["Délais administratifs autorisations", "Trouver les 600K MAD autofinancement", "Acquisition clients premiers mois"],
-    kpis:["CA mensuel ≥ 350K MAD à M12", "Taux satisfaction client ≥ 85%", "Taux de livraison à l'heure ≥ 92%"],
+    kpis:["CA mensuel ≥ 350K MAD à M3", "Taux satisfaction client ≥ 85%", "Taux de livraison à l'heure ≥ 92%"],
     entities:[{name:'Empire Fresh',part:70,role:'Opérationnel & commercial'},{name:'ELT',part:20,role:'Logistique & transport'},{name:'Investisseurs',part:10,role:'Capital amorçage'}]
   },
   {
     id:2, label:'Phase 2 — 3T/jour | Expansion Locale', capital:3_000_000, autofinancement:1_200_000, externe:1_800_000,
-    period:'Mois 13–24', status:'active', roi:34, payback:30, ca_cible:9_800_000, marge:21,
+    period:'Juin – Septembre 2025 (Mois 4–6)', status:'active', roi:34, payback:30, ca_cible:9_800_000, marge:21,
     tonnage_jour:3.0, tonnage_mois:78, prix_moyen_kg:4.8,
     objectifs:["Extension zone Casablanca + Mohammédia", "Fleet : 8 camions (dont 2 frigo premium)", "200 clients actifs", "Lancement module prévendeur mobile", "Entrepôt 1 200 m² zone industrielle"],
     risques:["Financement entrepôt (bail commercial)", "Recrutement chauffeurs qualifiés", "Concurrence acteurs établis"],
-    kpis:["CA mensuel ≥ 820K MAD à M24", "NPS client ≥ 60", "Coût logistique < 18% du CA"],
+    kpis:["CA mensuel ≥ 820K MAD à M6", "NPS client ≥ 60", "Coût logistique < 18% du CA"],
     entities:[{name:'Empire Fresh',part:65,role:'Opérationnel'},{name:'ELT',part:25,role:'Flotte & entrepôt'},{name:'Investisseurs',part:10,role:'Croissance'}]
   },
   {
     id:3, label:'Phase 3 — 5.5T/jour | Axe Rabat-Tanger', capital:5_000_000, autofinancement:2_000_000, externe:3_000_000,
-    period:'Mois 25–36', status:'locked', roi:38, payback:28, ca_cible:18_500_000, marge:23,
+    period:'Septembre – Décembre 2025 (Mois 7–9)', status:'locked', roi:38, payback:28, ca_cible:18_500_000, marge:23,
     tonnage_jour:5.5, tonnage_mois:143, prix_moyen_kg:5.0,
     objectifs:["Ouverture antennes Rabat & Tanger", "Partenariats 5 grandes surfaces", "Fleet : 15 camions", "Plateforme B2B clients institutionnels", "ISO 22000 alimentation"],
     risques:["Coordination multi-site", "Recrutement superviseurs régionaux", "Volatilité prix approvisionnement"],
-    kpis:["CA mensuel ≥ 1.5M MAD à M36", "Part marchés Rabat ≥ 8%", "EBITDA ≥ 22%"],
+    kpis:["CA mensuel ≥ 1.5M MAD à M9", "Part marchés Rabat ≥ 8%", "EBITDA ≥ 22%"],
     entities:[{name:'Empire Fresh',part:60,role:'Hub central'},{name:'ELT',part:30,role:'Réseau régional'},{name:'Investisseurs',part:10,role:'Expansion'}]
   },
   {
     id:4, label:'Phase 4 — 9T/jour | Industrialisation', capital:8_000_000, autofinancement:3_200_000, externe:4_800_000,
-    period:'Mois 37–48', status:'locked', roi:42, payback:26, ca_cible:32_000_000, marge:25,
+    period:'Décembre 2025 – Mars 2026 (Mois 10–12)', status:'locked', roi:42, payback:26, ca_cible:32_000_000, marge:25,
     tonnage_jour:9.0, tonnage_mois:234, prix_moyen_kg:5.2,
     objectifs:["Plateforme logistique centrale 3 500 m²", "Unité de conditionnement & 4ème gamme", "Certification GlobalG.A.P.", "Fleet : 25 camions + 5 frigos", "Lancement offre export Espagne/France"],
     risques:["Investissement industriel lourd", "Normes export européennes", "Change EUR/MAD"],
-    kpis:["CA mensuel ≥ 2.7M MAD à M48", "Export ≥ 15% du CA", "Pertes marchandises < 3%"],
+    kpis:["CA mensuel ≥ 2.7M MAD à M12", "Export ≥ 15% du CA", "Pertes marchandises < 3%"],
     entities:[{name:'Empire Fresh',part:55,role:'Production & export'},{name:'ELT',part:30,role:'Logistique avancée'},{name:'Partenaires industriels',part:15,role:'Cofinancement'}]
   },
   {
     id:5, label:'Phase 5 — 14.5T/jour | Scale National', capital:13_000_000, autofinancement:5_200_000, externe:7_800_000,
-    period:'Mois 49–60', status:'locked', roi:46, payback:24, ca_cible:55_000_000, marge:27,
+    period:'Mars – Juin 2026 (Mois 13–15)', status:'locked', roi:46, payback:24, ca_cible:55_000_000, marge:27,
     tonnage_jour:14.5, tonnage_mois:377, prix_moyen_kg:5.4,
     objectifs:["Couverture nationale : 12 villes", "Hub régionaux : Marrakech, Fès, Agadir", "Fleet : 45 camions", "1 200 clients actifs", "Lancement marque propre produits premium"],
     risques:["Complexité opérationnelle nationale", "Besoin profils managériaux senior", "Pression sur trésorerie croissance"],
-    kpis:["CA mensuel ≥ 4.6M MAD à M60", "Part marché national ≥ 4%", "Marge nette ≥ 12%"],
+    kpis:["CA mensuel ≥ 4.6M MAD à M15", "Part marché national ≥ 4%", "Marge nette ≥ 12%"],
     entities:[{name:'Empire Fresh',part:50,role:'National HQ'},{name:'ELT',part:30,role:'Réseau national'},{name:'Fonds d\'investissement',part:20,role:'Croissance accélérée'}]
   },
   {
     id:6, label:'Phase 6 — 22T/jour | Tech & Data', capital:21_000_000, autofinancement:8_400_000, externe:12_600_000,
-    period:'Mois 61–72', status:'locked', roi:50, payback:22, ca_cible:88_000_000, marge:29,
+    period:'Juin – Septembre 2026 (Mois 16–18)', status:'locked', roi:50, payback:22, ca_cible:88_000_000, marge:29,
     tonnage_jour:22.0, tonnage_mois:572, prix_moyen_kg:5.6,
     objectifs:["Plateforme IA prédictive (gestion stocks)", "Marketplace B2B fruits & légumes Maroc", "API open pour partenaires distributeurs", "R&D blockchain traçabilité", "Fleet : 80 camions + drones dernière mile"],
     risques:["Investissement tech élevé", "Maturité du marché digital B2B", "Recrutement profils tech rares au Maroc"],
@@ -76,7 +76,7 @@ const PHASES: Phase[] = [
   },
   {
     id:7, label:'Phase 7 — 38T/jour | Expansion MENA', capital:34_000_000, autofinancement:13_600_000, externe:20_400_000,
-    period:'Mois 73–96', status:'locked', roi:55, payback:20, ca_cible:150_000_000, marge:31,
+    period:'Septembre – Décembre 2026 (Mois 19–21)', status:'locked', roi:55, payback:20, ca_cible:150_000_000, marge:31,
     tonnage_jour:38.0, tonnage_mois:988, prix_moyen_kg:5.8,
     objectifs:["Ouverture Sénégal, Côte d'Ivoire, Mauritanie", "Joint-ventures partenaires locaux Afrique", "Agrément export vers Golfe (EAU, Qatar)", "Certification BRC Food Safety", "Introduction en bourse partielle (Casablanca Stock Exchange)"],
     risques:["Risques géopolitiques Afrique subsaharienne", "Logistique inter-pays complexe", "Régulation alimentaire par pays"],
@@ -85,7 +85,7 @@ const PHASES: Phase[] = [
   },
   {
     id:8, label:'Phase 8 — 70T/jour | Groupe Agro-Alimentaire', capital:55_000_000, autofinancement:22_000_000, externe:33_000_000,
-    period:'Mois 97–120', status:'locked', roi:60, payback:18, ca_cible:280_000_000, marge:33,
+    period:'Décembre 2026 – Mars 2027 (Mois 22–24)', status:'locked', roi:60, payback:18, ca_cible:280_000_000, marge:33,
     tonnage_jour:70.0, tonnage_mois:1820, prix_moyen_kg:6.0,
     objectifs:["Acquisition d'une coopérative agricole (1 500 ha)", "Unités de transformation : jus, conserves, surgelés", "Marque internationale distribuée en GMS Europe", "Fleet : 300+ véhicules dont 50 réfrigérés longue distance", "Cotation bourse & levée de fonds institutionnels"],
     risques:["Complexité intégration verticale amont", "Normes agroalimentaires Europe (IFS, BRC)", "Volatilité climatique sur production"],
