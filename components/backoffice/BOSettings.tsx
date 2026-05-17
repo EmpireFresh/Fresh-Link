@@ -114,6 +114,147 @@ function MonCompteContent({ user, monNom, setMonNom, monPwd, setMonPwd, monPwdCo
   )
 }
 
+const SITE_WEB_KEY = "ef_site_web_settings"
+
+type SiteWebSettings = {
+  siteUrl: string
+  email: string
+  whatsapp: string
+  whatsappMsg: string
+  openHours: string
+  instagram: string
+  facebook: string
+  tiktok: string
+  metaTitle: string
+  metaDesc: string
+  maintenanceMode: boolean
+}
+
+const DEFAULT_SITE: SiteWebSettings = {
+  siteUrl: "https://empire-fresh.co.site",
+  email: "sales@empire-fresh.co.site",
+  whatsapp: "+212600000000",
+  whatsappMsg: "Bonjour Empire Fresh, je souhaite passer une commande.",
+  openHours: "Lun–Sam : 6h–18h",
+  instagram: "",
+  facebook: "",
+  tiktok: "",
+  metaTitle: "Empire Fresh — Fruits & Légumes Casablanca",
+  metaDesc: "Distribution de fruits et légumes frais à Casablanca. Livraison B2B sous 24h.",
+  maintenanceMode: false,
+}
+
+function SiteWebTab({ saved, setSaved }: { saved: string; setSaved: (v: string) => void }) {
+  const [settings, setSettings] = useState<SiteWebSettings>(DEFAULT_SITE)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SITE_WEB_KEY)
+      if (stored) setSettings({ ...DEFAULT_SITE, ...JSON.parse(stored) })
+    } catch {}
+  }, [])
+
+  function set<K extends keyof SiteWebSettings>(k: K, v: SiteWebSettings[K]) {
+    setSettings(prev => ({ ...prev, [k]: v }))
+  }
+
+  function save() {
+    localStorage.setItem(SITE_WEB_KEY, JSON.stringify(settings))
+    setSaved("Paramètres site web sauvegardés")
+    setTimeout(() => setSaved(""), 3000)
+  }
+
+  const Field = ({ label, id, value, onChange, type = "text", placeholder = "" }: {
+    label: string; id: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string
+  }) => (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold text-slate-600">{label}</label>
+      <input id={id} type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        className="px-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
+        <svg className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+        </svg>
+        <div>
+          <p className="text-sm font-bold text-blue-900">Paramètres du site Empire Fresh</p>
+          <p className="text-xs text-blue-700 mt-0.5">Ces informations alimentent le portail client et les liens de contact.</p>
+        </div>
+      </div>
+
+      {/* Contact & URL */}
+      <div className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-4">
+        <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+          <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+          URL & Contact
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="URL du site" id="siteUrl" value={settings.siteUrl} onChange={v => set("siteUrl", v)} placeholder="https://empire-fresh.co.site" />
+          <Field label="Email contact" id="email" type="email" value={settings.email} onChange={v => set("email", v)} placeholder="sales@empire-fresh.co.site" />
+          <Field label="Numéro WhatsApp" id="whatsapp" value={settings.whatsapp} onChange={v => set("whatsapp", v)} placeholder="+212600000000" />
+          <Field label="Horaires d'ouverture" id="openHours" value={settings.openHours} onChange={v => set("openHours", v)} placeholder="Lun–Sam : 6h–18h" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600">Message WhatsApp pré-rempli</label>
+          <textarea value={settings.whatsappMsg} onChange={e => set("whatsappMsg", e.target.value)} rows={2}
+            className="px-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none" />
+        </div>
+      </div>
+
+      {/* Réseaux sociaux */}
+      <div className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-4">
+        <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+          <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+          Réseaux sociaux
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Field label="Instagram" id="instagram" value={settings.instagram} onChange={v => set("instagram", v)} placeholder="https://instagram.com/..." />
+          <Field label="Facebook" id="facebook" value={settings.facebook} onChange={v => set("facebook", v)} placeholder="https://facebook.com/..." />
+          <Field label="TikTok" id="tiktok" value={settings.tiktok} onChange={v => set("tiktok", v)} placeholder="https://tiktok.com/@..." />
+        </div>
+      </div>
+
+      {/* SEO */}
+      <div className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-4">
+        <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          SEO & Méta
+        </h3>
+        <Field label="Titre de la page (meta title)" id="metaTitle" value={settings.metaTitle} onChange={v => set("metaTitle", v)} placeholder="Empire Fresh — Fruits & Légumes" />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-slate-600">Description (meta description)</label>
+          <textarea value={settings.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2}
+            className="px-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none" />
+        </div>
+      </div>
+
+      {/* Mode maintenance */}
+      <div className="bg-card rounded-2xl border border-border p-5 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-foreground">Mode maintenance</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Affiche un message d'indisponibilité sur le portail client.</p>
+        </div>
+        <button onClick={() => set("maintenanceMode", !settings.maintenanceMode)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.maintenanceMode ? "bg-red-500" : "bg-slate-200"}`}>
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${settings.maintenanceMode ? "translate-x-6" : "translate-x-1"}`} />
+        </button>
+      </div>
+
+      {/* Save */}
+      <div className="flex justify-end">
+        <button onClick={save}
+          className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors">
+          Sauvegarder
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function BOSettings({ user }: { user: { id: string; name: string; role: string; email?: string } }) {
   // --- ALL hooks MUST come before any conditional return (Rules of Hooks) ---
   const [config, setConfig] = useState<EmailConfig>(() => store.getEmailConfig())
@@ -123,7 +264,9 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [motifs, setMotifs] = useState<MotifRetour[]>([])
   const [newMotif, setNewMotif] = useState({ label: "", labelAr: "" })
   const [saved, setSaved] = useState("")
-  const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "ai_config" | "alertes" | "transporteurs" | "moncompte">("entreprise")
+  const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "ai_config" | "alertes" | "transporteurs" | "moncompte" | "systeme" | "siteweb">("entreprise")
+  const [restartMsg, setRestartMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [restartLoading, setRestartLoading] = useState(false)
   const [transporteurs, setTransporteurs] = useState<TransportCompany[]>([])
   const [editingTransport, setEditingTransport] = useState<TransportCompany | null>(null)
   const [showTransportForm, setShowTransportForm] = useState(false)
@@ -399,6 +542,8 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     { id: "ai_config" as const,   label: "IA & Modeles",              labelAr: "الذكاء الاصطناعي" },
     { id: "alertes" as const,     label: "Alertes Email",             labelAr: "تنبيهات البريد" },
     { id: "transporteurs" as const, label: "Transporteurs",           labelAr: "شركات النقل" },
+    { id: "siteweb" as const,       label: "🌐 Site Web",               labelAr: "إعدادات الموقع" },
+    ...(user.role === "super_super_admin" ? [{ id: "systeme" as const, label: "⚡ Système", labelAr: "النظام" }] : []),
   ]
 
   return (
@@ -2404,6 +2549,109 @@ To: {{to_email}}
         <MonCompteContent user={user} monNom={monNom} setMonNom={setMonNom} monPwd={monPwd} setMonPwd={setMonPwd} monPwdConfirm={monPwdConfirm} setMonPwdConfirm={setMonPwdConfirm} monCompteMsg={monCompteMsg} setMonCompteMsg={setMonCompteMsg} />
       )}
 
+      {/* ══ SYSTÈME — super_super_admin only ══════════════════════════════════ */}
+      {tab === "systeme" && user.role === "super_super_admin" && (
+        <div className="flex flex-col gap-6">
+          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-300 rounded-2xl p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-yellow-500 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-white fill-white" viewBox="0 0 24 24"><path d="M2 19h20l-2-10-5 5-3-8-3 8-5-5z" /></svg>
+            </div>
+            <div>
+              <p className="font-black text-slate-900 text-base">Contrôle Système — Super Administrateur</p>
+              <p className="text-xs text-yellow-800 mt-0.5">Ces actions s'appliquent à <strong>tous les appareils connectés</strong> en temps réel. Utiliser avec précaution. / إجراءات تؤثر على جميع الأجهزة المتصلة</p>
+            </div>
+          </div>
+
+          {/* ── Restart All Devices ── */}
+          <div className="rounded-2xl border border-red-200 overflow-hidden">
+            <div className="px-5 py-4 bg-red-50 flex items-center gap-3 border-b border-red-200">
+              <svg className="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <div>
+                <p className="font-bold text-red-900 text-sm">Redémarrer tous les appareils</p>
+                <p className="text-xs text-red-700">Envoie un signal de rechargement à tous les navigateurs connectés à l'application</p>
+              </div>
+            </div>
+            <div className="p-5 bg-white flex flex-col gap-4">
+              <p className="text-sm text-slate-600">
+                Tous les utilisateurs actuellement connectés verront leur page se recharger automatiquement dans les 2 secondes.
+                Cela permet de forcer la mise à jour de l'application après un déploiement ou un changement de configuration.
+              </p>
+              {restartMsg && (
+                <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm border ${restartMsg.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+                  {restartMsg.text}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  disabled={restartLoading}
+                  onClick={async () => {
+                    setRestartLoading(true)
+                    setRestartMsg(null)
+                    try {
+                      const { createClient } = await import("@/lib/supabase/client")
+                      const sb = createClient()
+                      const channel = sb.channel("freshlink-erp-realtime-v3")
+                      await channel.subscribe()
+                      await channel.send({
+                        type: "broadcast",
+                        event: "force_restart",
+                        payload: { requestedBy: user.name, ts: new Date().toISOString() },
+                      })
+                      sb.removeChannel(channel)
+                      setRestartMsg({ ok: true, text: "Signal envoyé à tous les appareils connectés. Rechargement dans 2 secondes..." })
+                      // Recharger aussi ce device
+                      setTimeout(() => window.location.reload(), 2500)
+                    } catch (e) {
+                      setRestartMsg({ ok: false, text: `Erreur: ${String(e)}` })
+                    }
+                    setRestartLoading(false)
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50 shadow-sm">
+                  {restartLoading ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
+                  Redémarrer tous les appareils
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Session info ── */}
+          <div className="rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
+              <p className="font-bold text-slate-800 text-sm">Informations session super admin</p>
+            </div>
+            <div className="p-5 bg-white flex flex-col gap-3 text-sm">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-600">Nom</span>
+                <span className="font-bold text-slate-900">{user.name}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-600">Rôle</span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-300">super_super_admin</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-600">Email</span>
+                <span className="font-mono text-xs text-slate-700">{user.email ?? "—"}</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-slate-600">ID</span>
+                <span className="font-mono text-xs text-slate-500">{user.id}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* === TRANSPORTEURS === */}
       {tab === "transporteurs" && (
         <div className="flex flex-col gap-5">
@@ -2632,6 +2880,8 @@ To: {{to_email}}
         </div>
       )}
 
+      {/* === SITE WEB === */}
+      {tab === "siteweb" && <SiteWebTab saved={saved} setSaved={setSaved} />}
           </div>
           )
           }

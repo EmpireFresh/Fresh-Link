@@ -5,6 +5,8 @@ import dynamic from "next/dynamic"
 import LangSwitcher from "@/components/ui/LangSwitcher"
 import type { User } from "@/lib/store"
 import { store, ROLE_LABELS, ROLE_COLORS, isDemoUser, isSuperSuperAdmin, JAWAD_ID } from "@/lib/store"
+import { useLang, T } from "@/lib/i18n"
+import type { AppLang } from "@/lib/lang"
 
 // ─────────────────────────────────────────────────────────────
 // ERROR BOUNDARY — catches any render crash inside a panel
@@ -19,8 +21,9 @@ class PanelErrorBoundary extends Component<{ children: React.ReactNode; label: s
   static getDerivedStateFromError(err: unknown): EBState {
     return { hasError: true, msg: err instanceof Error ? err.message : String(err) }
   }
-  componentDidCatch(err: unknown) {
-    console.error("[PanelErrorBoundary]", err)
+  componentDidCatch(err: unknown, info: React.ErrorInfo) {
+    console.error("[PanelErrorBoundary] ERROR:", err)
+    console.error("[PanelErrorBoundary] STACK:", info?.componentStack)
   }
   render() {
     if (this.state.hasError) {
@@ -108,6 +111,7 @@ const BOMarketplace          = dynamic(() => import("./BOMarketplace"),         
 const BODocuments            = dynamic(() => import("./BODocuments"),            { ssr: false, loading: L("Chargement documents...") })
 const BOCategoryPricing      = dynamic(() => import("./BOCategoryPricing"),      { ssr: false, loading: L("Chargement tarifs catégories...") })
 const BOFirebaseArchive      = dynamic(() => import("./BOFirebaseArchive"),      { ssr: false, loading: L("Chargement archivage Firebase...") })
+const BOExternalLinks        = dynamic(() => import("./BOExternalLinks"),         { ssr: false, loading: L("Chargement liens...") })
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -138,6 +142,7 @@ export type Tab =
   | "documents"
   | "category_pricing"
   | "firebase_archive"
+  | "liens_externes"
 
 interface NavItem {
   id: Tab
@@ -152,6 +157,50 @@ interface NavGroup {
   label: string
   labelAr: string
   items: NavItem[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// TRANSLATION HELPER — nav items use T dictionary
+// ─────────────────────────────────────────────────────────────
+
+// Maps tab id → T key prefix for nav translations
+const NAV_I18N_KEYS: Partial<Record<string, keyof typeof T>> = {
+  recap: "nav.recap", finance: "nav.finance", rapport_livraison: "nav.rapport_livr",
+  achat: "nav.achat", po: "nav.po", fournisseurs: "nav.fournisseurs",
+  reception: "nav.reception", commercial: "nav.commandes", affectation: "nav.affectation",
+  cash: "nav.cash", stock: "nav.stock", dispatch: "nav.dispatch",
+  preparation: "nav.preparation", retour: "nav.retours", bon_livraison: "nav.bon_livr",
+  articles: "nav.articles", comptes_externes: "nav.clients", whatsapp: "nav.whatsapp",
+  agents_ia: "nav.agents_ia", gps_tracker: "nav.gps", feedback: "nav.feedback",
+  users: "nav.users", settings: "nav.settings_tab", database: "nav.settings_tab",
+  demandes_comptes: "nav.demandes", web_integration: "nav.web_int",
+  permissions_matrix: "nav.permissions",
+}
+
+const NAV_GROUP_I18N: Record<string, { fr: string; ar: string; en: string }> = {
+  "Vue d'ensemble":       { fr: "Vue d'ensemble",        ar: "نظرة عامة",           en: "Overview" },
+  "Achats":               { fr: "Achats",                 ar: "المشتريات",           en: "Purchases" },
+  "Commercial & Clients": { fr: "Commercial & Clients",   ar: "التجاري والعملاء",    en: "Sales & Clients" },
+  "Stock & Catalogue":    { fr: "Stock & Catalogue",      ar: "المخزون والفهرس",     en: "Stock & Catalog" },
+  "Logistique":           { fr: "Logistique",             ar: "اللوجستيك",           en: "Logistics" },
+  "Finance & Pilotage":   { fr: "Finance & Pilotage",     ar: "المالية والتحكم",     en: "Finance & Control" },
+  "RH & Equipe":          { fr: "RH & Equipe",            ar: "الموارد البشرية",     en: "HR & Team" },
+  "Administration":       { fr: "Administration",         ar: "الإدارة والإعدادات",  en: "Administration" },
+}
+
+function getNavLabel(id: string, fallbackFr: string, fallbackAr: string | undefined, lang: AppLang): string {
+  const key = NAV_I18N_KEYS[id]
+  if (key && (lang as string) === "en") return (T[key] as { fr: string; ar: string; en?: string }).en ?? fallbackFr
+  if (lang === "ar" && fallbackAr) return fallbackAr
+  return fallbackFr
+}
+
+function getGroupLabel(groupLabel: string, lang: AppLang): string {
+  const entry = NAV_GROUP_I18N[groupLabel]
+  if (!entry) return groupLabel
+  if ((lang as string) === "en") return entry.en
+  if (lang === "ar") return entry.ar
+  return entry.fr
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -278,6 +327,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "cutoffs",          label: "Notifications Cut-off",  labelAr: "إشعارات الإيقاف",   permKey: "canViewDatabase", icon: <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> },
       { id: "database",         label: "Base de donnees",        labelAr: "قاعدة البيانات",    permKey: "canViewDatabase", icon: <Icon d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /> },
       { id: "firebase_archive", label: "Archivage Firebase",     labelAr: "أرشفة Firebase",    permKey: "canViewDatabase", icon: <Icon d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /> },
+      { id: "liens_externes",   label: "Liens Partenaires",      labelAr: "روابط الشركاء",     permKey: "canViewDatabase", icon: <Icon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /> },
       { id: "settings",         label: "Parametres",             labelAr: "الإعدادات",         permKey: "canViewDatabase", icon: <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> },
       {
         id: "gsheets", label: "Google Sheets", labelAr: "جوجل شيتس", permKey: "canViewDatabase" as keyof User,
@@ -322,6 +372,7 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   category_pricing:  (_u) => <BOCategoryPricing />,
   documents:         (u) => <BODocuments user={u} />,
   firebase_archive:  (_u) => <BOFirebaseArchive />,
+  liens_externes:    (u)  => <BOExternalLinks user={u} />,
   demandes_comptes:  (u) => <BODemandesComptes user={u} />,
   web_integration:   (u) => <BOWebIntegration user={u} />,
   permissions_matrix:(_u) => <BOPermissionsMatrix />,
@@ -367,6 +418,7 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
 interface Props { user: User; onLogout: () => void }
 
 export default function BackOfficeLayout({ user, onLogout }: Props) {
+  const lang = useLang()
   const [activeTab, setActiveTab]       = useState<Tab>("dashboard")
   const [sidebarOpen, setSidebarOpen]   = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -468,7 +520,7 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
     items: g.items.filter(item =>
       isVisible(item) && (
         !searchQ ||
-        item.label.toLowerCase().includes(searchQ) ||
+        (item.label ?? "").toLowerCase().includes(searchQ) ||
         item.labelAr?.includes(navSearch)
       )
     )
@@ -509,6 +561,7 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
           appName={companyBrand.appName || "FreshLink Pro"}
           appSlogan={companyBrand.appSlogan || companyBrand.nom || "Empire Fresh"}
           appLogo={companyBrand.logo || ""}
+          lang={lang}
         />
       </div>
 
@@ -534,6 +587,7 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
               appName={companyBrand.appName || "FreshLink Pro"}
               appSlogan={companyBrand.appSlogan || companyBrand.nom || "Empire Fresh"}
               appLogo={companyBrand.logo || ""}
+              lang={lang}
             />
           </div>
           {/* Backdrop */}
@@ -564,19 +618,14 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-slate-400 hidden sm:inline font-medium">
-                  {NAV_GROUPS.find(g => g.items.some(i => i.id === activeTab))?.label ?? "Dashboard"}
+                  {(() => { const g = NAV_GROUPS.find(g => g.items.some(i => i.id === activeTab)); return g ? getGroupLabel(g.label, lang) : "Dashboard" })()}
                 </span>
                 <svg className="w-3 h-3 text-slate-300 hidden sm:block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
                 <h1 className="text-sm font-bold text-slate-800 truncate">
-                  {activeItem?.label ?? "Tableau de bord"}
+                  {activeItem ? getNavLabel(activeItem.id, activeItem.label, activeItem.labelAr, lang) : "Tableau de bord"}
                 </h1>
-                {activeItem?.labelAr && (
-                  <span className="text-[10px] text-slate-400 hidden md:inline shrink-0">
-                    {activeItem.labelAr}
-                  </span>
-                )}
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">
                 {new Date().toLocaleDateString("fr-MA", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
@@ -697,11 +746,11 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
           </div>
         </header>
 
-        {/* Jawad banner */}
+        {/* Jawad banner — accès Super Admin */}
         {isJawad && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-300 text-yellow-800 text-xs shrink-0">
-            <svg className="w-3.5 h-3.5 fill-yellow-500 shrink-0" viewBox="0 0 24 24"><path d="M2 19h20l-2-10-5 5-3-8-3 8-5-5z" /></svg>
-            <span><strong>Jawad — Super Super Admin</strong> — Contrôle total de l'application. Tous droits activés. <span className="opacity-60">المدير الأعلى — صلاحيات كاملة</span></span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-700 text-xs shrink-0">
+            <svg className="w-3.5 h-3.5 fill-amber-500 shrink-0" viewBox="0 0 24 24"><path d="M2 19h20l-2-10-5 5-3-8-3 8-5-5z" /></svg>
+            <span className="font-semibold">Super Admin</span>
           </div>
         )}
 
@@ -734,16 +783,33 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
         </main>
 
         {/* ── Footer ─────────────────────────────────────── */}
-        <footer className="shrink-0 border-t border-slate-200 bg-white px-6 py-2.5 flex items-center justify-between">
+        <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-2 flex items-center justify-between gap-4 flex-wrap">
           <p className="text-[11px] text-slate-500">
             &copy; 2026{" "}
-            <span className="font-black" style={{ color: "#1a4f2a" }}>Empire<span style={{ color: "#b8962e" }}>Fresh</span></span>
+            <a href="https://empire-fresh.netlify.app/" target="_blank" rel="noopener noreferrer"
+              className="font-black hover:underline" style={{ color: "#1a4f2a" }}>
+              Empire<span style={{ color: "#b8962e" }}>Fresh</span>
+            </a>
             {" "}&mdash;{" "}
             <span className="font-bold" style={{ color: "#1a4f2a" }}>Fresh Link Pro</span>
           </p>
-          <p className="text-[11px] text-slate-400 hidden sm:block">
-            جميع الحقوق محفوظة — Fruit &amp; Vegetable Distribution
-          </p>
+          <div className="flex items-center gap-3">
+            <a href="https://empire-fresh.netlify.app/" target="_blank" rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1 text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold hover:underline transition-colors">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Empire Fresh
+            </a>
+            <span className="text-slate-200 hidden sm:block">|</span>
+            <a href="https://www.neo.space/fr" target="_blank" rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1 text-[10px] text-violet-700 hover:text-violet-900 font-semibold hover:underline transition-colors">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Neo Space
+            </a>
+          </div>
         </footer>
       </div>
 
@@ -782,13 +848,14 @@ interface SidebarContentProps {
   appName: string
   appSlogan: string
   appLogo: string
+  lang: AppLang
 }
 
 function SidebarContent({
   user, activeTab, sidebarCollapsed, setSidebarCollapsed,
   profilPhoto, navSearch, setNavSearch, filteredGroups, searchQ,
   GROUP_ICON_COLOR, navigate, onLogout, onOpenProfil,
-  appName, appSlogan, appLogo,
+  appName, appSlogan, appLogo, lang,
 }: SidebarContentProps) {
   const BG = "#0d2218"
   const BG2 = "#1a4f2a"
@@ -864,17 +931,18 @@ function SidebarContent({
             {!sidebarCollapsed && !searchQ && (
               <div className="px-3 pt-3 pb-1">
                 <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#4ade80", opacity: 0.7 }}>
-                  {group.label}
+                  {getGroupLabel(group.label, lang)}
                 </span>
               </div>
             )}
             {group.items.map(item => {
               const isActive = activeTab === item.id
+              const itemLabel = getNavLabel(item.id, item.label, item.labelAr, lang)
               return (
                 <button
                   key={item.id}
                   onClick={() => { navigate(item.id); setNavSearch("") }}
-                  title={sidebarCollapsed ? item.label : undefined}
+                  title={sidebarCollapsed ? itemLabel : undefined}
                   className={[
                     "w-full flex items-center gap-3 rounded-xl text-sm transition-all duration-150 group mb-0.5",
                     sidebarCollapsed ? "justify-center p-2.5" : "px-3 py-2.5",
@@ -891,7 +959,7 @@ function SidebarContent({
                   </span>
                   {!sidebarCollapsed && (
                     <>
-                      <span className="flex-1 truncate text-left text-[13px] font-semibold">{item.label}</span>
+                      <span className="flex-1 truncate text-left text-[13px] font-semibold">{itemLabel}</span>
                       {item.badge ? (
                         <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#052e16", color: ACTIVE }}>
                           {item.badge}

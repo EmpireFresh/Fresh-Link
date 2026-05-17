@@ -316,15 +316,6 @@ function GranularRBACPanel({ userId, userName }: GranularRBACProps) {
         )}
       </div>
 
-      {/* Warning — no auto-select */}
-      <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
-        <svg className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>
-          <strong>Contrôle total individuel.</strong> Chaque action (Voir, Modifier, Supprimer, Bypass) est un toggle indépendant. Les modèles pré-remplissent — vous pouvez tout ajuster après.
-        </span>
-      </div>
 
       {/* Groups */}
       {GRANULAR_GROUPS.map(group => {
@@ -651,6 +642,54 @@ const BACKOFFICE_PERM_SECTIONS: PermSection[] = [
 // Combined for "all" view and legacy
 const PERM_SECTIONS: PermSection[] = [...MOBILE_PERM_SECTIONS, ...BACKOFFICE_PERM_SECTIONS]
 
+// ─────────────────────────────────────────────────────────────
+// DEFAULT PERMISSIONS BY ROLE — auto-applied on role selection
+// ─────────────────────────────────────────────────────────────
+type PermFlags = {
+  canViewAchat?: boolean; canViewCommercial?: boolean; canViewLogistique?: boolean
+  canViewStock?: boolean; canViewCash?: boolean; canViewFinance?: boolean
+  canViewRecap?: boolean; canViewDatabase?: boolean; canViewRH?: boolean
+  canViewExternal?: boolean; canCreateCommandeBO?: boolean
+}
+const ALL_OFF: PermFlags = {
+  canViewAchat: false, canViewCommercial: false, canViewLogistique: false,
+  canViewStock: false, canViewCash: false, canViewFinance: false,
+  canViewRecap: false, canViewDatabase: false, canViewRH: false,
+  canViewExternal: false, canCreateCommandeBO: false,
+}
+const ALL_ON: PermFlags = {
+  canViewAchat: true, canViewCommercial: true, canViewLogistique: true,
+  canViewStock: true, canViewCash: true, canViewFinance: true,
+  canViewRecap: true, canViewDatabase: true, canViewRH: true,
+  canViewExternal: true, canCreateCommandeBO: true,
+}
+const DEFAULT_PERMS_BY_ROLE: Partial<Record<UserRole, PermFlags>> = {
+  super_super_admin: ALL_ON,
+  super_admin:       ALL_ON,
+  admin:             ALL_ON,
+  resp_commercial:   { ...ALL_OFF, canViewCommercial: true, canViewCash: true, canViewRecap: true, canViewExternal: true, canCreateCommandeBO: true },
+  team_leader:       { ...ALL_OFF, canViewCommercial: true, canViewCash: true, canViewRecap: true },
+  prevendeur:        { ...ALL_OFF, canViewCommercial: true, canViewCash: true },
+  livreur:           { ...ALL_OFF, canViewLogistique: true, canViewCash: true },
+  magasinier:        { ...ALL_OFF, canViewStock: true, canViewLogistique: true },
+  dispatcheur:       { ...ALL_OFF, canViewLogistique: true, canViewStock: true },
+  acheteur:          { ...ALL_OFF, canViewAchat: true, canViewStock: true },
+  ctrl_achat:        { ...ALL_OFF, canViewAchat: true },
+  ctrl_prep:         { ...ALL_OFF, canViewLogistique: true },
+  cash_man:          { ...ALL_OFF, canViewCash: true, canViewLogistique: true },
+  financier:         { ...ALL_OFF, canViewFinance: true, canViewCash: true, canViewRecap: true },
+  comptable:         { ...ALL_OFF, canViewFinance: true, canViewCash: true, canViewRH: true },
+  rh_manager:        { ...ALL_OFF, canViewRH: true, canViewRecap: true },
+  resp_logistique:   { ...ALL_OFF, canViewLogistique: true, canViewStock: true, canViewRecap: true },
+  resp_achat:        { ...ALL_OFF, canViewAchat: true, canViewStock: true, canViewRecap: true },
+  auditeur:          { ...ALL_OFF, canViewFinance: true, canViewRecap: true, canViewRH: true },
+  qualite:           { ...ALL_OFF, canViewStock: true, canViewLogistique: true },
+  it_admin:          { ...ALL_OFF, canViewDatabase: true },
+  charge_recouvrement: { ...ALL_OFF, canViewCash: true, canViewFinance: true, canViewExternal: true },
+  suivi_commande:    { ...ALL_OFF, canViewCommercial: true, canViewLogistique: true },
+  chef_depot:        { ...ALL_OFF, canViewStock: true, canViewLogistique: true },
+}
+
 const EMPTY_USER: Omit<User, "id"> = {
   name: "", email: "", password: "1234", role: "prevendeur", accessType: undefined, secteur: "", depotId: undefined,
   phone: "", actif: true,
@@ -803,7 +842,9 @@ function PermissionsTabs({
   form: Omit<User, "id">
   setForm: React.Dispatch<React.SetStateAction<Omit<User, "id">>>
 }) {
-  const isFullAccessRole = form.role === "super_super_admin" || form.role === "super_admin"
+  // Only super_super_admin (Jawad) is immutable — super_admin can have perms configured
+  const isFullAccessRole = form.role === "super_super_admin"
+  const isSuperAdminRole = form.role === "super_admin" || form.role === "admin"
 
   const handleToggleAll = (on: boolean) => {
     const update: Partial<Omit<User, "id">> = {}
@@ -821,15 +862,30 @@ function PermissionsTabs({
     setForm(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }))
   }
 
+  // BO vs Mobile mapping for each permKey
+  const PERM_INTERFACES: Record<string, { bo: string; mobile: string }> = {
+    canViewCommercial:   { bo: "Commandes, Clients, Affectation, Prospection", mobile: "Prise commande terrain, Bilan objectifs" },
+    canViewCash:         { bo: "Cash & BL, Encaissements, Réconciliation",     mobile: "Validation encaissements livreur" },
+    canCreateCommandeBO: { bo: "Créer/modifier commandes depuis le BO",         mobile: "—" },
+    canViewStock:        { bo: "Stock, Inventaire, DLC, Forecast",              mobile: "Réception marchandise, Inventaire terrain" },
+    canViewLogistique:   { bo: "Dispatch, BL, Trips, Retours, GPS",            mobile: "Livraison terrain, BL, Retours clients" },
+    canViewAchat:        { bo: "Bons achat, PO, Fournisseurs, Analyse achat",  mobile: "Bons achat terrain, Contrôle chargement" },
+    canViewFinance:      { bo: "Finance, Comptabilité, P&L, CdG",              mobile: "—" },
+    canViewRecap:        { bo: "KPIs, Tableaux de bord, Synthèse journalière", mobile: "Rapport livraison" },
+    canViewRH:           { bo: "Salaires, Matricules, Contrats, Paie",         mobile: "—" },
+    canViewExternal:     { bo: "Clients, Fournisseurs, Demandes comptes",       mobile: "Comptes externes" },
+    canViewDatabase:     { bo: "Utilisateurs, Paramètres, Base données",       mobile: "—" },
+  }
+
   return (
     <div className="flex flex-col gap-3">
       {/* Section header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Droits d&apos;accès / الصلاحيات</h4>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Permissions par module — activation en cascade disponible</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Chaque permission donne accès à des modules précis selon l&apos;interface</p>
         </div>
-        {!isFullAccessRole && (
+        {!isFullAccessRole && !isSuperAdminRole && (
           <div className="flex gap-2">
             <button type="button" onClick={() => handleToggleAll(true)}
               className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">
@@ -843,17 +899,129 @@ function PermissionsTabs({
         )}
       </div>
 
-      {/* Full access banner for super admins */}
+      {/* Full access banner — only for super_super_admin (immutable) */}
       {isFullAccessRole ? (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-300">
-          <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+          <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
           <div>
-            <p className="text-sm font-bold text-amber-800">Accès complet — toutes permissions accordées automatiquement</p>
-            <p className="text-xs text-amber-700 mt-0.5">وصول كامل — جميع الصلاحيات ممنوحة تلقائياً لهذا الدور</p>
+            <p className="text-sm font-bold text-amber-800">Super Super Admin — accès root, non configurable</p>
+            <p className="text-xs text-amber-600 mt-0.5">Ce rôle possède tous les droits système de façon permanente. Les permissions ne peuvent pas être restreintes.</p>
+          </div>
+        </div>
+      ) : isSuperAdminRole ? (
+        /* Super Admin / Admin — show permissions but with info banner */
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200">
+            <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-violet-800">{form.role === "super_admin" ? "Super Admin" : "Admin"} — configurez les accès par module</p>
+              <p className="text-xs text-violet-600 mt-0.5">Cochez les modules accessibles. Les droits s&apos;appliquent à la fois sur le Back-office et le Mobile selon le module.</p>
+            </div>
+          </div>
+          {/* BO vs Mobile info grid */}
+          <div className="grid grid-cols-2 gap-2 px-1">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <p className="text-[10px] font-black uppercase tracking-wide text-blue-700 mb-1.5 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                Back-office
+              </p>
+              <ul className="space-y-0.5 text-[10px] text-blue-800">
+                <li>🛒 Commercial → Commandes, Affectation</li>
+                <li>💵 Cash → Encaissements, BL</li>
+                <li>🛍️ Achats → PO, Fournisseurs</li>
+                <li>📦 Stock → Inventaire, DLC</li>
+                <li>💰 Finance → P&L, Comptabilité</li>
+                <li>📊 Récap → KPIs, Tableaux de bord</li>
+                <li>👥 RH → Salaires, Paie</li>
+                <li>⚙️ Admin → Utilisateurs, Paramètres</li>
+                <li>🌐 Portails → Clients, Fournisseurs</li>
+                <li>➕ Créer commandes BO</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-green-200 bg-green-50 p-3">
+              <p className="text-[10px] font-black uppercase tracking-wide text-green-700 mb-1.5 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                Mobile terrain
+              </p>
+              <ul className="space-y-0.5 text-[10px] text-green-800">
+                <li>🛒 Commercial → Prise commande, Bilan</li>
+                <li>💵 Cash → Validation encaissements</li>
+                <li>🛍️ Achats → Bons achat terrain</li>
+                <li>📦 Stock → Réception, Validation BL</li>
+                <li>🚛 Logistique → Dispatch, Livraison</li>
+                <li>📊 Récap → Rapport livraison</li>
+                <li>🌐 Portails → Comptes externes</li>
+              </ul>
+            </div>
+          </div>
+          {/* Standard permission groups */}
+          <div className="flex flex-col gap-3">
+            {PERMISSION_GROUPS.map(group => {
+              const activeCount = group.permissions.filter(k => !!form[k as keyof typeof form]).length
+              const totalCount = group.permissions.length
+              const allOn = activeCount === totalCount
+              const someOn = activeCount > 0 && activeCount < totalCount
+              return (
+                <div key={group.id}
+                  className={`rounded-xl overflow-hidden border border-l-4 ${group.borderLight} ${group.borderLeftClass} bg-card`}>
+                  <div className={`flex items-center justify-between px-4 py-3 ${group.bgLight}`}>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className={`w-8 h-8 rounded-lg ${group.color} flex items-center justify-center shrink-0`}>
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={group.icon} />
+                        </svg>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-sm font-bold ${group.textColor}`}>{group.label}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground truncate">{group.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <span className={`text-[10px] font-semibold ${allOn ? "text-emerald-600" : someOn ? "text-amber-600" : "text-slate-400"}`}>
+                        {activeCount}/{totalCount}
+                      </span>
+                      <button type="button"
+                        onClick={() => handleGroupToggle(group, !allOn)}
+                        className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none ${allOn ? "bg-emerald-500" : someOn ? "bg-amber-400" : "bg-slate-200"}`}>
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${allOn ? "left-6" : someOn ? "left-3" : "left-1"}`} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-border bg-background">
+                    {group.permissions.map(permKey => {
+                      const isOn = !!form[permKey as keyof typeof form]
+                      const subLabel = group.subLabels[permKey as string]
+                      return (
+                        <div key={permKey as string}
+                          className="flex items-center gap-3 px-4 pl-8 py-2.5 hover:bg-slate-50/70 transition-colors">
+                          <button type="button"
+                            onClick={() => handlePermToggle(permKey)}
+                            className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${isOn ? "bg-emerald-500" : "bg-slate-200"}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${isOn ? "left-4" : "left-0.5"}`} />
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium ${isOn ? "text-slate-900" : "text-slate-400"}`}>{subLabel?.label ?? permKey as string}</p>
+                          </div>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isOn ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                            {isOn ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       ) : (
@@ -930,7 +1098,21 @@ function PermissionsTabs({
                           <p className={`text-xs font-semibold ${isOn ? "text-slate-900" : "text-slate-500"}`}>
                             {subLabel?.label ?? permKey as string}
                           </p>
-                          <p className="text-[10px] text-slate-400" dir="rtl">{subLabel?.labelAr}</p>
+                          {/* BO / Mobile detail */}
+                          {PERM_INTERFACES[permKey as string] && (
+                            <div className="flex flex-col gap-0.5 mt-0.5">
+                              <p className="text-[9px] text-blue-600 flex items-center gap-1">
+                                <span className="font-bold shrink-0">BO:</span>
+                                <span className="truncate">{PERM_INTERFACES[permKey as string].bo}</span>
+                              </p>
+                              {PERM_INTERFACES[permKey as string].mobile !== "—" && (
+                                <p className="text-[9px] text-green-600 flex items-center gap-1">
+                                  <span className="font-bold shrink-0">📱:</span>
+                                  <span className="truncate">{PERM_INTERFACES[permKey as string].mobile}</span>
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold shrink-0 ${isOn ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
                           {isOn ? "OUI" : "NON"}
@@ -982,7 +1164,17 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   // Access check — computed AFTER hooks
   const canAccess = currentUser.role === "super_super_admin" || currentUser.role === "admin" || currentUser.role === "super_admin" || currentUser.role === "rh_manager"
 
-  useEffect(() => { if (canAccess) { const all = store.getUsers().filter(u => u.id !== JAWAD_ID && (u.role !== 'super_super_admin' || currentUser.id === u.id)); setUsers(all) } }, [canAccess])
+  useEffect(() => {
+    if (canAccess) {
+      const isCurrentJawad = currentUser.role === "super_super_admin"
+      const all = store.getUsers().filter(u => {
+        if (u.id === JAWAD_ID) return isCurrentJawad               // compte Jawad : visible par Jawad uniquement
+        if (u.role === "super_super_admin") return currentUser.id === u.id || isCurrentJawad
+        return true
+      })
+      setUsers(all)
+    }
+  }, [canAccess, currentUser.id, currentUser.role])
 
   // Re-sync when Supabase pushes fresh data (fl_store_updated fires on every setLS call)
   useEffect(() => {
@@ -1065,8 +1257,8 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   }
 
   const filtered = users.filter(u => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = (u.name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (u.email ?? "").toLowerCase().includes(search.toLowerCase())
     const matchRole = filterRole === "" || u.role === filterRole
     return matchSearch && matchRole
   })
@@ -1104,7 +1296,7 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   }
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.email.trim()) return
+    if (!(form.name ?? "").trim() || !(form.email ?? "").trim()) return
     const all = store.getUsers()
     if (editing) {
       const idx = all.findIndex(u => u.id === editing.id)
@@ -1236,24 +1428,29 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   }
 
   // Role reference data shown in the roles legend card
-  const ROLE_DETAILS: { role: UserRole; label: string; acces: string; droits: string; reception: boolean }[] = [
-    { role: "super_super_admin", label: "Administrateur",      acces: "Back-office complet", droits: "Controle total — tous les droits, aucune restriction",                                          reception: true  },
-    { role: "super_admin",      label: "Super Admin",          acces: "Back-office complet", droits: "Tous les droits, parametres systeme, base de donnees, utilisateurs",                           reception: true  },
-    { role: "admin",            label: "Administrateur",       acces: "Back-office complet", droits: "Memes droits que super_admin sauf certains parametres critiques",                               reception: true  },
-    { role: "resp_commercial",  label: "Resp. Commercial",     acces: "Back-office",         droits: "Commandes, clients, affectation commerciale, recap, caisse",                                    reception: false },
-    { role: "team_leader",      label: "Team Leader",          acces: "Back-office",         droits: "Commandes, caisse, recap — supervise les prevendeurs",                                          reception: false },
-    { role: "prevendeur",       label: "Pre-vendeur",          acces: "Mobile",              droits: "Prise de commandes clients, visite terrain, objectifs journaliers",                             reception: false },
-    { role: "resp_logistique",  label: "Resp. Logistique",     acces: "Back-office + Mobile",droits: "Stock, dispatch, livraison, bons de preparation, RECEPTION MARCHANDISE",                       reception: true  },
-    { role: "magasinier",       label: "Magasinier",           acces: "Mobile",              droits: "RECEPTION marchandise, VALIDATION BL, preparation commandes, controle prep",                  reception: true  },
-    { role: "dispatcheur",      label: "Dispatcheur",          acces: "Mobile",              droits: "Affectation livreurs, planning tournees, RECEPTION MARCHANDISE",                                reception: true  },
-    { role: "livreur",          label: "Livreur",              acces: "Mobile",              droits: "Bons de livraison, rapport tournee, retours clients",                                           reception: false },
-    { role: "acheteur",         label: "Acheteur",             acces: "Mobile",              droits: "Bons d'achat, besoin par SKU, historique prix fournisseurs — PAS de reception",                reception: false },
-    { role: "ctrl_achat",       label: "Controleur Achat",     acces: "Mobile",              droits: "Verification qualite et prix des achats effectues",                                             reception: false },
-    { role: "ctrl_prep",        label: "Controleur Preparation",acces:"Mobile",              droits: "Verification des bons de preparation avant depart livreur",                                    reception: false },
-    { role: "cash_man",         label: "Cash Manager",         acces: "Back-office",         droits: "Encaissements, BL, suivi caisse journaliere",                                                   reception: false },
-    { role: "financier",        label: "Financier",            acces: "Back-office",         droits: "Bilan, tresorerie, tableaux de bord financiers",                                               reception: false },
-    { role: "client",           label: "Client",               acces: "Portail client",      droits: "Consultation commandes et historique via portail dedie",                                        reception: false },
-    { role: "fournisseur",      label: "Fournisseur",          acces: "Portail fournisseur", droits: "Consultation des PO, statuts livraisons via portail dedie",                                    reception: false },
+  const ROLE_DETAILS: { role: UserRole; label: string; acces: string; droits: string; processus: string; reception: boolean }[] = [
+    { role: "super_super_admin", label: "Super Admin",             acces: "Back-office complet", droits: "Contrôle total — tous les droits, purge, accès JAWAD, paramètres critiques",                          processus: "Peut intervenir sur toutes les étapes du processus. Accès aux logs systeme et à la purge des données.",                                            reception: true  },
+    { role: "super_admin",       label: "Admin Principal",         acces: "Back-office complet", droits: "Tous les droits : utilisateurs, DB, workflow, finance, RH, commandes, stock",                         processus: "Supervision complète — peut valider, annuler ou modifier toute étape : commande → achat → réception → préparation → livraison → encaissement.",   reception: true  },
+    { role: "admin",             label: "Administrateur",          acces: "Back-office complet", droits: "Idem super_admin sauf purge et paramètres système critiques",                                          processus: "Supervision complète des processus opérationnels. Peut créer/modifier utilisateurs, articles, clients, fournisseurs.",                            reception: true  },
+    { role: "resp_commercial",   label: "Resp. Commercial",        acces: "Back-office",         droits: "Commandes, clients, fournisseurs, affectation commerciale, marges, récap, caisse",                    processus: "Porte 0 : Valide les commandes des prévendeurs. Peut modifier prix/remises. Accède aux objectifs et KPIs de son équipe.",                         reception: false },
+    { role: "team_leader",       label: "Team Leader",             acces: "Back-office",         droits: "Commandes, caisse, récap journalier — supervise l'équipe de prévendeurs",                             processus: "Contrôle du terrain commercial : valide les commandes, suit les encaissements, gère les objectifs de l'équipe prévendeurs.",                      reception: false },
+    { role: "prevendeur",        label: "Prévendeur",              acces: "Mobile",              droits: "Prise de commandes clients, visites terrain, objectifs journaliers CA et clients visités",             processus: "Étape 1 — Création commande terrain. Saisit la commande, choisit les articles, quantités, conditions de paiement. Soumet pour validation.",       reception: false },
+    { role: "resp_logistique",   label: "Resp. Logistique",        acces: "Back-office + Mobile",droits: "Stock, dispatch, BL, trips, retours, réceptions, bons de préparation",                               processus: "Porte 3 : Valide les BL avant départ. Supervise les tournées, les retours et l'état du stock. Coordonne acheteurs, magasiniers et livreurs.",      reception: true  },
+    { role: "magasinier",        label: "Magasinier",              acces: "Mobile",              droits: "Réception marchandise, validation BL, préparation commandes, contrôle préparation",                   processus: "Porte 2 : Réceptionne et contrôle la marchandise arrivée au dépôt. Prépare les commandes selon les bons. Valide les BL de sortie.",               reception: true  },
+    { role: "dispatcheur",       label: "Dispatcheur",             acces: "Mobile",              droits: "Affectation livreurs, planning tournées, réception marchandise, suivi GPS",                           processus: "Organise les tournées de livraison : affecte les commandes aux livreurs, optimise les routes, suit les départs/retours en temps réel.",           reception: true  },
+    { role: "livreur",           label: "Livreur",                 acces: "Mobile",              droits: "Bons de livraison, rapport tournée, retours clients, GPS, signature",                                 processus: "Étape finale livraison : reçoit les BL, livre les clients, encaisse ou confirme, saisit les retours marchandise et valide la tournée.",          reception: false },
+    { role: "acheteur",          label: "Acheteur",                acces: "Mobile",              droits: "Bons d'achat, besoin par SKU, historique prix fournisseurs — PAS de réception",                       processus: "Étape 2 achat : Saisit les bons d'achat selon les besoins du stock. Consulte l'historique des prix et compare les fournisseurs.",                  reception: false },
+    { role: "ctrl_achat",        label: "Contrôleur Achat",        acces: "Mobile",              droits: "Vérification qualité, conformité prix, validation des achats effectués",                              processus: "Contrôle Porte 1 achat : vérifie que les achats effectués sont conformes au bon d'achat (quantité, qualité, prix). Peut bloquer ou valider.",      reception: false },
+    { role: "ctrl_prep",         label: "Contrôleur Préparation",  acces: "Mobile",              droits: "Contrôle des bons de préparation avant départ livreur",                                               processus: "Porte 2B : Vérifie que chaque BL préparé par le magasinier est correct (produits, quantités, DLC) avant de valider le chargement.",               reception: false },
+    { role: "cash_man",          label: "Cash Manager",            acces: "Back-office",         droits: "Encaissements livreurs, réconciliation BL, suivi caisse journalière",                                 processus: "Fin de journée : récupère les espèces et chèques des livreurs, pointe les BL encaissés/non-encaissés, produit le rapport de caisse.",             reception: false },
+    { role: "financier",         label: "Financier",               acces: "Back-office",         droits: "Trésorerie, P&L, charges, actionnaires, distribution bénéfices",                                     processus: "Analyse hebdomadaire/mensuelle : consolide les données de vente, achat et caisse. Produit les tableaux de bord financiers et calcule les marges.",  reception: false },
+    { role: "comptable",         label: "Comptable",               acces: "Back-office",         droits: "Comptabilité RH, salaires, paiements, journaux comptables",                                           processus: "Traite la paie mensuelle, édite les fiches de salaire, saisit les écritures comptables RH, gère les avances et déductions.",                    reception: false },
+    { role: "rh_manager",        label: "RH Manager",              acces: "Back-office",         droits: "Dossiers salariés, contrats, congés, matricules, CNSS, productivité",                                 processus: "Gestion des ressources humaines : onboarding, dossier administratif, suivi présences, objectifs, évaluations et reporting RH.",                   reception: false },
+    { role: "resp_achat",        label: "Resp. Achat",             acces: "Back-office",         droits: "Validation PO, négociation fournisseurs, analyse coûts, budget achat",                                processus: "Valide les bons d'achat et PO. Négocie les tarifs fournisseurs. Analyse les écarts prix/qualité. Suit le budget achat vs réalisé.",               reception: true  },
+    { role: "auditeur",          label: "Auditeur",                acces: "Back-office (lecture)", droits: "Lecture seule sur toutes les données — rapport, audit trail",                                        processus: "Contrôle interne : consulte les journaux d'activité, vérifie la cohérence des données (stock, ventes, achats) sans pouvoir modifier.",            reception: false },
+    { role: "investisseur",      label: "Investisseur",            acces: "Dashboard dédié",     droits: "Dashboard confidentiel — CA, marges, ROI, dividendes, projection",                                    processus: "Accès au tableau de bord investisseur uniquement : performance financière consolidée, évolution du portefeuille et distribution des bénéfices.",  reception: false },
+    { role: "client",            label: "Client",                  acces: "Portail client",      droits: "Consultation commandes, historique, factures, retours via portail dédié",                             processus: "Portail client : consulte ses commandes en cours et passées, télécharge les BL/factures, suit les livraisons et soumet les réclamations.",       reception: false },
+    { role: "fournisseur",       label: "Fournisseur",             acces: "Portail fournisseur", droits: "Consultation PO, statuts livraisons, factures, historique prix",                                      processus: "Portail fournisseur : reçoit les PO, confirme les disponibilités, met à jour les prix, consulte l'historique des transactions.",                 reception: false },
   ]
 
   return (
@@ -1349,70 +1546,107 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
           <svg className={`w-4 h-4 text-indigo-600 transition-transform ${showRoles ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
         </button>
         {showRoles && (
-              <div className="overflow-x-auto bg-white">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-indigo-700 text-white">
-                      <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide">Role</th>
-                      <th className="text-center px-3 py-2.5 font-semibold uppercase tracking-wide text-[10px]">
-                        <span className="flex items-center justify-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                          Mobile
+          <div className="bg-white">
+            {/* ── Table des rôles ── */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-indigo-700 text-white">
+                    <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide">Rôle</th>
+                    <th className="text-center px-3 py-2.5 font-semibold uppercase tracking-wide text-[10px]">
+                      <span className="flex items-center justify-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        Mobile
+                      </span>
+                    </th>
+                    <th className="text-center px-3 py-2.5 font-semibold uppercase tracking-wide text-[10px]">
+                      <span className="flex items-center justify-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        Back-office
+                      </span>
+                    </th>
+                    <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide">Droits / Accès</th>
+                    <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide hidden lg:table-cell">Rôle dans le processus</th>
+                    <th className="text-center px-3 py-2.5 font-semibold uppercase tracking-wide text-[10px]">Réception</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ROLE_DETAILS.filter(r => r.role !== "super_super_admin" || isJawadUser).map((r, i) => (
+                    <tr key={r.role} style={{ background: i % 2 === 0 ? "white" : "#f8f8ff", borderTop: "1px solid #e0e7ff" }}>
+                      <td className="px-4 py-2.5 min-w-[120px]">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${ROLE_COLORS[r.role as UserRole] ?? "bg-slate-100 text-slate-700"}`}>
+                          {r.label}
                         </span>
-                      </th>
-                      <th className="text-center px-3 py-2.5 font-semibold uppercase tracking-wide text-[10px]">
-                        <span className="flex items-center justify-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                          Back-office
-                        </span>
-                      </th>
-                      <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide">Droits principaux</th>
-                      <th className="text-center px-3 py-2.5 font-semibold uppercase tracking-wide text-[10px]">Reception</th>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">{r.acces}</p>
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        {(r.acces.includes("Mobile") || r.acces.includes("Portail") || r.acces.includes("terrain"))
+                          ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg></span>
+                          : <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></span>
+                        }
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        {(r.acces.includes("Back-office") || r.acces.includes("complet") || r.acces.includes("Dashboard"))
+                          ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg></span>
+                          : <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></span>
+                        }
+                      </td>
+                      <td className="px-4 py-2.5 text-muted-foreground text-[11px] max-w-[220px]">{r.droits}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground text-[11px] max-w-[260px] hidden lg:table-cell leading-relaxed">{r.processus}</td>
+                      <td className="px-3 py-2.5 text-center">
+                        {r.reception
+                          ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            </span>
+                          : <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-500">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </span>
+                        }
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {ROLE_DETAILS.filter(r => r.role !== "super_super_admin" || isJawadUser).map((r, i) => (
-                      <tr key={r.role} style={{ background: i % 2 === 0 ? "white" : "#f8f8ff", borderTop: "1px solid #e0e7ff" }}>
-                        <td className="px-4 py-2.5">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${ROLE_COLORS[r.role as UserRole]}`}>
-                            {r.label}
-                          </span>
-                        </td>
-                        {/* Mobile access */}
-                        <td className="px-3 py-2.5 text-center">
-                          {(r.acces.includes("Mobile") || r.acces.includes("Portail"))
-                            ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg></span>
-                            : <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></span>
-                          }
-                        </td>
-                        {/* Back-office access */}
-                        <td className="px-3 py-2.5 text-center">
-                          {(r.acces.includes("Back-office") || r.acces.includes("complet"))
-                            ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg></span>
-                            : <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></span>
-                          }
-                        </td>
-                        <td className="px-4 py-2.5 text-muted-foreground text-[11px]">{r.droits}</td>
-                        <td className="px-3 py-2.5 text-center">
-                          {r.reception
-                            ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                              </span>
-                            : <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-500">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                              </span>
-                          }
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="px-4 py-2.5 bg-amber-50 border-t border-amber-200 text-xs text-amber-800 flex items-start gap-2">
-                  <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5C3.312 18.333 4.274 20 5.814 20z" /></svg>
-                  <span><strong>Important — Reception marchandise:</strong> Seuls les roles marques <strong className="text-green-700">Oui</strong> peuvent effectuer une reception (Logistique + Admin). L&apos;acheteur cree des bons d&apos;achat mais ne peut pas receptionner les marchandises.</span>
-                </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+
+            {/* ── Flux processus détaillé ── */}
+            <div className="border-t border-indigo-200 bg-indigo-50/60 px-4 py-4">
+              <p className="text-xs font-bold text-indigo-800 uppercase tracking-wide mb-3">Flux processus complet — Qui intervient à chaque étape ?</p>
+              <div className="flex flex-col gap-2">
+                {[
+                  { step: "Étape 1 — Commande terrain",          color: "bg-emerald-500", roles: ["prévendeur"],                                                     desc: "Le prévendeur saisit la commande chez le client (mobile). Soumise à la validation du responsable commercial." },
+                  { step: "Porte A — Validation commerciale",    color: "bg-lime-500",    roles: ["resp_commercial", "team_leader", "admin"],                        desc: "Le responsable commercial/team leader valide ou refuse la commande. Peut modifier prix et conditions." },
+                  { step: "Étape 2 — Besoin achat & PO",         color: "bg-amber-500",   roles: ["acheteur", "resp_achat"],                                         desc: "L'acheteur identifie le besoin par SKU et crée le bon d'achat ou la PO fournisseur." },
+                  { step: "Porte B — Contrôle achat",            color: "bg-orange-500",  roles: ["ctrl_achat", "resp_achat"],                                       desc: "Vérifie la conformité de l'achat (prix, quantité, fournisseur) avant engagement financier." },
+                  { step: "Étape 3 — Réception marchandise",     color: "bg-cyan-500",    roles: ["magasinier", "dispatcheur", "resp_logistique", "admin"],          desc: "Réceptionne la marchandise au dépôt, contrôle la qualité/quantité, met à jour le stock." },
+                  { step: "Étape 4 — Préparation commandes",     color: "bg-sky-500",     roles: ["magasinier"],                                                     desc: "Prépare les commandes selon les bons de préparation validés." },
+                  { step: "Porte C — Contrôle préparation",      color: "bg-blue-500",    roles: ["ctrl_prep", "resp_logistique"],                                   desc: "Vérifie chaque BL préparé (produits, poids, DLC) avant autorisation de chargement." },
+                  { step: "Étape 5 — Dispatch & tournée",        color: "bg-violet-500",  roles: ["dispatcheur", "resp_logistique"],                                 desc: "Affecte les BL aux livreurs, crée les trips, optimise les tournées." },
+                  { step: "Étape 6 — Livraison terrain",         color: "bg-purple-500",  roles: ["livreur"],                                                        desc: "Le livreur effectue la tournée, livre les clients, collecte les signatures et les paiements." },
+                  { step: "Étape 7 — Encaissement & caisse",     color: "bg-rose-500",    roles: ["cash_man", "resp_commercial"],                                    desc: "Le cash man récupère les espèces/chèques, pointe les BL, produit le rapport de caisse." },
+                  { step: "Étape 8 — Clôture financière",        color: "bg-pink-500",    roles: ["financier", "comptable", "admin"],                                desc: "Consolidation P&L, rapprochement banque, calcul des marges, distribution des résultats." },
+                  { step: "Étape 9 — RH & Paie",                 color: "bg-fuchsia-500", roles: ["rh_manager", "comptable"],                                        desc: "Traitement des présences, calcul des salaires, édition fiches de paie, virements." },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                    <div className={`shrink-0 mt-0.5 w-2 h-2 rounded-full ${item.color}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[11px] font-bold text-slate-800">{item.step}</span>
+                        <div className="flex gap-1 flex-wrap">
+                          {item.roles.map(r => (
+                            <span key={r} className="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold">{r}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
         </div>
 
       {saved && (
@@ -1518,7 +1752,7 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                         />
                       ) : (
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${ROLE_COLORS[u.role]}`}>
-                          {u.name[0]}
+                          {(u.name?.[0] ?? "?").toUpperCase()}
                         </div>
                       )}
                       <p className="font-semibold text-foreground">{u.name}</p>
@@ -1628,9 +1862,19 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                 <h3 className="font-bold text-foreground">{editing ? "Modifier l&apos;utilisateur" : "Nouvel utilisateur"}</h3>
                 <p className="text-xs text-muted-foreground">{editing ? "تعديل المستخدم" : "مستخدم جديد"}</p>
               </div>
-              <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-muted text-muted-foreground">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={!(form.name ?? "").trim() || !(form.email ?? "").trim()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+                  style={{ background: "oklch(0.38 0.2 260)" }}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  {editing ? "Enregistrer" : "Créer"}
+                </button>
+                <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-muted text-muted-foreground">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             </div>
 
             <div className="p-6 flex flex-col gap-5">
@@ -1803,7 +2047,11 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                             <div className="flex flex-wrap gap-1.5">
                               {visibleRoles.map(r => (
                                 <button key={r} type="button"
-                                  onClick={() => setForm({ ...form, role: r })}
+                                  onClick={() => {
+                                    // Auto-apply default permissions for the selected role
+                                    const defaultPerms = DEFAULT_PERMS_BY_ROLE[r] ?? ALL_OFF
+                                    setForm(prev => ({ ...prev, role: r, ...defaultPerms }))
+                                  }}
                                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${form.role === r ? "text-primary-foreground border-transparent shadow-sm bg-primary" : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary"}`}>
                                   {ROLE_LABELS[r]}
                                 </button>
@@ -1989,7 +2237,7 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                     <p className="text-sm font-semibold text-foreground">Activer camera &amp; micro obligatoire</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       L&apos;utilisateur devra autoriser la camera et le micro avant d&apos;acceder a l&apos;application.
-                      {form.name?.toLowerCase().startsWith("demo") && (
+                      {(typeof form.name === "string" && form.name.toLowerCase().startsWith("demo")) && (
                         <span className="ml-1 text-amber-500 font-medium">(Comptes demo — toujours ignore)</span>
                       )}
                     </p>
@@ -2018,10 +2266,11 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                 Annuler
               </button>
               <button onClick={handleSave}
-                disabled={!form.name.trim() || !form.email.trim()}
-                className="px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+                disabled={!(form.name ?? "").trim() || !(form.email ?? "").trim()}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
                 style={{ background: "oklch(0.38 0.2 260)" }}>
-                {editing ? "Enregistrer les modifications" : "Cr\u00e9er l&apos;utilisateur"}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                {editing ? "Enregistrer les modifications" : "Cr\u00e9er l'utilisateur"}
               </button>
             </div>
           </div>

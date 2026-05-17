@@ -18,14 +18,17 @@ export default function LangSwitcher({ compact = false }: Props) {
     return () => window.removeEventListener("fl_lang_change", handler)
   }, [])
 
-  function toggle(which: "fr" | "ar") {
+  function select(which: "fr" | "ar" | "en") {
     let next: AppLang
-    if (lang === "fr-ar") {
-      next = which === "fr" ? "ar" : "fr"
-    } else if (lang === "fr") {
+    if (which === "en") {
+      next = "en"
+    } else if (lang === "en") {
+      // Coming from EN → activate the clicked language in bilingual default
       next = which === "fr" ? "fr-ar" : "ar"
+    } else if (which === "fr") {
+      next = lang === "fr-ar" ? "ar" : lang === "fr" ? "fr-ar" : "fr"
     } else {
-      next = which === "ar" ? "fr-ar" : "fr"
+      next = lang === "fr-ar" ? "fr" : lang === "ar" ? "fr-ar" : "ar"
     }
     setLang(next)
     setLangState(next)
@@ -33,21 +36,22 @@ export default function LangSwitcher({ compact = false }: Props) {
 
   const frOn = lang === "fr" || lang === "fr-ar"
   const arOn = lang === "ar" || lang === "fr-ar"
+  const enOn = lang === "en"
 
   if (compact) {
     return (
       <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
-        <button
-          onClick={() => toggle("fr")}
-          title="Français"
-          className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold transition-all ${frOn ? "bg-white shadow-sm text-blue-700 border border-blue-200" : "text-slate-400 hover:text-slate-600"}`}>
-          🇫🇷{!compact && <span>FR</span>}
+        <button onClick={() => select("fr")} title="Français"
+          className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold transition-all ${frOn ? "bg-white shadow-sm text-blue-700 border border-blue-200" : "text-slate-400 hover:text-slate-600"}`}>
+          🇫🇷
         </button>
-        <button
-          onClick={() => toggle("ar")}
-          title="العربية"
-          className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold transition-all ${arOn ? "bg-white shadow-sm text-emerald-700 border border-emerald-200" : "text-slate-400 hover:text-slate-600"}`}>
-          🇲🇦{!compact && <span>AR</span>}
+        <button onClick={() => select("ar")} title="العربية"
+          className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold transition-all ${arOn ? "bg-white shadow-sm text-emerald-700 border border-emerald-200" : "text-slate-400 hover:text-slate-600"}`}>
+          🇲🇦
+        </button>
+        <button onClick={() => select("en")} title="English"
+          className={`flex items-center px-2 py-1 rounded-md text-[10px] font-bold transition-all ${enOn ? "bg-white shadow-sm text-violet-700 border border-violet-200" : "text-slate-400 hover:text-slate-600"}`}>
+          🇬🇧
         </button>
       </div>
     )
@@ -55,17 +59,17 @@ export default function LangSwitcher({ compact = false }: Props) {
 
   return (
     <div className="flex items-center gap-0.5 p-0.5 rounded-xl bg-slate-100 border border-slate-200">
-      <button
-        onClick={() => toggle("fr")}
-        title="Français"
+      <button onClick={() => select("fr")} title="Français"
         className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${frOn ? "bg-white shadow-sm text-blue-700 border border-blue-200" : "text-slate-400 hover:text-slate-600"}`}>
         🇫🇷 <span>FR</span>
       </button>
-      <button
-        onClick={() => toggle("ar")}
-        title="العربية"
+      <button onClick={() => select("ar")} title="العربية"
         className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${arOn ? "bg-white shadow-sm text-emerald-700 border border-emerald-200" : "text-slate-400 hover:text-slate-600"}`}>
         🇲🇦 <span>AR</span>
+      </button>
+      <button onClick={() => select("en")} title="English"
+        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${enOn ? "bg-white shadow-sm text-violet-700 border border-violet-200" : "text-slate-400 hover:text-slate-600"}`}>
+        🇬🇧 <span>EN</span>
       </button>
     </div>
   )

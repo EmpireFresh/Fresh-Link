@@ -7,7 +7,11 @@ const JAWAD_EMAIL = "jawad@empire-fresh.ma"
 function fmtMAD(n: number) { return new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD", maximumFractionDigits: 0 }).format(n) }
 function fmtPct(n: number) { return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%` }
 
-const RAPPORT_EMAIL = "fresh.empire.contact@gmail.com"
+const RAPPORT_EMAIL_KEY = "fl_rapport_email"
+function getRapportEmail(): string {
+  if (typeof window === "undefined") return "fresh.empire.contact@gmail.com"
+  return localStorage.getItem(RAPPORT_EMAIL_KEY) || "fresh.empire.contact@gmail.com"
+}
 
 // ── Prévisionnels P&L (modifiables par Jawad seulement) ──────────────────────
 const DEFAULT_PL = {
@@ -81,7 +85,7 @@ function calcPL(cfg: PLConfig, jours = 22) {
 }
 
 // ── Daily Report Email ────────────────────────────────────────────────────────
-async function sendDailyReport() {
+async function sendDailyReport(toEmail: string) {
   const today = new Date().toISOString().split("T")[0]
   const commandes = store.getCommandes().filter((c: {date?: string}) => c.date === today)
   const bonsAchat = store.getBonsAchat().filter((b: {date?: string}) => b.date === today)
@@ -120,7 +124,7 @@ Envoyé automatiquement par FreshLink Empire Fresh
     const res = await fetch("/api/ext/rapport-journalier", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to: RAPPORT_EMAIL, subject: `Rapport Journalier Empire Fresh — ${today}`, body })
+      body: JSON.stringify({ to: toEmail, subject: `Rapport Journalier Empire Fresh — ${today}`, body })
     })
     return res.ok
   } catch {
@@ -137,6 +141,8 @@ export default function BOFinanceControlGestion({ user }: { user: User }) {
   const [sending, setSending] = useState(false)
   const [sentOk, setSentOk] = useState<boolean | null>(null)
   const [activeTab, setActiveTab] = useState<"pl" | "kpi" | "amelio" | "rapport">("pl")
+  const [rapportEmail, setRapportEmail] = useState(() => getRapportEmail())
+  const [emailSaved, setEmailSaved] = useState(false)
 
   const pl = useMemo(() => calcPL(cfg, jours), [cfg, jours])
 
@@ -145,10 +151,16 @@ export default function BOFinanceControlGestion({ user }: { user: User }) {
 
   const handleSend = async () => {
     setSending(true)
-    const ok = await sendDailyReport()
+    const ok = await sendDailyReport(rapportEmail)
     setSentOk(ok)
     setSending(false)
     setTimeout(() => setSentOk(null), 4000)
+  }
+
+  const handleSaveEmail = () => {
+    localStorage.setItem(RAPPORT_EMAIL_KEY, rapportEmail)
+    setEmailSaved(true)
+    setTimeout(() => setEmailSaved(false), 2000)
   }
 
   const TABS = [
@@ -409,10 +421,18 @@ export default function BOFinanceControlGestion({ user }: { user: User }) {
         <div className="flex flex-col gap-5">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <h3 className="font-bold text-slate-900 mb-2">📧 Rapport Journalier Automatique</h3>
-            <p className="text-sm text-slate-500 mb-4">
-              Envoi quotidien à <strong>{RAPPORT_EMAIL}</strong> avec toutes les données de la journée :
-              ventes, achats, marges, livraisons, retours.
-            </p>
+            <div className="flex flex-col gap-1 mb-4">
+              <label className="text-xs font-semibold text-slate-600">Adresse email destinataire</label>
+              <div className="flex gap-2">
+                <input type="email" value={rapportEmail} onChange={e => setRapportEmail(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <button onClick={handleSaveEmail}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                  {emailSaved ? "✓ Sauvegardé" : "Sauvegarder"}
+                </button>
+              </div>
+              <p className="text-xs text-slate-400">Données du jour : ventes, achats, marges, livraisons, retours.</p>
+            </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-xs text-slate-600 mb-4 whitespace-pre-wrap">
 {`RAPPORT JOURNALIER — FreshLink Empire Fresh
 Date : ${new Date().toISOString().split("T")[0]}
@@ -436,7 +456,7 @@ Date : ${new Date().toISOString().split("T")[0]}
               className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-60">
               {sending ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Envoi...</> : <>📧 Envoyer le rapport maintenant</>}
             </button>
-            {sentOk === true && <p className="text-emerald-600 font-semibold text-sm mt-2">✅ Rapport envoyé à {RAPPORT_EMAIL}</p>}
+            {sentOk === true && <p className="text-emerald-600 font-semibold text-sm mt-2">✅ Rapport envoyé à {rapportEmail}</p>}
             {sentOk === false && <p className="text-red-600 text-sm mt-2">❌ Erreur d'envoi — vérifier config SMTP dans .env.local</p>}
           </div>
 

@@ -133,7 +133,7 @@ function generateDoc(
   salarie?: Salarie,
 ): string {
   const date = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
-  const roleUp = employee.role.replace(/_/g, " ").toUpperCase()
+  const roleUp = (employee.role ?? "").replace(/_/g, " ").toUpperCase()
   const civ  = salarie?.civilite ?? employee.civilite ?? "M."
   const nom  = salarie ? `${salarie.nom} ${salarie.prenom}` : employee.name
   const cin  = salarie?.cin ?? "—"
@@ -433,7 +433,7 @@ function exportFichePayeExcel(salaries: { s: Salarie | null; emp: string; brut: 
   const url = URL.createObjectURL(blob)
   const a   = document.createElement("a")
   a.href = url
-  a.download = `Fiches_Paie_${periode.replace(/\s/g, "_")}.xls`
+  a.download = `Fiches_Paie_${(periode ?? "").replace(/\s/g, "_")}.xls`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -594,7 +594,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
       "caissier": "CAS", "rh": "RH", "comptable": "CPT", "qualité": "QUA",
       "chef dépôt": "CDP", "admin": "ADM",
     }
-    const key = poste.toLowerCase().trim()
+    const key = (poste ?? "").toLowerCase().trim()
     const code = Object.entries(codeMap).find(([k]) => key.includes(k))?.[1] ?? "EMP"
     const existing = store.getSalaries?.().filter((s: {cin?: string}) => s.cin?.startsWith(`FLP-${year}-${code}-`)) ?? []
     const seq = (existing.length + 1).toString().padStart(3, "0")
@@ -602,7 +602,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
   }
 
   const handleSaveSal = () => {
-    if (!salForm.nom.trim() || !salForm.prenom.trim() || !salForm.poste.trim()) return
+    if (!(salForm.nom ?? "").trim() || !(salForm.prenom ?? "").trim() || !(salForm.poste ?? "").trim()) return
     const now = new Date().toISOString()
     if (editingSal) {
       store.updateSalarie(editingSal.id, {
@@ -643,7 +643,10 @@ export default function BOHRDocuments({ user }: { user: User }) {
   const filteredSalaries = useMemo(() =>
     salaries.filter(s => {
       const q = salSearch.toLowerCase()
-      return !q || s.nom.toLowerCase().includes(q) || s.prenom.toLowerCase().includes(q) || s.poste.toLowerCase().includes(q)
+      return !q ||
+        (s.nom ?? "").toLowerCase().includes(q) ||
+        (s.prenom ?? "").toLowerCase().includes(q) ||
+        (s.poste ?? "").toLowerCase().includes(q)
     }),
     [salaries, salSearch]
   )
@@ -750,7 +753,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
     const civ  = linkedSal?.civilite ?? emp.civilite ?? "M."
     return {
       employeNom:      `${civ} ${linkedSal ? `${linkedSal.nom} ${linkedSal.prenom}` : emp.name}`,
-      employeRole:     emp.role.replace(/_/g, " ").toUpperCase(),
+      employeRole:     (emp.role ?? "").replace(/_/g, " ").toUpperCase(),
       employeEmail:    linkedSal?.email ?? emp.email,
       employePhone:    linkedSal?.telephone ?? emp.telephone ?? emp.phone,
       employeMatricule:linkedSal?.cin ?? extra?.matricule,
@@ -791,7 +794,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
     const civ  = emp.civilite ?? "M."
     const data: HRDocData = {
       employeNom:      `${civ} ${emp.name}`,
-      employeRole:     emp.role.replace(/_/g, " ").toUpperCase(),
+      employeRole:     (emp.role ?? "").replace(/_/g, " ").toUpperCase(),
       employeEmail:    emp.email,
       employePhone:    emp.telephone ?? emp.phone,
       societeNom:      companyConfig.nom ?? company,
@@ -840,7 +843,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
     const civ  = emp.civilite ?? "M."
     const data: HRDocData = {
       employeNom:      `${civ} ${emp.name}`,
-      employeRole:     emp.role.replace(/_/g, " ").toUpperCase(),
+      employeRole:     (emp.role ?? "").replace(/_/g, " ").toUpperCase(),
       employeEmail:    emp.email,
       employePhone:    emp.telephone ?? emp.phone,
       societeNom:      companyConfig.nom ?? company,
@@ -1161,7 +1164,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
                           </td>
                           <td className="px-4 py-3">
                             <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
-                              {s.typeContrat.toUpperCase()}
+                              {(s.typeContrat ?? "").toUpperCase()}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-slate-600 text-xs">
@@ -1230,7 +1233,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
                                       `Bonjour ${s.civilite} ${s.nom} ${s.prenom},`,
                                       `Votre dossier RH a ete mis a jour.`,
                                       `Poste : ${s.poste}`,
-                                      `Contrat : ${s.typeContrat.toUpperCase()}`,
+                                      `Contrat : ${(s.typeContrat ?? "").toUpperCase()}`,
                                       `Statut : ${STATUT_SALARIE_LABELS[s.statut]}`,
                                     ].join("\n")
                                     sendWhatsApp(s.telephone!, msg)
@@ -1283,7 +1286,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
                       <option value="">-- Choisir --</option>
                       {employees.map(e => (
                         <option key={e.id} value={e.id}>
-                          {e.civilite ? `${e.civilite} ` : ""}{e.name} — {e.role.replace(/_/g, " ")}
+                          {e.civilite ? `${e.civilite} ` : ""}{e.name} — {(e.role ?? "").replace(/_/g, " ")}
                         </option>
                       ))}
                     </select>
@@ -1496,7 +1499,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
                           </td>
                           <td className="px-4 py-3">
                             <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${STATUT_DOC_COLORS[doc.statut] ?? "bg-slate-100 text-slate-600"}`}>
-                              {doc.statut.charAt(0).toUpperCase() + doc.statut.slice(1)}
+                              {(doc.statut ?? "").charAt(0).toUpperCase() + (doc.statut ?? "").slice(1)}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-slate-500 text-xs">{doc.generePar}</td>
@@ -2105,7 +2108,7 @@ export default function BOHRDocuments({ user }: { user: User }) {
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                 Annuler
               </button>
-              <button onClick={handleSaveSal} disabled={!salForm.nom.trim() || !salForm.prenom.trim() || !salForm.poste.trim()}
+              <button onClick={handleSaveSal} disabled={!(salForm.nom ?? "").trim() || !(salForm.prenom ?? "").trim() || !(salForm.poste ?? "").trim()}
                 className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-700 disabled:opacity-40 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

@@ -1,5 +1,5 @@
 const KEY = "fl_lang"
-export type AppLang = "fr" | "ar" | "fr-ar"
+export type AppLang = "fr" | "ar" | "en" | "fr-ar"
 
 export function getLang(): AppLang {
   if (typeof window === "undefined") return "fr-ar"
@@ -9,7 +9,7 @@ export function getLang(): AppLang {
 export function setLang(lang: AppLang) {
   localStorage.setItem(KEY, lang)
   const dir = lang === "ar" ? "rtl" : "ltr"
-  const htmlLang = lang === "ar" ? "ar" : "fr"
+  const htmlLang = lang === "ar" ? "ar" : lang === "en" ? "en" : "fr"
   document.documentElement.dir  = dir
   document.documentElement.lang = htmlLang
   window.dispatchEvent(new CustomEvent("fl_lang_change", { detail: lang }))
@@ -18,5 +18,5 @@ export function setLang(lang: AppLang) {
 export function applyStoredLang() {
   const lang = getLang()
   document.documentElement.dir  = lang === "ar" ? "rtl" : "ltr"
-  document.documentElement.lang = lang === "ar" ? "ar" : "fr"
+  document.documentElement.lang = lang === "ar" ? "ar" : lang === "en" ? "en" : "fr"
 }

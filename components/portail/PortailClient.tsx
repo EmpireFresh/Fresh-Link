@@ -75,6 +75,14 @@ export default function PortailClient({ user, onLogout }: Props) {
 
   const familles = ["Toutes", ...Array.from(new Set(articles.map(a => a.famille ?? "").filter(Boolean)))]
 
+  // Prix adapté à la catégorie du client connecté
+  const clientCategorie: "chr" | "marchand" | "particulier" | undefined =
+    client?.categorie ??
+    ((client as unknown as { type?: string })?.type === "chr" ? "chr" :
+      (client as unknown as { type?: string })?.type === "marchand" ? "marchand" : undefined)
+  const artPrix = (art: Article): number => store.computePV(art, clientCategorie)
+  const isCHR = clientCategorie === "chr"
+
   const filteredCatalogue = articles.filter(a => {
     const matchSearch = !articleSearch || a.nom.toLowerCase().includes(articleSearch.toLowerCase()) || (a.nomAr ?? "").includes(articleSearch)
     const matchFamille = familleFilter === "Toutes" || a.famille === familleFilter
@@ -112,8 +120,7 @@ export default function PortailClient({ user, onLogout }: Props) {
 
     const cmdLignes: LigneCommande[] = validLignes.map(l => {
       const art = articles.find(a => a.id === l.articleId)!
-      const pv = art.pvMethode === "montant" ? art.pvValeur :
-        art.pvMethode === "pourcentage" ? art.prixAchat * (1 + art.pvValeur / 100) : art.pvValeur
+      const pv = artPrix(art)
       const qty = Number(l.quantite)
       return {
         articleId: art.id,
@@ -176,7 +183,16 @@ export default function PortailClient({ user, onLogout }: Props) {
     <div className="min-h-screen flex flex-col bg-background font-sans">
       {/* Header */}
       <header className="bg-sidebar text-sidebar-foreground px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-md">
-        <FreshLinkLogo size={34} variant="full-white" />
+        <div className="flex items-center gap-3">
+          <a href="https://empire-fresh.netlify.app/" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-sidebar-border text-[10px] font-semibold text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="hidden sm:inline">Empire Fresh</span>
+          </a>
+          <FreshLinkLogo size={34} variant="full-white" />
+        </div>
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <p className="text-xs font-bold text-white">{client?.nom ?? user.name}</p>
@@ -433,11 +449,7 @@ export default function PortailClient({ user, onLogout }: Props) {
               <div className="flex flex-col gap-3">
                 {lignes.map((l, i) => {
                   const art = articles.find(a => a.id === l.articleId)
-                  const pv = art ? (
-                    art.pvMethode === "montant" ? art.pvValeur :
-                    art.pvMethode === "pourcentage" ? art.prixAchat * (1 + art.pvValeur / 100) :
-                    art.pvValeur
-                  ) : 0
+                  const pv = art ? artPrix(art) : 0
                   const lineTotal = pv * Number(l.quantite || 0)
                   return (
                     <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-muted/20">
@@ -568,8 +580,7 @@ export default function PortailClient({ user, onLogout }: Props) {
                     {lignes.reduce((s, l) => {
                       const art = articles.find(a => a.id === l.articleId)
                       if (!art) return s
-                      const pv = art.pvMethode === "montant" ? art.pvValeur :
-                        art.pvMethode === "pourcentage" ? art.prixAchat * (1 + art.pvValeur / 100) : art.pvValeur
+                      const pv = artPrix(art)
                       return s + pv * Number(l.quantite || 0)
                     }, 0).toFixed(2)} DH
                   </p>
@@ -629,6 +640,16 @@ export default function PortailClient({ user, onLogout }: Props) {
                       <span className={`font-semibold ${art.stockDisponible > 0 ? "text-green-700" : "text-destructive"}`}>
                         {art.stockDisponible > 0 ? "Disponible" : "Rupture"}
                       </span>
+                      {/* Prix selon catégorie */}
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="font-black text-primary text-sm">
+                          {artPrix(art).toFixed(2)} DH
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">/{art.unite}</span>
+                        {isCHR && art.prixCHR && art.prixCHR > 0 && (
+                          <span className="text-[8px] font-black bg-purple-100 text-purple-700 border border-purple-200 px-1 py-0.5 rounded-full">CHR</span>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={() => quickAdd(art.id)}

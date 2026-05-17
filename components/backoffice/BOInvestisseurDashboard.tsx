@@ -116,14 +116,40 @@ function AutofinancementBar({auto,total}:{auto:number;total:number}) {
   )
 }
 
-import { type User } from "@/lib/store"
+const LS_PHASES = "fl_investisseur_phases"
+
+function loadPhases(): Phase[] {
+  if (typeof window === "undefined") return PHASES
+  try {
+    const raw = localStorage.getItem(LS_PHASES)
+    if (raw) return JSON.parse(raw) as Phase[]
+  } catch {}
+  return PHASES
+}
+
+import { type User, isSuperSuperAdmin } from "@/lib/store"
 export default function InvestisseurDashboard({ user }: { user?: User }) {
   const [expanded, setExpanded] = useState<number|null>(1)
-  const [activeTab, setActiveTab] = useState<'phases'|'synthese'|'regle'>('phases')
+  const [activeTab, setActiveTab] = useState<'phases'|'synthese'|'regle'|'edit'>('phases')
+  const [phases, setPhases] = useState<Phase[]>(loadPhases)
+  const [editPhases, setEditPhases] = useState<Phase[]>(loadPhases)
+  const [editSaved, setEditSaved] = useState(false)
+  const canEdit = user ? (isSuperSuperAdmin(user) || user.role === 'admin' || user.role === 'super_admin') : false
 
-  const totalCapital = PHASES.reduce((s,p)=>s+p.capital,0)
-  const totalAuto = PHASES.reduce((s,p)=>s+p.autofinancement,0)
-  const lastPhase = PHASES[PHASES.length-1]
+  const totalCapital = phases.reduce((s,p)=>s+p.capital,0)
+  const totalAuto = phases.reduce((s,p)=>s+p.autofinancement,0)
+  const lastPhase = phases[phases.length-1]
+
+  const handleSavePhases = () => {
+    localStorage.setItem(LS_PHASES, JSON.stringify(editPhases))
+    setPhases(editPhases)
+    setEditSaved(true)
+    setTimeout(() => { setEditSaved(false); setActiveTab('phases') }, 1500)
+  }
+
+  const updateEditPhase = (id: number, field: keyof Phase, value: number) => {
+    setEditPhases(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+  }
 
   return(
     <div className="min-h-screen bg-gray-50">
@@ -155,16 +181,92 @@ export default function InvestisseurDashboard({ user }: { user?: User }) {
       {/* TABS */}
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto flex gap-1 py-3 overflow-x-auto">
-          {[{k:'phases' as const,l:'8 Phases',i:<BarChart3 size={14}/>},{k:'synthese' as const,l:'Synthèse',i:<PieChart size={14}/>},{k:'regle' as const,l:"Règle d'or 40%",i:<Shield size={14}/>}].map(t=>(
+          {([{k:'phases' as const,l:'8 Phases',i:<BarChart3 size={14}/>},{k:'synthese' as const,l:'Synthèse',i:<PieChart size={14}/>},{k:'regle' as const,l:"Règle d'or 40%",i:<Shield size={14}/>}] as const).map(t=>(
             <button key={t.k} onClick={()=>setActiveTab(t.k)} className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeTab===t.k?'bg-emerald-50 text-emerald-700 border border-emerald-200':'text-gray-500 hover:bg-gray-100'}`}>{t.i}{t.l}</button>
           ))}
+          {canEdit && (
+            <button onClick={()=>{ setEditPhases([...phases]); setActiveTab('edit') }} className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeTab==='edit'?'bg-amber-50 text-amber-700 border border-amber-200':'text-gray-500 hover:bg-gray-100'}`}>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              Modifier les données
+            </button>
+          )}
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
 
+        {/* ── EDIT TAB ── */}
+        {activeTab==='edit'&&canEdit&&(
+          <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-amber-900">Modifier les données d'investissement</p>
+                <p className="text-xs text-amber-600 mt-0.5">Les modifications sont sauvegardées localement. Champs numériques en MAD.</p>
+              </div>
+              <button onClick={handleSavePhases} className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                {editSaved ? '✓ Sauvegardé !' : 'Enregistrer'}
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-600">
+                    <th className="text-left px-4 py-3 font-semibold">Phase</th>
+                    <th className="text-right px-3 py-3 font-semibold">Capital (MAD)</th>
+                    <th className="text-right px-3 py-3 font-semibold">Autofinancement</th>
+                    <th className="text-right px-3 py-3 font-semibold">Externe</th>
+                    <th className="text-right px-3 py-3 font-semibold">CA Cible (MAD)</th>
+                    <th className="text-right px-3 py-3 font-semibold">ROI %</th>
+                    <th className="text-right px-3 py-3 font-semibold">Marge %</th>
+                    <th className="text-right px-3 py-3 font-semibold">T/jour</th>
+                    <th className="text-center px-3 py-3 font-semibold">Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {editPhases.map(p => (
+                    <tr key={p.id} className="border-t border-gray-100 hover:bg-gray-50">
+                      <td className="px-4 py-2 font-semibold text-gray-700 whitespace-nowrap">P{p.id} — {p.period}</td>
+                      {(['capital','autofinancement','externe','ca_cible'] as const).map(f => (
+                        <td key={f} className="px-2 py-1">
+                          <input type="number" value={f === 'externe' ? p.capital - p.autofinancement : (p as unknown as Record<string,number>)[f]}
+                            readOnly={f === 'externe'}
+                            onChange={e => updateEditPhase(p.id, f as keyof Phase, Number(e.target.value))}
+                            className={`w-28 text-right px-2 py-1 border rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-400 ${f==='externe'?'bg-gray-50 text-gray-400 cursor-not-allowed':'border-gray-200 bg-white'}`}
+                          />
+                        </td>
+                      ))}
+                      {(['roi','marge','tonnage_jour'] as const).map(f => (
+                        <td key={f} className="px-2 py-1">
+                          <input type="number" value={(p as unknown as Record<string,number>)[f]}
+                            onChange={e => updateEditPhase(p.id, f as keyof Phase, Number(e.target.value))}
+                            className="w-16 text-right px-2 py-1 border border-gray-200 rounded-lg text-xs font-mono bg-white focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                          />
+                        </td>
+                      ))}
+                      <td className="px-2 py-1 text-center">
+                        <select value={p.status} onChange={e => setEditPhases(prev => prev.map(ph => ph.id === p.id ? { ...ph, status: e.target.value as Phase['status'] } : ph))}
+                          className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-emerald-400">
+                          <option value="complete">Réalisée</option>
+                          <option value="active">En cours</option>
+                          <option value="locked">Planifiée</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+              <button onClick={() => { setEditPhases(PHASES); }} className="text-xs text-gray-500 hover:text-gray-700 underline">Réinitialiser aux valeurs par défaut</button>
+              <button onClick={handleSavePhases} className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                {editSaved ? '✓ Sauvegardé !' : 'Enregistrer les modifications'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── PHASES ── */}
-        {activeTab==='phases'&&PHASES.map(phase=>{
+        {activeTab==='phases'&&phases.map(phase=>{
           const sm=STATUS_META[phase.status]; const isExp=expanded===phase.id; const autoOk=phase.autofinancement/phase.capital>=0.4
           return(
             <div key={phase.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-shadow hover:shadow-md ${phase.status==='active'?'border-blue-300':'border-gray-200'}`}>
@@ -254,7 +356,7 @@ export default function InvestisseurDashboard({ user }: { user?: User }) {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 overflow-x-auto">
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-emerald-500"/>Progression du capital — 8 phases</h3>
               <div className="flex items-end gap-2 h-40 min-w-max">
-                {PHASES.map(p=>{
+                {phases.map(p=>{
                   const maxCap=55_000_000; const h=Math.round((p.capital/maxCap)*100)
                   return(
                     <div key={p.id} className="flex flex-col items-center gap-1 w-14">
@@ -283,7 +385,7 @@ export default function InvestisseurDashboard({ user }: { user?: User }) {
                     <th className="text-center px-4 py-3">Statut</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-100">
-                    {PHASES.map(p=>{
+                    {phases.map(p=>{
                       const sm=STATUS_META[p.status]; const ok=p.autofinancement/p.capital>=0.4
                       return(
                         <tr key={p.id} className="hover:bg-gray-50">
@@ -326,7 +428,7 @@ export default function InvestisseurDashboard({ user }: { user?: User }) {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {PHASES.map(p=>{
+              {phases.map(p=>{
                 const pct=Math.round((p.autofinancement/p.capital)*100); const ok=pct>=40
                 return(
                   <div key={p.id} className={`bg-white rounded-xl border shadow-sm p-4 ${ok?'border-emerald-200':'border-amber-200'}`}>

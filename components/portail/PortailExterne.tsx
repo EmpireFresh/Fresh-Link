@@ -176,55 +176,142 @@ function LoginScreen({ onLogin, onRequestAccount }: LoginScreenProps) {
 
 // ─── Account Request Form ───────────────────────────────────────────────────
 
+const INPUT_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+const LABEL_CLS = "text-xs font-semibold text-slate-600 mb-1 block"
+
+type ClientType = "particulier" | "marchand" | "restaurant" | "hotel" | "traiteur" | "supermarche" | "autre"
+type FournisseurType = "producteur" | "grossiste" | "importateur" | "transformateur"
+
+const CLIENT_TYPES: { v: ClientType; label: string; emoji: string; desc: string }[] = [
+  { v: "particulier",  label: "Particulier",           emoji: "🧑",  desc: "Usage personnel" },
+  { v: "marchand",     label: "Marchand / Épicier",    emoji: "🏪",  desc: "Épicerie, alimentation générale" },
+  { v: "restaurant",   label: "Restaurant / Café",     emoji: "🍽️", desc: "Restauration, snack, café" },
+  { v: "hotel",        label: "Hôtel / Résidence",     emoji: "🏨",  desc: "Hôtellerie, résidence touristique" },
+  { v: "traiteur",     label: "Traiteur / Cantine",    emoji: "👨‍🍳", desc: "Traiteur, self, cantine" },
+  { v: "supermarche",  label: "Super / Grande surface", emoji: "🛒", desc: "Supermarché, grande surface" },
+]
+
+const FOURNISSEUR_TYPES: { v: FournisseurType; label: string; emoji: string; desc: string }[] = [
+  { v: "producteur",    label: "Producteur / Agriculteur", emoji: "🌱", desc: "Production directe, ferme" },
+  { v: "grossiste",     label: "Grossiste / Distributeur", emoji: "🏭", desc: "Distribution en gros" },
+  { v: "importateur",   label: "Importateur",              emoji: "🚢", desc: "Import de produits étrangers" },
+  { v: "transformateur",label: "Transformateur",           emoji: "⚙️", desc: "Transformation, conditionnement" },
+]
+
+const FAMILLES_PRODUITS = [
+  "Légumes", "Fruits", "Agrumes", "Herbes aromatiques",
+  "Viandes", "Poissons & Fruits de mer", "Produits laitiers",
+  "Œufs & Volailles", "Épices & Condiments", "Céréales & Légumineuses",
+  "Surgelés", "Produits secs",
+]
+
+const VOLUMES = [
+  "Moins de 500 kg / semaine",
+  "500 kg – 2 tonnes / semaine",
+  "2 – 10 tonnes / semaine",
+  "Plus de 10 tonnes / semaine",
+]
+
 interface AccountRequestFormProps {
   onBack: () => void
 }
 
 function AccountRequestForm({ onBack }: AccountRequestFormProps) {
   const company = store.getCompanyConfig()
-  const [type, setType] = useState<"client" | "fournisseur">("client")
-  const [nom, setNom] = useState("")
-  const [email, setEmail] = useState("")
-  const [telephone, setTelephone] = useState("")
-  const [societe, setSociete] = useState("")
-  const [ice, setIce] = useState("")
-  const [ville, setVille] = useState("")
-  const [message, setMessage] = useState("")
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState("")
+
+  // Step: "type" → "detail"
+  const [step, setStep] = useState<"type" | "detail">("type")
+  const [type, setType] = useState<"client" | "fournisseur" | "">("")
+
+  // Common fields
+  const [nom, setNom]               = useState("")
+  const [email, setEmail]           = useState("")
+  const [telephone, setTelephone]   = useState("")
+  const [ville, setVille]           = useState("")
+  const [adresse, setAdresse]       = useState("")
+  const [message, setMessage]       = useState("")
+
+  // Client fields
+  const [typeClient, setTypeClient] = useState<ClientType | "">("")
+  const [societe, setSociete]       = useState("")
+  const [ice, setIce]               = useState("")
+  const [nbCouverts, setNbCouverts] = useState("")
+  const [nbChambres, setNbChambres] = useState("")
+
+  // Fournisseur fields
+  const [typeFourn, setTypeFourn]   = useState<FournisseurType | "">("")
+  const [familles, setFamilles]     = useState<string[]>([])
+  const [volume, setVolume]         = useState("")
+  const [zoneLivraison, setZoneLiv] = useState("")
+
+  const [submitted, setSubmitted]   = useState(false)
+  const [error, setError]           = useState("")
+
+  const isParticulier = typeClient === "particulier"
+  const isCommerce = typeClient !== "" && typeClient !== "particulier"
+  const needsCouverts = typeClient === "restaurant" || typeClient === "traiteur"
+  const needsChambres = typeClient === "hotel"
+
+  const toggleFamille = (f: string) =>
+    setFamilles(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
 
   const handleSubmit = () => {
     setError("")
-    if (!nom.trim() || !email.trim() || !telephone.trim() || !societe.trim()) {
-      setError("Veuillez remplir tous les champs obligatoires (*).")
+    if (!nom.trim() || !telephone.trim()) {
+      setError("Nom et téléphone sont obligatoires.")
       return
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Adresse email invalide.")
+      return
+    }
+    if (type === "client" && !typeClient) {
+      setError("Veuillez choisir votre type de compte client.")
+      return
+    }
+    if (type === "fournisseur" && (!typeFourn || familles.length === 0)) {
+      setError("Veuillez choisir votre type et au moins une famille de produits.")
+      return
+    }
+    if (isCommerce && !societe.trim()) {
+      setError("La raison sociale est obligatoire.")
       return
     }
 
     const req: AccountRequest = {
       id: store.genId(),
-      type,
+      type: type as "client" | "fournisseur",
       nom: nom.trim(),
       email: email.trim(),
       telephone: telephone.trim(),
-      societe: societe.trim(),
-      ice: ice.trim(),
-      ville: ville.trim(),
-      message: message.trim(),
+      societe: societe.trim() || nom.trim(),
+      ice: ice.trim() || undefined,
+      ville: ville.trim() || undefined,
+      adresse: adresse.trim() || undefined,
+      message: message.trim() || undefined,
+      // client
+      typeClient: typeClient || undefined,
+      nbCouverts: nbCouverts ? parseInt(nbCouverts) : undefined,
+      nbChambres: nbChambres ? parseInt(nbChambres) : undefined,
+      // fournisseur
+      typeFournisseur: typeFourn || undefined,
+      familles: familles.length > 0 ? familles : undefined,
+      volumeEstime: volume || undefined,
+      zoneLivraison: zoneLivraison.trim() || undefined,
       statut: "en_attente",
       createdAt: new Date().toISOString(),
     }
-    const reqs = JSON.parse(localStorage.getItem("fl_account_requests") ?? "[]"); reqs.push(req); localStorage.setItem("fl_account_requests", JSON.stringify(reqs))
+    const reqs = JSON.parse(localStorage.getItem("fl_account_requests") ?? "[]")
+    reqs.push(req)
+    localStorage.setItem("fl_account_requests", JSON.stringify(reqs))
     setSubmitted(true)
   }
 
+  // ── Success screen ─────────────────────────────────────────────────────────
   if (submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col items-center gap-5 text-center">
+        <div className="max-w-sm w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col items-center gap-5 text-center">
           <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center">
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -233,13 +320,12 @@ function AccountRequestForm({ onBack }: AccountRequestFormProps) {
           <div>
             <h2 className="text-xl font-bold text-slate-900">Demande envoyée !</h2>
             <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-              Votre demande de création de compte a bien été enregistrée. Un responsable de <strong>{company.nom || "notre équipe"}</strong> va l'examiner et vous contactera par email ou téléphone.
+              Votre demande a bien été enregistrée. L&apos;équipe de <strong>{company.nom || "FreshLink"}</strong> vous contactera sous 24 à 48h.
             </p>
-            <p className="text-xs text-slate-400 mt-2" dir="rtl">
-              تم إرسال طلبك بنجاح. سيتم التواصل معك قريباً.
-            </p>
+            <p className="text-xs text-slate-400 mt-2" dir="rtl">تم إرسال طلبك بنجاح. سيتم التواصل معك قريباً.</p>
           </div>
-          <button onClick={onBack} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
+          <button onClick={onBack}
+            className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
             Retour à la connexion
           </button>
         </div>
@@ -247,44 +333,73 @@ function AccountRequestForm({ onBack }: AccountRequestFormProps) {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex flex-col items-center justify-start py-8 px-4">
-      <div className="w-full max-w-lg">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <button onClick={onBack} className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">
+  // ── Step 1 : choose Client or Fournisseur ──────────────────────────────────
+  if (step === "type") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* back */}
+          <button onClick={onBack}
+            className="flex items-center gap-2 mb-6 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Retour à la connexion
           </button>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900">Demande de création de compte</h1>
-            <p className="text-xs text-slate-500">طلب إنشاء حساب</p>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 flex flex-col gap-5">
-          {/* Type selector */}
-          <div>
-            <p className="text-xs font-semibold text-slate-600 mb-2">Type de compte *</p>
-            <div className="flex gap-3">
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-7">
+            <div className="text-center mb-7">
+              <h1 className="text-xl font-black text-slate-900">Créer un compte</h1>
+              <p className="text-sm text-slate-500 mt-1">Vous êtes…</p>
+              <p className="text-xs text-slate-400 mt-0.5" dir="rtl">اختر نوع حسابك</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
               {([
-                { v: "client", label: "Client", labelAr: "عميل", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-                { v: "fournisseur", label: "Fournisseur", labelAr: "مورد", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
+                { v: "client",      label: "Un Client",      labelAr: "عميل",  emoji: "🛍️", desc: "Épicier, restaurant, hôtel, particulier…" },
+                { v: "fournisseur", label: "Un Fournisseur", labelAr: "مورد",  emoji: "🚚", desc: "Producteur, grossiste, importateur…" },
               ] as const).map(opt => (
-                <label key={opt.v}
-                  className={`flex-1 flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${type === opt.v ? "border-blue-400 bg-blue-50" : "border-slate-200 hover:bg-slate-50"}`}
-                  onClick={() => setType(opt.v)}>
-                  <svg className={`w-5 h-5 ${type === opt.v ? "text-blue-600" : "text-slate-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={opt.icon} />
-                  </svg>
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{opt.label}</p>
-                    <p className="text-[10px] text-slate-400" dir="rtl">{opt.labelAr}</p>
+                <button key={opt.v}
+                  onClick={() => { setType(opt.v); setStep("detail") }}
+                  className="flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-all text-left group">
+                  <span className="text-3xl">{opt.emoji}</span>
+                  <div className="flex-1">
+                    <p className="font-bold text-slate-800 group-hover:text-blue-700">{opt.label}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{opt.desc}</p>
                   </div>
-                </label>
+                  <svg className="w-5 h-5 text-slate-300 group-hover:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               ))}
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
 
+  // ── Step 2 : detail form ───────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex flex-col items-center justify-start py-6 px-4">
+      <div className="w-full max-w-lg">
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={() => { setStep("type"); setError("") }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Retour
+          </button>
+          <div>
+            <h1 className="text-base font-bold text-slate-900">
+              {type === "client" ? "Demande client" : "Demande fournisseur"}
+            </h1>
+            <p className="text-[11px] text-slate-400">{type === "client" ? "طلب حساب عميل" : "طلب حساب مورد"}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-5 flex flex-col gap-5">
+
+          {/* Error */}
           {error && (
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
               <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -292,54 +407,206 @@ function AccountRequestForm({ onBack }: AccountRequestFormProps) {
             </div>
           )}
 
-          {/* Form fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { f: "nom", label: "Nom complet *", placeholder: "Mohammed Alami", value: nom, set: setNom, type: "text" },
-              { f: "email", label: "Email *", placeholder: "contact@societe.ma", value: email, set: setEmail, type: "email" },
-              { f: "telephone", label: "Téléphone *", placeholder: "+212 6 00 00 00 00", value: telephone, set: setTelephone, type: "tel" },
-              { f: "societe", label: "Raison sociale *", placeholder: "Ma Société SARL", value: societe, set: setSociete, type: "text" },
-              { f: "ice", label: "ICE (optionnel)", placeholder: "00000000000000000000", value: ice, set: setIce, type: "text" },
-              { f: "ville", label: "Ville", placeholder: "Casablanca", value: ville, set: setVille, type: "text" },
-            ].map(({ f, label, placeholder, value, set, type: t }) => (
-              <div key={f} className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-slate-600">{label}</label>
-                <input
-                  type={t}
-                  value={value}
-                  onChange={e => set(e.target.value)}
-                  placeholder={placeholder}
-                  className="px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
-                />
+          {/* ── CLIENT sub-type ──────────────────────────────────────────── */}
+          {type === "client" && (
+            <div>
+              <p className={LABEL_CLS}>Votre type de compte *</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {CLIENT_TYPES.map(ct => (
+                  <button key={ct.v}
+                    onClick={() => setTypeClient(ct.v)}
+                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 text-center transition-all text-xs font-semibold ${
+                      typeClient === ct.v
+                        ? "border-blue-400 bg-blue-50 text-blue-700"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}>
+                    <span className="text-xl">{ct.emoji}</span>
+                    <span className="leading-tight">{ct.label}</span>
+                  </button>
+                ))}
               </div>
-            ))}
+              {typeClient && (
+                <p className="text-[11px] text-slate-400 mt-1.5 ml-1">
+                  {CLIENT_TYPES.find(c => c.v === typeClient)?.desc}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ── FOURNISSEUR sub-type ─────────────────────────────────────── */}
+          {type === "fournisseur" && (
+            <div>
+              <p className={LABEL_CLS}>Votre type d'activité *</p>
+              <div className="grid grid-cols-2 gap-2">
+                {FOURNISSEUR_TYPES.map(ft => (
+                  <button key={ft.v}
+                    onClick={() => setTypeFourn(ft.v)}
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border-2 text-left transition-all ${
+                      typeFourn === ft.v
+                        ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}>
+                    <span className="text-xl shrink-0">{ft.emoji}</span>
+                    <div>
+                      <p className="text-xs font-bold leading-tight">{ft.label}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{ft.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── COMMON : Nom + Téléphone ─────────────────────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL_CLS}>
+                {isParticulier ? "Nom complet *" : "Nom du contact *"}
+              </label>
+              <input type="text" value={nom} onChange={e => setNom(e.target.value)}
+                placeholder={isParticulier ? "Mohammed Alami" : "Responsable achats"}
+                className={INPUT_CLS} />
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Téléphone *</label>
+              <input type="tel" value={telephone} onChange={e => setTelephone(e.target.value)}
+                placeholder="+212 6 00 00 00 00" className={INPUT_CLS} />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-600">Message / Informations complémentaires</label>
-            <textarea
-              rows={3}
-              value={message}
-              onChange={e => setMessage(e.target.value)}
+          <div>
+            <label className={LABEL_CLS}>Email <span className="font-normal text-slate-400">(optionnel)</span></label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="contact@societe.ma" className={INPUT_CLS} />
+          </div>
+
+          {/* ── COMMERCE/FOURNISSEUR : Raison sociale + Ville ────────────── */}
+          {(isCommerce || type === "fournisseur") && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={LABEL_CLS}>Raison sociale *</label>
+                <input type="text" value={societe} onChange={e => setSociete(e.target.value)}
+                  placeholder="Nom de votre société" className={INPUT_CLS} />
+              </div>
+              <div>
+                <label className={LABEL_CLS}>Ville</label>
+                <input type="text" value={ville} onChange={e => setVille(e.target.value)}
+                  placeholder="Casablanca" className={INPUT_CLS} />
+              </div>
+            </div>
+          )}
+
+          {/* Particulier: ville + adresse */}
+          {isParticulier && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={LABEL_CLS}>Ville</label>
+                <input type="text" value={ville} onChange={e => setVille(e.target.value)}
+                  placeholder="Casablanca" className={INPUT_CLS} />
+              </div>
+              <div>
+                <label className={LABEL_CLS}>Adresse <span className="font-normal text-slate-400">(optionnel)</span></label>
+                <input type="text" value={adresse} onChange={e => setAdresse(e.target.value)}
+                  placeholder="Rue, quartier…" className={INPUT_CLS} />
+              </div>
+            </div>
+          )}
+
+          {/* ── ICE pour commerce/fournisseur ───────────────────────────── */}
+          {(isCommerce || type === "fournisseur") && (
+            <div>
+              <label className={LABEL_CLS}>ICE <span className="font-normal text-slate-400">(optionnel — 15 chiffres)</span></label>
+              <input type="text" value={ice} onChange={e => setIce(e.target.value)}
+                placeholder="000000000000000" maxLength={20} className={INPUT_CLS} />
+            </div>
+          )}
+
+          {/* ── Restaurant : nb couverts ─────────────────────────────────── */}
+          {needsCouverts && (
+            <div>
+              <label className={LABEL_CLS}>
+                {typeClient === "restaurant" ? "Nombre de couverts (capacité)" : "Nombre de couverts / repas / jour"}
+              </label>
+              <input type="number" min={1} value={nbCouverts} onChange={e => setNbCouverts(e.target.value)}
+                placeholder="ex : 80" className={INPUT_CLS} />
+            </div>
+          )}
+
+          {/* ── Hôtel : nb chambres ──────────────────────────────────────── */}
+          {needsChambres && (
+            <div>
+              <label className={LABEL_CLS}>Nombre de chambres</label>
+              <input type="number" min={1} value={nbChambres} onChange={e => setNbChambres(e.target.value)}
+                placeholder="ex : 40" className={INPUT_CLS} />
+            </div>
+          )}
+
+          {/* ── FOURNISSEUR : familles produits ──────────────────────────── */}
+          {type === "fournisseur" && (
+            <div>
+              <p className={LABEL_CLS}>Familles de produits proposées * <span className="font-normal text-slate-400">(plusieurs choix possibles)</span></p>
+              <div className="flex flex-wrap gap-2">
+                {FAMILLES_PRODUITS.map(f => (
+                  <button key={f} type="button" onClick={() => toggleFamille(f)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      familles.includes(f)
+                        ? "bg-emerald-500 text-white border-emerald-500"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:border-emerald-300 hover:text-emerald-700"
+                    }`}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── FOURNISSEUR : volume + zone ───────────────────────────────── */}
+          {type === "fournisseur" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={LABEL_CLS}>Volume de livraison estimé</label>
+                <select value={volume} onChange={e => setVolume(e.target.value)} className={INPUT_CLS}>
+                  <option value="">-- Sélectionner --</option>
+                  {VOLUMES.map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={LABEL_CLS}>Zone / Ville de livraison</label>
+                <input type="text" value={zoneLivraison} onChange={e => setZoneLiv(e.target.value)}
+                  placeholder="ex : Casablanca, Rabat…" className={INPUT_CLS} />
+              </div>
+            </div>
+          )}
+
+          {/* ── Message libre ─────────────────────────────────────────────── */}
+          <div>
+            <label className={LABEL_CLS}>
+              {type === "client" ? "Informations complémentaires" : "Message / Détails supplémentaires"}
+              <span className="font-normal text-slate-400 ml-1">(optionnel)</span>
+            </label>
+            <textarea rows={2} value={message} onChange={e => setMessage(e.target.value)}
               placeholder={type === "client"
-                ? "Décrivez votre activité, vos besoins, votre fréquence de commande…"
-                : "Décrivez vos produits, capacités de livraison, zones couvertes…"}
-              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 resize-none"
-            />
+                ? "Décrivez vos besoins, votre fréquence de commande…"
+                : "Certifications, délais de livraison, conditions de paiement…"}
+              className={`${INPUT_CLS} resize-none`} />
           </div>
 
+          {/* Notice */}
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
             <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span>Votre demande sera examinée par un responsable de notre équipe. Vous serez contacté(e) sous 24 à 48h ouvrées.</span>
+            <span>Votre demande sera examinée sous 24 à 48h ouvrées. Vous serez contacté(e) par téléphone ou email.</span>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            className="w-full py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+          <button onClick={handleSubmit}
+            className="w-full py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
             Envoyer ma demande
           </button>
         </div>
+
+        <p className="text-center text-xs text-slate-400 mt-4 pb-6">
+          {company.nom || "FreshLink"} — Accès sécurisé partenaires
+        </p>
       </div>
     </div>
   )

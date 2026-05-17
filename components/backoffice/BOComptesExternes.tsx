@@ -37,8 +37,10 @@ export default function BOComptesExternes({ user }: Props) {
   const [showAddFour, setShowAddFour] = useState(false)
   const [clientForm, setClientForm] = useState<Omit<Client, "id" | "createdBy" | "createdAt">>(EMPTY_CLIENT())
   const [fourForm, setFourForm] = useState<Omit<Fournisseur, "id">>(EMPTY_FOURNISSEUR())
+  const [confirmDel, setConfirmDel] = useState<{ type: "client" | "fournisseur"; id: string; nom: string } | null>(null)
 
   const canAdd = ALLOWED_ROLES.includes(user.role) || !!user.canViewExternal
+  const canDelete = ALLOWED_ROLES.includes(user.role) || !!user.canViewExternal
 
   const reload = useCallback(() => {
     setClients(store.getClients())
@@ -91,6 +93,19 @@ export default function BOComptesExternes({ user }: Props) {
     setShowAddFour(false)
     reload()
     flash(true, `Fournisseur "${fourForm.nom}" ajouté.`)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!confirmDel) return
+    if (confirmDel.type === "client") {
+      store.deleteClient(confirmDel.id)
+      flash(true, `Client "${confirmDel.nom}" supprimé.`)
+    } else {
+      store.deleteFournisseur(confirmDel.id)
+      flash(true, `Fournisseur "${confirmDel.nom}" supprimé.`)
+    }
+    setConfirmDel(null)
+    reload()
   }
 
   if (!ALLOWED_ROLES.includes(user.role) && !user.canViewExternal) {
@@ -281,6 +296,33 @@ export default function BOComptesExternes({ user }: Props) {
         </div>
       )}
 
+      {/* Confirmation suppression */}
+      {confirmDel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-bold text-slate-900">Confirmer la suppression</p>
+                <p className="text-sm text-slate-500">Cette action est irréversible</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-700">
+              Supprimer {confirmDel.type === "client" ? "le client" : "le fournisseur"} <strong>&quot;{confirmDel.nom}&quot;</strong> ?
+              {confirmDel.type === "client" && <span className="block mt-1 text-xs text-red-600">⚠️ Toutes les commandes liées resteront mais le client n&apos;apparaîtra plus.</span>}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setConfirmDel(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">Annuler</button>
+              <button onClick={handleConfirmDelete} className="px-5 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors shadow">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Reset password reveal */}
       {resetPwd && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-300 text-sm flex-wrap">
@@ -379,26 +421,38 @@ export default function BOComptesExternes({ user }: Props) {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {pu ? (
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          {pu ? (
+                            <>
+                              <button
+                                onClick={() => toggleActif(pu.id)}
+                                title={pu.actif ? "Désactiver le compte" : "Activer le compte"}
+                                className={`p-1.5 rounded-lg text-xs transition-colors ${pu.actif ? "hover:bg-red-50 hover:text-red-600 text-slate-400" : "hover:bg-green-50 hover:text-green-600 text-slate-400"}`}>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={pu.actif ? "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleResetPwd(pu.id)}
+                                title="Réinitialiser le mot de passe"
+                                className="p-1.5 rounded-lg hover:bg-amber-50 hover:text-amber-600 text-slate-400 transition-colors">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                              </button>
+                            </>
+                          ) : null}
+                          {canDelete && (
                             <button
-                              onClick={() => toggleActif(pu.id)}
-                              title={pu.actif ? "Désactiver le compte" : "Activer le compte"}
-                              className={`p-1.5 rounded-lg text-xs transition-colors ${pu.actif ? "hover:bg-red-50 hover:text-red-600 text-slate-400" : "hover:bg-green-50 hover:text-green-600 text-slate-400"}`}>
+                              onClick={() => setConfirmDel({ type: "client", id: c.id, nom: c.nom })}
+                              title="Supprimer le client"
+                              className="p-1.5 rounded-lg hover:bg-red-100 hover:text-red-700 text-red-400 transition-colors">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={pu.actif ? "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </button>
-                            <button
-                              onClick={() => handleResetPwd(pu.id)}
-                              title="Réinitialiser le mot de passe"
-                              className="p-1.5 rounded-lg hover:bg-amber-50 hover:text-amber-600 text-slate-400 transition-colors">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                              </svg>
-                            </button>
-                          </div>
-                        ) : <span className="text-xs text-slate-300">—</span>}
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -473,26 +527,38 @@ export default function BOComptesExternes({ user }: Props) {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {pu ? (
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          {pu && (
+                            <>
+                              <button
+                                onClick={() => toggleActif(pu.id)}
+                                title={pu.actif ? "Désactiver" : "Activer"}
+                                className={`p-1.5 rounded-lg transition-colors ${pu.actif ? "hover:bg-red-50 hover:text-red-600 text-slate-400" : "hover:bg-green-50 hover:text-green-600 text-slate-400"}`}>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={pu.actif ? "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleResetPwd(pu.id)}
+                                title="Réinitialiser le mot de passe"
+                                className="p-1.5 rounded-lg hover:bg-amber-50 hover:text-amber-600 text-slate-400 transition-colors">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                          {canDelete && (
                             <button
-                              onClick={() => toggleActif(pu.id)}
-                              title={pu.actif ? "Désactiver" : "Activer"}
-                              className={`p-1.5 rounded-lg transition-colors ${pu.actif ? "hover:bg-red-50 hover:text-red-600 text-slate-400" : "hover:bg-green-50 hover:text-green-600 text-slate-400"}`}>
+                              onClick={() => setConfirmDel({ type: "fournisseur", id: f.id, nom: f.nom })}
+                              title="Supprimer le fournisseur"
+                              className="p-1.5 rounded-lg hover:bg-red-100 hover:text-red-700 text-red-400 transition-colors">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={pu.actif ? "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </button>
-                            <button
-                              onClick={() => handleResetPwd(pu.id)}
-                              title="Réinitialiser le mot de passe"
-                              className="p-1.5 rounded-lg hover:bg-amber-50 hover:text-amber-600 text-slate-400 transition-colors">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                              </svg>
-                            </button>
-                          </div>
-                        ) : <span className="text-xs text-slate-300">—</span>}
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )

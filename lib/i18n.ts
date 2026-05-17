@@ -201,7 +201,7 @@ export function t(key: TKey, lang?: AppLang): string {
   const entry = T[key]
   if (!entry) return key
   if (l === "ar") return entry.ar
-  if (l === "en") return (entry as { fr: string; ar: string; en?: string }).en ?? entry.fr
+  if ((l as string) === "en") return (entry as { fr: string; ar: string; en?: string }).en ?? entry.fr
   return entry.fr // "fr" or "fr-ar" → French text
 }
 
@@ -209,7 +209,7 @@ export function t(key: TKey, lang?: AppLang): string {
 export function t3(fr: string, ar: string, en: string): string {
   const l = getLang()
   if (l === "ar") return ar
-  if (l === "en") return en
+  if ((l as string) === "en") return en
   return fr
 }
 

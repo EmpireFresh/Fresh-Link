@@ -8,7 +8,7 @@ import dynamic from "next/dynamic"
 const LoginPage        = dynamic(() => import("@/components/auth/LoginPage"),             { ssr: false, loading: () => <Spinner /> })
 const MobileLayout     = dynamic(() => import("@/components/mobile/MobileLayout"),        { ssr: false, loading: () => <Spinner /> })
 const BackOfficeLayout = dynamic(() => import("@/components/backoffice/BackOfficeLayout"),{ ssr: false, loading: () => <Spinner /> })
-const PortailExterne   = dynamic(() => import("@/components/portail/PortailExterne"),     { ssr: false })
+// Portail externe désactivé — accès uniquement via site Netlify
 const SecurityGuard    = dynamic(() => import("@/components/SecurityGuard"),               { ssr: false })
 
 function Spinner() {
@@ -94,9 +94,31 @@ export default function App() {
     return <LoginPage onLogin={handleLogin} />
   }
 
-  // External roles get the external portal
+  // Clients et fournisseurs : accès portail uniquement via le site web externe
   if (user.role === "fournisseur" || user.role === "client") {
-    return <PortailExterne />
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-sm w-full bg-white rounded-2xl border border-slate-200 shadow-lg p-8 flex flex-col items-center gap-5 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center">
+            <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-base font-bold text-slate-800">Espace client / fournisseur</p>
+            <p className="text-sm text-slate-500 mt-2">
+              Votre espace de commande est accessible depuis notre site web.
+              Veuillez contacter votre commercial pour obtenir le lien d&apos;accès.
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+            Se déconnecter
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const iface = getUserInterface(user)

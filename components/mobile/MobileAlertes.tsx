@@ -19,10 +19,21 @@ interface AlertItem {
   icon: string
 }
 
+interface ArticleAlert {
+  articleId: string
+  articleNom: string
+  famille: string
+  joursAbsence: number
+  nbCommandesHistorique: number
+  stockDisponible?: number
+  prixVente?: number
+}
+
 export default function MobileAlertes({ user }: Props) {
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [filter, setFilter] = useState<"all" | "high" | "medium" | "low">("all")
   const [loading, setLoading] = useState(true)
+  const [selectedClientId, setSelectedClientId] = useState("")
 
   useEffect(() => {
     const alertConfig = store.getAlertConfig()
@@ -143,8 +154,8 @@ export default function MobileAlertes({ user }: Props) {
 
     // ── 4. Objectifs journaliers non atteints ────────────────────────────────
     const todayStr = today.toISOString().split("T")[0]
-    const todayCmds = allCommandes.filter(c => c.date === todayStr && c.prevendeurId === user.id)
-    const todayCA = todayCmds.reduce((s, c) => s + (c.montantTotal ?? 0), 0)
+    const todayCmds = allCommandes.filter(c => c.date === todayStr && c.commercialId === user.id)
+    const todayCA = todayCmds.reduce((s, c) => s + c.lignes.reduce((t, l) => t + l.total, 0), 0)
     const todayClients = new Set(todayCmds.map(c => c.clientId)).size
     const objCA = user.objectifJournalierCA ?? 0
     const objClients = user.objectifJournalierClients ?? 0
@@ -189,6 +200,62 @@ export default function MobileAlertes({ user }: Props) {
     filter === "all" ? alerts : alerts.filter(a => a.severity === filter),
     [alerts, filter]
   )
+
+  // ── Alertes par article pour le client sélectionné ──────────────────────────
+  const allClientsForSelect = useMemo(() =>
+    store.getClients().filter(c => c.prevendeurId === user.id || !c.prevendeurId).sort((a, b) => a.nom.localeCompare(b.nom)),
+    [user.id]
+  )
+
+  const articleAlerts = useMemo((): ArticleAlert[] => {
+    if (!selectedClientId) return []
+    const commandes = store.getCommandes().filter(c => c.clientId === selectedClientId)
+    if (commandes.length === 0) return []
+
+    const today = new Date()
+    const articles = store.getArticles()
+
+    // Compter la fréquence de chaque article dans les commandes
+    const articleFreq: Record<string, { count: number; lastDate: string; prixVente?: number }> = {}
+    commandes.forEach(cmd => {
+      cmd.lignes.forEach(l => {
+        if (!l.articleId) return
+        const prev = articleFreq[l.articleId]
+        if (!prev || l.articleId && cmd.date > (prev.lastDate ?? "")) {
+          articleFreq[l.articleId] = {
+            count: (prev?.count ?? 0) + 1,
+            lastDate: cmd.date,
+            prixVente: l.prixVente ?? l.prixUnitaire,
+          }
+        } else {
+          articleFreq[l.articleId] = { ...prev, count: prev.count + 1 }
+        }
+      })
+    })
+
+    // Générer alertes pour articles commandés ≥ 2 fois mais absents récemment
+    const result: ArticleAlert[] = []
+    Object.entries(articleFreq).forEach(([artId, info]) => {
+      if (info.count < 2) return
+      const art = articles.find(a => a.id === artId)
+      if (!art) return
+      const lastDate = new Date(info.lastDate)
+      const joursAbsence = Math.floor((today.getTime() - lastDate.getTime()) / 86400000)
+      if (joursAbsence >= 7) {
+        result.push({
+          articleId: artId,
+          articleNom: art.nom,
+          famille: art.famille ?? "",
+          joursAbsence,
+          nbCommandesHistorique: info.count,
+          stockDisponible: art.stockDisponible,
+          prixVente: info.prixVente,
+        })
+      }
+    })
+
+    return result.sort((a, b) => b.joursAbsence - a.joursAbsence)
+  }, [selectedClientId])
 
   const counts = useMemo(() => ({
     all: alerts.length,
@@ -324,6 +391,79 @@ export default function MobileAlertes({ user }: Props) {
           })}
         </div>
       )}
+
+      {/* ── Section alertes par article / client ── */}
+      <div className="flex flex-col gap-3 mt-2">
+        <div className="flex items-center gap-2">
+          <span className="text-base">📦</span>
+          <h3 className="font-bold text-sm text-foreground">Alertes articles par client</h3>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Articles habituellement commandés mais absents depuis +7 jours
+        </p>
+
+        <select
+          value={selectedClientId}
+          onChange={e => setSelectedClientId(e.target.value)}
+          className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-400"
+        >
+          <option value="">— Sélectionner un client —</option>
+          {allClientsForSelect.map(c => (
+            <option key={c.id} value={c.id}>{c.nom}</option>
+          ))}
+        </select>
+
+        {selectedClientId && articleAlerts.length === 0 && (
+          <div className="flex flex-col items-center gap-2 py-8">
+            <span className="text-3xl">✅</span>
+            <p className="text-sm font-semibold text-foreground">Tous les articles sont à jour</p>
+            <p className="text-xs text-muted-foreground text-center">
+              Ce client commande régulièrement tous ses articles habituels.
+            </p>
+          </div>
+        )}
+
+        {articleAlerts.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {articleAlerts.map(a => {
+              const isUrgent = a.joursAbsence >= 21
+              const isMedium = a.joursAbsence >= 14
+              const bg   = isUrgent ? "bg-red-50 border-red-200"   : isMedium ? "bg-amber-50 border-amber-200"   : "bg-blue-50 border-blue-200"
+              const badge = isUrgent ? "bg-red-100 text-red-700"    : isMedium ? "bg-amber-100 text-amber-700"    : "bg-blue-100 text-blue-700"
+              const stockOk = a.stockDisponible != null && a.stockDisponible > 0
+              return (
+                <div key={a.articleId} className={`${bg} border rounded-xl p-3 flex items-start gap-3`}>
+                  <span className="text-lg shrink-0">
+                    {isUrgent ? "🚨" : isMedium ? "⚠️" : "📋"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-bold text-sm text-foreground leading-tight">{a.articleNom}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${badge}`}>
+                        J-{a.joursAbsence}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{a.famille}</p>
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                      <span className="text-[10px] text-slate-500">
+                        📊 {a.nbCommandesHistorique}× commandé
+                      </span>
+                      {a.prixVente != null && (
+                        <span className="text-[10px] text-slate-500">
+                          💰 {a.prixVente.toLocaleString("fr-MA")} DH/kg
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-semibold ${stockOk ? "text-green-600" : "text-red-500"}`}>
+                        {stockOk ? `✓ Stock: ${a.stockDisponible} kg` : "⚠ Stock indispo"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Footer info */}
       <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mt-1">

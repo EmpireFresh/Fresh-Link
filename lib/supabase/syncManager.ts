@@ -1,33 +1,3 @@
-"use client"
-
-// ============================================================
-// FreshLink Pro — SyncManager
-// Pushes all existing localStorage data → Supabase on first login.
-// Safe to run multiple times (uses upsert). Shows a progress UI.
-// ============================================================
-
-import { store, JAWAD_ID } from "@/lib/store"
-import {
-  upsertUser, upsertClient, upsertArticle, upsertFournisseur,
-  upsertCommande, upsertVisite, upsertBonAchat, upsertPurchaseOrder,
-  upsertReception, upsertTrip, upsertBonLivraison, upsertRetour,
-  upsertBonPreparation, upsertTransfert, upsertMotif, upsertLivreur,
-  upsertMessage, upsertNotice,
-} from "./db"
-
-// Demo account IDs that must NEVER be pushed to Supabase production
-const DEMO_USER_IDS = new Set([
-  "u1", "u_admin", "u_rc", "u2", "u3", "u5", "u6",
-  "u_cash", "u_fin", "u_ourai", "u_acheteur",
-  "u_ctrl_achat", "u_ctrl_prep", "u_liv_demo",
-  "u_client", "u_four",
-])
-
-function getRealUsers() {
-  // Keep Jawad (super_super_admin) but exclude all demo accounts
-  return store.getUsers().filter(u => u.id === JAWAD_ID || !DEMO_USER_IDS.has(u.id))
-}
-
 export interface SyncProgress {
   step: string
   done: number
@@ -36,65 +6,102 @@ export interface SyncProgress {
   finished: boolean
 }
 
-export type ProgressCallback = (p: SyncProgress) => void
+const TABLES = [
+  "fl_clients", "fl_articles", "fl_commandes", "fl_achats",
+  "fl_stock", "fl_cash", "fl_fournisseurs", "fl_users",
+  "fl_dispatch", "fl_retours", "fl_bons_livraison",
+]
 
-const SYNC_DONE_KEY = "fl_supabase_synced_v1"
+const SYNC_DONE_KEY = "fl_sync_done"
+
+let aborted = false
 
 export function isSyncDone(): boolean {
-  try { return localStorage.getItem(SYNC_DONE_KEY) === "true" } catch { return false }
-}
-
-export function markSyncDone() {
-  try { localStorage.setItem(SYNC_DONE_KEY, "true") } catch { /* noop */ }
+  if (typeof window === "undefined") return false
+  return localStorage.getItem(SYNC_DONE_KEY) === "1"
 }
 
 export function resetSync() {
-  try { localStorage.removeItem(SYNC_DONE_KEY) } catch { /* noop */ }
-}
-
-// Batch helper — push array with progress tracking
-async function batch<T>(
-  items: T[],
-  fn: (item: T) => Promise<void>,
-  label: string,
-  cb: ProgressCallback,
-  errorCount: { n: number }
-) {
-  const total = items.length
-  cb({ step: label, done: 0, total, errors: errorCount.n, finished: false })
-  for (let i = 0; i < items.length; i++) {
-    try {
-      await fn(items[i])
-    } catch {
-      errorCount.n++
-    }
-    cb({ step: label, done: i + 1, total, errors: errorCount.n, finished: false })
+  aborted = false
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(SYNC_DONE_KEY)
   }
 }
 
-export async function runFullSync(cb: ProgressCallback): Promise<void> {
-  const err = { n: 0 }
+export async function runFullSync(onProgress: (p: SyncProgress) => void): Promise<void> {
+  aborted = false
+  const total = TABLES.length
+  let done = 0
+  let errors = 0
 
-  // Only push real (non-demo) users to Supabase
-  await batch(getRealUsers(),              upsertUser,            "Utilisateurs",        cb, err)
-  await batch(store.getClients(),          upsertClient,          "Clients",             cb, err)
-  await batch(store.getArticles(),         upsertArticle,         "Articles",            cb, err)
-  await batch(store.getFournisseurs(),     upsertFournisseur,     "Fournisseurs",        cb, err)
-  await batch(store.getMotifs(),           upsertMotif,           "Motifs retour",       cb, err)
-  await batch(store.getLivreurs?.() ?? [], upsertLivreur,         "Livreurs",            cb, err)
-  await batch(store.getCommandes(),        upsertCommande,        "Commandes",           cb, err)
-  await batch(store.getVisites(),          upsertVisite,          "Visites",             cb, err)
-  await batch(store.getBonsAchat(),        upsertBonAchat,        "Bons achat",          cb, err)
-  await batch(store.getPurchaseOrders(),   upsertPurchaseOrder,   "Purchase orders",     cb, err)
-  await batch(store.getReceptions(),       upsertReception,       "Receptions",          cb, err)
-  await batch(store.getTrips(),            upsertTrip,            "Trips",               cb, err)
-  await batch(store.getBonsLivraison(),    upsertBonLivraison,    "Bons de livraison",   cb, err)
-  await batch(store.getRetours(),          upsertRetour,          "Retours",             cb, err)
-  await batch(store.getBonsPreparation(),  upsertBonPreparation,  "Bons preparation",    cb, err)
-  await batch(store.getTransferts(),       upsertTransfert,       "Transferts stock",    cb, err)
-  await batch(store.getMessages(),         upsertMessage,         "Messages",            cb, err)
-  await batch(store.getNotices(),          upsertNotice,          "Notices",             cb, err)
+  const { createClient } = await import("@/lib/supabase/client")
+  const sb = createClient()
 
-  if (err.n === 0) markSyncDone()
-  cb({ step: "Terminé", done: 1, total: 1, errors: err.n, finished: true })
+  for (const table of TABLES) {
+    if (aborted) break
+
+    onProgress({ step: `Sync ${table}...`, done, total, errors, finished: false })
+
+    try {
+      const { data, error } = await sb
+        .from(table as "fl_clients")
+        .select("id, payload, updated_at")
+        .limit(5000)
+
+      if (error) {
+        errors++
+      } else if (data && Array.isArray(data) && data.length > 0) {
+        type Row = { id: string; payload: Record<string, unknown>; updated_at: string }
+        const rows = data as Row[]
+
+        for (const row of rows) {
+          const key = `${table}:${row.id}`
+          const local = localStorage.getItem(key)
+          if (!local) {
+            localStorage.setItem(key, JSON.stringify(row.payload))
+          } else {
+            try {
+              const localPayload = JSON.parse(local) as Record<string, unknown>
+              const localTs = localPayload.__updated_at as string | undefined
+              if (!localTs || row.updated_at > localTs) {
+                localStorage.setItem(key, JSON.stringify(row.payload))
+              }
+            } catch { /* skip malformed */ }
+          }
+        }
+
+        // Push local-only rows up to Supabase
+        const upserts: { id: string; payload: Record<string, unknown>; updated_at: string }[] = []
+        const prefix = `${table}:`
+        for (let j = 0; j < localStorage.length; j++) {
+          const k = localStorage.key(j)
+          if (!k?.startsWith(prefix)) continue
+          const id = k.slice(prefix.length)
+          const remoteRow = rows.find(r => r.id === id)
+          if (!remoteRow) {
+            try {
+              const payload = JSON.parse(localStorage.getItem(k) ?? "{}") as Record<string, unknown>
+              upserts.push({ id, payload, updated_at: new Date().toISOString() })
+            } catch { /* skip malformed */ }
+          }
+        }
+        if (upserts.length > 0) {
+          const res = await fetch("/api/sync-write", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ table, upserts }),
+          })
+          if (!res.ok) errors++
+        }
+      }
+    } catch {
+      errors++
+    }
+
+    done++
+    window.dispatchEvent(new CustomEvent("fl_store_updated"))
+  }
+
+  localStorage.setItem(SYNC_DONE_KEY, "1")
+  onProgress({ step: "Terminé", done: total, total, errors, finished: true })
 }

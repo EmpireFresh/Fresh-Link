@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { type User, ROLE_LABELS, ROLE_COLORS, isDemoUser } from "@/lib/store"
+import { useLang } from "@/lib/i18n"
 import MobileAchat from "./MobileAchat"
 import MobileCommercial from "./MobileCommercial"
 import MobileLogistique from "./MobileLogistique"
@@ -27,6 +28,7 @@ interface Props {
 type MobileTab = "achat" | "commercial" | "logistique" | "bilan" | "preparation" | "ctrl_achat" | "ctrl_prep" | "ctrl_retour" | "agent_ia" | "avis" | "magasinier" | "pricing" | "bl_validation" | "alertes"
 
 export default function MobileLayout({ user, onLogout }: Props) {
+  const lang = useLang()
   const [isOnline, setIsOnline] = useState(true)
   const isDemo = isDemoUser(user)
 
@@ -65,21 +67,21 @@ export default function MobileLayout({ user, onLogout }: Props) {
     )
   }
 
-  const allTabs: { id: MobileTab; label: string; labelAr: string; icon: React.ReactNode }[] = [
-    { id: "magasinier", label: "Reception",  labelAr: "الاستلام",        icon: T("M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4") },
-    { id: "achat",      label: "Achat",     labelAr: "الشراء",          icon: T("M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z") },
-    { id: "commercial", label: "Commande",  labelAr: "الطلبية",         icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2") },
-    { id: "logistique", label: "Livraison", labelAr: "التوصيل",         icon: T("M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2") },
-    { id: "bilan",      label: "Bilan",     labelAr: "ملخصي",           icon: T("M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z") },
-    { id: "preparation",label: "Prep",      labelAr: "التحضير",         icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01") },
-    { id: "ctrl_achat", label: "Ctrl Ach",  labelAr: "مراقبة الشراء",   icon: T("M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z") },
-    { id: "ctrl_prep",  label: "Ctrl Prep", labelAr: "مراقبة التحضير", icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4") },
-    { id: "ctrl_retour",label: "Retour",    labelAr: "المرتجعات",       icon: T("M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6") },
-    { id: "agent_ia",   label: "IA",        labelAr: "المساعد",         icon: T("M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1 1 .03 2.694-1.338 2.694H4.136c-1.368 0-2.337-1.694-1.338-2.694L4 15.3") },
-    { id: "avis",       label: "Avis",      labelAr: "تقييم",           icon: T("M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z") },
-    { id: "pricing",       label: "Prix",     labelAr: "الأسعار",     icon: T("M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z") },
-    { id: "bl_validation", label: "Mes BL",   labelAr: "وصولاتي",    icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4") },
-    { id: "alertes", label: "Alertes", labelAr: "التنبيهات", icon: T("M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9") },
+  const allTabs: { id: MobileTab; label: string; labelAr: string; labelEn: string; icon: React.ReactNode }[] = [
+    { id: "magasinier", label: "Reception",  labelAr: "الاستلام",        labelEn: "Receipt",    icon: T("M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4") },
+    { id: "achat",      label: "Achat",     labelAr: "الشراء",          labelEn: "Purchase",   icon: T("M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z") },
+    { id: "commercial", label: "Commande",  labelAr: "الطلبية",         labelEn: "Order",      icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2") },
+    { id: "logistique", label: "Livraison", labelAr: "التوصيل",         labelEn: "Delivery",   icon: T("M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2") },
+    { id: "bilan",      label: "Bilan",     labelAr: "ملخصي",           labelEn: "Report",     icon: T("M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z") },
+    { id: "preparation",label: "Prep",      labelAr: "التحضير",         labelEn: "Prep",       icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01") },
+    { id: "ctrl_achat", label: "Ctrl Ach",  labelAr: "مراقبة الشراء",   labelEn: "Ctrl Buy",   icon: T("M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z") },
+    { id: "ctrl_prep",  label: "Ctrl Prep", labelAr: "مراقبة التحضير",  labelEn: "Ctrl Prep",  icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4") },
+    { id: "ctrl_retour",label: "Retour",    labelAr: "المرتجعات",       labelEn: "Return",     icon: T("M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6") },
+    { id: "agent_ia",   label: "IA",        labelAr: "المساعد",         labelEn: "AI",         icon: T("M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1 1 .03 2.694-1.338 2.694H4.136c-1.368 0-2.337-1.694-1.338-2.694L4 15.3") },
+    { id: "avis",       label: "Avis",      labelAr: "تقييم",           labelEn: "Reviews",    icon: T("M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z") },
+    { id: "pricing",       label: "Prix",     labelAr: "الأسعار",       labelEn: "Prices",     icon: T("M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z") },
+    { id: "bl_validation", label: "Mes BL",   labelAr: "وصولاتي",      labelEn: "My DL",      icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4") },
+    { id: "alertes", label: "Alertes", labelAr: "التنبيهات", labelEn: "Alerts", icon: T("M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9") },
   ]
 
   const allowedTabIds: MobileTab[] = ROLE_TAB_ACCESS[user.role] ?? ["achat"]
@@ -184,7 +186,7 @@ export default function MobileLayout({ user, onLogout }: Props) {
                   {tab.icon}
                 </span>
                 <span className={`text-[9px] font-semibold truncate max-w-full px-0.5 ${isActive ? "text-green-700" : "text-slate-400"}`}>
-                  {tab.label}
+                  {(lang as string) === "en" ? tab.labelEn : lang === "ar" ? tab.labelAr : tab.label}
                 </span>
               </button>
             )

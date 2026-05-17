@@ -64,7 +64,7 @@ export default function CameraPermissionsPanel({ currentUser }: { currentUser: U
               style={{ background: "#0f1623", border: `1px solid ${granted ? "#10b98130" : "#1a2535"}` }}
             >
               <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style={{ background: granted ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#374151,#1f2937)" }}>
-                {u.name[0].toUpperCase()}
+                {(u.name?.[0] ?? "?").toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{u.name}</p>

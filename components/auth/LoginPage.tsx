@@ -320,18 +320,10 @@ export default function LoginPage({ onLogin }: Props) {
       if (iface === "both") {
         const forcedView = store.loginGetForcedView(identifier.trim(), password)
         if (forcedView) {
-          // offer biometric after forced-view login
-          setLoggedInUser(user)
-          if (biometricSupported && !getStoredCreds().some(c => c.userId === user.id)) {
-            setShowBiometricTip(true); setLoading(false)
-          } else { onLogin(user, forcedView) }
+          onLogin(user, forcedView)
         } else { setPendingUser(user); setLoading(false) }
       } else {
-        // offer biometric enrollment for non-dual-interface users
-        setLoggedInUser(user)
-        if (biometricSupported && !getStoredCreds().some(c => c.userId === user.id)) {
-          setShowBiometricTip(true); setLoading(false)
-        } else { onLogin(user) }
+        onLogin(user)
       }
     } else { setError("Identifiant ou mot de passe incorrect"); setLoading(false) }
   }
@@ -340,7 +332,7 @@ export default function LoginPage({ onLogin }: Props) {
     if (!forgotEmail.trim() || !forgotEmail.includes("@")) { setForgotStatus("notfound"); return }
     setForgotStatus("sending")
     const users = store.getUsers()
-    const found = users.find(u => u.email.toLowerCase() === forgotEmail.toLowerCase().trim())
+    const found = users.find(u => (u.email ?? "").toLowerCase() === forgotEmail.toLowerCase().trim())
     if (!found) { setForgotStatus("notfound"); return }
     const newPwd = generatePassword()
     const idx = users.findIndex(u => u.id === found.id)
@@ -536,15 +528,106 @@ export default function LoginPage({ onLogin }: Props) {
       </div>
 
       {/* ── Right — login form ─────────────────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center overflow-y-auto p-4 sm:p-6"
+      <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto p-4 sm:p-6 pt-6"
         style={{
           backgroundImage: "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.035) 1px, transparent 0)",
           backgroundSize: "22px 22px",
         }}>
+
+        {/* ── Hero banner — fraîcheur de la ferme à vous ── */}
+        <div className="w-full max-w-[390px] mb-4">
+          <style>{`
+            @keyframes truck-move {
+              0%   { transform: translateX(-8px); }
+              50%  { transform: translateX(8px); }
+              100% { transform: translateX(-8px); }
+            }
+            @keyframes leaf-bounce {
+              0%, 100% { transform: translateY(0) rotate(-5deg); }
+              50%       { transform: translateY(-4px) rotate(5deg); }
+            }
+            @keyframes dot-flow {
+              0%   { opacity: 0.2; transform: scaleX(0.6); }
+              50%  { opacity: 1;   transform: scaleX(1); }
+              100% { opacity: 0.2; transform: scaleX(0.6); }
+            }
+            @keyframes fresh-pulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+              50%       { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+            }
+          `}</style>
+
+          <div className="relative overflow-hidden rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4">
+            {/* Top — logo + brand */}
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <div style={{ animation: "fresh-pulse 2s ease-in-out infinite" }} className="rounded-xl">
+                <FreshLinkLogo size={36} />
+              </div>
+              <div>
+                <p className="text-sm font-black text-green-900">
+                  {companyBrand.nom || companyBrand.appName || "Empire Fresh"}
+                </p>
+                <p className="text-[10px] font-semibold text-green-600">Distribution alimentaire professionnelle</p>
+              </div>
+            </div>
+
+            {/* Journey animation — ferme → camion → vous */}
+            <div className="flex items-center justify-between gap-1 px-2">
+              {/* Farm */}
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-white border border-green-200 flex items-center justify-center shadow-sm"
+                  style={{ animation: "leaf-bounce 2.5s ease-in-out infinite" }}>
+                  <span className="text-xl">🌿</span>
+                </div>
+                <span className="text-[8px] font-bold text-green-700 uppercase tracking-wide">Ferme</span>
+              </div>
+
+              {/* Animated dots left */}
+              <div className="flex-1 flex items-center justify-center gap-0.5">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className="h-1 rounded-full bg-green-400"
+                    style={{ width: "18%", animation: `dot-flow 1.4s ease-in-out ${i * 0.2}s infinite` }} />
+                ))}
+              </div>
+
+              {/* Truck */}
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-white border border-emerald-200 flex items-center justify-center shadow-sm"
+                  style={{ animation: "truck-move 2s ease-in-out infinite" }}>
+                  <span className="text-xl">🚛</span>
+                </div>
+                <span className="text-[8px] font-bold text-emerald-700 uppercase tracking-wide">Livraison</span>
+              </div>
+
+              {/* Animated dots right */}
+              <div className="flex-1 flex items-center justify-center gap-0.5">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className="h-1 rounded-full bg-teal-400"
+                    style={{ width: "18%", animation: `dot-flow 1.4s ease-in-out ${i * 0.2 + 0.3}s infinite` }} />
+                ))}
+              </div>
+
+              {/* You */}
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-white border border-teal-200 flex items-center justify-center shadow-sm"
+                  style={{ animation: "leaf-bounce 2.5s ease-in-out 0.5s infinite" }}>
+                  <span className="text-xl">🏪</span>
+                </div>
+                <span className="text-[8px] font-bold text-teal-700 uppercase tracking-wide">Vous</span>
+              </div>
+            </div>
+
+            {/* Tagline */}
+            <p className="text-center text-[10px] font-semibold text-green-700 mt-3 opacity-80">
+              ✨ Fraîcheur garantie — de la récolte à votre table
+            </p>
+          </div>
+        </div>
+
         <div className="w-full max-w-[390px] flex flex-col gap-3.5">
 
-          {/* Mobile logo */}
-          <div className="md:hidden flex items-center mb-1">
+          {/* Mobile logo — hidden (now shown in hero) */}
+          <div className="md:hidden hidden flex items-center mb-1">
             <FreshLinkLogo size={34} />
           </div>
 
@@ -558,17 +641,7 @@ export default function LoginPage({ onLogin }: Props) {
             </p>
           </div>
 
-          {/* Mode switcher */}
-          <div className="flex rounded-xl overflow-hidden p-1 bg-white border border-slate-200 shadow-sm">
-            <button type="button" onClick={() => { setClientMode(false); setError("") }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${!clientMode ? "bg-green-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-              Personnel / Equipe
-            </button>
-            <button type="button" onClick={() => { setClientMode(true); setError("") }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${clientMode ? "bg-green-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-              Externe / خارجي
-            </button>
-          </div>
+          {/* Mode switcher — accès interne uniquement (portail externe sur le site Netlify) */}
 
           {/* Login form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-2.5" autoComplete="off">

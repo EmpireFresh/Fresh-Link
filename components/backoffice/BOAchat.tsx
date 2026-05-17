@@ -16,6 +16,10 @@ export default function BOAchat() {
   const [showFournisseurForm, setShowFournisseurForm] = useState(false)
   const [tab, setTab] = useState<"bons" | "articles" | "fournisseurs">("bons")
   const [emailConfig, setEmailConfig] = useState(store.getEmailConfig().achat)
+  const [chargeParUnite, setChargeParUnite] = useState<number>(() => {
+    const v = localStorage.getItem("fl_charge_par_unite")
+    return v ? Number(v) : 0
+  })
 
   // Form state
   const [formFournisseurId, setFormFournisseurId] = useState("")
@@ -552,6 +556,27 @@ export default function BOAchat() {
       {/* Articles */}
       {tab === "articles" && (
         <div className="flex flex-col gap-4">
+
+          {/* ── Charge config ── */}
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
+              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span className="text-sm font-semibold text-amber-800">Calcul coût de revient</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-amber-700 font-medium">Charge / unité :</label>
+              <input
+                type="number" min={0} step={0.01} value={chargeParUnite}
+                onChange={e => { const v = Number(e.target.value); setChargeParUnite(v); localStorage.setItem("fl_charge_par_unite", String(v)) }}
+                className="w-24 px-2 py-1.5 rounded-lg border border-amber-300 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400 text-center"
+              />
+              <span className="text-xs text-amber-700 font-semibold">DH/unité</span>
+            </div>
+            <p className="text-xs text-amber-600 ml-auto">Inclut transport, manutention, perte… — réparti sur chaque unité</p>
+          </div>
+
           <div className="flex justify-end">
             <button onClick={() => { setEditArticle(null); setArtNom(""); setArtUnite("kg"); setArtStock(""); setArtPrixAchat(""); setArtPrixVente(""); setShowArticleForm(true) }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium font-sans hover:opacity-90 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -657,47 +682,71 @@ export default function BOAchat() {
             <table className="w-full text-sm font-sans">
               <thead className="bg-muted">
                 <tr>
-                  {["", "Article", "Famille", "Unite", "Stock", "PA (DH)", "Actions"].map(h => (
-                    <th key={h} className="text-left px-3 py-3 text-muted-foreground font-medium text-xs">{h}</th>
-                  ))}
+                  <th className="text-left px-3 py-3 text-muted-foreground font-medium text-xs"></th>
+                  <th className="text-left px-3 py-3 text-muted-foreground font-medium text-xs">Article</th>
+                  <th className="text-left px-3 py-3 text-muted-foreground font-medium text-xs">Famille</th>
+                  <th className="text-left px-3 py-3 text-muted-foreground font-medium text-xs">Unité</th>
+                  <th className="text-right px-3 py-3 text-muted-foreground font-medium text-xs">Stock</th>
+                  <th className="text-right px-3 py-3 text-muted-foreground font-medium text-xs">PA</th>
+                  <th className="text-right px-3 py-3 text-amber-600 font-bold text-xs">+Charge</th>
+                  <th className="text-right px-3 py-3 text-orange-700 font-bold text-xs">Coût revient</th>
+                  <th className="text-right px-3 py-3 text-blue-600 font-bold text-xs">PV</th>
+                  <th className="text-right px-3 py-3 text-green-700 font-bold text-xs">Marge nette</th>
+                  <th className="text-right px-3 py-3 text-muted-foreground font-medium text-xs">Marge%</th>
+                  <th className="px-3 py-3"></th>
                 </tr>
               </thead>
               <tbody>
-                {articles.map(a => (
-                  <tr key={a.id} className="border-t border-border hover:bg-muted/30 transition-colors">
-                    {/* Photo thumbnail */}
-                    <td className="px-3 py-2 w-12">
-                      {a.photo ? (
-                        <img src={a.photo} alt={a.nom}
-                          className="w-9 h-9 rounded-lg object-cover border border-border" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
-                          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01" />
-                          </svg>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
-                      <p className="font-semibold text-foreground">{a.nom}</p>
-                      {a.nomAr && <p className="text-[11px] text-muted-foreground">{a.nomAr}</p>}
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">{a.famille ?? "—"}</span>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{a.unite}</td>
-                    <td className={`px-3 py-2 font-semibold tabular-nums ${a.stockDisponible < 50 ? "text-red-600" : "text-green-600"}`}>
-                      {a.stockDisponible}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground font-mono">{a.prixAchat.toFixed(2)}</td>
-                    <td className="px-3 py-2">
-                      <button onClick={() => openEditArticle(a)}
-                        className="px-3 py-1.5 bg-muted rounded-lg text-xs font-medium hover:bg-muted/70 transition-colors">
-                        Modifier
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {articles.map(a => {
+                  const pv = a.pvMethode === "manuel" ? a.pvValeur
+                    : a.pvMethode === "pourcentage" ? a.prixAchat * (1 + a.pvValeur / 100)
+                    : a.prixAchat + a.pvValeur
+                  const coutRevient = a.prixAchat + chargeParUnite
+                  const margeNette = pv - coutRevient
+                  const margePct = pv > 0 ? (margeNette / pv) * 100 : 0
+                  return (
+                    <tr key={a.id} className="border-t border-border hover:bg-muted/30 transition-colors">
+                      <td className="px-3 py-2 w-12">
+                        {a.photo ? (
+                          <img src={a.photo} alt={a.nom} className="w-9 h-9 rounded-lg object-cover border border-border" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center border border-border">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01" />
+                            </svg>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        <p className="font-semibold text-foreground">{a.nom}</p>
+                        {a.nomAr && <p className="text-[11px] text-muted-foreground">{a.nomAr}</p>}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">{a.famille ?? "—"}</span>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{a.unite}</td>
+                      <td className={`px-3 py-2 text-right font-semibold tabular-nums ${a.stockDisponible < 50 ? "text-red-600" : "text-green-600"}`}>
+                        {a.stockDisponible}
+                      </td>
+                      <td className="px-3 py-2 text-right text-muted-foreground font-mono text-xs">{a.prixAchat.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right text-amber-600 font-mono text-xs">+{chargeParUnite.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right text-orange-700 font-mono font-bold text-xs">{coutRevient.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right text-blue-600 font-mono text-xs">{pv.toFixed(2)}</td>
+                      <td className={`px-3 py-2 text-right font-mono font-bold text-xs ${margeNette >= 0 ? "text-green-700" : "text-red-600"}`}>
+                        {margeNette >= 0 ? "+" : ""}{margeNette.toFixed(2)}
+                      </td>
+                      <td className={`px-3 py-2 text-right font-bold text-xs ${margePct >= 20 ? "text-green-600" : margePct >= 10 ? "text-amber-600" : "text-red-600"}`}>
+                        {margePct.toFixed(1)}%
+                      </td>
+                      <td className="px-3 py-2">
+                        <button onClick={() => openEditArticle(a)}
+                          className="px-3 py-1.5 bg-muted rounded-lg text-xs font-medium hover:bg-muted/70 transition-colors">
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

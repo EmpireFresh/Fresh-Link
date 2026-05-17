@@ -198,6 +198,62 @@ export default function BOFinance({ user }: { user: { id: string; name: string; 
     })
   }, [actionnaires, synthese.beneficeDistribuable])
 
+  // ── Profitabilité par jour ────────────────────────────────────────────────
+  const profitParJour = useMemo(() => {
+    const bonsAchat = store.getBonsAchat()
+    const commandes = store.getCommandes()
+    const inPeriod = (date: string) => date >= periodFilter.from && date <= periodFilter.to
+
+    // Group days that have activity
+    const days = new Set<string>()
+    commandes.filter(c => inPeriod(c.date)).forEach(c => days.add(c.date))
+    bonsAchat.filter(b => inPeriod(b.date) && b.statut === "validé").forEach(b => days.add(b.date))
+
+    const totalChargesPeriod = charges.filter(c => inPeriod(c.date)).reduce((s, c) => s + c.montant, 0)
+    const nbJours = days.size || 1
+
+    return Array.from(days).sort().map(day => {
+      const ca = commandes
+        .filter(c => c.date === day && ["valide", "livre", "en_transit"].includes(c.statut))
+        .reduce((s, c) => s + c.lignes.reduce((ls, l) => ls + l.quantite * l.prixVente, 0), 0)
+      const coutAchat = bonsAchat
+        .filter(b => b.date === day && b.statut === "validé")
+        .reduce((s, b) => s + b.lignes.reduce((ls, l) => ls + l.quantite * l.prixAchat, 0), 0)
+      const chargesJour = totalChargesPeriod / nbJours
+      const marge = ca - coutAchat
+      const profit = marge - chargesJour
+      const margePct = ca > 0 ? (marge / ca) * 100 : 0
+      return { day, ca, coutAchat, chargesJour, marge, profit, margePct }
+    })
+  }, [periodFilter, charges])
+
+  // ── Profitabilité par trip (BL) ───────────────────────────────────────────
+  const profitParTrip = useMemo(() => {
+    const inPeriod = (date: string) => date >= periodFilter.from && date <= periodFilter.to
+    const commandes = store.getCommandes()
+    const bonsAchat = store.getBonsAchat()
+
+    const totalChargesPeriod = charges.filter(c => inPeriod(c.date)).reduce((s, c) => s + c.montant, 0)
+    const nbBls = bls.filter(b => inPeriod(b.date)).length || 1
+
+    return bls.filter(b => inPeriod(b.date)).map(bl => {
+      // CA: the commande linked to this BL
+      const blCmds = commandes.filter(c => c.id === bl.commandeId)
+      const ca = blCmds.length > 0
+        ? blCmds.reduce((s, c) => s + c.lignes.reduce((ls, l) => ls + l.quantite * l.prixVente, 0), 0)
+        : bl.montantTotal
+      // Coût achat: bons achat same day
+      const coutAchat = bonsAchat
+        .filter(b => b.date === bl.date && b.statut === "validé")
+        .reduce((s, b) => s + b.lignes.reduce((ls, l) => ls + l.quantite * l.prixAchat, 0), 0) / nbBls
+      const chargesTrip = totalChargesPeriod / nbBls
+      const marge = ca - coutAchat
+      const profit = marge - chargesTrip
+      const margePct = ca > 0 ? (marge / ca) * 100 : 0
+      return { bl, ca, coutAchat, chargesTrip, marge, profit, margePct, nbCommandes: blCmds.length }
+    }).sort((a, b) => b.bl.date.localeCompare(a.bl.date))
+  }, [periodFilter, bls, charges])
+
   // Caisse filtered
   const caisseFiltree = useMemo(() => caisse.filter(e => {
     const matchMois = !caisseFilter.mois || e.date.startsWith(caisseFilter.mois)
@@ -464,6 +520,94 @@ export default function BOFinance({ user }: { user: { id: string; name: string; 
                 )
               })}
             </div>
+          </div>
+
+          {/* ── Profitabilité par jour ── */}
+          <div className="bg-card rounded-2xl border border-border p-5">
+            <h3 className="font-bold text-sm mb-1">Rentabilite par jour / الربحية اليومية</h3>
+            <p className="text-xs text-muted-foreground mb-4">Les charges sont reparties equitablement sur le nombre de jours actifs de la periode.</p>
+            {profitParJour.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune activite dans la periode selectionnee.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-sans">
+                  <thead className="bg-muted">
+                    <tr>
+                      {["Date", "CA", "Coût achat", "Marge brute", "Charges/j", "Profit net", "Marge%"].map(h => (
+                        <th key={h} className={`px-3 py-2.5 font-semibold text-muted-foreground ${h === "Date" ? "text-left" : "text-right"}`}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profitParJour.map(row => (
+                      <tr key={row.day} className="border-t border-border hover:bg-muted/20 transition-colors">
+                        <td className="px-3 py-2.5 font-semibold text-foreground">{row.day}</td>
+                        <td className="px-3 py-2.5 text-right font-mono text-blue-600 font-semibold">{fmt(row.ca)}</td>
+                        <td className="px-3 py-2.5 text-right font-mono text-red-600">{fmt(row.coutAchat)}</td>
+                        <td className={`px-3 py-2.5 text-right font-mono font-bold ${row.marge >= 0 ? "text-emerald-600" : "text-red-600"}`}>{fmt(row.marge)}</td>
+                        <td className="px-3 py-2.5 text-right font-mono text-orange-600">{fmt(row.chargesJour)}</td>
+                        <td className={`px-3 py-2.5 text-right font-mono font-bold ${row.profit >= 0 ? "text-green-700" : "text-red-700"}`}>
+                          {row.profit >= 0 ? "+" : ""}{fmt(row.profit)}
+                        </td>
+                        <td className={`px-3 py-2.5 text-right font-bold ${row.margePct >= 25 ? "text-green-600" : row.margePct >= 15 ? "text-amber-600" : "text-red-600"}`}>
+                          {row.margePct.toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="border-t-2 border-border bg-muted/30 font-bold">
+                      <td className="px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">Total</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-blue-700 font-bold">{fmt(profitParJour.reduce((s, r) => s + r.ca, 0))}</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-red-700 font-bold">{fmt(profitParJour.reduce((s, r) => s + r.coutAchat, 0))}</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-emerald-700 font-bold">{fmt(profitParJour.reduce((s, r) => s + r.marge, 0))}</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-orange-700">{fmt(profitParJour.reduce((s, r) => s + r.chargesJour, 0))}</td>
+                      <td className="px-3 py-2.5 text-right font-mono font-bold text-green-800">{fmt(profitParJour.reduce((s, r) => s + r.profit, 0))}</td>
+                      <td className="px-3 py-2.5 text-right text-muted-foreground">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* ── Profitabilité par trip ── */}
+          <div className="bg-card rounded-2xl border border-border p-5">
+            <h3 className="font-bold text-sm mb-1">Rentabilite par trip (BL) / الربحية حسب الرحلة</h3>
+            <p className="text-xs text-muted-foreground mb-4">Chaque bon de livraison = 1 trip. Les charges et achats sont repartis proportionnellement.</p>
+            {profitParTrip.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun bon de livraison dans la periode selectionnee.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-sans">
+                  <thead className="bg-muted">
+                    <tr>
+                      {["BL", "Date", "Livreur", "Cmds", "CA", "Coût achat", "Marge brute", "Charges/trip", "Profit net", "Marge%"].map(h => (
+                        <th key={h} className={`px-3 py-2.5 font-semibold text-muted-foreground ${["BL", "Date", "Livreur"].includes(h) ? "text-left" : "text-right"}`}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profitParTrip.map(row => (
+                      <tr key={row.bl.id} className="border-t border-border hover:bg-muted/20 transition-colors">
+                        <td className="px-3 py-2.5 font-mono text-muted-foreground">{row.bl.id.slice(0, 8)}</td>
+                        <td className="px-3 py-2.5 font-semibold text-foreground">{row.bl.date}</td>
+                        <td className="px-3 py-2.5 text-muted-foreground">{row.bl.livreurNom ?? "—"}</td>
+                        <td className="px-3 py-2.5 text-right font-semibold">{row.nbCommandes}</td>
+                        <td className="px-3 py-2.5 text-right font-mono text-blue-600 font-semibold">{fmt(row.ca)}</td>
+                        <td className="px-3 py-2.5 text-right font-mono text-red-600">{fmt(row.coutAchat)}</td>
+                        <td className={`px-3 py-2.5 text-right font-mono font-bold ${row.marge >= 0 ? "text-emerald-600" : "text-red-600"}`}>{fmt(row.marge)}</td>
+                        <td className="px-3 py-2.5 text-right font-mono text-orange-600">{fmt(row.chargesTrip)}</td>
+                        <td className={`px-3 py-2.5 text-right font-mono font-bold ${row.profit >= 0 ? "text-green-700" : "text-red-700"}`}>
+                          {row.profit >= 0 ? "+" : ""}{fmt(row.profit)}
+                        </td>
+                        <td className={`px-3 py-2.5 text-right font-bold ${row.margePct >= 25 ? "text-green-600" : row.margePct >= 15 ? "text-amber-600" : "text-red-600"}`}>
+                          {row.margePct.toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

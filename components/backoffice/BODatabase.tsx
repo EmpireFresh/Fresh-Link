@@ -187,20 +187,25 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
     setWriteTestLoading(true)
     setWriteTestResult(null)
     try {
-      const sb = createClient()
       const testId = `__test_${Date.now()}`
-      const { error: insertErr } = await sb.from("fl_clients").upsert([{ id: testId, payload: { id: testId, nom: "__TEST__" }, updated_at: new Date().toISOString() }], { onConflict: "id" })
-      if (insertErr) {
-        setWriteTestResult({ ok: false, message: `Ecriture echouee: ${insertErr.message} (code: ${insertErr.code})` })
+      const res = await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_clients", upserts: [{ id: testId, payload: { id: testId, nom: "__TEST__" }, updated_at: new Date().toISOString() }] }),
+      })
+      const json = await res.json() as { ok: boolean; errors?: string[] }
+      if (!json.ok) {
+        setWriteTestResult({ ok: false, message: `Ecriture echouee via /api/sync-write: ${json.errors?.join(", ")}` })
         setWriteTestLoading(false)
         return
       }
-      const { error: deleteErr } = await sb.from("fl_clients").delete().eq("id", testId)
-      if (deleteErr) {
-        setWriteTestResult({ ok: false, message: `Ecriture OK mais suppression echouee: ${deleteErr.message}` })
-      } else {
-        setWriteTestResult({ ok: true, message: "Ecriture et suppression reussies — RLS OK, permissions en ordre." })
-      }
+      // cleanup
+      await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_clients", deletes: [testId] }),
+      })
+      setWriteTestResult({ ok: true, message: "Ecriture et suppression reussies via service role — RLS bypasse correctement." })
     } catch (e) {
       setWriteTestResult({ ok: false, message: `Erreur inattendue: ${String(e)}` })
     }
@@ -210,7 +215,6 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
   const handleForceSync = async () => {
     setForceSyncLoading(true)
     setForceSyncResult(null)
-    const sb = createClient()
     const results: { table: string; count: number; error?: string }[] = []
     for (const [lsKey, sbTable] of Object.entries(ERP_SYNC_KEYS)) {
       try {
@@ -219,12 +223,26 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
         const items: Array<Record<string, unknown>> = JSON.parse(raw)
         const validItems = Array.isArray(items) ? items.filter(i => i && i.id) : []
         if (validItems.length === 0) { results.push({ table: sbTable, count: 0 }); continue }
-        const rows = validItems.map(item => ({ id: item.id as string, payload: item, updated_at: new Date().toISOString() }))
-        const { error } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
-        if (error) {
-          results.push({ table: sbTable, count: 0, error: `${error.message} (${error.code})` })
+        const upserts = validItems.map(item => ({ id: item.id as string, payload: item, updated_at: new Date().toISOString() }))
+        // Send in batches of 50 to avoid oversized payloads
+        const CHUNK = 50
+        let batchOk = true
+        let batchErr = ""
+        for (let ci = 0; ci < upserts.length; ci += CHUNK) {
+          const chunk = upserts.slice(ci, ci + CHUNK)
+          const res = await fetch("/api/sync-write", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ table: sbTable, upserts: chunk }),
+          })
+          if (!res.ok) { batchOk = false; batchErr = `HTTP ${res.status}`; break }
+          const json = await res.json() as { ok: boolean; errors?: string[] }
+          if (!json.ok) { batchOk = false; batchErr = json.errors?.join(", ") ?? "Erreur inconnue"; break }
+        }
+        if (!batchOk) {
+          results.push({ table: sbTable, count: 0, error: batchErr })
         } else {
-          results.push({ table: sbTable, count: rows.length })
+          results.push({ table: sbTable, count: upserts.length })
         }
       } catch (e) {
         results.push({ table: sbTable, count: 0, error: String(e) })

@@ -1639,6 +1639,33 @@ const DEFAULT_USERS: User[] = [
     fournisseurId: "f1",  // linked to Marche Central Casablanca
     telephone: "212600000001",
   },
+  // === PREVENDEUR — JARIRI ===
+  {
+    id: "u_jariri", name: "Jariri", email: "jariri@freshlink.ma", password: "jariri2024",
+    role: "prevendeur", secteur: "Nord", actif: true,
+    objectifClients: 25, objectifTonnage: 600,
+    objectifJournalierCA: 2500, objectifHebdomadaireCA: 15000, objectifMensuelCA: 60000,
+    objectifJournalierClients: 6, objectifHebdomadaireClients: 30, objectifMensuelClients: 100,
+    notifCommercial: true,
+  },
+  // === QUALITE — S. ABDELILAH (Responsable Qualité) ===
+  {
+    id: "u_abdelilah", name: "S. Abdelilah", email: "abdelilah@freshlink.ma", password: "abdelilah2024",
+    role: "qualite", actif: true, accessType: "backoffice" as const,
+    canViewStock: true, canViewAchat: true, canViewCommercial: true,
+  },
+  // === QUALITE — ABDELALI (Contrôleur Qualité) ===
+  {
+    id: "u_abdelali", name: "Abdelali", email: "abdelali@freshlink.ma", password: "abdelali2024",
+    role: "qualite", actif: true, accessType: "backoffice" as const,
+    canViewStock: true, canViewAchat: true,
+  },
+  // === COMPTABLE — THOMAS (Contrôleur de Gestion) ===
+  {
+    id: "u_thomas", name: "Thomas", email: "thomas@freshlink.ma", password: "thomas2024",
+    role: "comptable", actif: true, accessType: "backoffice" as const,
+    canViewFinance: true, canViewCash: true, canViewRecap: true, canViewAchat: true,
+  },
 ]
 
 const DEFAULT_CLIENTS: Client[] = [
@@ -1968,7 +1995,7 @@ const DEMO_EMAILS = new Set([
 
 export function isDemoUser(user: User | null): boolean {
   if (!user) return false
-  return DEMO_EMAILS.has(user.email.toLowerCase())
+  return DEMO_EMAILS.has((user.email ?? "").toLowerCase())
 }
 
 // Wraps a write function — silently no-ops for demo users
@@ -2007,8 +2034,8 @@ export const store = {
     const users = store.getUsers()
     return users.find(u => {
       const idMatch =
-        u.email.toLowerCase() === identifier.toLowerCase() ||
-        u.name.toLowerCase() === identifier.toLowerCase()
+        (u.email ?? "").toLowerCase() === identifier.toLowerCase() ||
+        (u.name ?? "").toLowerCase() === identifier.toLowerCase()
       if (!idMatch || !u.actif) return false
       // Check all password variants
       return (
@@ -2025,8 +2052,8 @@ export const store = {
     const users = store.getUsers()
     const u = users.find(u => {
       const idMatch =
-        u.email.toLowerCase() === identifier.toLowerCase() ||
-        u.name.toLowerCase() === identifier.toLowerCase()
+        (u.email ?? "").toLowerCase() === identifier.toLowerCase() ||
+        (u.name ?? "").toLowerCase() === identifier.toLowerCase()
       return idMatch && u.actif
     })
     if (!u) return null
@@ -2052,7 +2079,7 @@ export const store = {
       if (u.email && u.email.toLowerCase() === lower) return true
       if (u.phone && u.phone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
       if (u.telephone && u.telephone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
-      if (subtype !== "chr" && u.name.toLowerCase() === lower) return true
+      if (subtype !== "chr" && u.name && u.name.toLowerCase() === lower) return true
       return false
     }) || null
   },
@@ -2078,6 +2105,7 @@ export const store = {
     const idx = cl.findIndex(c => c.id === id)
     if (idx >= 0) { cl[idx] = { ...cl[idx], ...updates }; store.saveClients(cl) }
   },
+  deleteClient: (id: string) => { store.saveClients(store.getClients().filter(c => c.id !== id)) },
 
   // --- Articles ---
   getArticles: (): Article[] => getLS("fl_articles", DEFAULT_ARTICLES),
@@ -3344,7 +3372,17 @@ export interface AccountRequest {
   societe: string
   ice?: string
   ville?: string
+  adresse?: string
   message?: string
+  // Client-specific
+  typeClient?: "particulier" | "marchand" | "restaurant" | "hotel" | "traiteur" | "supermarche" | "autre"
+  nbCouverts?: number
+  nbChambres?: number
+  // Fournisseur-specific
+  typeFournisseur?: "producteur" | "grossiste" | "importateur" | "transformateur"
+  familles?: string[]
+  volumeEstime?: string
+  zoneLivraison?: string
   statut: AccountRequestStatut
   createdAt: string
   approvedAt?: string

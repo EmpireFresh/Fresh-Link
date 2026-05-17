@@ -8,7 +8,7 @@
 //     id TEXT PRIMARY KEY, payload JSONB, updated_at TIMESTAMPTZ
 //
 //   WRITE PATH  : localStorage.setItem intercepté →
-//     diff old/new → upsert { id, payload: item } vers Supabase
+//     diff old/new → POST /api/sync-write (service_role, bypasse RLS)
 //
 //   READ PATH   : Supabase Realtime →
 //     event reçu → extraire payload.payload (l'objet réel) →
@@ -95,6 +95,24 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
       if (val) prevRef.current[key] = val
     }
 
+    // ── Helper : push rows via service_role route (bypasse RLS) ───────────
+    async function pushViaApi(sbTable: string, rows: ReturnType<typeof toRow>[]): Promise<number> {
+      if (rows.length === 0) return 0
+      const res = await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: sbTable, upserts: rows }),
+      })
+      const json = await res.json() as { ok: boolean; errors?: string[] }
+      if (!json.ok) {
+        const msg = json.errors?.join(", ") ?? "Erreur inconnue"
+        syncErrors.current.push({ table: sbTable, error: msg, code: "server", ts: new Date().toISOString() })
+        window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: msg, code: "server" } }))
+        return 0
+      }
+      return rows.length
+    }
+
     // ── 1. WRITE PATH : intercepter localStorage.setItem ───────────────────
     const originalSetItem = localStorage.setItem.bind(localStorage)
 
@@ -127,25 +145,26 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
         )
         const deleted = prevItems.filter(i => i.id && !newSet.has(i.id))
 
-        if (upserted.length > 0) {
+        if (upserted.length > 0 || deleted.length > 0) {
           const rows = upserted.map(toRow)
-          console.log(`[LiveSync↑] Envoi ${sbTable} — ${upserted.length} item(s)`)
-          void sb.from(sbTable).upsert(rows, { onConflict: "id" }).then(({ error }) => {
-            if (error) {
-              console.error(`[LiveSync↑] ERREUR ${sbTable}:`, error.message, error)
-              syncErrors.current.push({ table: sbTable, error: error.message, code: error.code, ts: new Date().toISOString() })
-              window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: error.message, code: error.code } }))
+          const delIds = deleted.map(i => i.id as string).filter(Boolean)
+          console.log(`[LiveSync↑] Envoi ${sbTable} — ${upserted.length} upsert(s), ${delIds.length} delete(s)`)
+          void fetch("/api/sync-write", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ table: sbTable, upserts: rows, deletes: delIds }),
+          }).then(r => r.json()).then((res: { ok: boolean; errors?: string[] }) => {
+            if (!res.ok) {
+              const msg = res.errors?.join(", ") ?? "Erreur inconnue"
+              console.error(`[LiveSync↑] ERREUR ${sbTable}:`, msg)
+              syncErrors.current.push({ table: sbTable, error: msg, code: "server", ts: new Date().toISOString() })
+              window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: msg, code: "server" } }))
             } else {
-              console.log(`[LiveSync↑] ✅ ${sbTable} — ${upserted.length} sauvegardé(s) dans Supabase`)
+              console.log(`[LiveSync↑] ✅ ${sbTable} — ${upserted.length} sauvegardé(s)`)
               window.dispatchEvent(new CustomEvent("fl_sync_success", { detail: { table: sbTable, count: upserted.length } }))
             }
-          })
-        }
-
-        for (const item of deleted) {
-          void sb.from(sbTable).delete().eq("id", item.id as string).then(({ error }) => {
-            if (error) console.error(`[LiveSync↑] ERREUR delete ${sbTable}:`, error.message)
-            else console.log(`[LiveSync↑] 🗑️ ${sbTable} — supprimé ${item.id}`)
+          }).catch(err => {
+            console.error(`[LiveSync↑] fetch error ${sbTable}:`, err)
           })
         }
       } catch {
@@ -156,6 +175,15 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
     // ── 2. READ PATH : Supabase Realtime ───────────────────────────────────
     const channel = sb.channel("freshlink-erp-realtime-v3", {
       config: { broadcast: { self: false } },
+    })
+
+    // ── BROADCAST: force restart (super admin → tous les appareils) ───────────
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    channel.on("broadcast" as any, { event: "force_restart" }, (payload: { payload?: { requestedBy?: string } }) => {
+      const by = payload?.payload?.requestedBy ?? "Admin"
+      console.log(`[LiveSync] Force restart demandé par ${by} — rechargement dans 2s...`)
+      window.dispatchEvent(new CustomEvent("fl_force_restart", { detail: { requestedBy: by } }))
+      setTimeout(() => window.location.reload(), 2000)
     })
 
     for (const [lsKey, sbTable] of Object.entries(ERP_KEYS)) {
@@ -208,6 +236,7 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
     })
 
     // ── 3. Bootstrap : sync bidirectionnel au démarrage ────────────────────
+    // Utilise /api/sync-read (service_role) au lieu du client anon pour bypasser RLS
     void (async () => {
       let tablesFromSupabase = 0
       let itemsPushedToSupabase = 0
@@ -215,31 +244,26 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
       try {
         for (const [lsKey, sbTable] of Object.entries(ERP_KEYS)) {
           try {
-            const { data, error } = await sb.from(sbTable).select("id, payload").limit(1000)
+            // Lecture via service_role (bypasse RLS) — pas de clé anon exposée
+            const res = await fetch(`/api/sync-read?table=${encodeURIComponent(sbTable)}`)
+            const json = await res.json() as { ok: boolean; data?: Array<{ id: string; payload: unknown }>; error?: string }
 
-            // Table n'existe pas encore → créer depuis localStorage
-            if (error) {
-              console.warn(`[LiveSync] Bootstrap — table ${sbTable} inaccessible:`, error.message)
-              window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: error.message, code: error.code } }))
-              // Pousser les données locales vers Supabase
+            // Table inaccessible → tenter de pousser les données locales
+            if (!json.ok) {
+              console.warn(`[LiveSync] Bootstrap — table ${sbTable} inaccessible:`, json.error)
+              window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: json.error ?? "Erreur lecture", code: "read_error" } }))
               const raw = localStorage.getItem(lsKey)
               if (raw) {
                 const localItems: Array<Record<string, unknown>> = JSON.parse(raw)
                 if (localItems.length > 0) {
                   const rows = localItems.filter(i => i.id).map(toRow)
-                  const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
-                  if (pushErr) {
-                    syncErrors.current.push({ table: sbTable, error: pushErr.message, code: pushErr.code, ts: new Date().toISOString() })
-                    window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: pushErr.message, code: pushErr.code } }))
-                  } else {
-                    itemsPushedToSupabase += rows.length
-                  }
+                  itemsPushedToSupabase += await pushViaApi(sbTable, rows)
                 }
               }
               continue
             }
 
-            const sbItems = (data ?? []).map(fromRow).filter(r => r && r.id)
+            const sbItems = (json.data ?? []).map(row => fromRow(row as Record<string, unknown>)).filter(r => r && r.id)
             const raw = localStorage.getItem(lsKey)
             const localItems: Array<Record<string, unknown>> = raw ? JSON.parse(raw) : []
 
@@ -252,31 +276,22 @@ export default function LiveSyncProvider({ children }: { children?: React.ReactN
             const localOnly = localItems.filter(i => i.id && !sbIds.has(i.id as string))
             if (localOnly.length > 0) {
               const rows = localOnly.filter(i => i.id).map(toRow)
-              const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
-              if (pushErr) {
-                syncErrors.current.push({ table: sbTable, error: pushErr.message, code: pushErr.code, ts: new Date().toISOString() })
-                window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: pushErr.message, code: pushErr.code } }))
-              } else {
-                itemsPushedToSupabase += rows.length
-              }
+              itemsPushedToSupabase += await pushViaApi(sbTable, rows)
             }
 
             if (sbItems.length > 0) {
               const merged = Array.from(localMap.values())
-              const json = JSON.stringify(merged)
-              originalSetItem(lsKey, json)
-              prevRef.current[lsKey] = json
+              const mergedJson = JSON.stringify(merged)
+              originalSetItem(lsKey, mergedJson)
+              prevRef.current[lsKey] = mergedJson
               tablesFromSupabase++
             } else if (localItems.length > 0) {
               // Supabase vide, pousser tout le local
               const rows = localItems.filter(i => i.id).map(toRow)
-              const { error: pushErr } = await sb.from(sbTable).upsert(rows, { onConflict: "id" })
-              if (pushErr) {
-                syncErrors.current.push({ table: sbTable, error: pushErr.message, code: pushErr.code, ts: new Date().toISOString() })
-                window.dispatchEvent(new CustomEvent("fl_sync_error", { detail: { table: sbTable, error: pushErr.message, code: pushErr.code } }))
-              } else {
-                itemsPushedToSupabase += rows.length
-                window.dispatchEvent(new CustomEvent("fl_sync_success", { detail: { table: sbTable, count: rows.length } }))
+              const pushed = await pushViaApi(sbTable, rows)
+              if (pushed > 0) {
+                itemsPushedToSupabase += pushed
+                window.dispatchEvent(new CustomEvent("fl_sync_success", { detail: { table: sbTable, count: pushed } }))
               }
             }
           } catch (tableErr) {
