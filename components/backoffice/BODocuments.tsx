@@ -632,10 +632,26 @@ export default function BODocuments({ user }: { user: { id: string; name: string
 
   const load = useCallback(async () => {
     setLoading(true)
+
+    // Toujours charger le localStorage en premier (fallback quand table Supabase inexistante)
+    const localDocs: Document[] = (() => {
+      try { return JSON.parse(localStorage.getItem("fl_documents_local") ?? "[]") } catch { return [] }
+    })()
+
     try {
-      const { data } = await sb.from("fl_documents").select("*").order("created_at", { ascending: false })
-      setDocs((data ?? []) as Document[])
-    } catch { /* offline */ }
+      const { data, error } = await sb.from("fl_documents").select("*").order("created_at", { ascending: false })
+      if (!error && data) {
+        // Merge : Supabase + local (local en dernier = complément si absent de Supabase)
+        const sbIds = new Set((data as Document[]).map(d => d.id))
+        const extra = localDocs.filter(d => !sbIds.has(d.id))
+        setDocs([...(data as Document[]), ...extra])
+      } else {
+        // Table inexistante ou offline → afficher uniquement le local
+        setDocs(localDocs.sort((a, b) => b.created_at.localeCompare(a.created_at)))
+      }
+    } catch {
+      setDocs(localDocs.sort((a, b) => b.created_at.localeCompare(a.created_at)))
+    }
 
     // Load CHR clients — local store + Supabase simultaneously, merge and deduplicate
     // CHR = type==="chr" OR categorie==="chr"
@@ -684,22 +700,68 @@ export default function BODocuments({ user }: { user: { id: string; name: string
 
   useEffect(() => { load() }, [load])
 
+  // ── Helpers ──────────────────────────────────────────────────
+  const extractError = (e: unknown): string => {
+    if (e instanceof Error) return e.message
+    const obj = e as Record<string, unknown>
+    return (obj?.message as string) ?? (obj?.details as string) ?? (obj?.hint as string) ?? JSON.stringify(e)
+  }
+
+  const genNumeroLocal = (type: DocType): string => {
+    const prefix = type === "devis" ? "DEV" : type === "contrat" ? "CTR" : type === "facture" ? "FAC" : "DOC"
+    const yy = new Date().getFullYear().toString().slice(-2)
+    const seq = String(Date.now()).slice(-4)
+    return `${prefix}-${yy}-${seq}`
+  }
+
+  const saveDocLocal = (doc: Document) => {
+    try {
+      const stored: Document[] = JSON.parse(localStorage.getItem("fl_documents_local") ?? "[]")
+      const idx = stored.findIndex(d => d.id === doc.id)
+      if (idx >= 0) stored[idx] = doc; else stored.unshift(doc)
+      localStorage.setItem("fl_documents_local", JSON.stringify(stored))
+    } catch { /* ignore */ }
+  }
+
   const handleSave = async (doc: Document) => {
     setSaving(true)
     try {
-      const { data: numData } = await sb.rpc("generate_document_number", { p_type: doc.type_doc } as any)
-      const saveDoc = { ...doc, numero: doc.numero.startsWith("TEMP") ? (numData ?? doc.numero) : doc.numero }
+      // 1. Générer numéro (RPC ou fallback local)
+      let numero = doc.numero
+      if (numero.startsWith("TEMP")) {
+        try {
+          const { data: numData } = await sb.rpc("generate_document_number", { p_type: doc.type_doc } as any)
+          numero = (numData as string) ?? genNumeroLocal(doc.type_doc)
+        } catch {
+          numero = genNumeroLocal(doc.type_doc)
+        }
+      }
+      const saveDoc = { ...doc, numero }
 
+      // 2. Sauvegarder dans Supabase
       const { error } = await sb.from("fl_documents").upsert(saveDoc as any)
-      if (error) throw error
-      setMsg({ ok: true, text: "Document enregistré." })
+      if (error) {
+        // Table inexistante ou erreur réseau → fallback localStorage
+        const code = (error as Record<string,unknown>)?.code as string
+        const isTableMissing = code === "42P01" || code === "PGRST116"
+        saveDocLocal(saveDoc)
+        if (isTableMissing) {
+          setMsg({ ok: true, text: `✅ Document ${saveDoc.numero} sauvegardé localement. (Table Supabase fl_documents à créer — voir SQL ci-dessous)` })
+        } else {
+          throw error
+        }
+      } else {
+        setMsg({ ok: true, text: `✅ Document ${saveDoc.numero} enregistré.` })
+      }
+
+      // 3. Recharger liste (inclut localStorage)
       await load()
       setView("list")
     } catch (e) {
-      setMsg({ ok: false, text: `Erreur: ${e instanceof Error ? e.message : String(e)}` })
+      setMsg({ ok: false, text: `Erreur: ${extractError(e)}` })
     } finally {
       setSaving(false)
-      setTimeout(() => setMsg(null), 3000)
+      setTimeout(() => setMsg(null), 5000)
     }
   }
 

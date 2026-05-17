@@ -22,35 +22,44 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
-      nom_societe, nom_contact, telephone, whatsapp,
+      // Format API standard
+      nom_societe, nom_contact,
+      // Format site Netlify (formulaire HTML)
+      nom, etablissement, type, sujet,
+      // Champs communs
+      telephone, whatsapp,
       email, adresse, ville, type_activite,
       nb_couverts, nb_chambres,
-      familles_souhaitees, volume_estime, message,
+      familles_souhaitees, volume_estime, message, source,
     } = body
 
-    if (!nom_societe?.trim() || !nom_contact?.trim() || !telephone?.trim()) {
+    // Accepter les deux formats de champs
+    const resolvedNomSociete = (nom_societe ?? etablissement ?? "").trim()
+    const resolvedNomContact  = (nom_contact ?? nom ?? "").trim()
+
+    if (!resolvedNomContact || !telephone?.trim()) {
       return NextResponse.json(
-        { error: "nom_societe, nom_contact et telephone sont requis." },
+        { error: "nom (contact) et telephone sont requis." },
         { status: 400, headers: cors(origin) }
       )
     }
 
     const prospect = {
-      nom_societe: nom_societe.trim(),
-      nom_contact:  nom_contact.trim(),
+      nom_societe: resolvedNomSociete || resolvedNomContact,
+      nom_contact:  resolvedNomContact,
       telephone:    telephone.trim(),
       whatsapp:     whatsapp?.trim() ?? null,
       email:        email?.trim()    ?? null,
       adresse:      adresse?.trim()  ?? null,
       ville:        ville?.trim()    ?? "Casablanca",
-      type_activite: type_activite   ?? "autre",
-      nb_couverts:  nb_couverts      ?? null,
-      nb_chambres:  nb_chambres      ?? null,
+      type_activite: type_activite ?? type ?? "autre",
+      nb_couverts:  nb_couverts  ?? null,
+      nb_chambres:  nb_chambres  ?? null,
       familles_souhaitees: familles_souhaitees ?? [],
-      volume_estime: volume_estime   ?? null,
-      message:      message?.trim()  ?? null,
+      volume_estime: volume_estime ?? null,
+      message:      (message ?? sujet ?? "")?.trim() || null,
       statut:       "nouveau",
-      source:       "site_web",
+      source:       source ?? "site_web",
       ip_address:   req.headers.get("x-forwarded-for") ?? null,
     }
 

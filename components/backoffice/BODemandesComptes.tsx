@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { store, type AccountRequest, type User, type Client, type Fournisseur } from "@/lib/store"
+import { createClient } from "@/lib/supabase/client"
 
 function generatePassword(len = 10): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
@@ -45,7 +46,42 @@ export default function BODemandesComptes({ user }: Props) {
 
   const refresh = () => setRequests(getAccountRequests())
 
-  useEffect(() => { refresh() }, [])
+  // Sync depuis Supabase fl_account_requests (demandes du site web externe)
+  const syncFromSupabase = async () => {
+    try {
+      const sb = createClient()
+      const { data, error } = await sb
+        .from("fl_account_requests")
+        .select("*")
+        .order("created_at", { ascending: false })
+      if (error || !data) return
+      // Mapper vers AccountRequest et fusionner avec le localStorage
+      const local = getAccountRequests()
+      const localIds = new Set(local.map((r: AccountRequest) => r.id))
+      const fromSb: AccountRequest[] = (data as Record<string, unknown>[]).map(row => ({
+        id:        String(row.id),
+        type:      String(row.type ?? "client") as "client" | "fournisseur",
+        nom:       String(row.nom ?? ""),
+        email:     String(row.email ?? ""),
+        telephone: String(row.telephone ?? ""),
+        societe:   String(row.societe ?? row.nom_societe ?? ""),
+        ice:       row.ice as string | undefined,
+        ville:     row.ville as string | undefined,
+        message:   row.message as string | undefined,
+        statut:    String(row.statut ?? "en_attente") as AccountRequest["statut"],
+        createdAt: String(row.created_at ?? new Date().toISOString()),
+      }))
+      // Nouvelles demandes Supabase absentes du local → les ajouter
+      const newFromSb = fromSb.filter(r => !localIds.has(r.id))
+      if (newFromSb.length > 0) {
+        const merged = [...newFromSb, ...local]
+        saveAccountRequests(merged)
+        setRequests(merged)
+      }
+    } catch { /* offline ok */ }
+  }
+
+  useEffect(() => { refresh(); syncFromSupabase() }, [])
 
   if (!canAccess(user)) {
     return (
