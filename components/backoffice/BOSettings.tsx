@@ -282,6 +282,12 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [dgMsg, setDgMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [clearMode, setClearMode] = useState<"local" | "supabase" | "both">("both")
+  const [clearTables, setClearTables] = useState<Set<string>>(() => new Set([
+    "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
+    "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
+    "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
+    "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
+  ]))
   const [sbTestResult, setSbTestResult] = useState<{ ok: boolean; text: string } | null>(null)
   const [sbTesting, setSbTesting] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
@@ -449,40 +455,56 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     "fl_messages","fl_depots","fl_livreurs","fl_demandes_achat","fl_notices","fl_non_achats",
   ]
 
+  // Mapping table → clé localStorage (même nom en général)
+  const TABLE_LS_KEY: Record<string, string> = {
+    fl_clients:"fl_clients", fl_fournisseurs:"fl_fournisseurs", fl_articles:"fl_articles",
+    fl_commandes:"fl_commandes", fl_bons_livraison:"fl_bons_livraison",
+    fl_bons_preparation:"fl_bons_preparation", fl_bons_achat:"fl_bons_achat",
+    fl_purchase_orders:"fl_purchase_orders", fl_receptions:"fl_receptions",
+    fl_trips:"fl_trips", fl_retours:"fl_retours", fl_visites:"fl_visites",
+    fl_transferts_stock:"fl_transferts_stock", fl_demandes_achat:"fl_demandes_achat",
+    fl_messages:"fl_messages", fl_notices:"fl_notices", fl_non_achats:"fl_non_achats",
+    fl_depots:"fl_depots", fl_livreurs:"fl_livreurs", fl_users:"fl_users",
+  }
+
   const handleClearAll = async () => {
+    if (clearTables.size === 0) return
     // Protection super_admin : leur compte ne peut jamais être supprimé
     const isSuperAdmin = user.role === "super_super_admin"
     setShowClearConfirm(false)
 
     try {
-      // 1. Effacer localStorage
+      // 1. Effacer localStorage (uniquement les tables sélectionnées)
       if (clearMode === "local" || clearMode === "both") {
-        localStorage.clear()
+        clearTables.forEach(tableKey => {
+          const lsKey = TABLE_LS_KEY[tableKey] ?? tableKey
+          localStorage.removeItem(lsKey)
+        })
       }
 
-      // 2. Effacer Supabase (si demandé)
+      // 2. Effacer Supabase (si demandé, uniquement les tables sélectionnées)
       if (clearMode === "supabase" || clearMode === "both") {
         const sb = createClient()
         let sbErrors = 0
         for (const table of ERP_TABLES_SYNC) {
+          if (!clearTables.has(table)) continue
           try {
-            // DELETE all rows except the super_admin user if applicable
             if (table === "fl_users" && isSuperAdmin) {
-              // Ne pas supprimer le compte super_admin courant
               await sb.from(table).delete().neq("id", user.id)
             } else {
-              await sb.from(table).delete().gte("id", "")  // delete all
+              await sb.from(table).delete().gte("id", "")
             }
           } catch { sbErrors++ }
         }
         if (sbErrors > 0) {
-          setDgMsg({ ok: false, text: `Effacement partiel — ${sbErrors} tables Supabase inaccessibles (données locales effacées).` })
+          setDgMsg({ ok: false, text: `Effacement partiel — ${sbErrors} tables Supabase inaccessibles.` })
           setTimeout(() => setDgMsg(null), 5000)
           return
         }
       }
 
-      setDgMsg({ ok: true, text: clearMode === "local" ? "Données locales effacées. Rechargez la page." : "Toutes les données effacées (local + Supabase). Rechargez la page." })
+      const scopeLabel = clearMode === "local" ? "locales" : clearMode === "supabase" ? "Supabase" : "local + Supabase"
+      setDgMsg({ ok: true, text: `${clearTables.size} catégorie(s) effacée(s) (${scopeLabel}). Rechargez la page.` })
     } catch {
       setDgMsg({ ok: false, text: "Erreur lors de l'effacement. Vérifiez la connexion Supabase." })
     }
@@ -2070,16 +2092,16 @@ To: {{to_email}}
               </div>
               <div>
                 <h3 className="font-semibold text-red-700 text-sm">Réinitialiser les données / مسح البيانات</h3>
-                <p className="text-xs text-muted-foreground">Efface définitivement les données — local et/ou Supabase</p>
+                <p className="text-xs text-muted-foreground">Sélectionnez les catégories à effacer — local et/ou Supabase</p>
               </div>
             </div>
 
-            {/* Sélection du scope */}
+            {/* Scope local/supabase */}
             <div className="flex gap-2 flex-wrap">
               {([
-                { val: "local", label: "Local uniquement", desc: "Navigateur seulement" },
+                { val: "local",    label: "Local uniquement",    desc: "Navigateur seulement" },
                 { val: "supabase", label: "Supabase uniquement", desc: "Base de données distante" },
-                { val: "both", label: "Les deux", desc: "Reset complet" },
+                { val: "both",     label: "Les deux",            desc: "Reset complet" },
               ] as const).map(opt => (
                 <button key={opt.val} onClick={() => setClearMode(opt.val)}
                   className={`flex flex-col items-start px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${clearMode === opt.val ? "bg-red-100 border-red-400 text-red-800" : "border-border text-muted-foreground hover:bg-muted"}`}>
@@ -2089,6 +2111,71 @@ To: {{to_email}}
               ))}
             </div>
 
+            {/* Checklist par catégorie de données */}
+            <div className="border border-red-100 rounded-xl p-4 flex flex-col gap-3 bg-red-50/30">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-red-700">Catégories à effacer ({clearTables.size}/{[
+                  "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
+                  "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
+                  "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
+                  "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
+                ].length})</span>
+                <div className="flex gap-2">
+                  <button onClick={() => setClearTables(new Set([
+                    "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
+                    "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
+                    "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
+                    "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
+                  ]))} className="text-[11px] font-semibold text-red-600 hover:underline px-2 py-0.5 rounded hover:bg-red-100 transition-colors">
+                    Tout sélectionner
+                  </button>
+                  <button onClick={() => setClearTables(new Set())}
+                    className="text-[11px] font-semibold text-muted-foreground hover:underline px-2 py-0.5 rounded hover:bg-muted transition-colors">
+                    Tout décocher
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {([
+                  { key: "fl_clients",          label: "Clients",              emoji: "👥" },
+                  { key: "fl_fournisseurs",     label: "Fournisseurs",         emoji: "🏭" },
+                  { key: "fl_articles",         label: "Articles / Catalogue", emoji: "📦" },
+                  { key: "fl_commandes",        label: "Commandes",            emoji: "🛒" },
+                  { key: "fl_bons_livraison",   label: "Bons de livraison",    emoji: "🚚" },
+                  { key: "fl_bons_preparation", label: "Bons de préparation",  emoji: "📋" },
+                  { key: "fl_bons_achat",       label: "Bons d'achat",         emoji: "🧾" },
+                  { key: "fl_purchase_orders",  label: "Commandes achat",      emoji: "📄" },
+                  { key: "fl_receptions",       label: "Réceptions",           emoji: "📥" },
+                  { key: "fl_trips",            label: "Tournées",             emoji: "🗺️" },
+                  { key: "fl_retours",          label: "Retours",              emoji: "↩️" },
+                  { key: "fl_visites",          label: "Visites",              emoji: "📍" },
+                  { key: "fl_transferts_stock", label: "Transferts stock",     emoji: "🔄" },
+                  { key: "fl_demandes_achat",   label: "Demandes achat",       emoji: "📝" },
+                  { key: "fl_messages",         label: "Messages",             emoji: "💬" },
+                  { key: "fl_notices",          label: "Notices / Alertes",    emoji: "🔔" },
+                  { key: "fl_non_achats",       label: "Non-achats",           emoji: "❌" },
+                  { key: "fl_depots",           label: "Dépôts",               emoji: "🏪" },
+                  { key: "fl_livreurs",         label: "Livreurs",             emoji: "🏍️" },
+                  { key: "fl_users",            label: "Utilisateurs",         emoji: "👤" },
+                ] as const).map(t => {
+                  const checked = clearTables.has(t.key)
+                  return (
+                    <label key={t.key}
+                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer text-xs font-medium transition-colors select-none
+                        ${checked ? "bg-red-100 border-red-300 text-red-800" : "bg-white border-gray-200 text-muted-foreground hover:border-red-200"}`}>
+                      <input type="checkbox" checked={checked} onChange={e => {
+                        const next = new Set(clearTables)
+                        if (e.target.checked) next.add(t.key); else next.delete(t.key)
+                        setClearTables(next)
+                      }} className="accent-red-600 w-3.5 h-3.5 shrink-0" />
+                      <span>{t.emoji}</span>
+                      <span className="truncate">{t.label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
             {user.role === "super_super_admin" && (
               <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
                 <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
@@ -2096,18 +2183,24 @@ To: {{to_email}}
               </div>
             )}
 
+            {clearTables.size === 0 && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                ⚠️ Aucune catégorie sélectionnée — cochez au moins une catégorie pour activer la suppression.
+              </p>
+            )}
+
             {!showClearConfirm ? (
-              <button onClick={() => setShowClearConfirm(true)}
-                className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors">
+              <button onClick={() => setShowClearConfirm(true)} disabled={clearTables.size === 0}
+                className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Effacer {clearMode === "local" ? "les données locales" : clearMode === "supabase" ? "Supabase" : "toutes les données"}
+                Effacer {clearTables.size} catégorie{clearTables.size > 1 ? "s" : ""} ({clearMode === "local" ? "local" : clearMode === "supabase" ? "Supabase" : "local + Supabase"})
               </button>
             ) : (
               <div className="flex flex-col gap-2">
                 <p className="text-sm font-semibold text-red-700">
-                  Confirmez la suppression {clearMode === "both" ? "locale + Supabase" : clearMode === "supabase" ? "Supabase" : "locale"} ?
+                  Confirmer la suppression de {clearTables.size} catégorie{clearTables.size > 1 ? "s" : ""} ({clearMode === "both" ? "local + Supabase" : clearMode === "supabase" ? "Supabase" : "local"}) ?
                 </p>
                 <div className="flex gap-2">
                   <button onClick={handleClearAll}

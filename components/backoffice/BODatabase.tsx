@@ -151,7 +151,9 @@ export default function BODatabase({ user }: { user: { id: string; role?: string
     fetchClients().then(({ clients, source }) => {
       if (source === "supabase") {
         setSbStatus("ok")
-        setSbMsg(`${clients.length} clients — Supabase actif`)
+        setSbMsg(clients.length > 0
+          ? `${clients.length} clients — Supabase actif`
+          : `Supabase connecté — prêt à synchroniser`)
       } else {
         setSbStatus("local")
         if (isCurrentUserDemo) {

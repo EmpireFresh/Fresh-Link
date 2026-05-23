@@ -60,14 +60,19 @@ export default function BOAffectationCommerciale({ user }: Props) {
     reload(); flash()
   }
 
+  // Resolve teamLeadId from a prevendeur's secteur
+  const resolveTeamLead = (prev: User | undefined): string | undefined => {
+    if (!prev?.secteur) return undefined
+    return users.find(u =>
+      (u.role === "team_leader" || u.role === "resp_commercial") && u.secteur === prev.secteur
+    )?.id
+  }
+
   const assignClientPrevendeur = (clientId: string, prevendeurId: string) => {
     const prev = users.find(u => u.id === prevendeurId)
-    const teamLead = prev?.secteur
-      ? users.find(u => (u.role === "team_leader" || u.role === "resp_commercial") && u.secteur === prev.secteur)
-      : undefined
     store.updateClient(clientId, {
       prevendeurId: prevendeurId || undefined,
-      teamLeadId: teamLead?.id,
+      teamLeadId:  resolveTeamLead(prev),
     })
     reload(); flash()
   }
@@ -75,20 +80,39 @@ export default function BOAffectationCommerciale({ user }: Props) {
   const assignPrevendeurSecteur = (userId: string, secteur: string) => {
     const all = store.getUsers()
     const idx = all.findIndex(u => u.id === userId)
-    if (idx >= 0) { all[idx] = { ...all[idx], secteur }; store.saveUsers(all) }
-    reload(); flash()
-  }
-
-  const assignPrevendeurTeamLead = (userId: string, teamLeadId: string) => {
-    // store team_lead secteur on the prevendeur as secteur if TL has one
-    const all = store.getUsers()
-    const idx = all.findIndex(u => u.id === userId)
     if (idx >= 0) {
-      all[idx] = { ...all[idx], secteur: all[idx].secteur }
+      all[idx] = { ...all[idx], secteur }
       store.saveUsers(all)
+      // Cascade: update all clients already assigned to this prevendeur
+      const myClients = clients.filter(c => c.prevendeurId === userId)
+      const tl = users.find(u => (u.role === "team_leader" || u.role === "resp_commercial") && u.secteur === secteur)
+      myClients.forEach(c => store.updateClient(c.id, { teamLeadId: tl?.id }))
     }
     reload(); flash()
   }
+
+  // ── AUTO-AFFECTATION ──────────────────────────────────────────────────────
+  // For each client without a prevendeurId, try to find a prevendeur in the same secteur.
+  // If multiple prevendeurs in the same secteur, assign round-robin.
+  const autoAffecterTous = () => {
+    const unassigned = clients.filter(c => !c.prevendeurId && c.secteur)
+    if (unassigned.length === 0) return
+    const countByPrev: Record<string, number> = {}
+    prevendeurs.forEach(p => { countByPrev[p.id] = clients.filter(c => c.prevendeurId === p.id).length })
+
+    unassigned.forEach(c => {
+      const prevInSecteur = prevendeurs.filter(p => p.secteur === c.secteur)
+      if (prevInSecteur.length === 0) return
+      // pick the one with least assigned clients
+      const pick = prevInSecteur.sort((a, b) => (countByPrev[a.id] ?? 0) - (countByPrev[b.id] ?? 0))[0]
+      const tl = resolveTeamLead(pick)
+      store.updateClient(c.id, { prevendeurId: pick.id, teamLeadId: tl })
+      countByPrev[pick.id] = (countByPrev[pick.id] ?? 0) + 1
+    })
+    reload(); flash()
+  }
+
+  const unassignedCount = clients.filter(c => !c.prevendeurId && c.secteur).length
 
   // stats
   const clientsWithPrev   = clients.filter(c => c.prevendeurId).length
@@ -106,15 +130,27 @@ export default function BOAffectationCommerciale({ user }: Props) {
             <span className="text-muted-foreground font-normal text-base mr-2"> / التوزيع التجاري</span>
           </h2>
           <p className="text-sm text-muted-foreground">
-            Affecter les clients à un secteur et à un prévendeur — Affecter les prévendeurs à un secteur
+            Affecter les clients à un secteur et à un prévendeur — Le Team Lead est résolu automatiquement.
           </p>
         </div>
-        {saved && (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-            Affectation sauvegardée
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {unassignedCount > 0 && tab === "clients" && (
+            <button
+              onClick={autoAffecterTous}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Auto-affecter ({unassignedCount})
+            </button>
+          )}
+          {saved && (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              Affectation sauvegardée
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats row */}
@@ -123,7 +159,12 @@ export default function BOAffectationCommerciale({ user }: Props) {
           { label: "Clients total", value: clients.length, color: "bg-blue-50 border-blue-200 text-blue-700" },
           { label: "Avec secteur", value: clientsWithSecteur, color: "bg-indigo-50 border-indigo-200 text-indigo-700" },
           { label: "Avec prévendeur", value: clientsWithPrev, color: "bg-green-50 border-green-200 text-green-700" },
-          { label: "Prévendeurs actifs", value: prevendeurs.length, sub: `${prevWithSecteur} avec secteur`, color: "bg-amber-50 border-amber-200 text-amber-700" },
+          {
+            label: "Sans prévendeur",
+            value: unassignedCount,
+            sub: unassignedCount > 0 ? "→ Auto-affecter" : "✓ Tout affecté",
+            color: unassignedCount > 0 ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-green-50 border-green-200 text-green-700",
+          },
         ].map(s => (
           <div key={s.label} className={`rounded-xl border p-3 ${s.color}`}>
             <p className="text-2xl font-bold">{s.value}</p>

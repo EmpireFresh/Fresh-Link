@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { store } from "@/lib/store"
 import type { Article, Client } from "@/lib/store"
 
@@ -13,30 +13,113 @@ const CAT_COLORS: Record<Cat, string> = {
   particulier: "bg-green-100  text-green-700  border-green-200",
 }
 
-const getField = (cat: Cat): { prix: keyof Article; promo: keyof Article } => ({
-  chr:         { prix: "prixCHR",         promo: "promoCHR" },
-  marchand:    { prix: "prixMarchand",    promo: "promoMarchand" },
-  particulier: { prix: "prixParticulier", promo: "promoParticulier" },
-}[cat])
+// ── CSV helpers ──────────────────────────────────────────────────────────────
+function exportCSV(articles: Article[]) {
+  const rows = [
+    ["id","nom","famille","unite","prixAchat","prixCHR","prixMarchand","prixParticulier","promoCHR","promoMarchand","promoParticulier"],
+    ...articles.map(a => [
+      a.id, a.nom, a.famille, a.unite,
+      a.prixAchat ?? "",
+      (a as unknown as Record<string,unknown>).prixCHR ?? "",
+      (a as unknown as Record<string,unknown>).prixMarchand ?? "",
+      (a as unknown as Record<string,unknown>).prixParticulier ?? "",
+      (a as unknown as Record<string,unknown>).promoCHR ?? "",
+      (a as unknown as Record<string,unknown>).promoMarchand ?? "",
+      (a as unknown as Record<string,unknown>).promoParticulier ?? "",
+    ]),
+  ]
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n")
+  const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" }))
+  const a = document.createElement("a"); a.href = url; a.download = `tarifs_${new Date().toISOString().slice(0,10)}.csv`
+  a.click(); URL.revokeObjectURL(url)
+}
+
+function importCSV(text: string): Partial<Article>[] {
+  const lines = text.trim().split(/\r?\n/)
+  if (lines.length < 2) return []
+  const headers = lines[0].split(",").map(h => h.replace(/^"|"$/g, "").trim())
+  return lines.slice(1).map(line => {
+    const vals = line.split(",").map(v => v.replace(/^"|"$/g, ""))
+    const row: Record<string, unknown> = {}
+    headers.forEach((h, i) => { row[h] = vals[i] ?? "" })
+    return {
+      id:              row.id as string,
+      prixCHR:         row.prixCHR        ? Number(row.prixCHR)         : undefined,
+      prixMarchand:    row.prixMarchand   ? Number(row.prixMarchand)    : undefined,
+      prixParticulier: row.prixParticulier? Number(row.prixParticulier) : undefined,
+      promoCHR:        row.promoCHR       ? Number(row.promoCHR)        : undefined,
+      promoMarchand:   row.promoMarchand  ? Number(row.promoMarchand)   : undefined,
+      promoParticulier:row.promoParticulier? Number(row.promoParticulier): undefined,
+    } as Partial<Article>
+  }).filter(r => r.id)
+}
+
+const FIELD_MAP: Record<Cat, { prix: keyof Article; promo: keyof Article }> = {
+  chr:         { prix: "prixCHR" as keyof Article,         promo: "promoCHR" as keyof Article },
+  marchand:    { prix: "prixMarchand" as keyof Article,    promo: "promoMarchand" as keyof Article },
+  particulier: { prix: "prixParticulier" as keyof Article, promo: "promoParticulier" as keyof Article },
+}
+const getField = (cat: Cat): { prix: keyof Article; promo: keyof Article } => FIELD_MAP[cat]
 
 export default function BOCategoryPricing() {
   const [articles, setArticles]     = useState<Article[]>([])
   const [clients, setClients]       = useState<Client[]>([])
   const [search, setSearch]         = useState("")
+  const [showInactive, setShowInactive] = useState(true)   // show ALL articles by default
   const [mode, setMode]             = useState<Mode>("segment")
   const [activeCat, setActiveCat]   = useState<Cat>("chr")
   const [selectedClient, setSelectedClient] = useState<string>("")
   const [edits, setEdits]           = useState<Record<string, { prix?: number; promo?: number }>>({})
   const [saved, setSaved]           = useState(false)
+  const [importMsg, setImportMsg]   = useState<{ ok: boolean; text: string } | null>(null)
+  const fileRef                     = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setArticles(store.getArticles())
-    setClients(store.getClients().filter(c => c.actif !== false))
+    setClients(store.getClients().filter(c => (c as unknown as Record<string,unknown>).actif !== false))
   }, [])
 
-  const filtered = articles.filter(a =>
-    a.actif && a.nom.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = articles.filter(a => {
+    const matchSearch = a.nom.toLowerCase().includes(search.toLowerCase()) ||
+      (a.famille ?? "").toLowerCase().includes(search.toLowerCase())
+    const matchActive = showInactive || a.actif
+    return matchSearch && matchActive
+  })
+
+  // ── Import handler ──────────────────────────────────────────────────────────
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      try {
+        const rows = importCSV(ev.target?.result as string)
+        if (rows.length === 0) { setImportMsg({ ok: false, text: "Aucune ligne valide trouvée dans le fichier." }); return }
+        const all = store.getArticles()
+        let updated = 0
+        rows.forEach(row => {
+          const idx = all.findIndex(a => a.id === row.id)
+          if (idx < 0) return
+          const a = all[idx] as unknown as Record<string, unknown>
+          if (row.prixCHR !== undefined)          a.prixCHR         = row.prixCHR
+          if (row.prixMarchand !== undefined)     a.prixMarchand    = row.prixMarchand
+          if (row.prixParticulier !== undefined)  a.prixParticulier = row.prixParticulier
+          if (row.promoCHR !== undefined)         a.promoCHR        = row.promoCHR
+          if (row.promoMarchand !== undefined)    a.promoMarchand   = row.promoMarchand
+          if (row.promoParticulier !== undefined) a.promoParticulier = row.promoParticulier
+          updated++
+        })
+        store.saveArticles(all)
+        setArticles([...all])
+        setImportMsg({ ok: true, text: `${updated} article(s) mis à jour depuis le fichier CSV.` })
+        setTimeout(() => setImportMsg(null), 4000)
+      } catch {
+        setImportMsg({ ok: false, text: "Erreur lors de la lecture du fichier CSV." })
+      }
+      if (fileRef.current) fileRef.current.value = ""
+    }
+    reader.readAsText(file, "utf-8")
+  }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -132,17 +215,52 @@ export default function BOCategoryPricing() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Tarification clients</h2>
-          <p className="text-xs text-muted-foreground">Prix par segment ou par client individuel</p>
+          <h2 className="text-lg font-bold text-foreground">Tarifs par Catégorie</h2>
+          <p className="text-xs text-muted-foreground">
+            {articles.length} articles · Prix par segment ou par client individuel
+          </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={Object.keys(edits).length === 0}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 transition-opacity"
-          style={{ background: "oklch(0.38 0.2 260)" }}>
-          {saved ? "✓ Sauvegarde" : "Enregistrer les tarifs"}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Download CSV */}
+          <button
+            onClick={() => exportCSV(articles)}
+            title="Télécharger les tarifs en CSV"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-muted transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export CSV
+          </button>
+          {/* Upload CSV */}
+          <label
+            title="Importer des tarifs depuis un CSV"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-muted transition-colors cursor-pointer">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import CSV
+            <input ref={fileRef} type="file" accept=".csv" onChange={handleImport} className="hidden" />
+          </label>
+          {/* Save */}
+          <button
+            onClick={handleSave}
+            disabled={Object.keys(edits).length === 0}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 transition-opacity"
+            style={{ background: "oklch(0.38 0.2 260)" }}>
+            {saved ? "✓ Sauvegardé" : "Enregistrer les tarifs"}
+          </button>
+        </div>
       </div>
+
+      {/* Import feedback */}
+      {importMsg && (
+        <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm border ${importMsg.ok ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"}`}>
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={importMsg.ok ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
+          </svg>
+          {importMsg.text}
+        </div>
+      )}
 
       {/* Mode toggle */}
       <div className="flex items-center gap-1 p-1 bg-muted rounded-xl w-fit border border-border">
@@ -211,15 +329,25 @@ export default function BOCategoryPricing() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          type="text" value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher un article..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+      {/* Search + filter */}
+      <div className="flex gap-2 items-center flex-wrap">
+        <div className="relative flex-1 min-w-52">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Rechercher un article ou famille..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+          <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)}
+            className="w-4 h-4 rounded text-primary" />
+          Inclure inactifs
+        </label>
+        <span className="text-xs text-muted-foreground bg-muted rounded-lg px-2 py-1.5 font-medium">
+          {filtered.length}/{articles.length} articles
+        </span>
       </div>
 
       {/* Empty state for client mode without selection */}
@@ -274,10 +402,13 @@ export default function BOCategoryPricing() {
                     const catPromo = Number(getSegVal(art, activeCat, "promo")) || 0
                     const hasCustom = catPrix > 0 || catPromo > 0
                     return (
-                      <tr key={art.id} className={`border-b border-border last:border-0 hover:bg-muted/20 ${hasCustom ? "bg-primary/[0.03]" : ""}`}>
+                      <tr key={art.id} className={`border-b border-border last:border-0 hover:bg-muted/20 ${hasCustom ? "bg-primary/[0.03]" : ""} ${!art.actif ? "opacity-60" : ""}`}>
                         <td className="px-4 py-3">
-                          <p className="font-semibold text-foreground">{art.nom}</p>
-                          <p className="text-xs text-muted-foreground">{art.unite}{art.um ? ` · ${art.um}` : ""}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-foreground">{art.nom}</p>
+                            {!art.actif && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">Inactif</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{art.famille} · {art.unite}{art.um ? ` / ${art.um}` : ""}</p>
                         </td>
                         <td className="px-4 py-3 text-center text-muted-foreground font-mono">{stdPrix} DH</td>
                         <td className="px-4 py-3 text-center">
@@ -310,10 +441,13 @@ export default function BOCategoryPricing() {
                   const segPrixKey = getField(currentClientCat).prix
                   const segPrix = (art as unknown as Record<string, unknown>)[segPrixKey as string] as number || stdPrix
                   return (
-                    <tr key={art.id} className={`border-b border-border last:border-0 hover:bg-muted/20 ${hasOverride ? "bg-amber-50/50" : ""}`}>
+                    <tr key={art.id} className={`border-b border-border last:border-0 hover:bg-muted/20 ${hasOverride ? "bg-amber-50/50" : ""} ${!art.actif ? "opacity-60" : ""}`}>
                       <td className="px-4 py-3">
-                        <p className="font-semibold text-foreground">{art.nom}</p>
-                        <p className="text-xs text-muted-foreground">{art.unite}{art.um ? ` · ${art.um}` : ""}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-foreground">{art.nom}</p>
+                          {!art.actif && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">Inactif</span>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{art.famille} · {art.unite}{art.um ? ` / ${art.um}` : ""}</p>
                         {hasOverride && (
                           <span className="inline-block mt-0.5 text-[10px] font-bold text-amber-700 bg-amber-100 rounded-full px-1.5 py-0.5">override actif</span>
                         )}

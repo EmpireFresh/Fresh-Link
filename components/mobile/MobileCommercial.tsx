@@ -354,15 +354,20 @@ export default function MobileCommercial({ user }: Props) {
     )
   }
 
-  // Filter clients — prevendeur only sees their own (by secteur or prevendeurId) unless admin
+  // ── Filter clients ────────────────────────────────────────────────────────
+  // Prevendeur sees ONLY clients explicitly assigned to them (prevendeurId === user.id)
+  // + unassigned clients from their sector (so they can pick up new clients).
+  // Admins/team_leaders see all clients.
+  const isPrevendeur = user.role === "prevendeur"
   const myClients = clients.filter(c => {
-    if (user.role === "prevendeur") {
-      // match by prevendeurId if set, else fall back to secteur
-      if (c.prevendeurId) return c.prevendeurId === user.id
-      return !c.secteur || c.secteur === user.secteur
+    if (isPrevendeur) {
+      if (c.prevendeurId) return c.prevendeurId === user.id  // directly assigned
+      if (user.secteur)   return c.secteur === user.secteur   // same sector, not yet assigned
+      return false  // prevendeur without sector — show nothing (until sector is assigned)
     }
-    return true
+    return true  // admin / team_leader / resp_commercial see everyone
   })
+  const assignedCount = clients.filter(c => c.prevendeurId === user.id).length
 
   const filteredClients = myClients.filter(c => {
     if (filterKey === "nom") return c.nom.toLowerCase().includes(searchNom.toLowerCase())
@@ -759,6 +764,22 @@ export default function MobileCommercial({ user }: Props) {
         </div>
       )}
 
+      {/* PREVENDEUR — Mes clients banner */}
+      {isPrevendeur && (
+        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200">
+          <svg className="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-indigo-800">
+              {assignedCount} client(s) affecté(s) à vous
+              {user.secteur ? ` · Secteur : ${user.secteur}` : ""}
+            </p>
+            <p className="text-[11px] text-indigo-600">Vous ne voyez que vos clients et ceux non encore affectés dans votre secteur.</p>
+          </div>
+        </div>
+      )}
+
       {/* CLIENT SELECTION */}
       <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -844,7 +865,15 @@ export default function MobileCommercial({ user }: Props) {
         {/* Dropdown list */}
         <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
           {filteredClients.length === 0 ? (
-            <p className="text-xs text-muted-foreground px-2 py-3 text-center">Aucun client trouvé</p>
+            <div className="text-center py-4">
+              <p className="text-xs text-muted-foreground">Aucun client trouvé</p>
+              {isPrevendeur && myClients.length === 0 && (
+                <p className="text-[11px] text-amber-600 mt-1">
+                  Vous n&apos;avez pas encore de clients affectés.
+                  Contactez votre responsable pour l&apos;affectation.
+                </p>
+              )}
+            </div>
           ) : filteredClients.map(c => {
             const dist = gpsLat && c.gpsLat ? distKm(gpsLat, gpsLng!, c.gpsLat, c.gpsLng!) : null
             return (
@@ -854,7 +883,12 @@ export default function MobileCommercial({ user }: Props) {
                   {c.nom[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{c.nom}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-foreground truncate">{c.nom}</p>
+                    {isPrevendeur && c.prevendeurId === user.id && (
+                      <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">MON CLIENT</span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">{c.secteur} · {TYPE_LABELS[c.type]} · {TAILLE_LABELS[c.taille]}</p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">

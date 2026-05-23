@@ -22,13 +22,15 @@ function CopyBtn({ text }: { text: string }) {
   )
 }
 
-type Tab = "config" | "endpoints" | "snippet"
+type Tab = "config" | "endpoints" | "snippet" | "architecture"
 
 export default function BOWebIntegration({ user }: Props) {
   const [cfg, setCfg] = useState<WebIntegrationConfig | null>(null)
   const [tab, setTab] = useState<Tab>("config")
   const [newOrigin, setNewOrigin] = useState("")
   const [saved, setSaved] = useState(false)
+  const [liveTestResult, setLiveTestResult] = useState<{ ok: boolean; text: string } | null>(null)
+  const [liveTestRunning, setLiveTestRunning] = useState(false)
 
   useEffect(() => { setCfg((store as any).getWebIntegrationConfig()) }, [])
 
@@ -68,6 +70,27 @@ export default function BOWebIntegration({ user }: Props) {
 
   const removeOrigin = (o: string) => patch({ allowedOrigins: cfg.allowedOrigins.filter(x => x !== o) })
 
+  const runLiveTest = async () => {
+    setLiveTestRunning(true)
+    setLiveTestResult(null)
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      if (cfg.apiKey) headers["X-Api-Key"] = cfg.apiKey
+      const res = await fetch(`${BASE}/api/ext/catalogue`, { headers })
+      if (res.ok) {
+        const data = await res.json()
+        const count = Array.isArray(data) ? data.length : "?"
+        setLiveTestResult({ ok: true, text: `Connexion OK (${count} articles)` })
+      } else {
+        setLiveTestResult({ ok: false, text: `Erreur ${res.status}: ${res.statusText}` })
+      }
+    } catch (err: any) {
+      setLiveTestResult({ ok: false, text: `Erreur: ${err?.message ?? "Connexion impossible"}` })
+    } finally {
+      setLiveTestRunning(false)
+    }
+  }
+
   const BASE = typeof window !== "undefined" ? window.location.origin : "https://votre-erp.vercel.app"
 
   const ENDPOINTS = [
@@ -100,6 +123,28 @@ export default function BOWebIntegration({ user }: Props) {
       auth: "X-Api-Key requis",
       desc: "Liste les commandes d'un client.",
       response: `[{ "id": "...", "date": "...", "statut": "livre", "total": 120 }]`,
+    },
+    {
+      method: "GET",
+      path: "/api/ext/mon-compte",
+      auth: "Bearer token",
+      desc: "Retourne le profil du client authentifié ainsi que ses commandes récentes.",
+      response: `{ "client": { "id": "...", "nom": "...", "email": "...", "telephone": "..." }, "commandes": [{ "id": "...", "date": "...", "statut": "...", "total": 0 }] }`,
+    },
+    {
+      method: "POST",
+      path: "/api/ext/auth",
+      auth: "public",
+      desc: "Authentifie un client par téléphone+mot de passe ou email+mot de passe. Retourne un token Bearer.",
+      body: `{ "phone": "0600000000", "password": "..." }\n// ou\n{ "email": "client@exemple.ma", "password": "..." }`,
+      response: `{ "token": "eyJ...", "user": { "id": "...", "nom": "...", "email": "..." } }`,
+    },
+    {
+      method: "GET",
+      path: "/api/ext/demande-acces",
+      auth: "X-Api-Key",
+      desc: "Liste les demandes de création de compte en attente de validation.",
+      response: `[{ "id": "...", "type": "client", "nom": "...", "email": "...", "statut": "en_attente", "createdAt": "..." }]`,
     },
   ]
 
@@ -205,6 +250,7 @@ $cmd = erp_request('POST', '/api/ext/commandes', [
           { id: "config" as Tab, label: "Configuration", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
           { id: "endpoints" as Tab, label: "Endpoints API", icon: "M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
           { id: "snippet" as Tab, label: "Code Exemple", icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" },
+          { id: "architecture" as Tab, label: "Architecture", icon: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" },
         ]).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${tab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
@@ -310,11 +356,25 @@ $cmd = erp_request('POST', '/api/ext/commandes', [
               className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
 
-          <button onClick={handleSave}
-            className="self-start flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary/90 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-            Sauvegarder la configuration
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={handleSave}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary/90 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              Sauvegarder la configuration
+            </button>
+            <button onClick={runLiveTest} disabled={liveTestRunning}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold border border-primary text-primary bg-primary/5 hover:bg-primary/10 transition-colors disabled:opacity-60">
+              {liveTestRunning
+                ? <><svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Test en cours…</>
+                : <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Test rapide</>
+              }
+            </button>
+          </div>
+          {liveTestResult && (
+            <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-semibold ${liveTestResult.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+              {liveTestResult.ok ? "✅" : "❌"} {liveTestResult.text}
+            </div>
+          )}
         </div>
       )}
 
@@ -384,6 +444,137 @@ $cmd = erp_request('POST', '/api/ext/commandes', [
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-sm text-amber-800">
             <svg className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             <span>Ne stockez jamais la clé API dans du code JavaScript côté client (navigateur). Utilisez un backend (Node.js, PHP, etc.) comme proxy pour sécuriser vos appels.</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: ARCHITECTURE ───────────────────────────────────────── */}
+      {tab === "architecture" && (
+        <div className="flex flex-col gap-6">
+          {/* Data flow diagram */}
+          <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
+            <p className="font-semibold text-foreground">Flux de données</p>
+            <p className="text-xs text-muted-foreground">Visualisation du chemin d'une requête depuis votre site web jusqu'à la base de données.</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 py-4">
+              {/* Node: Site Web */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" /></svg>
+                </div>
+                <div className="px-4 py-2.5 rounded-xl border-2 border-blue-300 bg-blue-50 text-center min-w-[90px]">
+                  <p className="text-xs font-bold text-blue-700">Site Web</p>
+                  <p className="text-[10px] text-blue-500 mt-0.5">Votre frontend</p>
+                </div>
+              </div>
+              {/* Arrow */}
+              <div className="flex flex-col items-center gap-0.5 px-1">
+                <p className="text-[10px] text-muted-foreground font-mono">HTTPS</p>
+                <div className="flex items-center gap-0.5">
+                  <div className="h-0.5 w-8 bg-slate-300 rounded" />
+                  <svg className="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>
+                </div>
+                <p className="text-[10px] text-muted-foreground font-mono">X-Api-Key</p>
+              </div>
+              {/* Node: API REST */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+                <div className="px-4 py-2.5 rounded-xl border-2 border-violet-300 bg-violet-50 text-center min-w-[90px]">
+                  <p className="text-xs font-bold text-violet-700">API REST</p>
+                  <p className="text-[10px] text-violet-500 mt-0.5">/api/ext/*</p>
+                </div>
+              </div>
+              {/* Arrow */}
+              <div className="flex flex-col items-center gap-0.5 px-1">
+                <p className="text-[10px] text-muted-foreground font-mono">interne</p>
+                <div className="flex items-center gap-0.5">
+                  <div className="h-0.5 w-8 bg-slate-300 rounded" />
+                  <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </div>
+                <p className="text-[10px] text-muted-foreground font-mono">logique</p>
+              </div>
+              {/* Node: ERP FreshLink */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
+                <div className="px-4 py-2.5 rounded-xl border-2 border-green-300 bg-green-50 text-center min-w-[90px]">
+                  <p className="text-xs font-bold text-green-700">ERP FreshLink</p>
+                  <p className="text-[10px] text-green-500 mt-0.5">Next.js App</p>
+                </div>
+              </div>
+              {/* Arrow */}
+              <div className="flex flex-col items-center gap-0.5 px-1">
+                <p className="text-[10px] text-muted-foreground font-mono">queries</p>
+                <div className="flex items-center gap-0.5">
+                  <div className="h-0.5 w-8 bg-slate-300 rounded" />
+                  <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </div>
+                <p className="text-[10px] text-muted-foreground font-mono">SQL / RLS</p>
+              </div>
+              {/* Node: Supabase */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                </div>
+                <div className="px-4 py-2.5 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-center min-w-[90px]">
+                  <p className="text-xs font-bold text-emerald-700">Supabase</p>
+                  <p className="text-[10px] text-emerald-500 mt-0.5">PostgreSQL</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Setup guide */}
+          <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
+            <p className="font-semibold text-foreground">Guide de mise en place</p>
+            <div className="flex flex-col gap-3">
+              {[
+                { step: 1, label: "Activer l'API dans Configuration", detail: "Activez le toggle \"Activer l'API externe\" dans l'onglet Configuration." },
+                { step: 2, label: "Générer une clé API secrète", detail: "Cliquez sur \"Générer une clé\" et transmettez-la à votre développeur de façon sécurisée." },
+                { step: 3, label: "Ajouter votre domaine dans CORS", detail: "Ajoutez l'URL de votre site (ex: https://monsite.ma) dans la liste des origines autorisées." },
+                { step: 4, label: "Activer les fonctionnalités souhaitées", detail: "Activez catalogue, commandes et/ou demandes de compte selon vos besoins." },
+                { step: 5, label: "Copier le code depuis \"Code Exemple\"", detail: "Copiez le snippet JavaScript ou PHP et intégrez-le dans votre backend." },
+                { step: 6, label: "Tester avec le bouton \"Tester la connexion\"", detail: "Utilisez le test en direct ci-dessous (ou le Test rapide dans Configuration) pour vérifier que tout fonctionne." },
+              ].map(({ step, label, detail }) => (
+                <div key={step} className="flex items-start gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
+                  <div className="shrink-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-black">
+                    {step}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Live connection test */}
+          <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
+            <div>
+              <p className="font-semibold text-foreground">Tester la connexion en direct</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Envoie une requête GET /api/ext/catalogue avec votre clé API actuelle pour vérifier que l'intégration fonctionne.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted border border-border font-mono text-xs text-muted-foreground">
+                <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-black text-[10px]">GET</span>
+                {BASE}/api/ext/catalogue
+              </div>
+              <button onClick={runLiveTest} disabled={liveTestRunning}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary/90 transition-colors disabled:opacity-60">
+                {liveTestRunning
+                  ? <><svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Test en cours…</>
+                  : <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Tester la connexion</>
+                }
+              </button>
+            </div>
+            {liveTestResult && (
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-semibold ${liveTestResult.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+                {liveTestResult.ok ? "✅" : "❌"} {liveTestResult.text}
+              </div>
+            )}
           </div>
         </div>
       )}

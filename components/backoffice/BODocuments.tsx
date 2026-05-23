@@ -298,16 +298,30 @@ function DocumentForm({
             <tbody>
               {(form.lignes ?? []).map((l, i) => (
                 <tr key={i} className="border-t border-border">
-                  <td className="px-2 py-1.5 min-w-[180px]">
+                  <td className="px-2 py-1.5 min-w-[200px]">
                     <ComboBox
                       items={articleItems}
                       value=""
                       inputValue={l.designation}
-                      onChange={(_id, label) => {
-                        // Remplir désignation + unité depuis le catalogue
-                        const art = store.getArticles().find(a => a.nom === label)
-                        updateLigne(i, "designation", label)
-                        if (art?.unite) updateLigne(i, "unite", art.unite)
+                      onChange={(artId, label) => {
+                        // Remplir désignation + unité + prix depuis le catalogue
+                        const art = store.getArticles().find(a => a.id === artId || a.nom === label)
+                        const ls = (form.lignes ?? []).map((line, idx) => {
+                          if (idx !== i) return line
+                          const updated = { ...line, designation: label }
+                          if (art?.unite) updated.unite = art.unite
+                          if (art) {
+                            // Auto-fill price: client override → CHR price → computed PV
+                            const clientId = form.client_id
+                            const override = clientId ? art.clientPrices?.[clientId]?.prix : undefined
+                            const catPrix = (art as unknown as Record<string,unknown>).prixCHR as number | undefined
+                            const pv = store.computePV(art)
+                            updated.prix_u = override ?? catPrix ?? pv ?? 0
+                            updated.montant = Number(updated.qte) * updated.prix_u
+                          }
+                          return updated
+                        })
+                        recompute(ls, form.remise_pct ?? 0, form.tva_pct ?? 0)
                       }}
                       onInputChange={txt => updateLigne(i, "designation", txt)}
                       placeholder="Article…"
@@ -657,44 +671,41 @@ export default function BODocuments({ user }: { user: { id: string; name: string
       setDocs(localDocs.sort((a, b) => b.created_at.localeCompare(a.created_at)))
     }
 
-    // Load CHR clients — local store + Supabase simultaneously, merge and deduplicate
-    // CHR = type==="chr" OR categorie==="chr"
-    const isChr = (rec: Record<string,unknown>) => rec.type === "chr" || rec.categorie === "chr"
+    // Load ALL clients (not just CHR) — show all in ComboBox with CHR badge
     try {
       // 1. Local store immediately (fast)
       const localAll = store.getClients()
       const toRecord = (c: typeof localAll[0]): ClientRecord => ({
         id: c.id,
         nom: c.nom,
-        type: String((c as unknown as Record<string,unknown>).type ?? c.categorie ?? ""),
+        type: String((c as unknown as Record<string,unknown>).type ?? (c as unknown as Record<string,unknown>).categorie ?? ""),
         telephone: c.telephone,
         email: c.email,
         adresse: c.adresse,
       })
-      const localChr = localAll.filter(c => isChr(c as unknown as Record<string,unknown>))
-      if (localChr.length > 0) {
-        setClients(localChr.map(toRecord).sort((a, b) => a.nom.localeCompare(b.nom, "fr")))
+      if (localAll.length > 0) {
+        setClients(localAll.map(toRecord).sort((a, b) => a.nom.localeCompare(b.nom, "fr")))
       }
 
       // 2. Supabase in parallel — always try to get fresh data
       const { data } = await sb.from("fl_clients").select("id, payload")
       if (data && data.length > 0) {
-        const sbChr = (data as { id: string; payload: Record<string, unknown> }[])
-          .filter(r => r.payload?.nom && isChr(r.payload))
+        const sbClients = (data as { id: string; payload: Record<string, unknown> }[])
+          .filter(r => r.payload?.nom)
           .map(r => ({
             id: r.id,
             nom: String(r.payload?.nom ?? ""),
-            type: String(r.payload?.type ?? r.payload?.categorie ?? "chr"),
+            type: String(r.payload?.type ?? r.payload?.categorie ?? ""),
             telephone: r.payload?.telephone as string | undefined,
             email: r.payload?.email as string | undefined,
             adresse: r.payload?.adresse as string | undefined,
             ville: r.payload?.ville as string | undefined,
           } as ClientRecord))
           .sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
-        // Merge: Supabase wins, fill gaps with local CHR
-        const ids = new Set(sbChr.map(c => c.id))
-        const localExtra = localChr.map(toRecord).filter(c => !ids.has(c.id))
-        const merged = [...sbChr, ...localExtra].sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
+        // Merge: Supabase wins, fill gaps with local
+        const ids = new Set(sbClients.map(c => c.id))
+        const localExtra = localAll.map(toRecord).filter(c => !ids.has(c.id))
+        const merged = [...sbClients, ...localExtra].sort((a, b) => a.nom.localeCompare(b.nom, "fr"))
         if (merged.length > 0) setClients(merged)
       }
     } catch { /* offline — local store data already shown */ }

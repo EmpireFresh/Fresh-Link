@@ -109,12 +109,15 @@ export async function fetchClients(): Promise<{ clients: Client[]; source: "supa
   try {
     const { data, error } = await sbRead().from("fl_clients").select("id, payload")
     if (error) throw error
+    // Connection OK — could be empty table
     if (data && data.length > 0) {
       const clients = (data as { id: string; payload: unknown }[]).map(r => fromRow<Client>(r))
       store.saveClients(clients)
       return { clients, source: "supabase" }
     }
-  } catch { /* offline */ }
+    // Connected but empty table → still report supabase connected
+    return { clients: store.getClients(), source: "supabase" }
+  } catch { /* truly offline or unreachable */ }
   return { clients: store.getClients(), source: "local" }
 }
 
