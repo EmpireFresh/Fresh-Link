@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
 
     const allowedOrigins: string[] = cfg.allowed_origins ?? []
 
-    if (!cfg.demandes_comptes) {
+    // Default true if column missing (backwards compat with old fl_web_integration rows)
+    if (cfg.demandes_comptes === false) {
       return NextResponse.json(
         { error: "Les demandes de compte sont désactivées pour le moment." },
         { status: 403, headers: corsHeaders(origin, allowedOrigins) }
@@ -52,26 +53,35 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { type, nom, email, telephone, societe, ice, ville, message } = body
 
-    // Validation
-    if (!type || !["client", "fournisseur"].includes(type)) {
-      return NextResponse.json({ error: "Type invalide (client ou fournisseur requis)." }, { status: 400 })
+    // Accepted types: client, chr, marchand, particulier, fournisseur
+    const VALID_TYPES = ["client", "chr", "marchand", "particulier", "fournisseur"]
+    if (!type || !VALID_TYPES.includes(type)) {
+      return NextResponse.json({ error: "Type invalide." }, { status: 400 })
     }
-    if (!nom?.trim() || !email?.trim() || !telephone?.trim() || !societe?.trim()) {
-      return NextResponse.json({ error: "Champs requis manquants: nom, email, téléphone, societe." }, { status: 400 })
+    if (!nom?.trim() || !telephone?.trim()) {
+      return NextResponse.json({ error: "Champs requis manquants: nom, téléphone." }, { status: 400 })
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Email optional — validate only if provided
+    if (email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return NextResponse.json({ error: "Email invalide." }, { status: 400 })
     }
 
-    // Check for duplicate pending request
+    // Map frontend types to canonical ERP types
+    const typeMap: Record<string, string> = {
+      chr: "client", marchand: "client", particulier: "client",
+      client: "client", fournisseur: "fournisseur"
+    }
+    const canonicalType = typeMap[type] ?? "client"
+
+    // Check for duplicate by phone (more reliable than email)
     const dupRes = await fetch(
-      `${supabaseUrl}/rest/v1/fl_account_requests?email=eq.${encodeURIComponent(email)}&statut=eq.en_attente&select=id`,
+      `${supabaseUrl}/rest/v1/fl_account_requests?telephone=eq.${encodeURIComponent(telephone.trim())}&statut=eq.en_attente&select=id`,
       { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
     )
     const dups = await dupRes.json()
-    if (dups?.length > 0) {
+    if (Array.isArray(dups) && dups.length > 0) {
       return NextResponse.json(
-        { error: "Une demande avec cet email est déjà en cours d'examen." },
+        { error: "Une demande avec ce numéro est déjà en cours d'examen." },
         { status: 409, headers: corsHeaders(origin, allowedOrigins) }
       )
     }
@@ -88,11 +98,12 @@ export async function POST(req: NextRequest) {
           Prefer: "return=representation",
         },
         body: JSON.stringify({
-          type:      type.trim(),
+          type:      canonicalType,
+          sous_type: type.trim(),        // preserve original (chr, marchand…)
           nom:       nom.trim(),
-          email:     email.trim().toLowerCase(),
+          email:     email?.trim()?.toLowerCase() ?? null,
           telephone: telephone.trim(),
-          societe:   societe.trim(),
+          societe:   societe?.trim() ?? null,
           ice:       ice?.trim() ?? null,
           ville:     ville?.trim() ?? null,
           message:   message?.trim() ?? null,

@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
       next: { revalidate: 60 },
     })
 
-    let articles = await dataRes.json()
+    let articles: any[] = await dataRes.json()
 
     // Client-side filters
     if (q) {
@@ -101,6 +101,22 @@ export async function GET(req: NextRequest) {
         Array.isArray(a.tags) && a.tags.some((t: string) => t.toLowerCase() === tag.toLowerCase())
       )
     }
+
+    // Sort by marketplace ordre
+    articles.sort((a: any, b: any) => (a.ordre ?? 999) - (b.ordre ?? 999))
+
+    // Normalize: ensure all expected fields exist for the website's mapERPArticle()
+    // The view returns snake_case; the website handles both formats, so no transform needed.
+    // But we add a compatibility alias for legacy clients expecting camelCase.
+    articles = articles.map((a: any) => ({
+      ...a,
+      // camelCase aliases
+      nomAr:               a.nom_ar ?? "",
+      prix:                a.prix_public ?? a.marketplace_prix_public ?? 0,
+      prixVente:           a.prix_public ?? 0,
+      stockDisponible:     99,   // stock not tracked in static seed
+      marketplaceActif:    a.marketplace_actif ?? true,
+    }))
 
     return NextResponse.json(articles, {
       status: 200,
