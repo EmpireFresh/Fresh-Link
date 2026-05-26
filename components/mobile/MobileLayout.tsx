@@ -20,6 +20,8 @@ import MobilePricing from "./MobilePricing"
 import MobileBLValidation from "./MobileBLValidation"
 import MobileAlertes from "./MobileAlertes"
 import MobileChargesAcheteur from "./MobileChargesAcheteur"
+import MobileClientPortail from "./MobileClientPortail"
+import MobileFournisseurPortail from "./MobileFournisseurPortail"
 import RoleSwitcher from "@/components/ui/RoleSwitcher"
 
 interface Props {
@@ -31,6 +33,7 @@ type MobileTab =
   | "achat" | "charges" | "commercial" | "logistique" | "bilan"
   | "preparation" | "ctrl_achat" | "ctrl_prep" | "ctrl_retour"
   | "agent_ia" | "avis" | "magasinier" | "pricing" | "bl_validation" | "alertes"
+  | "client_portail" | "fournisseur_portail"
 
 export default function MobileLayout({ user: initialUser, onLogout }: Props) {
   const lang = useLang()
@@ -63,8 +66,8 @@ export default function MobileLayout({ user: initialUser, onLogout }: Props) {
     resp_logistique:  ["logistique", "preparation", "ctrl_prep", "ctrl_retour", "agent_ia", "avis"],
     dispatcheur:      ["logistique", "preparation", "ctrl_prep", "ctrl_retour", "agent_ia", "avis"],
     livreur:          ["bl_validation", "logistique", "ctrl_retour", "agent_ia", "avis"],
-    client:           ["commercial", "avis"],
-    fournisseur:      ["achat",      "avis"],
+    client:           ["client_portail",      "avis"],
+    fournisseur:      ["fournisseur_portail", "avis"],
   }
 
   // Tab icon helper
@@ -91,7 +94,9 @@ export default function MobileLayout({ user: initialUser, onLogout }: Props) {
     { id: "avis",         label: "Avis",       labelAr: "تقييم",            labelEn: "Reviews",    icon: T("M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z") },
     { id: "pricing",      label: "Prix",       labelAr: "الأسعار",          labelEn: "Prices",     icon: T("M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z") },
     { id: "bl_validation",label: "Mes BL",     labelAr: "وصولاتي",         labelEn: "My DL",      icon: T("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4") },
-    { id: "alertes",      label: "Alertes",    labelAr: "التنبيهات",        labelEn: "Alerts",     icon: T("M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9") },
+    { id: "alertes",           label: "Alertes",    labelAr: "التنبيهات",        labelEn: "Alerts",     icon: T("M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9") },
+    { id: "client_portail",    label: "Mon espace", labelAr: "فضائي",           labelEn: "My Space",   icon: T("M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z") },
+    { id: "fournisseur_portail", label: "Portail",  labelAr: "البوابة",         labelEn: "Portal",     icon: T("M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4") },
   ]
 
   const allowedTabIds: MobileTab[] = ROLE_TAB_ACCESS[activeRole] ?? ["achat"]
@@ -196,7 +201,9 @@ export default function MobileLayout({ user: initialUser, onLogout }: Props) {
         {resolvedTab === "avis"          && <MobileFeedback user={user} />}
         {resolvedTab === "pricing"       && <MobilePricing user={user} />}
         {resolvedTab === "bl_validation" && <MobileBLValidation user={user} />}
-        {resolvedTab === "alertes"       && <MobileAlertes user={user} />}
+        {resolvedTab === "alertes"             && <MobileAlertes user={user} />}
+        {resolvedTab === "client_portail"      && <MobileClientPortail user={user} />}
+        {resolvedTab === "fournisseur_portail" && <MobileFournisseurPortail user={user} />}
       </main>
 
       {/* ── Bottom nav ──────────────────────────────────────────────────────── */}

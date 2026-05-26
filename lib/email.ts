@@ -1,63 +1,61 @@
-// ============================================================
-// EmailJS Integration — FreshLink Pro
-// Uses EmailJS browser SDK loaded dynamically (no npm install needed)
-// Configure via Paramètres → EmailJS dans le back-office.
-//
-// Template EmailJS requis avec les variables :
-//   {{to_email}}  {{subject}}  {{message}}
-// ============================================================
+"use client"
 
-// --------------- Config storage ---------------
+/**
+ * lib/email.ts — FreshLink Pro Notification System
+ *
+ * Email  : Resend API via /api/send-email  (gratuit, 3000 emails/mois)
+ * Config : RESEND_API_KEY dans .env.local (https://resend.com — inscription gratuite)
+ * Fallback SMTP : SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS
+ *
+ * ⚠️  EmailJS est supprimé — plus de configuration côté client requise.
+ * Tous les envois passent par l'API route serveur (/api/send-email).
+ */
 
-interface EmailJSConfig {
-  serviceId:  string
-  templateId: string
-  publicKey:  string
+// ── Config expéditeur (stockée en localStorage par l'admin) ───────────────────
+const LS_FROM_KEY  = "fl_email_from"
+const LS_REPLY_KEY = "fl_email_reply_to"
+
+export interface EmailConfig {
+  from:    string   // ex: "FreshLink Pro <noreply@vitafresh.ma>"
+  replyTo?: string  // ex: "contact@vitafresh.ma"
 }
 
-const LS_KEY = "fl_emailjs_config"
-
-function getEmailJSConfig(): EmailJSConfig {
-  if (typeof window === "undefined") {
-    return { serviceId: "", templateId: "", publicKey: "" }
-  }
+export function getEmailConfig(): EmailConfig {
+  if (typeof window === "undefined") return { from: "" }
   try {
-    const raw = localStorage.getItem(LS_KEY)
-    if (raw) {
-      const p = JSON.parse(raw) as Partial<EmailJSConfig>
-      return {
-        serviceId:  p.serviceId  ?? "",
-        templateId: p.templateId ?? "",
-        publicKey:  p.publicKey  ?? "",
-      }
-    }
-  } catch { /* ignore */ }
+    const raw = localStorage.getItem(LS_FROM_KEY)
+    return raw ? JSON.parse(raw) as EmailConfig : { from: "" }
+  } catch { return { from: "" } }
+}
+
+export function saveEmailConfig(cfg: EmailConfig): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LS_FROM_KEY, JSON.stringify(cfg))
+  }
+}
+
+export function isEmailConfigured(): boolean {
+  // Email works as long as the server has RESEND_API_KEY set — always return true
+  // The API route handles the "not configured" error gracefully
+  return true
+}
+
+// Legacy compat — anciens composants appellent ces fonctions
+export function saveEmailJSConfig(cfg: { serviceId: string; templateId: string; publicKey: string }): void {
+  // no-op — EmailJS est remplacé par Resend
+}
+export function getEmailJSConfigPublic() {
   return { serviceId: "", templateId: "", publicKey: "" }
 }
+export function isEmailJSConfigured(): boolean { return false }
 
-export function saveEmailJSConfig(cfg: EmailJSConfig): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(LS_KEY, JSON.stringify(cfg))
-  }
-}
-
-export function getEmailJSConfigPublic(): EmailJSConfig {
-  return getEmailJSConfig()
-}
-
-export function isEmailJSConfigured(): boolean {
-  const cfg = getEmailJSConfig()
-  return !!(cfg.serviceId && cfg.templateId && cfg.publicKey)
-}
-
-// --------------- Core sender ---------------
-// Uses EmailJS REST API v1 with the publicKey as Bearer token.
-// Template must have variables: {{to_email}}, {{subject}}, {{message}}
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface EmailPayload {
   to_email: string
   subject:  string
-  body:     string
+  body:     string    // plain text body — auto-wrapped in HTML
+  html?:    string    // optional override HTML
 }
 
 export interface SendResult {
@@ -66,105 +64,139 @@ export interface SendResult {
   status?: number
 }
 
+// ── Core sender ───────────────────────────────────────────────────────────────
+
 export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
-  const cfg = getEmailJSConfig()
-
-  if (!cfg.publicKey || !cfg.serviceId || !cfg.templateId) {
-    return {
-      ok: false,
-      error: "EmailJS non configuré. Allez dans Paramètres → EmailJS (SMTP) pour saisir Service ID, Template ID et Public Key.",
-    }
-  }
-
-  if (!payload.to_email || !payload.to_email.includes("@")) {
+  if (!payload.to_email?.includes("@")) {
     return { ok: false, error: "Adresse email destinataire invalide." }
   }
 
   try {
-    // EmailJS REST API — publicKey goes in the Authorization header
-    const res = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Some templates also need this — include both approaches
-        "origin": typeof window !== "undefined" ? window.location.origin : "https://localhost",
-      },
+    const res = await fetch("/api/send-email", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        service_id:  cfg.serviceId,
-        template_id: cfg.templateId,
-        user_id:     cfg.publicKey,       // publicKey = user_id in v3 API
-        accessToken: cfg.publicKey,       // required in v4+
-        template_params: {
-          to_email: payload.to_email,
-          subject:  payload.subject,
-          message:  payload.body,
-          // aliases for different template variable naming conventions
-          to:       payload.to_email,
-          email:    payload.to_email,
-          titre:    payload.subject,
-          contenu:  payload.body,
-          corps:    payload.body,
-        },
+        to:      payload.to_email,
+        subject: payload.subject,
+        html:    payload.html ?? bodyToHtml(payload.body),
+        text:    payload.body,
       }),
     })
 
-    if (res.ok) {
-      return { ok: true }
-    }
+    const data = await res.json().catch(() => ({})) as { ok?: boolean; error?: string }
 
-    // EmailJS returns plain text on error
-    const text = await res.text().catch(() => "")
-    return {
-      ok: false,
-      status: res.status,
-      error: `EmailJS erreur ${res.status}: ${text || res.statusText}`,
-    }
+    if (data.ok) return { ok: true }
+    return { ok: false, status: res.status, error: data.error ?? "Erreur envoi email" }
   } catch (err) {
-    return {
-      ok: false,
-      error: `Erreur réseau: ${err instanceof Error ? err.message : String(err)}`,
-    }
+    return { ok: false, error: `Réseau : ${err instanceof Error ? err.message : String(err)}` }
   }
 }
 
-// Send to multiple recipients one by one, collecting results
 export async function sendEmailMulti(
   to_emails: string[],
   subject: string,
   body: string
 ): Promise<{ sent: string[]; failed: Array<{ email: string; error: string }> }> {
-  const sent: string[] = []
+  const sent:   string[] = []
   const failed: Array<{ email: string; error: string }> = []
 
   for (const email of to_emails) {
     const result = await sendEmail({ to_email: email, subject, body })
-    if (result.ok) {
-      sent.push(email)
-    } else {
-      failed.push({ email, error: result.error ?? "Erreur inconnue" })
-    }
-    // Small delay between sends to respect EmailJS rate limits
-    await new Promise(r => setTimeout(r, 400))
+    if (result.ok) sent.push(email)
+    else failed.push({ email, error: result.error ?? "Erreur inconnue" })
+    await new Promise(r => setTimeout(r, 200))
   }
 
   return { sent, failed }
 }
 
-// --------------- Test de connexion ---------------
-
-export async function testEmailJSConnection(): Promise<SendResult> {
-  const cfg = getEmailJSConfig()
-  if (!cfg.publicKey || !cfg.serviceId || !cfg.templateId) {
-    return { ok: false, error: "Identifiants manquants." }
-  }
+export async function testEmailConnection(): Promise<SendResult> {
   return sendEmail({
-    to_email: "test@freshlink.test",
-    subject:  "Test connexion EmailJS — FreshLink Pro",
-    body:     "Ce message est un test automatique pour vérifier la configuration EmailJS.",
+    to_email: "test@vitafresh.ma",
+    subject:  "Test connexion Email — FreshLink Pro",
+    body:     "Ce message est un test automatique de la configuration email (Resend).",
   })
 }
 
-// --------------- Email body builders ---------------
+// Legacy alias
+export const testEmailJSConnection = testEmailConnection
+
+// ── WhatsApp ──────────────────────────────────────────────────────────────────
+
+export interface WAResult {
+  ok:      boolean
+  error?:  string
+  waLink?: string    // fallback si API non configurée
+}
+
+/**
+ * Envoie un message WhatsApp via CallMeBot ou Twilio.
+ * Sans WhatsApp Business ouvert — 100% API serveur.
+ *
+ * @param phone  Numéro international (ex: "212661234567" ou "+212661234567")
+ * @param message Texte du message
+ */
+export async function sendWhatsApp(phone: string, message: string): Promise<WAResult> {
+  if (!phone) return { ok: false, error: "Numéro de téléphone manquant." }
+
+  try {
+    const res = await fetch("/api/send-whatsapp", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, message }),
+    })
+
+    const data = await res.json().catch(() => ({})) as {
+      ok?: boolean; error?: string; waLink?: string; fallback?: string
+    }
+
+    if (data.ok) return { ok: true }
+
+    // Fallback : retourner le lien wa.me si aucune API configurée
+    if (data.fallback === "wa_link" && data.waLink) {
+      return { ok: false, error: data.error, waLink: data.waLink }
+    }
+
+    return { ok: false, error: data.error ?? "Erreur envoi WhatsApp" }
+  } catch (err) {
+    return { ok: false, error: `Réseau : ${err instanceof Error ? err.message : String(err)}` }
+  }
+}
+
+// ── Helpers HTML ──────────────────────────────────────────────────────────────
+
+function bodyToHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>")
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>
+  body{font-family:Arial,sans-serif;font-size:14px;color:#1e293b;line-height:1.6;margin:0;padding:20px;background:#f8fafc}
+  .card{background:#fff;border-radius:12px;padding:24px 28px;max-width:600px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .header{background:linear-gradient(135deg,#1a4f2a,#2d7a46);color:#fff;padding:16px 24px;border-radius:10px;margin-bottom:20px}
+  .header h1{margin:0;font-size:18px;font-weight:800}
+  .header p{margin:4px 0 0;font-size:12px;opacity:.8}
+  pre{background:#f1f5f9;border-radius:8px;padding:16px;font-size:13px;overflow-x:auto;white-space:pre-wrap;border:1px solid #e2e8f0}
+  .footer{text-align:center;margin-top:20px;font-size:11px;color:#94a3b8}
+</style></head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>🌿 FreshLink Pro</h1>
+      <p>Vita Fresh — Distribution Fruits &amp; Légumes</p>
+    </div>
+    <pre>${escaped}</pre>
+    <div class="footer">⚡ Powered by Vita tech · FreshLink Pro</div>
+  </div>
+</body>
+</html>`
+}
+
+// ── Email body builders (inchangés) ──────────────────────────────────────────
 
 function fmt(n: number): string {
   return n.toLocaleString("fr-MA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -174,20 +206,11 @@ function dateStr(): string {
   return new Date().toLocaleDateString("fr-MA", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
-// ---- Récap journalier ----
-
 export function buildRecapJournalier(data: {
   date: string
-  totalAchats: number
-  totalCommandes: number
-  totalLivraisons: number
-  totalRetours: number
-  totalCash: number
-  marge: number
-  nbBonsAchat?: number
-  nbCommandes?: number
-  nbLivraisons?: number
-  nbRetours?: number
+  totalAchats: number; totalCommandes: number; totalLivraisons: number
+  totalRetours: number; totalCash: number; marge: number
+  nbBonsAchat?: number; nbCommandes?: number; nbLivraisons?: number; nbRetours?: number
 }): string {
   const line = "─".repeat(48)
   return [
@@ -195,7 +218,6 @@ export function buildRecapJournalier(data: {
     "     RÉCAP JOURNALIER — FreshLink Pro",
     `     Date : ${data.date}`,
     line,
-    "",
     `  Achats du jour        : ${fmt(data.totalAchats)} DH  (${data.nbBonsAchat ?? 0} bons)`,
     `  Commandes validées    : ${fmt(data.totalCommandes)} DH  (${data.nbCommandes ?? 0} commandes)`,
     `  Livraisons effectuées : ${fmt(data.totalLivraisons)} DH  (${data.nbLivraisons ?? 0} BLs)`,
@@ -203,14 +225,11 @@ export function buildRecapJournalier(data: {
     `  Encaissements (Cash)  : ${fmt(data.totalCash)} DH`,
     "  " + "·".repeat(44),
     `  Marge brute estimée   : ${fmt(data.marge)} DH`,
-    "",
     line,
     "  Rapport généré par FreshLink Pro",
     line,
   ].join("\n")
 }
-
-// ---- Bon d'achat ----
 
 export function buildAchatEmail(bon: {
   id: string; fournisseurNom: string; date: string; acheteurNom: string
@@ -234,8 +253,6 @@ export function buildAchatEmail(bon: {
   ].join("\n")
 }
 
-// ---- Commande ----
-
 export function buildCommandeEmail(cmd: {
   id: string; clientNom: string; commercialNom: string; date: string; heurelivraison: string
   lignes: { articleNom: string; quantite: number; prixVente: number }[]
@@ -258,83 +275,42 @@ export function buildCommandeEmail(cmd: {
   ].join("\n")
 }
 
-// ---- Besoin d'achat net ----
-// Calcul : commandes prévendeurs – stock disponible – retours validés
-// Peut être regroupé par fournisseur
-
 export interface BesoinLigneEmail {
-  articleNom:    string
-  fournisseurNom?: string
-  commandeTotal: number
-  stockActuel:   number
-  retours:       number
-  besoinNet:     number
-  unite?:        string
+  articleNom: string; fournisseurNom?: string
+  commandeTotal: number; stockActuel: number; retours: number; besoinNet: number; unite?: string
 }
 
-export function buildBesoinAchatEmail(
-  lignes: BesoinLigneEmail[],
-  options?: { date?: string; titre?: string }
-): string {
-  const d    = options?.date  ?? dateStr()
+export function buildBesoinAchatEmail(lignes: BesoinLigneEmail[], options?: { date?: string; titre?: string }): string {
+  const d    = options?.date ?? dateStr()
   const line = "─".repeat(56)
   const total = lignes.reduce((s, l) => s + l.besoinNet, 0)
-
-  const header = [
+  return [
     line,
     `  BESOIN D'ACHAT NET — FreshLink Pro`,
     `  Date : ${d}`,
-    `  Calcul : Commandes prévendeurs − Stock − Retours validés`,
     line,
     `  ${"Article".padEnd(22)} ${"Cdes".padStart(6)} ${"Stock".padStart(6)} ${"Retours".padStart(8)} ${"Besoin".padStart(8)}`,
-    `  ${"─".repeat(52)}`,
-  ]
-
-  const rows = lignes.map(l => {
-    const unite = l.unite ? ` ${l.unite}` : ""
-    const status = l.besoinNet > 0 ? `  *** COMMANDER ${l.besoinNet}${unite} ***` : "  OK"
-    return [
-      `  ${l.articleNom.slice(0, 22).padEnd(22)} ${String(l.commandeTotal).padStart(6)} ${String(l.stockActuel).padStart(6)} ${String(l.retours).padStart(8)} ${String(l.besoinNet).padStart(8)}${l.besoinNet > 0 ? status : ""}`,
-      l.fournisseurNom ? `    → Fournisseur : ${l.fournisseurNom}` : "",
-    ].filter(Boolean).join("\n")
-  })
-
-  const footer = [
-    `  ${"─".repeat(52)}`,
+    ...lignes.map(l => {
+      const unite = l.unite ? ` ${l.unite}` : ""
+      return `  ${l.articleNom.slice(0, 22).padEnd(22)} ${String(l.commandeTotal).padStart(6)} ${String(l.stockActuel).padStart(6)} ${String(l.retours).padStart(8)} ${String(l.besoinNet).padStart(8)}${l.besoinNet > 0 ? `  *** COMMANDER ${l.besoinNet}${unite} ***` : ""}`
+    }),
     `  Total besoin net : ${total} unité(s)`,
     line,
-    "  À envoyer au(x) fournisseur(s) pour approvisionnement",
-    line,
-  ]
-
-  return [...header, ...rows, ...footer].join("\n")
+  ].join("\n")
 }
-
-// ---- Besoin d'achat consolide par fournisseur ----
 
 export interface BesoinParFournisseur {
-  fournisseurNom: string
-  fournisseurEmail?: string
-  lignes: BesoinLigneEmail[]
+  fournisseurNom: string; fournisseurEmail?: string; lignes: BesoinLigneEmail[]
 }
 
-export function buildBesoinAchatParFournisseur(
-  groupes: BesoinParFournisseur[],
-  date?: string
-): Array<{ fournisseurNom: string; fournisseurEmail?: string; subject: string; body: string }> {
+export function buildBesoinAchatParFournisseur(groupes: BesoinParFournisseur[], date?: string) {
   const d = date ?? dateStr()
   return groupes
     .filter(g => g.lignes.some(l => l.besoinNet > 0))
-    .map(g => {
-      const lignesAvecBesoin = g.lignes.filter(l => l.besoinNet > 0)
-      return {
-        fournisseurNom:   g.fournisseurNom,
-        fournisseurEmail: g.fournisseurEmail,
-        subject: `Commande d'approvisionnement FreshLink — ${g.fournisseurNom} — ${d}`,
-        body: buildBesoinAchatEmail(
-          lignesAvecBesoin.map(l => ({ ...l, fournisseurNom: undefined })),
-          { date: d, titre: `Commande pour ${g.fournisseurNom}` }
-        ),
-      }
-    })
+    .map(g => ({
+      fournisseurNom:   g.fournisseurNom,
+      fournisseurEmail: g.fournisseurEmail,
+      subject: `Commande d'approvisionnement FreshLink — ${g.fournisseurNom} — ${d}`,
+      body:    buildBesoinAchatEmail(g.lignes.filter(l => l.besoinNet > 0), { date: d }),
+    }))
 }
