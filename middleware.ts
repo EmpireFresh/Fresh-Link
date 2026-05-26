@@ -1,35 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyDeviceToken, verifySadminToken, isDeviceAllowed, DEVICE_COOKIE, DEVICE_BYPASS, SADMIN_COOKIE } from "@/lib/deviceGuard"
-import type { DeviceEntry } from "@/lib/deviceGuard"
+import { verifyDeviceToken, verifySadminToken, DEVICE_COOKIE, DEVICE_BYPASS, SADMIN_COOKIE } from "@/lib/deviceGuard"
 
 // ── Paths toujours accessibles (pas de device check) ──────────────────────────
 const PUBLIC_PATHS = [
   "/device-blocked",
-  "/api/device/register",
-  "/api/device/check",
-  "/api/ext/",          // API publique site web
+  "/api/device/",          // toutes les routes device (register, request-access, check-and-token…)
+  "/api/ext/",             // API publique site web
   "/_next/",
   "/favicon",
   "/icon",
   "/apple-touch",
   "/manifest",
+  "/vita-fresh-logo",
+  "/empire-fresh-logo",
+  "/site-netlify",         // HTML site servi depuis public/
 ]
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(p => pathname.startsWith(p))
-}
-
-// ── Charger la whitelist depuis les headers / env ──────────────────────────────
-// En production, cette liste vient de Supabase via un edge config ou env var.
-// En mode localStorage, on passe la vérification (garde ouverte = toujours vrai).
-function getWhitelist(): DeviceEntry[] {
-  try {
-    const raw = process.env.DEVICE_WHITELIST_JSON
-    if (!raw) return []             // Liste vide = mode ouvert (tous autorisés)
-    return JSON.parse(raw) as DeviceEntry[]
-  } catch {
-    return []
-  }
 }
 
 export function middleware(request: NextRequest) {
@@ -39,7 +27,6 @@ export function middleware(request: NextRequest) {
   if (isPublicPath(pathname)) return NextResponse.next()
 
   // ── 2a. Super-admin bypass (Jawad — exempt de device guard) ─────────────────
-  // Si un cookie sadmin valide est présent, on laisse passer sans vérification device.
   const sadminCookie = request.cookies.get(SADMIN_COOKIE)?.value
   if (sadminCookie && verifySadminToken(sadminCookie)) {
     return NextResponse.next()
@@ -52,47 +39,40 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── 3. Vérifier le cookie device ──────────────────────────────────────────
+  // ── 3. Vérifier le cookie device (HMAC signé) ─────────────────────────────
+  // Le token est posé par /api/device/check-and-token après approbation dans Supabase
   const deviceCookie = request.cookies.get(DEVICE_COOKIE)?.value
-  const whitelist    = getWhitelist()
 
-  // Mode ouvert : liste vide = aucun device enregistré = accès libre
-  // Cela permet l'accès jusqu'à ce que l'admin crée des entrées dans la whitelist
-  if (whitelist.length === 0) {
-    return NextResponse.next()
-  }
-
-  // Liste non vide → le cookie doit être présent et valide
   if (!deviceCookie) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/device-blocked"
-    url.searchParams.set("reason", "no-token")
-    return NextResponse.redirect(url)
+    // Aucun cookie → premier accès → portail de demande d'accès
+    return redirectToBlocked(request, "no-token")
   }
 
-  // Vérifier signature du token
   const fingerprint = verifyDeviceToken(deviceCookie)
   if (!fingerprint) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/device-blocked"
-    url.searchParams.set("reason", "invalid-token")
-    return NextResponse.redirect(url)
+    // Token invalide ou expiré → redemander l'accès
+    return redirectToBlocked(request, "invalid-token")
   }
 
-  // Vérifier si le device est autorisé
-  if (!isDeviceAllowed(fingerprint, whitelist)) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/device-blocked"
-    url.searchParams.set("reason", "not-allowed")
-    return NextResponse.redirect(url)
-  }
-
+  // Token HMAC valide → accès autorisé
+  // (L'approbation a été vérifiée dans Supabase lors de l'émission du token)
   return NextResponse.next()
+}
+
+function redirectToBlocked(req: NextRequest, reason: string): NextResponse {
+  const url = req.nextUrl.clone()
+  url.pathname = "/device-blocked"
+  url.searchParams.set("reason", reason)
+  // Conserver la page cible pour redirection après approbation
+  if (req.nextUrl.pathname !== "/device-blocked") {
+    url.searchParams.set("from", req.nextUrl.pathname)
+  }
+  return NextResponse.redirect(url)
 }
 
 export const config = {
   matcher: [
     // Toutes les pages ET API (sauf _next/static, _next/image, fichiers statiques)
-    "/((?!_next/static|_next/image|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)).*)",
+    "/((?!_next/static|_next/image|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|mp4|pdf)).*)",
   ],
 }

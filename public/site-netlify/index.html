@@ -704,35 +704,6 @@ html[dir="rtl"] .modal-close{right:auto;left:14px}
 .stars { background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b); -webkit-background-clip:text; background-clip:text; color:transparent; background-size:200% 100%; animation:starsShimmer 3s ease infinite; }
 @keyframes starsShimmer{0%,100%{background-position:0%}50%{background-position:100%}}
 
-/* ── ACCESS GATE ── */
-#access-gate{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#020805 0%,#0D1A0D 40%,#1B3A22 100%);display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .6s,visibility .6s}
-#access-gate.fade-out{opacity:0;pointer-events:none}
-.gate-box{background:#fff;border-radius:24px;padding:40px 32px;max-width:460px;width:100%;text-align:center;box-shadow:0 32px 100px rgba(0,0,0,.6);animation:scaleIn .5s cubic-bezier(.22,1,.36,1)}
-.gate-logo-wrap{margin:0 auto 18px;display:block}
-.gate-logo-img{height:56px;width:auto;object-fit:contain}
-.gate-logo-fallback{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#1E5631,#2D7A45);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px}
-.gate-badge{display:inline-block;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px}
-.gate-title{font-size:1.45rem;font-weight:900;color:#111827;margin-bottom:6px;font-family:'DM Sans','Inter',sans-serif}
-.gate-sub{font-size:13.5px;color:#6b7280;margin-bottom:22px;line-height:1.65}
-.gate-form{text-align:left}
-.gate-field{margin-bottom:13px}
-.gate-field label{display:block;font-size:11px;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
-.gate-field input{width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;transition:border-color .2s;box-sizing:border-box;color:#111}
-.gate-field input:focus{outline:none;border-color:#1E5631;box-shadow:0 0 0 3px rgba(30,86,49,.1)}
-.gate-btn{width:100%;padding:14px;background:linear-gradient(135deg,#1E5631,#2D7A45);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
-.gate-btn:hover:not(:disabled){background:linear-gradient(135deg,#2D7A45,#3a9e5f);transform:translateY(-1px);box-shadow:0 6px 20px rgba(30,86,49,.35)}
-.gate-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.gate-gps-ok{padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;font-size:12px;color:#166534;margin:10px 0;text-align:left}
-.gate-err{color:#dc2626;font-size:13px;margin:8px 0;display:none;padding:8px 12px;background:#fef2f2;border-radius:8px}
-.gate-pulse{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1E5631,#2D7A45);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px}
-@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(30,86,49,.4)}70%{box-shadow:0 0 0 22px rgba(30,86,49,0)}100%{box-shadow:0 0 0 0 rgba(30,86,49,0)}}
-.gate-pulse{animation:pulse-ring 2s infinite}
-.gate-waiting-title{font-size:1.2rem;font-weight:800;color:#1a7a3c;margin-bottom:8px}
-.gate-waiting-sub{font-size:13px;color:#555;line-height:1.75;margin-bottom:18px}
-.gate-device-info{font-size:11px;color:#aaa;margin-top:8px;font-family:monospace}
-.gate-resend-btn{margin-top:12px;padding:9px 20px;background:none;border:1.5px solid #1E5631;color:#1E5631;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s}
-.gate-resend-btn:hover{background:#f0fdf4}
-.gate-note{font-size:11px;color:#9ca3af;margin-top:16px;padding-top:12px;border-top:1px solid #f3f4f6}
 /* Admin user management */
 .ua-list{display:grid;gap:10px;margin-bottom:14px}
 .ua-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -748,56 +719,7 @@ html[dir="rtl"] .modal-close{right:auto;left:14px}
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     ACCESS GATE — Contrôle d'accès sécurisé par Jawad (super administrateur)
-     Bloque l'accès jusqu'à autorisation. GPS obligatoire envoyé à Jawad.
-     ═══════════════════════════════════════════════════════════════════════ -->
-<div id="access-gate">
-  <div class="gate-box">
-    <!-- Logo Vita Fresh -->
-    <div class="gate-logo-wrap">
-      <img src="https://f-l.vercel.app/vita-fresh-logo.svg" class="gate-logo-img" alt="Vita Fresh"
-           onerror="this.style.display='none';document.getElementById('gate-logo-fb').style.display='flex'"/>
-      <div id="gate-logo-fb" class="gate-logo-fallback" style="display:none">🌿</div>
-    </div>
-    <div class="gate-badge">🔐 Accès Sécurisé</div>
-    <!-- ÉTAPE 1 — Formulaire de demande -->
-    <div id="gate-step-request">
-      <h2 class="gate-title">Site réservé — Accès privé</h2>
-      <p class="gate-sub">Ce site est accessible uniquement aux personnes autorisées par<br><strong>Jawad — Super Administrateur.</strong><br>Entrez vos informations pour soumettre une demande d'accès.</p>
-      <form class="gate-form" onsubmit="gateSubmit(event)">
-        <div class="gate-field">
-          <label>👤 Votre nom complet</label>
-          <input id="gate-nom" type="text" placeholder="Prénom et Nom" autocomplete="name" required/>
-        </div>
-        <div class="gate-field">
-          <label>📱 Téléphone WhatsApp</label>
-          <input id="gate-phone" type="tel" placeholder="06 XX XX XX XX" autocomplete="tel" required/>
-        </div>
-        <div id="gate-gps-status" class="gate-gps-ok" style="display:none"></div>
-        <div id="gate-err" class="gate-err"></div>
-        <button class="gate-btn" id="gate-btn" type="submit">
-          <span>📍</span><span>Demander l'accès + Partager ma position</span>
-        </button>
-      </form>
-      <p class="gate-note">📍 Votre position GPS sera envoyée à Jawad pour validation.<br>La demande est traitée manuellement — réponse sous quelques minutes.</p>
-    </div>
-    <!-- ÉTAPE 2 — En attente d'autorisation -->
-    <div id="gate-step-waiting" style="display:none">
-      <div class="gate-pulse">⏳</div>
-      <h3 class="gate-waiting-title">Demande envoyée avec succès !</h3>
-      <p class="gate-waiting-sub">
-        📲 Votre demande a été transmise à <strong>Jawad</strong> via WhatsApp.<br>
-        📍 Votre position GPS a été partagée.<br>
-        🔄 Le site vérifie automatiquement l'autorisation toutes les <strong>30 secondes</strong>.<br><br>
-        ⏱️ Temps d'attente habituel : <strong>quelques minutes</strong>.
-      </p>
-      <div id="gate-device-info" class="gate-device-info"></div>
-      <button class="gate-resend-btn" onclick="gateResend()">🔔 Renvoyer la notification à Jawad</button>
-      <p class="gate-note">Si vous avez déjà été autorisé et que le site ne s'ouvre pas,<br>rechargez la page (F5 / Actualiser).</p>
-    </div>
-  </div>
-</div>
+<!-- Site Vita Fresh — accès public. FreshLink ERP (f-l.vercel.app) est restreint. -->
 
 <script>
 // ── NAVBAR SCROLL CLASS ──
@@ -1271,8 +1193,8 @@ function setLang(lang){
       <div class="cfg-f"><label>Bénéficiaire</label><input id="c-rib-benef" type="text" placeholder="Vita Fresh SARL"></div>
       <div class="cfg-f"><label>Banque</label><input id="c-rib-banque" type="text" placeholder="CIH / Attijariwafa / BMCE"></div>
       <div class="cfg-grp">🌍 Réseaux sociaux</div>
-      <div class="cfg-f"><label>Facebook</label><input id="c-fb" type="url" placeholder="https://facebook.com/empirefreshmaroc"></div>
-      <div class="cfg-f"><label>Instagram</label><input id="c-ig" type="url" placeholder="https://instagram.com/empirefreshmaroc"></div>
+      <div class="cfg-f"><label>Facebook</label><input id="c-fb" type="url" placeholder="https://facebook.com/vitafreshmaroc"></div>
+      <div class="cfg-f"><label>Instagram</label><input id="c-ig" type="url" placeholder="https://instagram.com/vitafreshmaroc"></div>
     </div>
     <div class="cfg-sec" id="s-stats">
       <div class="cfg-grp">📊 Chiffres clés — بدّل الأرقام هنا مباشرة</div>
@@ -2607,210 +2529,6 @@ function initSupabase(){
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ACCESS GATE — Contrôle d'accès sécurisé
-// Jawad (super admin) doit autoriser chaque appareil.
-// GPS obligatoire envoyé via WhatsApp à Jawad à la première visite.
-// ══════════════════════════════════════════════════════════════════
-var JAWAD_WA = CONFIG.WA_EQUIPE_1 || "212647333456";
-var GATE_STORAGE_KEY = "vf_access_v3";
-var GATE_DEVICE_KEY  = "vf_did_v3";
-var gatePollingTimer = null;
-var gateDeviceId     = null;
-
-function gateGetDeviceId(){
-  var id = localStorage.getItem(GATE_DEVICE_KEY);
-  if(!id){ id = "did_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8); localStorage.setItem(GATE_DEVICE_KEY, id); }
-  return id;
-}
-
-function initAccessGate(){
-  // Dev bypass: add ?bypass=VitaFresh2026 to URL to skip gate
-  if(new URLSearchParams(location.search).get("bypass") === ADMIN_PIN){ hideGate(); return; }
-
-  var saved = null;
-  try{ saved = JSON.parse(localStorage.getItem(GATE_STORAGE_KEY)||"null"); }catch(e){}
-  gateDeviceId = gateGetDeviceId();
-
-  if(saved && saved.statut === "autorise"){
-    // Verify with Supabase (background — show site immediately then recheck)
-    hideGate();
-    if(!sb) sb = initSupabase();
-    if(sb){
-      sb.from("fl_site_access").select("statut").eq("device_id", gateDeviceId).single()
-        .then(function(r){
-          if(!r.error && r.data){
-            if(r.data.statut === "bloque"){ clearGateSession(); location.reload(); }
-          }
-        }).catch(function(){});
-    }
-    return;
-  }
-
-  if(saved && saved.statut === "en_attente"){
-    // Still waiting — show waiting screen
-    document.getElementById("gate-step-request").style.display = "none";
-    document.getElementById("gate-step-waiting").style.display = "block";
-    var di = document.getElementById("gate-device-info");
-    if(di) di.textContent = "ID Appareil : " + gateDeviceId;
-    startGatePolling(gateDeviceId);
-    return;
-  }
-
-  // First visit or no record — show form
-  showGate();
-}
-
-function showGate(){
-  var g = document.getElementById("access-gate");
-  if(g){ g.style.display = "flex"; g.classList.remove("fade-out"); document.body.style.overflow = "hidden"; }
-}
-
-function hideGate(){
-  var g = document.getElementById("access-gate");
-  if(g){ g.classList.add("fade-out"); setTimeout(function(){ g.style.display = "none"; document.body.style.overflow = ""; }, 600); }
-}
-
-function clearGateSession(){
-  localStorage.removeItem(GATE_STORAGE_KEY);
-}
-
-function gateSubmit(e){
-  e.preventDefault();
-  var nom   = (document.getElementById("gate-nom").value||"").trim();
-  var phone = (document.getElementById("gate-phone").value||"").trim();
-  if(!nom || !phone){ gateShowErr("Nom et téléphone sont obligatoires."); return; }
-
-  var btn = document.getElementById("gate-btn");
-  btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span><span>Envoi en cours...</span>';
-  gateShowErr("");
-
-  // Request GPS — obligatoire
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      function(pos){ gateDoSubmit(nom, phone, pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy); },
-      function(err){ gateDoSubmit(nom, phone, null, null, null); },
-      { timeout:9000, maximumAge:0, enableHighAccuracy:true }
-    );
-  } else {
-    gateDoSubmit(nom, phone, null, null, null);
-  }
-}
-
-function gateDoSubmit(nom, phone, lat, lng, acc){
-  var deviceId = gateGetDeviceId();
-  gateDeviceId = deviceId;
-  var now = new Date().toISOString();
-
-  var rowData = {
-    id: deviceId, device_id: deviceId, nom: nom, telephone: phone,
-    statut: "en_attente", user_agent: navigator.userAgent.slice(0,200),
-    first_visit_at: now
-  };
-  if(lat !== null){ rowData.gps_lat = lat; rowData.gps_lng = lng; rowData.gps_precision = acc; }
-
-  // 1. Save to Supabase fl_site_access
-  if(!sb) sb = initSupabase();
-  var saveOp = sb
-    ? sb.from("fl_site_access").upsert([rowData], { onConflict:"device_id" })
-    : Promise.resolve({});
-
-  saveOp.then(function(){
-    // 2. Send WhatsApp to Jawad
-    var mapsUrl = (lat !== null) ? ("https://maps.google.com/?q="+lat.toFixed(6)+","+lng.toFixed(6)) : "GPS non disponible";
-    var msg = "🔐 *DEMANDE D'ACCÈS — Site Vita Fresh*\n";
-    msg += "━━━━━━━━━━━━━━━━━━━━\n";
-    msg += "👤 *Nom :* " + nom + "\n";
-    msg += "📱 *Tél :* " + phone + "\n";
-    msg += "🔑 *Device ID :* " + deviceId + "\n";
-    if(lat !== null){
-      msg += "📍 *GPS :* " + lat.toFixed(6) + ", " + lng.toFixed(6) + "\n";
-      msg += "🗺️ *Maps :* " + mapsUrl + "\n";
-      if(acc) msg += "📐 *Précision :* " + Math.round(acc) + "m\n";
-    } else {
-      msg += "📍 *GPS :* Non partagé (refusé par l'utilisateur)\n";
-    }
-    msg += "🕒 *Date :* " + new Date().toLocaleString("fr-FR") + "\n";
-    msg += "━━━━━━━━━━━━━━━━━━━━\n";
-    msg += "✅ *Pour autoriser :*\n";
-    msg += "FreshLink ERP → Admin → Accès Site → Approuver\n";
-    msg += "Ou répondez *AUTORISE "+deviceId+"*";
-
-    window.open("https://wa.me/" + JAWAD_WA + "?text=" + encodeURIComponent(msg), "_blank");
-
-    // 3. Update UI
-    if(lat !== null){
-      var gs = document.getElementById("gate-gps-status");
-      if(gs){ gs.style.display = "block"; gs.textContent = "📍 Position GPS partagée avec Jawad ✅"; }
-    }
-
-    localStorage.setItem(GATE_STORAGE_KEY, JSON.stringify({ statut:"en_attente", deviceId:deviceId, nom:nom, phone:phone, sentAt:now }));
-
-    document.getElementById("gate-step-request").style.display = "none";
-    document.getElementById("gate-step-waiting").style.display  = "block";
-    var di = document.getElementById("gate-device-info");
-    if(di) di.textContent = "ID Appareil : " + deviceId;
-
-    startGatePolling(deviceId);
-  }).catch(function(err){
-    console.error("[AccessGate]", err);
-    gateShowErr("Erreur réseau. Vérifiez votre connexion.");
-    var btn = document.getElementById("gate-btn");
-    if(btn){ btn.disabled = false; btn.innerHTML = '<span>📍</span><span>Demander l\'accès + Partager ma position</span>'; }
-  });
-}
-
-function startGatePolling(deviceId){
-  if(gatePollingTimer) clearInterval(gatePollingTimer);
-  gatePollingTimer = setInterval(function(){
-    if(!sb) sb = initSupabase();
-    if(!sb) return;
-    sb.from("fl_site_access").select("statut").eq("device_id", deviceId).single()
-      .then(function(r){
-        if(!r.error && r.data){
-          if(r.data.statut === "autorise"){
-            clearInterval(gatePollingTimer);
-            var saved = JSON.parse(localStorage.getItem(GATE_STORAGE_KEY)||"{}");
-            saved.statut = "autorise";
-            localStorage.setItem(GATE_STORAGE_KEY, JSON.stringify(saved));
-            showToast("✅ Accès autorisé par Jawad ! Bienvenue sur Vita Fresh 🌿");
-            hideGate();
-          } else if(r.data.statut === "bloque"){
-            clearInterval(gatePollingTimer);
-            clearGateSession();
-            document.getElementById("gate-step-waiting").innerHTML =
-              '<div style="font-size:48px;margin-bottom:16px">🚫</div>'
-              +'<h3 style="color:#dc2626;font-size:1.1rem;font-weight:800;margin-bottom:8px">Accès refusé</h3>'
-              +'<p style="font-size:13px;color:#666">Votre demande a été refusée par l\'administrateur.<br>Contactez Jawad pour plus d\'informations.</p>';
-          }
-        }
-      }).catch(function(){});
-  }, 30000); // check every 30s
-}
-
-function gateResend(){
-  var saved = null;
-  try{ saved = JSON.parse(localStorage.getItem(GATE_STORAGE_KEY)||"null"); }catch(e){}
-  if(!saved) return;
-  var msg = "🔔 *RAPPEL — Demande d'accès Vita Fresh*\n\n";
-  msg += "👤 Nom : " + (saved.nom||"?") + "\n📱 Tél : " + (saved.phone||"?") + "\n🔑 Device : " + (saved.deviceId||"?") + "\n\n";
-  msg += "✅ Pour autoriser : FreshLink ERP → Accès Site → Approuver";
-  window.open("https://wa.me/" + JAWAD_WA + "?text=" + encodeURIComponent(msg), "_blank");
-  showToast("🔔 Notification renvoyée à Jawad");
-}
-
-function gateShowErr(msg){
-  var el = document.getElementById("gate-err");
-  if(!el) return;
-  if(msg){ el.textContent = msg; el.style.display = "block"; }
-  else { el.style.display = "none"; }
-  var btn = document.getElementById("gate-btn");
-  if(btn && msg){ btn.disabled = false; btn.innerHTML = '<span>📍</span><span>Demander l\'accès + Partager ma position</span>'; }
-}
-window.gateSubmit  = gateSubmit;
-window.gateResend  = gateResend;
-
-// ══════════════════════════════════════════════════════════════════
 // ADMIN USER MANAGEMENT — Gestion comptes + Mots de passe
 // ══════════════════════════════════════════════════════════════════
 var adminUsersCache = [];
@@ -4108,10 +3826,7 @@ function initReveal(){
 
 // ── INIT ──
 document.addEventListener("DOMContentLoaded",function(){
-  // Access gate must be initialized first — it may block the site
   sb=initSupabase();
-  initAccessGate();
-
   updateContactLinks(); renderStats(); renderZones();
   setLang(currentLang);
   showSkeletons(8);
