@@ -1,17 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import {
-  verifyDeviceToken,
-  verifySadminToken,
-  signSadminToken,
-  DEVICE_COOKIE,
-  DEVICE_BYPASS,
-  SADMIN_COOKIE,
-} from "@/lib/deviceGuard"
+import { verifyDeviceToken, verifySadminToken, DEVICE_COOKIE, DEVICE_BYPASS, SADMIN_COOKIE } from "@/lib/deviceGuard"
 
 // ── Paths toujours accessibles (pas de device check) ──────────────────────────
 const PUBLIC_PATHS = [
   "/device-blocked",
-  "/api/device/",          // toutes les routes device (register, request-access, check-and-token…)
+  "/api/device/",          // toutes les routes device (register, request-access, check-and-token, admin-bypass…)
   "/api/admin-session",    // login admin — accessible avant d'avoir le sadmin cookie
   "/api/ext/",             // API publique site web
   "/_next/",
@@ -40,27 +33,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── 2b. Bypass key (URL param ou header) → pose cookie sadmin 30j ───────────
+  // ── 2b. Bypass key dans URL → déléguer à la route Node.js /api/device/admin-bypass
+  //        (Ne pas signer de token ici : Edge Runtime n'a pas accès à crypto Node.js)
   const bypassHeader = request.headers.get("x-vita-bypass")
   const bypassQuery  = request.nextUrl.searchParams.get("bypass")
 
   if (bypassHeader === DEVICE_BYPASS || bypassQuery === DEVICE_BYPASS) {
-    // Pose un cookie sadmin permanent (30 jours) ET redirige sans le param
-    const sadminToken = signSadminToken("jawad-bypass")
-
-    // Nettoyer l'URL (retirer le param bypass)
-    const cleanUrl = request.nextUrl.clone()
-    cleanUrl.searchParams.delete("bypass")
-
-    const response = NextResponse.redirect(cleanUrl)
-    response.cookies.set(SADMIN_COOKIE, sadminToken, {
-      httpOnly: true,
-      secure:   process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path:     "/",
-      maxAge:   30 * 24 * 60 * 60,   // 30 jours
-    })
-    return response
+    // Construire l'URL de la route admin-bypass avec la destination originale
+    const dest   = request.nextUrl.pathname + (request.nextUrl.search ? request.nextUrl.search.replace(/[?&]bypass=[^&]*/g, "").replace(/^&/, "?") : "")
+    const target = new URL("/api/device/admin-bypass", request.nextUrl.origin)
+    target.searchParams.set("key", DEVICE_BYPASS)
+    target.searchParams.set("to", dest || "/")
+    return NextResponse.redirect(target)
   }
 
   // ── 3. Vérifier le cookie device (HMAC signé) ─────────────────────────────
