@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FreshLink Pro — Shared AI/LLM Helper
  * 
  * Provides a robust, model-agnostic callLLM function with:
@@ -131,7 +131,7 @@ export async function callLLM(
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${OR_KEY}`,
-          "HTTP-Referer": "https://app.empire-fresh.co.site",
+          "HTTP-Referer": "https://app.vita-fresh.co.site",
           "X-Title": "FreshLink Pro",
         },
         body: JSON.stringify({

@@ -1,6 +1,6 @@
-// ============================================================
-// FreshLink Web Client — Liaison FreshLink ↔ empire-fresh.netlify.app
-// À utiliser côté site client (empire-fresh.netlify.app)
+﻿// ============================================================
+// FreshLink Web Client — Liaison FreshLink ↔ vita-fresh.netlify.app
+// À utiliser côté site client (vita-fresh.netlify.app)
 // Permet : catalogue, contacts, demandes compte, commandes web
 // Compatible Vanilla JS et tous frameworks (React, Vue, Svelte…)
 // ============================================================
@@ -9,7 +9,7 @@
 const FRESHLINK_BASE_URL =
   (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_FRESHLINK_URL) ??
   (typeof window !== "undefined" && (window as any).__FRESHLINK_URL) ??
-  "https://freshlink.empire-fresh.ma"  // URL de prod — à configurer
+  "https://freshlink.vita-fresh.ma"  // URL de prod — à configurer
 
 const SUPABASE_URL =
   (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SUPABASE_URL) ??
@@ -325,7 +325,7 @@ export function genWhatsAppCommande(
   const total = calculerTotal(lignes)
   const details = lignes.map(l => `• ${l.nom} — ${l.qte} ${l.unite} × ${formatPrix(l.prix_u)} = ${formatPrix(l.montant)}`).join("\n")
   const msg = [
-    `🛒 *Nouvelle commande Empire Fresh*`,
+    `🛒 *Nouvelle commande Vita Fresh*`,
     nomClient ? `👤 Client : ${nomClient}` : "",
     ``,
     details,

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 
@@ -17,8 +17,8 @@ interface SiteEntry {
 
 const DEFAULT_SITES: SiteEntry[] = [
   {
-    id: "empire_fresh", name: "Empire Fresh", nameAr: "إمبير فريش",
-    url: "https://empire-fresh.netlify.app/",
+    id: "vita_fresh", name: "Vita Fresh", nameAr: "إمبير فريش",
+    url: "https://vita-fresh.netlify.app/",
     description: "Site vitrine et catalogue en ligne — présentez vos produits à vos clients",
     descriptionAr: "موقع العرض والكتالوج الإلكتروني",
     color: "bg-emerald-600", bgCard: "from-emerald-50 to-green-50",
@@ -74,7 +74,7 @@ function InlineForm({ form, setForm, onSave, onCancel }: {
     <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {([
-          { key:"name",          label:"Nom (FR)",         ph:"ex: Empire Fresh" },
+          { key:"name",          label:"Nom (FR)",         ph:"ex: Vita Fresh" },
           { key:"nameAr",        label:"Nom (AR)",         ph:"بالعربية" },
           { key:"url",           label:"URL",              ph:"https://..." },
           { key:"description",   label:"Description (FR)", ph:"Courte description" },

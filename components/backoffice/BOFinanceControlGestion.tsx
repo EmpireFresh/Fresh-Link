@@ -1,8 +1,8 @@
-"use client"
+﻿"use client"
 import { useState, useMemo } from "react"
 import { store, type User, isSuperSuperAdmin } from "@/lib/store"
 
-const JAWAD_EMAIL = "jawad@empire-fresh.ma"
+const JAWAD_EMAIL = "jawad@vita-fresh.ma"
 
 function fmtMAD(n: number) { return new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD", maximumFractionDigits: 0 }).format(n) }
 function fmtPct(n: number) { return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%` }
@@ -98,7 +98,7 @@ async function sendDailyReport(toEmail: string) {
   const margeJour = totalVentes - totalAchats
   const margePct = totalVentes > 0 ? (margeJour / totalVentes * 100) : 0
 
-  const body = `RAPPORT JOURNALIER — FreshLink Empire Fresh
+  const body = `RAPPORT JOURNALIER — FreshLink Vita Fresh
 Date : ${today}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -117,14 +117,14 @@ Date : ${today}
 • BL du jour : ${bls.length}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Envoyé automatiquement par FreshLink Empire Fresh
-© ${new Date().getFullYear()} Empire Fresh — Casablanca`
+Envoyé automatiquement par FreshLink Vita Fresh
+© ${new Date().getFullYear()} Vita Fresh — Casablanca`
 
   try {
     const res = await fetch("/api/ext/rapport-journalier", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to: toEmail, subject: `Rapport Journalier Empire Fresh — ${today}`, body })
+      body: JSON.stringify({ to: toEmail, subject: `Rapport Journalier Vita Fresh — ${today}`, body })
     })
     return res.ok
   } catch {
@@ -434,7 +434,7 @@ export default function BOFinanceControlGestion({ user }: { user: User }) {
               <p className="text-xs text-slate-400">Données du jour : ventes, achats, marges, livraisons, retours.</p>
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-xs text-slate-600 mb-4 whitespace-pre-wrap">
-{`RAPPORT JOURNALIER — FreshLink Empire Fresh
+{`RAPPORT JOURNALIER — FreshLink Vita Fresh
 Date : ${new Date().toISOString().split("T")[0]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📦 COMMERCIAL
@@ -464,9 +464,9 @@ Date : ${new Date().toISOString().split("T")[0]}
             <p className="font-bold mb-1">⚙️ Configuration email automatique</p>
             <p>Pour l'envoi automatique quotidien à 20h, configurez un cron job ou utilisez Vercel Cron :</p>
             <code className="block mt-2 bg-white border border-amber-300 rounded-lg px-3 py-2 text-xs font-mono text-amber-900">
-              SMTP_FROM=noreply@empire-fresh.co.site<br />
-              SMTP_HOST=mail.empire-fresh.co.site<br />
-              SMTP_USER=noreply@empire-fresh.co.site<br />
+              SMTP_FROM=noreply@vita-fresh.co.site<br />
+              SMTP_HOST=mail.vita-fresh.co.site<br />
+              SMTP_USER=noreply@vita-fresh.co.site<br />
               SMTP_PASS=VOTRE_MOT_DE_PASSE
             </code>
           </div>

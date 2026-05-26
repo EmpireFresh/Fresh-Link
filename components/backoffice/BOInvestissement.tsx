@@ -1,10 +1,10 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 
 const LANG_LABELS = {
-  fr: { title: "Dossier Investisseur", sub: "FreshLink Pro — Empire Fresh Distribution" },
-  en: { title: "Investor Dossier", sub: "FreshLink Pro — Empire Fresh Distribution" },
+  fr: { title: "Dossier Investisseur", sub: "FreshLink Pro — Vita Fresh Distribution" },
+  en: { title: "Investor Dossier", sub: "FreshLink Pro — Vita Fresh Distribution" },
   ar: { title: "ملف المستثمر", sub: "فريشلينك برو — توزيع إمبير فريش" },
 }
 
@@ -20,13 +20,13 @@ const SECTIONS = [
     content: {
       fr: [
         { tag: "Vision", text: "FreshLink Pro est la première plateforme ERP tout-en-un dédiée à la distribution de fruits et légumes au Maroc, développée par et pour les opérateurs locaux." },
-        { tag: "Traction", text: "Déjà déployée chez Empire Fresh Distribution (Casablanca), l'application gère en temps réel : commandes terrain, stock, logistique, finance et agents IA commerciaux." },
+        { tag: "Traction", text: "Déjà déployée chez Vita Fresh Distribution (Casablanca), l'application gère en temps réel : commandes terrain, stock, logistique, finance et agents IA commerciaux." },
         { tag: "Modèle", text: "SaaS B2B modulaire — abonnement mensuel par utilisateur. Premier client actif. Expansion prévue vers 50+ distributeurs au Maroc dès 2026." },
         { tag: "Levée", text: "Recherche de 2 à 5 M MAD (seed) pour accélérer la commercialisation, l'équipe commerciale et l'hébergement cloud." },
       ],
       en: [
         { tag: "Vision", text: "FreshLink Pro is Morocco's first all-in-one ERP platform dedicated to fruit & vegetable distribution, built by and for local operators." },
-        { tag: "Traction", text: "Already live at Empire Fresh Distribution (Casablanca), managing in real-time: field orders, stock, logistics, finance, and AI commercial agents." },
+        { tag: "Traction", text: "Already live at Vita Fresh Distribution (Casablanca), managing in real-time: field orders, stock, logistics, finance, and AI commercial agents." },
         { tag: "Model", text: "Modular B2B SaaS — monthly per-user subscription. First active client. Expansion target: 50+ Moroccan distributors by 2026." },
         { tag: "Raise", text: "Seeking 2–5 M MAD (seed) to accelerate commercialization, sales team, and cloud infrastructure." },
       ],
@@ -184,19 +184,19 @@ const SECTIONS = [
         { tag: "Montant recherché", text: "2 000 000 à 5 000 000 MAD — Round Seed. Ticket minimum 250 000 MAD. Structure : obligations convertibles ou participation minoritaire au choix." },
         { tag: "Utilisation des fonds", text: "40% Infrastructure cloud & sécurité (Supabase prod, CDN, monitoring). 35% Équipe commerciale & marketing. 15% R&D IA avancée. 10% Opérations & légal." },
         { tag: "Retour attendu", text: "Break-even prévu M+18. MRR de 500 000 MAD projeté à 24 mois. Exit possible par acquisition stratégique (Fintech marocaine, ERP régional)." },
-        { tag: "Contact", text: "Jawad — Fondateur & CEO | +212 663 898 707 | jawad@empirefresh.ma | Casablanca, Maroc" },
+        { tag: "Contact", text: "Jawad — Fondateur & CEO | +212 663 898 707 | jawad@VitaFresh.ma | Casablanca, Maroc" },
       ],
       en: [
         { tag: "Amount sought", text: "2,000,000 to 5,000,000 MAD — Seed Round. Minimum ticket 250,000 MAD. Structure: convertible notes or minority stake, your choice." },
         { tag: "Use of funds", text: "40% Cloud infrastructure & security (Supabase prod, CDN, monitoring). 35% Sales team & marketing. 15% Advanced AI R&D. 10% Operations & legal." },
         { tag: "Expected return", text: "Break-even expected M+18. MRR of 500K MAD projected at 24 months. Exit possible via strategic acquisition (Moroccan Fintech, regional ERP)." },
-        { tag: "Contact", text: "Jawad — Founder & CEO | +212 663 898 707 | jawad@empirefresh.ma | Casablanca, Morocco" },
+        { tag: "Contact", text: "Jawad — Founder & CEO | +212 663 898 707 | jawad@VitaFresh.ma | Casablanca, Morocco" },
       ],
       ar: [
         { tag: "المبلغ المطلوب", text: "من 2,000,000 إلى 5,000,000 درهم — جولة Seed. الحد الأدنى للتذكرة 250,000 درهم. الهيكل: سندات قابلة للتحويل أو حصة أقلية حسب الاختيار." },
         { tag: "استخدام الأموال", text: "40% البنية التحتية السحابية والأمان. 35% فريق المبيعات والتسويق. 15% بحث وتطوير الذكاء الاصطناعي المتقدم. 10% العمليات والقانوني." },
         { tag: "العائد المتوقع", text: "التعادل متوقع في M+18. MRR من 500,000 درهم متوقع في 24 شهراً. الخروج ممكن عبر الاستحواذ الاستراتيجي." },
-        { tag: "التواصل", text: "جواد — المؤسس والرئيس التنفيذي | +212 663 898 707 | jawad@empirefresh.ma | الدار البيضاء، المغرب" },
+        { tag: "التواصل", text: "جواد — المؤسس والرئيس التنفيذي | +212 663 898 707 | jawad@VitaFresh.ma | الدار البيضاء، المغرب" },
       ],
     },
   },
@@ -329,9 +329,9 @@ export default function BOInvestissement() {
       {/* Footer note */}
       <p className="text-[10px] text-muted-foreground text-center pb-2">
         {lang === "fr"
-          ? "Document confidentiel — FreshLink Pro © 2026 Empire Fresh Distribution. Tous droits réservés."
+          ? "Document confidentiel — FreshLink Pro © 2026 Vita Fresh Distribution. Tous droits réservés."
           : lang === "en"
-          ? "Confidential document — FreshLink Pro © 2026 Empire Fresh Distribution. All rights reserved."
+          ? "Confidential document — FreshLink Pro © 2026 Vita Fresh Distribution. All rights reserved."
           : "وثيقة سرية — فريشلينك برو © 2026 إمبير فريش للتوزيع. جميع الحقوق محفوظة."}
       </p>
     </div>

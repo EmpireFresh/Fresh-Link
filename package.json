@@ -1,8 +1,8 @@
 {
-  "name": "freshlink-empire-fresh",
+  "name": "freshlink-vita-fresh",
   "version": "3.0.0",
   "private": true,
-  "description": "FreshLink Empire Fresh — Distribution Fruits & Légumes — Gestion bout en bout",
+  "description": "FreshLink Vita Fresh — Distribution Fruits & Légumes — Gestion bout en bout",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",
-    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.106.1",
     "@types/leaflet": "^1.9.21",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

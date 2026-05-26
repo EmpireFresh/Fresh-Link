@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect, useCallback, Component } from "react"
 import dynamic from "next/dynamic"
@@ -559,7 +559,7 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
           onLogout={onLogout}
           onOpenProfil={() => setShowProfil(true)}
           appName={companyBrand.appName || "FreshLink Pro"}
-          appSlogan={companyBrand.appSlogan || companyBrand.nom || "Empire Fresh"}
+          appSlogan={companyBrand.appSlogan || companyBrand.nom || "Vita Fresh"}
           appLogo={companyBrand.logo || ""}
           lang={lang}
         />
@@ -585,7 +585,7 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
               onLogout={onLogout}
               onOpenProfil={() => setShowProfil(true)}
               appName={companyBrand.appName || "FreshLink Pro"}
-              appSlogan={companyBrand.appSlogan || companyBrand.nom || "Empire Fresh"}
+              appSlogan={companyBrand.appSlogan || companyBrand.nom || "Vita Fresh"}
               appLogo={companyBrand.logo || ""}
               lang={lang}
             />
@@ -786,29 +786,17 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
         <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-2 flex items-center justify-between gap-4 flex-wrap">
           <p className="text-[11px] text-slate-500">
             &copy; 2026{" "}
-            <a href="https://empire-fresh.netlify.app/" target="_blank" rel="noopener noreferrer"
-              className="font-black hover:underline" style={{ color: "#1a4f2a" }}>
-              Empire<span style={{ color: "#b8962e" }}>Fresh</span>
-            </a>
+            <span className="font-black" style={{ color: "#1a4f2a" }}>
+              Vita<span style={{ color: "#b8962e" }}>Fresh</span>
+            </span>
             {" "}&mdash;{" "}
             <span className="font-bold" style={{ color: "#1a4f2a" }}>Fresh Link Pro</span>
           </p>
           <div className="flex items-center gap-3">
-            <a href="https://empire-fresh.netlify.app/" target="_blank" rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1 text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold hover:underline transition-colors">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              Empire Fresh
-            </a>
-            <span className="text-slate-200 hidden sm:block">|</span>
-            <a href="https://www.neo.space/fr" target="_blank" rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1 text-[10px] text-violet-700 hover:text-violet-900 font-semibold hover:underline transition-colors">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              Neo Space
-            </a>
+            <span className="hidden sm:flex items-center gap-1 text-[10px] font-semibold" style={{ color: "#6b7280" }}>
+              ⚡ Powered by{" "}
+              <span className="font-black" style={{ color: "#1a4f2a" }}>Vita tech</span>
+            </span>
           </div>
         </footer>
       </div>
@@ -868,7 +856,7 @@ function SidebarContent({
       <div className="flex items-center gap-3 px-4 py-4 border-b" style={{ borderColor: "#1a4f2a" }}>
         <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border-2 shadow-lg" style={{ borderColor: "#22c55e" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={appLogo || "/empire-fresh-logo.png"} alt={appName} className="w-full h-full object-contain p-0.5 bg-white" />
+          <img src={appLogo || "/vita-fresh-logo.png"} alt={appName} className="w-full h-full object-contain p-0.5 bg-white" />
         </div>
         {!sidebarCollapsed && (
           <div className="min-w-0">
@@ -876,7 +864,7 @@ function SidebarContent({
               <span style={{ color: "#d1fae5" }}>FRESHLINK </span>
               <span style={{ color: "#4ade80" }}>PRO</span>
             </p>
-            <p className="text-[10px] font-bold truncate" style={{ color: "#6ee7b7" }}>{appSlogan || "Empire Fresh"}</p>
+            <p className="text-[10px] font-bold truncate" style={{ color: "#6ee7b7" }}>{appSlogan || "Vita Fresh"}</p>
           </div>
         )}
       </div>

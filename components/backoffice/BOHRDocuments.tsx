@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useMemo } from "react"
 import {
@@ -145,7 +145,7 @@ function generateDoc(
                         ${company}
               Distribution Alimentaire Professionnelle
             Zone Industrielle, Casablanca, Maroc
-            Tél : +212 5XX-XXXXXX  |  contact@empire-fresh.ma
+            Tél : +212 5XX-XXXXXX  |  contact@vita-fresh.ma
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 `
@@ -186,7 +186,7 @@ Loi 65-99 — Juridiction de ${ville}.
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines
+Vita Fresh — Direction des Ressources Humaines
 Signature & Cachet :          ${civ} ${nom} — Signature (Lu et approuvé) :`
       break
 
@@ -227,7 +227,7 @@ Délivrée à la demande de l'intéressé(e) pour faire valoir ce que de droit.
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines
+Vita Fresh — Direction des Ressources Humaines
 Signature & Cachet :`
       break
 
@@ -248,7 +248,7 @@ Cotisations légales prélevées à la source (CNSS 4,48% + AMO 2,26% + IR barè
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines
+Vita Fresh — Direction des Ressources Humaines
 Signature & Cachet :`
       break
 
@@ -273,7 +273,7 @@ Vous disposez de 48h pour nous faire parvenir vos observations écrites (Art. 62
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines — Signature & Cachet :`
+Vita Fresh — Direction des Ressources Humaines — Signature & Cachet :`
       break
 
     case "mise_en_demeure":
@@ -296,7 +296,7 @@ Délai de réponse: 72 heures à compter de la réception du présent courrier.
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines — Signature & Cachet :
+Vita Fresh — Direction des Ressources Humaines — Signature & Cachet :
 
 Accusé de réception (date & signature du salarié) :`
       break
@@ -328,7 +328,7 @@ Le salarié dispose de 60 jours pour dénoncer ce reçu par lettre recommandée 
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines
+Vita Fresh — Direction des Ressources Humaines
 Signature & Cachet :       ${civ} ${nom} — "Reçu pour solde de tout compte" :`
       break
 
@@ -346,7 +346,7 @@ Art. 4 — Renonciation mutuelle à tout recours ultérieur
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines
+Vita Fresh — Direction des Ressources Humaines
 Signature & Cachet :       ${civ} ${nom} — Signature :`
       break
 
@@ -367,7 +367,7 @@ Conditions:
 
 Fait à ${ville}, le ${date}
 
-Empire Fresh — Direction des Ressources Humaines — Signature & Cachet :`
+Vita Fresh — Direction des Ressources Humaines — Signature & Cachet :`
       break
 
     default:
@@ -683,8 +683,8 @@ export default function BOHRDocuments({ user }: { user: User }) {
   const company = useMemo(() => {
     try {
       const cfg = JSON.parse(localStorage.getItem("fl_company_config") ?? "{}")
-      return cfg.nom ?? "Empire Fresh"
-    } catch { return "Empire Fresh" }
+      return cfg.nom ?? "Vita Fresh"
+    } catch { return "Vita Fresh" }
   }, [])
 
   const companyConfig = useMemo(() => {

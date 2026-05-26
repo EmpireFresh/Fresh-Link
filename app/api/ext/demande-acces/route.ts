@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 
 // ══════════════════════════════════════════════════════════════
 // POST /api/ext/demande-acces
-// Reçoit les demandes d'accès pro depuis empire-fresh.netlify.app
+// Reçoit les demandes d'accès pro depuis vita-fresh.netlify.app
 // Enregistre dans fl_demandes_acces (Supabase)
 // ══════════════════════════════════════════════════════════════
 

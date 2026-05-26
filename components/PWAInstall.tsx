@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 
@@ -91,7 +91,7 @@ export default function PWAInstall() {
           {/* App Icon */}
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden border border-slate-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/empire-fresh-logo.png" alt="FreshLink Pro" className="w-full h-full object-cover" />
+            <img src="/vita-fresh-logo.png" alt="FreshLink Pro" className="w-full h-full object-cover" />
           </div>
 
           <div className="flex-1 min-w-0">

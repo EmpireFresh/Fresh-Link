@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useRef } from "react"
 import { store, type EmailConfig, type MotifRetour, type CompanyConfig, type CompanyContacts, type WorkflowConfig, type WorkflowStep, type ContenantTare, DEFAULT_WORKFLOW_STEPS, type ProcessConfig, DEFAULT_PROCESS_CONFIG, type TransportCompany } from "@/lib/store"
@@ -131,15 +131,15 @@ type SiteWebSettings = {
 }
 
 const DEFAULT_SITE: SiteWebSettings = {
-  siteUrl: "https://empire-fresh.co.site",
-  email: "sales@empire-fresh.co.site",
+  siteUrl: "https://vita-fresh.co.site",
+  email: "sales@vita-fresh.co.site",
   whatsapp: "+212600000000",
-  whatsappMsg: "Bonjour Empire Fresh, je souhaite passer une commande.",
+  whatsappMsg: "Bonjour Vita Fresh, je souhaite passer une commande.",
   openHours: "Lun–Sam : 6h–18h",
   instagram: "",
   facebook: "",
   tiktok: "",
-  metaTitle: "Empire Fresh — Fruits & Légumes Casablanca",
+  metaTitle: "Vita Fresh — Fruits & Légumes Casablanca",
   metaDesc: "Distribution de fruits et légumes frais à Casablanca. Livraison B2B sous 24h.",
   maintenanceMode: false,
 }
@@ -181,7 +181,7 @@ function SiteWebTab({ saved, setSaved }: { saved: string; setSaved: (v: string) 
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
         </svg>
         <div>
-          <p className="text-sm font-bold text-blue-900">Paramètres du site Empire Fresh</p>
+          <p className="text-sm font-bold text-blue-900">Paramètres du site Vita Fresh</p>
           <p className="text-xs text-blue-700 mt-0.5">Ces informations alimentent le portail client et les liens de contact.</p>
         </div>
       </div>
@@ -193,8 +193,8 @@ function SiteWebTab({ saved, setSaved }: { saved: string; setSaved: (v: string) 
           URL & Contact
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="URL du site" id="siteUrl" value={settings.siteUrl} onChange={v => set("siteUrl", v)} placeholder="https://empire-fresh.co.site" />
-          <Field label="Email contact" id="email" type="email" value={settings.email} onChange={v => set("email", v)} placeholder="sales@empire-fresh.co.site" />
+          <Field label="URL du site" id="siteUrl" value={settings.siteUrl} onChange={v => set("siteUrl", v)} placeholder="https://vita-fresh.co.site" />
+          <Field label="Email contact" id="email" type="email" value={settings.email} onChange={v => set("email", v)} placeholder="sales@vita-fresh.co.site" />
           <Field label="Numéro WhatsApp" id="whatsapp" value={settings.whatsapp} onChange={v => set("whatsapp", v)} placeholder="+212600000000" />
           <Field label="Horaires d'ouverture" id="openHours" value={settings.openHours} onChange={v => set("openHours", v)} placeholder="Lun–Sam : 6h–18h" />
         </div>
@@ -224,7 +224,7 @@ function SiteWebTab({ saved, setSaved }: { saved: string; setSaved: (v: string) 
           <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           SEO & Méta
         </h3>
-        <Field label="Titre de la page (meta title)" id="metaTitle" value={settings.metaTitle} onChange={v => set("metaTitle", v)} placeholder="Empire Fresh — Fruits & Légumes" />
+        <Field label="Titre de la page (meta title)" id="metaTitle" value={settings.metaTitle} onChange={v => set("metaTitle", v)} placeholder="Vita Fresh — Fruits & Légumes" />
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-slate-600">Description (meta description)</label>
           <textarea value={settings.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2}
@@ -614,10 +614,10 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">Sous-titre / Slogan</label>
                 <input type="text"
-                  value={company.appSlogan ?? company.nom ?? "Empire Fresh"}
+                  value={company.appSlogan ?? company.nom ?? "Vita Fresh"}
                   onChange={e => setCompany(c => ({ ...c, appSlogan: e.target.value }))}
                   className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Empire Fresh" />
+                  placeholder="Vita Fresh" />
                 <p className="text-[10px] text-muted-foreground">Texte affiché sous le nom de l&apos;application</p>
               </div>
             </div>
@@ -847,10 +847,10 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {([
-                { key: "email_principal",     label: "Email principal",         placeholder: "contact@empire-fresh.co.site" },
-                { key: "email_commercial",    label: "Email commercial",        placeholder: "commercial@empire-fresh.co.site" },
-                { key: "email_comptabilite",  label: "Email comptabilité",      placeholder: "compta@empire-fresh.co.site" },
-                { key: "email_rh",            label: "Email RH",                placeholder: "rh@empire-fresh.co.site" },
+                { key: "email_principal",     label: "Email principal",         placeholder: "contact@vita-fresh.co.site" },
+                { key: "email_commercial",    label: "Email commercial",        placeholder: "commercial@vita-fresh.co.site" },
+                { key: "email_comptabilite",  label: "Email comptabilité",      placeholder: "compta@vita-fresh.co.site" },
+                { key: "email_rh",            label: "Email RH",                placeholder: "rh@vita-fresh.co.site" },
               ] as { key: keyof CompanyContacts; label: string; placeholder: string }[]).map(f => (
                 <div key={f.key} className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{f.label}</label>
@@ -917,9 +917,9 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
             <div className="grid grid-cols-2 gap-4">
               {([
                 { key: "instagram", label: "Instagram", placeholder: "@empire.fresh" },
-                { key: "facebook",  label: "Facebook",  placeholder: "facebook.com/empirefresh" },
-                { key: "linkedin",  label: "LinkedIn",   placeholder: "linkedin.com/in/empirefresh" },
-                { key: "tiktok",    label: "TikTok",    placeholder: "@empirefresh" },
+                { key: "facebook",  label: "Facebook",  placeholder: "facebook.com/VitaFresh" },
+                { key: "linkedin",  label: "LinkedIn",   placeholder: "linkedin.com/in/VitaFresh" },
+                { key: "tiktok",    label: "TikTok",    placeholder: "@VitaFresh" },
               ] as { key: keyof CompanyContacts; label: string; placeholder: string }[]).map(f => (
                 <div key={f.key} className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{f.label}</label>

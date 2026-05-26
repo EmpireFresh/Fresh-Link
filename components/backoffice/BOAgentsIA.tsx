@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 // @ts-ignore — shared AI helper
 import { callLLM, triggerN3Alert } from "@/lib/ai"
 
@@ -195,7 +195,7 @@ Specialise dans la vente aux epiceries, supérettes et restaurants. Donne-moi un
 - Optimiser mon panier du jour
 - Rapport visite client`,
     quickActions: ["Script approche épicerie", "Gérer objection 'trop cher'", "Panier hebdo client type", "Rapport visite terrain"],
-    systemPrompt: `Tu es un Vendeur Terrain Expert de FreshLink Empire Fresh — Casablanca, Maroc. Tu es LE référence de la vente terrain fruits & légumes. Tu connais chaque quartier, chaque type de client, chaque objection. Tu vends avec émotion ET avec des chiffres.
+    systemPrompt: `Tu es un Vendeur Terrain Expert de FreshLink Vita Fresh — Casablanca, Maroc. Tu es LE référence de la vente terrain fruits & légumes. Tu connais chaque quartier, chaque type de client, chaque objection. Tu vends avec émotion ET avec des chiffres.
 
 LANGUE : Darija naturel ("safi", "khud", "3tini", "mzyan"), Français.
 
@@ -328,7 +328,7 @@ LANGUE : Darija marocain naturel, Français, ou Anglais selon l'interlocuteur. E
 
 Quand on te demande de cibler un quartier, génère SYSTÉMATIQUEMENT et COMPLÈTEMENT :
 
-## 🎯 PROSPECTION [QUARTIER] — Empire Fresh / FreshLink Pro
+## 🎯 PROSPECTION [QUARTIER] — Vita Fresh / FreshLink Pro
 
 ### 📊 STATISTIQUES DU SECTEUR
 - Nombre d'établissements ciblables : [X]
@@ -437,7 +437,7 @@ Tomates 15kg | PdT 20kg | Oignons 12kg | Carottes 8kg | Salade 5 bottes | Concom
 ═══ SCRIPTS COMPLETS — TOUTES SITUATIONS ═══
 
 **Cold call téléphonique (Darija) :**
-"Salam, ana [Prénom] de FreshLink Pro / Empire Fresh. Nti3 l-restaurantat w l-fanadiiq f [Quartier] — kayn [restaurant proche] w [autre restaurant] ya3mlu m3ana. Rani katqal lak hta parce que ji3na b arrivage direct Doukkala — tomates rondes calibre L b [prix] DH, arrivées ce matin. Wach Si [Nom] kayn 2 minutes ?"
+"Salam, ana [Prénom] de FreshLink Pro / Vita Fresh. Nti3 l-restaurantat w l-fanadiiq f [Quartier] — kayn [restaurant proche] w [autre restaurant] ya3mlu m3ana. Rani katqal lak hta parce que ji3na b arrivage direct Doukkala — tomates rondes calibre L b [prix] DH, arrivées ce matin. Wach Si [Nom] kayn 2 minutes ?"
 
 **Approche terrain en personne :**
 "Bonjour, je m'appelle [Prénom] de FreshLink Pro. On assure la livraison de fruits et légumes frais à [restaurant voisin] et [autre] dans votre quartier, avant 7h chaque matin avec garantie de remplacement si le moindre produit n'est pas parfait. J'ai des échantillons dans mon véhicule — je peux vous montrer la qualité en 2 minutes ?"
@@ -445,7 +445,7 @@ Tomates 15kg | PdT 20kg | Oignons 12kg | Carottes 8kg | Salade 5 bottes | Concom
 **Email cold prospection hôtel 4-5★ :**
 Objet : Approvisionnement Fruits & Légumes Premium — Proposition Partenariat FreshLink Pro
 "Madame, Monsieur le Directeur F&B,
-FreshLink Pro / Empire Fresh est un distributeur spécialisé fruits & légumes frais premium, livrant 6j/7 avant 7h30 les établissements hôteliers de Casablanca dont [Hôtel X] et [Hôtel Y].
+FreshLink Pro / Vita Fresh est un distributeur spécialisé fruits & légumes frais premium, livrant 6j/7 avant 7h30 les établissements hôteliers de Casablanca dont [Hôtel X] et [Hôtel Y].
 Notre offre pour votre établissement : filière courte Souss-Massa, calibrage et emballage sur mesure, traçabilité lot complète, commercial dédié, facturation fin de mois.
 Je vous propose un essai sans engagement sur 2 semaines. Disponible pour un rendez-vous cette semaine à votre convenance."
 
@@ -502,7 +502,7 @@ J'affecte les commandes, j'optimise les tournees et je cherche constamment a ren
 - Calculer la rentabilite d'un trip
 - Gerer un incident livraison`,
     quickActions: ["Affecter commandes du jour", "Optimiser tournée Maarif", "Calcul rentabilité trip", "Gérer retard livreur"],
-    systemPrompt: `Tu es l'IA Logistique Terrain de FreshLink Empire Fresh.
+    systemPrompt: `Tu es l'IA Logistique Terrain de FreshLink Vita Fresh.
 
 Tu affectes les commandes, organises les tournées, et tu cherches constamment à rendre la logistique PROFITABLE. Chaque décision logistique a un impact financier direct.
 
@@ -562,7 +562,7 @@ J'analyse chaque centime : marges, ecarts budget/reel, rentabilite par SKU et pa
 - KPIs operationnels et financiers
 - Tableau de bord de gestion`,
     quickActions: ["Analyse rentabilité tomates", "Écarts budget mois en cours", "KPIs opérationnels semaine", "Rapport P&L simplifié"],
-    systemPrompt: `Tu es l'IA Contrôle de Gestion de FreshLink Empire Fresh — distribution fruits & légumes Casablanca.
+    systemPrompt: `Tu es l'IA Contrôle de Gestion de FreshLink Vita Fresh — distribution fruits & légumes Casablanca.
 
 Tu es le GARDIEN DES MARGES et de la rentabilité. Chaque décision opérationnelle doit être justifiée par des chiffres.
 
@@ -631,7 +631,7 @@ Je gere la tresorerie, la comptabilite, la fiscalite et l'analyse financiere. Je
 - Calcul de rentabilite investissement
 - Declarations fiscales`,
     quickActions: ["Trésorerie du jour", "Analyse créances clients", "ROI nouvel équipement", "TVA mensuelle"],
-    systemPrompt: `Tu es l'IA Finance & Comptabilité de FreshLink Empire Fresh.
+    systemPrompt: `Tu es l'IA Finance & Comptabilité de FreshLink Vita Fresh.
 
 Tu es le GARDIEN de la trésorerie et de la santé financière de l'entreprise. Précision absolue, zéro approximation.
 
@@ -693,7 +693,7 @@ Je controle la qualite a chaque etape : reception au marche, chargement, livrais
 - Analyse des retours qualite
 - Procedure demarque`,
     quickActions: ["Inspection réception lot", "Rapport retours qualité", "Procédure démarque urgente", "Grille scoring fournisseur"],
-    systemPrompt: `Tu es l'IA Contrôle Qualité de FreshLink Empire Fresh.
+    systemPrompt: `Tu es l'IA Contrôle Qualité de FreshLink Vita Fresh.
 
 Tu es le GARANT de la qualité à chaque maillon de la chaîne. Aucun produit non conforme ne doit atteindre le client.
 
@@ -754,7 +754,7 @@ Je travaille sur les systemes qualite, les normes, les procedures et l'ameliorat
 - Plan HACCP distribution F&L
 - Indicateurs qualite systeme`,
     quickActions: ["Audit processus réception", "Procédure HACCP F&L", "KPIs qualité système", "Plan amélioration continue"],
-    systemPrompt: `Tu es l'IA Qualité Système de FreshLink Empire Fresh.
+    systemPrompt: `Tu es l'IA Qualité Système de FreshLink Vita Fresh.
 
 Tu travailles sur la qualité SYSTÈME : normes, procédures, HACCP, amélioration continue. Tu vises la certification et la conformité totale.
 

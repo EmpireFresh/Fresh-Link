@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 // ============================================================
 // MobileBLValidation — Interface mobile-first pour valider
@@ -108,7 +108,7 @@ function buildBLHtml(bl: BonLivraison, company: { nom?: string; adresse?: string
 <body>
   <div class="header">
     ${company.logo ? `<img src="${company.logo}" style="height:50px;margin-bottom:8px" />` : ""}
-    <div class="co-name">${company.nom ?? "Empire Fresh"}</div>
+    <div class="co-name">${company.nom ?? "Vita Fresh"}</div>
     ${company.adresse ? `<div style="font-size:11px;color:#6b7280">${company.adresse}</div>` : ""}
     ${company.telephone ? `<div style="font-size:11px;color:#6b7280">Tél : ${company.telephone}</div>` : ""}
     <div class="doc-title">BON DE LIVRAISON</div>
@@ -153,7 +153,7 @@ function buildBLHtml(bl: BonLivraison, company: { nom?: string; adresse?: string
     </div>
   </div>
 
-  <div class="footer">Merci pour votre confiance — ${company.nom ?? "Empire Fresh"}</div>
+  <div class="footer">Merci pour votre confiance — ${company.nom ?? "Vita Fresh"}</div>
 </body>
 </html>`
 }

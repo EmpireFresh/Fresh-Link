@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // FRESHLINK PRO — DOCUMENT ENGINE v2  (International Grade)
 // BL · Facture · Bon de Commande · Facture Transport
 // RH: Contrat · Bulletins · Attestations · Disciplinaire · Rupture
@@ -95,19 +95,19 @@ export function calcPayroll(brut: number, avances = 0) {
 }
 
 // ── Company default ───────────────────────────────────────────────────────────
-export const EMPIRE_FRESH_CONFIG: CompanyConfig = {
-  nom:           "Empire Fresh",
+export const vita_fresh_CONFIG: CompanyConfig = {
+  nom:           "Vita Fresh",
   adresse:       "Zone Industrielle, Lot 42, Route d'Ouled Salah",
   ville:         "Casablanca 20000 — Maroc",
   telephone:     "+212 5XX-XXXXXX",
-  email:         "contact@empire-fresh.co.site",
+  email:         "contact@vita-fresh.co.site",
   ice:           "000000000000000",
   rc:            "XXXXXX",
   if_fiscal:     "XXXXXXXX",
   patente:       "XXXXXXXX",
-  logo:          "/empire-fresh-logo.png",
+  logo:          "/vita-fresh-logo.png",
   couleurEntete: "#1a4f2a",
-  mentionsBL:    "Marchandises voyageant aux risques et périls du destinataire. Tout litige doit être signalé dans les 48h. Empire Fresh — Distribution Fruits & Légumes, Casablanca.",
+  mentionsBL:    "Marchandises voyageant aux risques et périls du destinataire. Tout litige doit être signalé dans les 48h. Vita Fresh — Distribution Fruits & Légumes, Casablanca.",
   mentionsFacture: "Règlement à 30 jours date facture. Tout retard entraîne des pénalités de 1,5% par mois. ICE inclus sur la présente facture conformément à la loi 24-09.",
 }
 
@@ -256,7 +256,7 @@ function fmtDate(d?: string) {
 //  BON DE LIVRAISON  (international grade)
 // ─────────────────────────────────────────────────────────────────────────────
 export function printBL(bl: BonLivraison, company?: CompanyConfig) {
-  const cfg    = { ...EMPIRE_FRESH_CONFIG, ...company }
+  const cfg    = { ...vita_fresh_CONFIG, ...company }
   const accent = cfg.couleurEntete ?? "#1a4f2a"
   const gold   = "#b8962e"
   const blId   = (bl as unknown as { numero?: string }).numero ?? bl.id
@@ -332,7 +332,7 @@ export function printBL(bl: BonLivraison, company?: CompanyConfig) {
 //  FACTURE COMMERCIALE (niveau DHL / grands distributeurs)
 // ─────────────────────────────────────────────────────────────────────────────
 export function printFacture(bl: BonLivraison, factureNum: string, company?: CompanyConfig) {
-  const cfg    = { ...EMPIRE_FRESH_CONFIG, ...company }
+  const cfg    = { ...vita_fresh_CONFIG, ...company }
   const accent = cfg.couleurEntete ?? "#1a4f2a"
   const gold   = "#b8962e"
   const dateStr = fmtDate(bl.date)
@@ -403,7 +403,7 @@ export function printFacture(bl: BonLivraison, factureNum: string, company?: Com
 //  BON DE COMMANDE  (Purchase Order — international)
 // ─────────────────────────────────────────────────────────────────────────────
 export function printPurchaseOrder(po: PurchaseOrder, company?: CompanyConfig) {
-  const cfg    = { ...EMPIRE_FRESH_CONFIG, ...company }
+  const cfg    = { ...vita_fresh_CONFIG, ...company }
   const accent = cfg.couleurEntete ?? "#1a4f2a"
   const gold   = "#b8962e"
   const dateStr = fmtDate(po.date)
@@ -503,7 +503,7 @@ export interface FactureTransportData {
 }
 
 export function printFactureTransport(data: FactureTransportData, company?: CompanyConfig) {
-  const cfg    = { ...EMPIRE_FRESH_CONFIG, ...company }
+  const cfg    = { ...vita_fresh_CONFIG, ...company }
   const accent = "#1a4f2a"
   const gold   = "#b8962e"
   const dateStr = fmtDate(data.date)
@@ -645,7 +645,7 @@ interface BOBonLivraison {
 }
 
 function buildBLHtml(bl: BOBonLivraison, opts: PrintBLOpts): string {
-  const cfg    = { ...EMPIRE_FRESH_CONFIG }
+  const cfg    = { ...vita_fresh_CONFIG }
   const accent = cfg.couleurEntete ?? "#1a4f2a"
   const gold   = "#b8962e"
   const companyNom = opts.nomSocieteOverride || cfg.nom
@@ -654,7 +654,7 @@ function buildBLHtml(bl: BOBonLivraison, opts: PrintBLOpts): string {
   const ice        = opts.iceOverride        || cfg.ice || ""
   const rc         = opts.rcOverride         || cfg.rc || ""
   const ifFiscal   = opts.ifOverride         || cfg.if_fiscal || ""
-  const logo       = opts.logoOverride       || cfg.logo || "/empire-fresh-logo.png"
+  const logo       = opts.logoOverride       || cfg.logo || "/vita-fresh-logo.png"
   const piedDePage = opts.piedDePageOverride || cfg.mentionsBL || ""
   const dateStr    = fmtDate(bl.date)
   const tva        = bl.tva ?? 0
@@ -741,7 +741,7 @@ export function printFichePaie(
   modePaie = "virement",
   company?: CompanyConfig
 ) {
-  const cfg       = { ...EMPIRE_FRESH_CONFIG, ...company }
+  const cfg       = { ...vita_fresh_CONFIG, ...company }
   const accent    = cfg.couleurEntete ?? "#1a4f2a"
   const gold      = "#b8962e"
   const avances   = salarie?.avances ?? 0
@@ -850,10 +850,10 @@ td.gain{color:#15803d;font-weight:700;text-align:right}
 //  DOCUMENTS RH — Moteur HTML (niveau international, droit marocain)
 // ─────────────────────────────────────────────────────────────────────────────
 export function printHRDoc(data: HRDocData, company?: CompanyConfig) {
-  const cfg      = { ...EMPIRE_FRESH_CONFIG, ...company }
+  const cfg      = { ...vita_fresh_CONFIG, ...company }
   const accent   = cfg.couleurEntete ?? "#1a4f2a"
   const gold     = "#b8962e"
-  const compNom  = data.societe ?? data.societeNom ?? cfg.nom ?? "Empire Fresh"
+  const compNom  = data.societe ?? data.societeNom ?? cfg.nom ?? "Vita Fresh"
   const dateDoc  = fmtDate(data.dateDoc)
 
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
@@ -898,8 +898,8 @@ ${data.employe || data.employeNom ? `
 
 // ── Download HR Doc as Word ───────────────────────────────────────────────────
 export function downloadHRDocAsWord(data: HRDocData, company?: CompanyConfig) {
-  const cfg     = { ...EMPIRE_FRESH_CONFIG, ...company }
-  const compNom = data.societe ?? data.societeNom ?? cfg.nom ?? "Empire Fresh"
+  const cfg     = { ...vita_fresh_CONFIG, ...company }
+  const compNom = data.societe ?? data.societeNom ?? cfg.nom ?? "Vita Fresh"
   const content = `<html xmlns:w="urn:schemas-microsoft-com:office:word">
 <head><meta charset="UTF-8"><style>
 body{font-family:Times New Roman,serif;font-size:12pt;line-height:2;margin:3cm;color:#000}

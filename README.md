@@ -1,4 +1,4 @@
-# 🥑 FreshLink Empire Fresh v3.0
+﻿# 🥑 FreshLink Vita Fresh v3.0
 
 > Plateforme de gestion commerciale, logistique et suivi de distribution — **fruits et légumes au Maroc**
 
@@ -29,7 +29,7 @@ npm run dev
 ## 📁 Structure du projet
 
 ```
-FreshLink-empire-fresh/
+FreshLink-vita-fresh/
 ├── app/                    # Pages & API routes (Next.js App Router)
 │   ├── api/ext/            # API publiques (catalogue, commandes, comptes)
 │   ├── globals.css         # Styles globaux
@@ -112,4 +112,4 @@ npm run build && npm start
 
 ---
 
-**Empire Fresh** · Casablanca, Maroc 🇲🇦
+**Vita Fresh** · Casablanca, Maroc 🇲🇦

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { createHmac } from "crypto"
 
 // ══════════════════════════════════════════════════════════════
 // POST /api/ext/auth — Authentification par numéro de téléphone
-// Utilisé par empire-fresh.netlify.app
+// Utilisé par vita-fresh.netlify.app
 // Accepte: { phone, password }  OU  { email, password } (fallback)
 // ══════════════════════════════════════════════════════════════
 

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { store, type User, type UserRole, ROLE_LABELS, getUserInterface } from "@/lib/store"
@@ -495,13 +495,13 @@ export default function LoginPage({ onLogin }: Props) {
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 shadow-sm shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={companyBrand.logo || "/empire-fresh-logo.png"} alt={companyBrand.appName || "FreshLink Pro"} className="w-full h-full object-contain p-0.5" />
+            <img src={companyBrand.logo || "/vita-fresh-logo.png"} alt={companyBrand.appName || "FreshLink Pro"} className="w-full h-full object-contain p-0.5" />
           </div>
           <div>
             <p className="text-sm font-black leading-tight" style={{ color: "#1a4f2a" }}>
               {companyBrand.appName || "FreshLink Pro"}
             </p>
-            <p className="text-[10px] font-bold" style={{ color: "#b8962e" }}>{companyBrand.appSlogan || companyBrand.nom || "Empire Fresh"}</p>
+            <p className="text-[10px] font-bold" style={{ color: "#b8962e" }}>{companyBrand.appSlogan || companyBrand.nom || "Vita Fresh"}</p>
           </div>
         </div>
         <div className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border"
@@ -673,7 +673,7 @@ export default function LoginPage({ onLogin }: Props) {
               </div>
               <div>
                 <p className="text-sm font-black text-green-900">
-                  {companyBrand.nom || companyBrand.appName || "Empire Fresh"}
+                  {companyBrand.nom || companyBrand.appName || "Vita Fresh"}
                 </p>
                 <p className="text-[10px] font-semibold text-green-600">Distribution alimentaire professionnelle</p>
               </div>
@@ -1137,9 +1137,12 @@ export default function LoginPage({ onLogin }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-center pt-0.5">
+          <div className="flex flex-col items-center justify-center pt-0.5 gap-0.5">
             <p className="text-[10px] text-slate-400">
               &copy; {new Date().getFullYear()} <span className="font-black text-slate-500">FRESHLINK PRO</span>
+            </p>
+            <p className="text-[9px] font-semibold tracking-wide" style={{ color: "#b8962e" }}>
+              ⚡ Powered by <span className="font-black" style={{ color: "#1a4f2a" }}>Vita tech</span>
             </p>
           </div>
         </div>

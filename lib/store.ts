@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 // ============================================================
 // TYPES
@@ -85,6 +85,12 @@ export interface User {
   requireCameraAuth?: boolean
   // Multi-depot: which depot this user is assigned to (magasinier, acheteur...)
   depotId?: string
+  // ── Multi-role support ─────────────────────────────────────────────────────
+  // A user can hold multiple roles simultaneously (e.g. acheteur + prevendeur).
+  // `roles` is the full list; `activeRole` is the currently selected view.
+  // When `roles` is undefined/empty, fall back to the single `role` field.
+  roles?: UserRole[]
+  activeRole?: UserRole
 }
 
 export type ModalitePaiement = "cash" | "cheque" | "virement" | "traite_30" | "traite_60" | "traite_90" | "credit_7" | "credit_15" | "credit_30"
@@ -1515,7 +1521,7 @@ export function isMobileRole(role: UserRole): boolean {
 export const JAWAD_USER: User = {
   id: JAWAD_ID,
   name: "Jawad",
-  email: "jawad@empire-fresh.ma",
+  email: "jawad@vita-fresh.ma",
   password: "Medghaly@22",
   role: "super_super_admin",
   actif: true,
@@ -2033,6 +2039,21 @@ export const store = {
     })
   },
   saveUsers: (u: User[]) => setLS("fl_users", u),
+
+  /** Switch the active role for a user (only if role is in their `roles` list) */
+  switchActiveRole: (userId: string, newRole: UserRole): User | null => {
+    const users = store.getUsers()
+    const idx   = users.findIndex(u => u.id === userId)
+    if (idx < 0) return null
+    const user = users[idx]
+    const available = user.roles && user.roles.length > 0 ? user.roles : [user.role]
+    if (!available.includes(newRole)) return null
+    const updated: User = { ...user, activeRole: newRole }
+    users[idx] = updated
+    store.saveUsers(users)
+    return updated
+  },
+
   // Returns { user, forcedView } where forcedView is set when a specific dual-password was matched
   login: (identifier: string, password: string): User | null => {
     const users = store.getUsers()
@@ -2315,9 +2336,9 @@ export const store = {
 
   // --- Company config ---
   getCompanyConfig: (): CompanyConfig => getLS("fl_company", {
-    nom: "Empire Fresh", adresse: "", ville: "Casablanca", pays: "Maroc",
+    nom: "Vita Fresh", adresse: "", ville: "Casablanca", pays: "Maroc",
     telephone: "", email: "", couleurEntete: "#1a4f2a",
-    appName: "FreshLink Pro", appSlogan: "Empire Fresh",
+    appName: "FreshLink Pro", appSlogan: "Vita Fresh",
   }),
   saveCompanyConfig: (c: CompanyConfig) => {
     setLS("fl_company", c)

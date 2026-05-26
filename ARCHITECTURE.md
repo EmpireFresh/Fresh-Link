@@ -1,10 +1,10 @@
-# Architecture FreshLink - Distribution & Supply Chain
+﻿# Architecture FreshLink - Distribution & Supply Chain
 
 ## 🏗️ Vue d'ensemble du système
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  EMPIRE-FRESH.NETLIFY.APP                   │
+│                  vita-fresh.NETLIFY.APP                   │
 │              (Site e-commerce & Client Portal)              │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │

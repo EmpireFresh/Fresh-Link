@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { store, type Depot, type User, DEFAULT_DEPOT } from "@/lib/store"
@@ -305,7 +305,7 @@ export default function BODepots({ user }: { user: User }) {
                   <Field label="Ville"><input value={form.ville} onChange={e => setForm(f => ({ ...f, ville: e.target.value }))} className={inp} placeholder="Casablanca" /></Field>
                   <Field label="Responsable"><input value={form.responsableNom} onChange={e => setForm(f => ({ ...f, responsableNom: e.target.value }))} className={inp} placeholder="Nom du responsable" /></Field>
                   <Field label="Téléphone"><input value={form.telephone} onChange={e => setForm(f => ({ ...f, telephone: e.target.value }))} className={inp} placeholder="06xxxxxxxx" /></Field>
-                  <Field label="Email"><input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} placeholder="depot@empire-fresh.ma" /></Field>
+                  <Field label="Email"><input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} placeholder="depot@vita-fresh.ma" /></Field>
                   <Field label="Capacité (kg)"><input type="number" value={form.capaciteKg ?? ""} onChange={e => setForm(f => ({ ...f, capaciteKg: e.target.value ? +e.target.value : undefined }))} className={inp} placeholder="5000" /></Field>
                   <Field label="Heure ouverture"><input type="time" value={form.heureOuverture ?? "06:00"} onChange={e => setForm(f => ({ ...f, heureOuverture: e.target.value }))} className={inp} /></Field>
                   <Field label="Heure fermeture"><input type="time" value={form.heureFermeture ?? "22:00"} onChange={e => setForm(f => ({ ...f, heureFermeture: e.target.value }))} className={inp} /></Field>

@@ -1,8 +1,8 @@
-'use client'
-// 🔐 CONFIDENTIEL — Dashboard Investisseur Empire Fresh
+﻿'use client'
+// 🔐 CONFIDENTIEL — Dashboard Investisseur Vita Fresh
 // Accès restreint: Super Administrateur uniquement
 // CHEMIN VS CODE : components/investisseur/InvestisseurDashboard.tsx
-// Stratégie d'investissement Empire Fresh & ELT
+// Stratégie d'investissement Vita Fresh & ELT
 // Règle d'or : 40% autofinancement avant chaque expansion
 // P1:1.5M | P2:3M | P3:5M | P4:8M | P5:13M | P6:21M | P7:34M | P8:55M
 import React, { useState } from 'react'
@@ -27,7 +27,7 @@ const PHASES: Phase[] = [
     objectifs:["Lancement FreshLink Pro (MVP) — pilotage Jariri", "3 camions frigos opérationnels", "50 clients actifs (restaurants + marchands)", "Certification halal & normes ONSSA", "Thomas : contrôle de gestion", "S.Abdelilah : expert qualité", "Abdelali : contrôle qualité", "Ayoub : responsable affectation transport"],
     risques:["Délais administratifs autorisations", "Trouver les 600K MAD autofinancement", "Acquisition clients premiers mois"],
     kpis:["CA mensuel ≥ 350K MAD à M3", "Taux satisfaction client ≥ 85%", "Taux de livraison à l'heure ≥ 92%"],
-    entities:[{name:'Empire Fresh',part:70,role:'Opérationnel & commercial'},{name:'ELT',part:20,role:'Logistique & transport'},{name:'Investisseurs',part:10,role:'Capital amorçage'}]
+    entities:[{name:'Vita Fresh',part:70,role:'Opérationnel & commercial'},{name:'ELT',part:20,role:'Logistique & transport'},{name:'Investisseurs',part:10,role:'Capital amorçage'}]
   },
   {
     id:2, label:'Phase 2 — 3T/jour | Expansion Locale', capital:3_000_000, autofinancement:1_200_000, externe:1_800_000,
@@ -36,7 +36,7 @@ const PHASES: Phase[] = [
     objectifs:["Extension zone Casablanca + Mohammédia", "Fleet : 8 camions (dont 2 frigo premium)", "200 clients actifs", "Lancement module prévendeur mobile", "Entrepôt 1 200 m² zone industrielle"],
     risques:["Financement entrepôt (bail commercial)", "Recrutement chauffeurs qualifiés", "Concurrence acteurs établis"],
     kpis:["CA mensuel ≥ 820K MAD à M6", "NPS client ≥ 60", "Coût logistique < 18% du CA"],
-    entities:[{name:'Empire Fresh',part:65,role:'Opérationnel'},{name:'ELT',part:25,role:'Flotte & entrepôt'},{name:'Investisseurs',part:10,role:'Croissance'}]
+    entities:[{name:'Vita Fresh',part:65,role:'Opérationnel'},{name:'ELT',part:25,role:'Flotte & entrepôt'},{name:'Investisseurs',part:10,role:'Croissance'}]
   },
   {
     id:3, label:'Phase 3 — 5.5T/jour | Axe Rabat-Tanger', capital:5_000_000, autofinancement:2_000_000, externe:3_000_000,
@@ -45,7 +45,7 @@ const PHASES: Phase[] = [
     objectifs:["Ouverture antennes Rabat & Tanger", "Partenariats 5 grandes surfaces", "Fleet : 15 camions", "Plateforme B2B clients institutionnels", "ISO 22000 alimentation"],
     risques:["Coordination multi-site", "Recrutement superviseurs régionaux", "Volatilité prix approvisionnement"],
     kpis:["CA mensuel ≥ 1.5M MAD à M9", "Part marchés Rabat ≥ 8%", "EBITDA ≥ 22%"],
-    entities:[{name:'Empire Fresh',part:60,role:'Hub central'},{name:'ELT',part:30,role:'Réseau régional'},{name:'Investisseurs',part:10,role:'Expansion'}]
+    entities:[{name:'Vita Fresh',part:60,role:'Hub central'},{name:'ELT',part:30,role:'Réseau régional'},{name:'Investisseurs',part:10,role:'Expansion'}]
   },
   {
     id:4, label:'Phase 4 — 9T/jour | Industrialisation', capital:8_000_000, autofinancement:3_200_000, externe:4_800_000,
@@ -54,7 +54,7 @@ const PHASES: Phase[] = [
     objectifs:["Plateforme logistique centrale 3 500 m²", "Unité de conditionnement & 4ème gamme", "Certification GlobalG.A.P.", "Fleet : 25 camions + 5 frigos", "Lancement offre export Espagne/France"],
     risques:["Investissement industriel lourd", "Normes export européennes", "Change EUR/MAD"],
     kpis:["CA mensuel ≥ 2.7M MAD à M12", "Export ≥ 15% du CA", "Pertes marchandises < 3%"],
-    entities:[{name:'Empire Fresh',part:55,role:'Production & export'},{name:'ELT',part:30,role:'Logistique avancée'},{name:'Partenaires industriels',part:15,role:'Cofinancement'}]
+    entities:[{name:'Vita Fresh',part:55,role:'Production & export'},{name:'ELT',part:30,role:'Logistique avancée'},{name:'Partenaires industriels',part:15,role:'Cofinancement'}]
   },
   {
     id:5, label:'Phase 5 — 14.5T/jour | Scale National', capital:13_000_000, autofinancement:5_200_000, externe:7_800_000,
@@ -63,7 +63,7 @@ const PHASES: Phase[] = [
     objectifs:["Couverture nationale : 12 villes", "Hub régionaux : Marrakech, Fès, Agadir", "Fleet : 45 camions", "1 200 clients actifs", "Lancement marque propre produits premium"],
     risques:["Complexité opérationnelle nationale", "Besoin profils managériaux senior", "Pression sur trésorerie croissance"],
     kpis:["CA mensuel ≥ 4.6M MAD à M15", "Part marché national ≥ 4%", "Marge nette ≥ 12%"],
-    entities:[{name:'Empire Fresh',part:50,role:'National HQ'},{name:'ELT',part:30,role:'Réseau national'},{name:'Fonds d\'investissement',part:20,role:'Croissance accélérée'}]
+    entities:[{name:'Vita Fresh',part:50,role:'National HQ'},{name:'ELT',part:30,role:'Réseau national'},{name:'Fonds d\'investissement',part:20,role:'Croissance accélérée'}]
   },
   {
     id:6, label:'Phase 6 — 22T/jour | Tech & Data', capital:21_000_000, autofinancement:8_400_000, externe:12_600_000,
@@ -72,7 +72,7 @@ const PHASES: Phase[] = [
     objectifs:["Plateforme IA prédictive (gestion stocks)", "Marketplace B2B fruits & légumes Maroc", "API open pour partenaires distributeurs", "R&D blockchain traçabilité", "Fleet : 80 camions + drones dernière mile"],
     risques:["Investissement tech élevé", "Maturité du marché digital B2B", "Recrutement profils tech rares au Maroc"],
     kpis:["Revenus SaaS ≥ 10% du CA", "Réduction pertes IA ≥ 40%", "NPS ≥ 75"],
-    entities:[{name:'Empire Fresh',part:45,role:'Opérationnel & commercial'},{name:'ELT',part:25,role:'Infrastructure'},{name:'Tech Fund',part:20,role:'Financement R&D'},{name:'Partenaires data',part:10,role:'Data & IA'}]
+    entities:[{name:'Vita Fresh',part:45,role:'Opérationnel & commercial'},{name:'ELT',part:25,role:'Infrastructure'},{name:'Tech Fund',part:20,role:'Financement R&D'},{name:'Partenaires data',part:10,role:'Data & IA'}]
   },
   {
     id:7, label:'Phase 7 — 38T/jour | Expansion MENA', capital:34_000_000, autofinancement:13_600_000, externe:20_400_000,
@@ -81,7 +81,7 @@ const PHASES: Phase[] = [
     objectifs:["Ouverture Sénégal, Côte d'Ivoire, Mauritanie", "Joint-ventures partenaires locaux Afrique", "Agrément export vers Golfe (EAU, Qatar)", "Certification BRC Food Safety", "Introduction en bourse partielle (Casablanca Stock Exchange)"],
     risques:["Risques géopolitiques Afrique subsaharienne", "Logistique inter-pays complexe", "Régulation alimentaire par pays"],
     kpis:["CA international ≥ 30% du total", "EBITDA groupe ≥ 28%", "Valorisation ≥ 500M MAD"],
-    entities:[{name:'Empire Fresh Holding',part:40,role:'Groupe'},{name:'ELT International',part:25,role:'Logistique MENA'},{name:'Partenaires locaux',part:20,role:'JV par pays'},{name:'Fonds IPO',part:15,role:'Pré-IPO'}]
+    entities:[{name:'Vita Fresh Holding',part:40,role:'Groupe'},{name:'ELT International',part:25,role:'Logistique MENA'},{name:'Partenaires locaux',part:20,role:'JV par pays'},{name:'Fonds IPO',part:15,role:'Pré-IPO'}]
   },
   {
     id:8, label:'Phase 8 — 70T/jour | Groupe Agro-Alimentaire', capital:55_000_000, autofinancement:22_000_000, externe:33_000_000,
@@ -90,7 +90,7 @@ const PHASES: Phase[] = [
     objectifs:["Acquisition d'une coopérative agricole (1 500 ha)", "Unités de transformation : jus, conserves, surgelés", "Marque internationale distribuée en GMS Europe", "Fleet : 300+ véhicules dont 50 réfrigérés longue distance", "Cotation bourse & levée de fonds institutionnels"],
     risques:["Complexité intégration verticale amont", "Normes agroalimentaires Europe (IFS, BRC)", "Volatilité climatique sur production"],
     kpis:["CA groupe ≥ 23M MAD/mois", "Capitalisation boursière ≥ 1.2Mrd MAD", "Présence dans ≥ 12 pays"],
-    entities:[{name:'Empire Fresh Group SA',part:35,role:'Holding industriel'},{name:'ELT Logistics',part:20,role:'Transport & froid'},{name:'Agro Division',part:25,role:'Production & transformation'},{name:'Investisseurs institutionnels',part:20,role:'Capital marché'}]
+    entities:[{name:'Vita Fresh Group SA',part:35,role:'Holding industriel'},{name:'ELT Logistics',part:20,role:'Transport & froid'},{name:'Agro Division',part:25,role:'Production & transformation'},{name:'Investisseurs institutionnels',part:20,role:'Capital marché'}]
   },
 ]
 
@@ -158,7 +158,7 @@ export default function InvestisseurDashboard({ user }: { user?: User }) {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center"><Leaf size={24}/></div>
-            <div><p className="text-emerald-400 text-sm font-semibold">Empire Fresh × ELT</p><h1 className="text-2xl sm:text-3xl font-black">Stratégie d'Investissement</h1></div>
+            <div><p className="text-emerald-400 text-sm font-semibold">Vita Fresh × ELT</p><h1 className="text-2xl sm:text-3xl font-black">Stratégie d'Investissement</h1></div>
           </div>
           <p className="text-slate-300 text-sm sm:text-base max-w-2xl mb-8 leading-relaxed">Plan de développement en 8 phases sur 10 ans. <strong className="text-emerald-400">Règle d'or : 40% d'autofinancement minimum avant chaque nouvelle expansion.</strong></p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -423,7 +423,7 @@ export default function InvestisseurDashboard({ user }: { user?: User }) {
                 <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shrink-0"><Shield size={28}/></div>
                 <div>
                   <h2 className="text-2xl font-black mb-2">Règle d'Or — 40% Autofinancement</h2>
-                  <p className="text-emerald-100 leading-relaxed">Avant chaque nouvelle phase d'expansion, Empire Fresh & ELT doivent justifier d'un autofinancement d'au moins <strong>40% du capital de la phase</strong>. Cette règle garantit la solidité financière et limite l'exposition aux financeurs externes.</p>
+                  <p className="text-emerald-100 leading-relaxed">Avant chaque nouvelle phase d'expansion, Vita Fresh & ELT doivent justifier d'un autofinancement d'au moins <strong>40% du capital de la phase</strong>. Cette règle garantit la solidité financière et limite l'exposition aux financeurs externes.</p>
                 </div>
               </div>
             </div>

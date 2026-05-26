@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 
 // ══════════════════════════════════════════════════════════════
 // POST /api/ext/prospects — Demande de création de compte
-// Depuis le site client empire-fresh.netlify.app
+// Depuis le site client vita-fresh.netlify.app
 // Enregistre dans fl_prospects — public, pas de clé requise
 // ══════════════════════════════════════════════════════════════
 

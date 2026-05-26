@@ -17,10 +17,10 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'FreshLink Empire Fresh — Distribution Fruits & Légumes',
-  description: 'Gestion commerciale, logistique et suivi de distribution pour fruits et légumes au Maroc.',
-  keywords: ['freshlink', 'distribution', 'fruits', 'légumes', 'gestion commerciale', 'logistique', 'maroc'],
-  authors: [{ name: 'Jawad' }],
+  title: 'FreshLink Vita Fresh — Distribution Fruits & Légumes',
+  description: 'Gestion commerciale, logistique et suivi de distribution pour fruits et légumes au Maroc. Powered by Vita tech.',
+  keywords: ['freshlink', 'vitafresh', 'distribution', 'fruits', 'légumes', 'gestion commerciale', 'logistique', 'maroc'],
+  authors: [{ name: 'Vita tech' }],
   robots: { index: false, follow: false },
   manifest: '/manifest.json',
   icons: {
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: 'FreshLink Empire Fresh',
+    title: 'FreshLink Vita Fresh',
     statusBarStyle: 'black-translucent',
     startupImage: [
       { url: '/icon-512.png' },
     ],
   },
-  applicationName: 'FreshLink Empire Fresh',
+  applicationName: 'FreshLink Vita Fresh',
   formatDetection: {
     telephone: false,
     date: false,

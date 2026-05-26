@@ -1,16 +1,16 @@
-# 🔗 Guide d'Intégration — FreshLink Empire Fresh
+﻿# 🔗 Guide d'Intégration — FreshLink Vita Fresh
 
 ## Vue d'ensemble de l'architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                  FreshLink Empire Fresh                  │
+│                  FreshLink Vita Fresh                  │
 │              (Next.js 15 + React 19)                    │
 └──────────────┬──────────────────────────┬───────────────┘
                │                          │
        ┌───────▼──────┐          ┌────────▼───────┐
        │   NETLIFY    │          │     VERCEL     │
-       │ empire-fresh │          │  (alternative) │
+       │ vita-fresh │          │  (alternative) │
        │ .netlify.app │          │                │
        └───────┬──────┘          └────────┬───────┘
                │                          │
@@ -87,9 +87,9 @@ Neo.space est votre service email pour :
 ```env
 SMTP_HOST=smtp.neo.space
 SMTP_PORT=587
-SMTP_USER=votre-email@empire-fresh.co.site
+SMTP_USER=votre-email@vita-fresh.co.site
 SMTP_PASS=VOTRE_MOT_DE_PASSE_NEO
-SMTP_FROM="FreshLink Empire Fresh <no-reply@empire-fresh.co.site>"
+SMTP_FROM="FreshLink Vita Fresh <no-reply@vita-fresh.co.site>"
 DAILY_REPORT_EMAIL=fresh.empire.contact@gmail.com
 ```
 
@@ -97,7 +97,7 @@ DAILY_REPORT_EMAIL=fresh.empire.contact@gmail.com
 
 ## 📌 ÉTAPE 3 — Déploiement Netlify (recommandé)
 
-Votre site actuel : **https://empire-fresh.netlify.app**
+Votre site actuel : **https://vita-fresh.netlify.app**
 
 ### 3.1 Via l'interface Netlify (recommandé)
 
@@ -122,9 +122,9 @@ Site Settings → **Environment Variables** → Add variable :
 | `SMTP_PORT` | `587` |
 | `SMTP_USER` | (votre email Neo) |
 | `SMTP_PASS` | (votre mot de passe Neo) |
-| `SMTP_FROM` | `FreshLink Empire Fresh <no-reply@empire-fresh.co.site>` |
+| `SMTP_FROM` | `FreshLink Vita Fresh <no-reply@vita-fresh.co.site>` |
 | `DAILY_REPORT_EMAIL` | `fresh.empire.contact@gmail.com` |
-| `NEXT_PUBLIC_APP_URL` | `https://empire-fresh.netlify.app` |
+| `NEXT_PUBLIC_APP_URL` | `https://vita-fresh.netlify.app` |
 
 ### 3.3 Installer le plugin Next.js
 
@@ -156,7 +156,7 @@ Si vous préférez Vercel en parallèle :
 npm i -g vercel
 
 # Déploiement
-cd FreshLink-empire-fresh
+cd FreshLink-vita-fresh
 vercel login
 vercel --prod
 ```
@@ -192,7 +192,7 @@ Après déploiement, tester dans cet ordre :
 ## 📁 Structure des fichiers importants
 
 ```
-FreshLink-empire-fresh/
+FreshLink-vita-fresh/
 ├── .env.local.template    ← Copier en .env.local + remplir
 ├── .env.example           ← Même contenu (référence)
 ├── netlify.toml           ← Config Netlify (auto)

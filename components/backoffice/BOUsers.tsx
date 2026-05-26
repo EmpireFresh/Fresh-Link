@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { store, type User, type UserRole, type UserAccessType, type GranularPermissions, type Civilite, ROLE_LABELS, ROLE_COLORS, JAWAD_ID } from "@/lib/store"
+import { autoAssignPermissions } from "@/lib/rolePermissions"
 import { sendEmail } from "@/lib/email"
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1302,8 +1303,10 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
       const idx = all.findIndex(u => u.id === editing.id)
       if (idx >= 0) { all[idx] = { ...all[idx], ...form }; store.saveUsers(all) }
     } else {
-      const newId = store.genId()
-      all.push({ ...form, id: newId })
+      const newId  = store.genId()
+      // Auto-assign permissions based on role — no manual setup needed
+      const autoPerms = autoAssignPermissions(form.role as UserRole)
+      all.push({ ...autoPerms, ...form, id: newId })
       store.saveUsers(all)
       // Notifier le RH : nouveau compte cree — dossier administratif a completer
       if (["super_super_admin", "admin", "super_admin"].includes(currentUser.role)) {
@@ -2048,9 +2051,10 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                               {visibleRoles.map(r => (
                                 <button key={r} type="button"
                                   onClick={() => {
-                                    // Auto-apply default permissions for the selected role
+                                    // Auto-apply permissions + accessType for the selected role
                                     const defaultPerms = DEFAULT_PERMS_BY_ROLE[r] ?? ALL_OFF
-                                    setForm(prev => ({ ...prev, role: r, ...defaultPerms }))
+                                    const autoPerms    = autoAssignPermissions(r)
+                                    setForm(prev => ({ ...prev, role: r, ...defaultPerms, accessType: autoPerms.accessType }))
                                   }}
                                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${form.role === r ? "text-primary-foreground border-transparent shadow-sm bg-primary" : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary"}`}>
                                   {ROLE_LABELS[r]}

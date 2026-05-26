@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -495,11 +495,11 @@ function generateDocumentHTML(doc: Document, company: CompanyConfig): string {
   <div class="header">
     <div class="logo-block">
       ${company.logo ? `<img src="${company.logo}" style="height:60px;object-fit:contain;margin-bottom:8px" alt="Logo" />` : ""}
-      <div class="company-name">${company.nom || "Empire Fresh"}</div>
+      <div class="company-name">${company.nom || "Vita Fresh"}</div>
       <div class="company-tagline">Distribution Alimentaire Professionnelle</div>
       <div class="company-sub" style="margin-top:6px;font-style:italic;color:#6b7280">Qualité • Fiabilité • Fraîcheur</div>
       <div class="company-sub" style="margin-top:6px">${company.adresse || "Zone Industrielle"}${company.ville ? " — " + company.ville : ", Casablanca"}, ${company.pays || "Maroc"}</div>
-      <div class="company-sub">Tél : ${company.telephone || "+212 5XX-XXXXXX"}  |  ${company.email || "contact@empire-fresh.ma"}</div>
+      <div class="company-sub">Tél : ${company.telephone || "+212 5XX-XXXXXX"}  |  ${company.email || "contact@vita-fresh.ma"}</div>
       ${company.ice ? `<div class="company-sub">ICE : ${company.ice}</div>` : ""}
     </div>
     <div class="doc-block">
@@ -518,7 +518,7 @@ function generateDocumentHTML(doc: Document, company: CompanyConfig): string {
   <div class="parties">
     <div class="party-box">
       <div class="party-title">Fournisseur</div>
-      <div class="party-name">${company.nom || "Empire Fresh"}</div>
+      <div class="party-name">${company.nom || "Vita Fresh"}</div>
       <div class="party-info">
         ${[company.adresse, company.ville, company.pays].filter(Boolean).join(" — ")}<br/>
         ${company.rc ? "RC : " + company.rc + " — " : ""}${company.ice ? "ICE : " + company.ice : ""}
@@ -577,9 +577,9 @@ function generateDocumentHTML(doc: Document, company: CompanyConfig): string {
       <div class="signature-block">
         <div class="sig-label">Fournisseur</div>
         <div class="sig-line"></div>
-        <div style="font-size:11px;font-weight:700;color:#1a4f2a">${company.nom || "Empire Fresh"}</div>
+        <div style="font-size:11px;font-weight:700;color:#1a4f2a">${company.nom || "Vita Fresh"}</div>
         <div style="font-size:10px;color:#6b7280">Distribution Alimentaire Professionnelle</div>
-        <div style="font-size:10px;color:#6b7280">${company.email || "contact@empire-fresh.ma"}</div>
+        <div style="font-size:10px;color:#6b7280">${company.email || "contact@vita-fresh.ma"}</div>
       </div>
       <div class="signature-block">
         <div class="sig-label">Client — Lu et approuvé</div>
@@ -623,7 +623,7 @@ function shareWhatsApp(doc: Document) {
 function shareEmail(doc: Document, company: CompanyConfig) {
   const total = doc.tva_pct > 0 ? doc.montant_ttc : doc.montant_net
   const subject = `${TYPE_LABELS[doc.type_doc]} N° ${doc.numero} — ${doc.client_nom}`
-  const body = `Bonjour,\n\nVeuillez trouver ci-joint le ${TYPE_LABELS[doc.type_doc].toLowerCase()} N° ${doc.numero}.\n\nClient : ${doc.client_nom}\nMontant total TTC : ${total.toFixed(2)} DH\nDate : ${new Date(doc.date_doc).toLocaleDateString("fr-FR")}${doc.date_validite ? `\nValidité : ${new Date(doc.date_validite).toLocaleDateString("fr-FR")}` : ""}\n\nCordialement,\n${company.nom || "Empire Fresh"}\nDistribution Alimentaire Professionnelle\n${company.email || "contact@empire-fresh.ma"}`
+  const body = `Bonjour,\n\nVeuillez trouver ci-joint le ${TYPE_LABELS[doc.type_doc].toLowerCase()} N° ${doc.numero}.\n\nClient : ${doc.client_nom}\nMontant total TTC : ${total.toFixed(2)} DH\nDate : ${new Date(doc.date_doc).toLocaleDateString("fr-FR")}${doc.date_validite ? `\nValidité : ${new Date(doc.date_validite).toLocaleDateString("fr-FR")}` : ""}\n\nCordialement,\n${company.nom || "Vita Fresh"}\nDistribution Alimentaire Professionnelle\n${company.email || "contact@vita-fresh.ma"}`
   window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank")
 }
 

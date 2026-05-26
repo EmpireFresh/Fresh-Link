@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 
 // ══════════════════════════════════════════════════════════════
 // GET /api/ext/contacts — Coordonnées publiques de l'entreprise
-// Utilisé par empire-fresh.netlify.app pour afficher :
+// Utilisé par vita-fresh.netlify.app pour afficher :
 //   - Téléphones, WhatsApp, Emails, Adresse, Horaires, Réseaux sociaux
 // Public — aucune clé requise
 // ══════════════════════════════════════════════════════════════
