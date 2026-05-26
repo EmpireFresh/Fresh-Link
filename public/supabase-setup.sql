@@ -172,6 +172,30 @@ CREATE INDEX idx_fl_account_requests_statut    ON public.fl_account_requests (st
 CREATE INDEX idx_fl_account_requests_email     ON public.fl_account_requests (email);
 
 
+-- ── fl_site_access — Contrôle d'accès portail web (autorisé par Jawad) ───────
+-- Chaque appareil doit être approuvé par le super admin avant d'accéder au site
+CREATE TABLE public.fl_site_access (
+  id              TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  device_id       TEXT NOT NULL UNIQUE,           -- identifiant unique appareil (localStorage)
+  nom             TEXT,
+  telephone       TEXT,
+  statut          TEXT NOT NULL DEFAULT 'en_attente', -- en_attente | autorise | bloque
+  gps_lat         DOUBLE PRECISION,              -- latitude GPS (obligatoire)
+  gps_lng         DOUBLE PRECISION,              -- longitude GPS
+  gps_precision   FLOAT,                         -- précision en mètres
+  user_agent      TEXT,                           -- navigateur / appareil
+  first_visit_at  TIMESTAMPTZ DEFAULT now(),      -- première demande
+  updated_at      TIMESTAMPTZ DEFAULT now(),
+  autorise_par    TEXT,                           -- 'Jawad' ou admin ERP
+  autorise_at     TIMESTAMPTZ,                    -- date d'autorisation
+  bloque_at       TIMESTAMPTZ,
+  notes           TEXT
+);
+CREATE INDEX idx_fl_site_access_device_id ON public.fl_site_access (device_id);
+CREATE INDEX idx_fl_site_access_statut    ON public.fl_site_access (statut);
+CREATE INDEX idx_fl_site_access_telephone ON public.fl_site_access (telephone);
+
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- ÉTAPE 3 — fl_web_integration (configuration API site web)
 -- Utilisée par /api/ext/catalogue, /api/ext/commandes, /api/ext/auth
@@ -265,8 +289,10 @@ GRANT SELECT ON public.v_marketplace_catalogue TO anon, authenticated;
 -- Grant perms on new tables
 GRANT ALL ON public.fl_account_requests TO anon, authenticated, service_role;
 GRANT ALL ON public.fl_feedbacks        TO anon, authenticated, service_role;
+GRANT ALL ON public.fl_site_access      TO anon, authenticated, service_role;
 ALTER TABLE public.fl_account_requests DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fl_feedbacks        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fl_site_access      DISABLE ROW LEVEL SECURITY;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE
   public.fl_depots, public.fl_users, public.fl_clients, public.fl_fournisseurs,
@@ -276,7 +302,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE
   public.fl_messages, public.fl_transferts_stock, public.fl_demandes_achat,
   public.fl_notices, public.fl_non_achats, public.fl_demandes_acces,
   public.fl_documents, public.fl_web_integration,
-  public.fl_account_requests, public.fl_feedbacks;
+  public.fl_account_requests, public.fl_feedbacks, public.fl_site_access;
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -951,4 +977,6 @@ SELECT 'Fournisseurs insérés', count(*)::text FROM public.fl_fournisseurs
 UNION ALL
 SELECT 'Web integration', count(*)::text FROM public.fl_web_integration
 UNION ALL
-SELECT 'Vue catalogue', count(*)::text FROM public.v_marketplace_catalogue;
+SELECT 'Vue catalogue', count(*)::text FROM public.v_marketplace_catalogue
+UNION ALL
+SELECT 'Accès site (table)', '✅ créée' FROM pg_tables WHERE tablename='fl_site_access' AND schemaname='public';

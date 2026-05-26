@@ -703,9 +703,102 @@ html[dir="rtl"] .modal-close{right:auto;left:14px}
 /* Stars rating shimmer */
 .stars { background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b); -webkit-background-clip:text; background-clip:text; color:transparent; background-size:200% 100%; animation:starsShimmer 3s ease infinite; }
 @keyframes starsShimmer{0%,100%{background-position:0%}50%{background-position:100%}}
+
+/* ── ACCESS GATE ── */
+#access-gate{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#020805 0%,#0D1A0D 40%,#1B3A22 100%);display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .6s,visibility .6s}
+#access-gate.fade-out{opacity:0;pointer-events:none}
+.gate-box{background:#fff;border-radius:24px;padding:40px 32px;max-width:460px;width:100%;text-align:center;box-shadow:0 32px 100px rgba(0,0,0,.6);animation:scaleIn .5s cubic-bezier(.22,1,.36,1)}
+.gate-logo-wrap{margin:0 auto 18px;display:block}
+.gate-logo-img{height:56px;width:auto;object-fit:contain}
+.gate-logo-fallback{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#1E5631,#2D7A45);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px}
+.gate-badge{display:inline-block;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px}
+.gate-title{font-size:1.45rem;font-weight:900;color:#111827;margin-bottom:6px;font-family:'DM Sans','Inter',sans-serif}
+.gate-sub{font-size:13.5px;color:#6b7280;margin-bottom:22px;line-height:1.65}
+.gate-form{text-align:left}
+.gate-field{margin-bottom:13px}
+.gate-field label{display:block;font-size:11px;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
+.gate-field input{width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;transition:border-color .2s;box-sizing:border-box;color:#111}
+.gate-field input:focus{outline:none;border-color:#1E5631;box-shadow:0 0 0 3px rgba(30,86,49,.1)}
+.gate-btn{width:100%;padding:14px;background:linear-gradient(135deg,#1E5631,#2D7A45);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
+.gate-btn:hover:not(:disabled){background:linear-gradient(135deg,#2D7A45,#3a9e5f);transform:translateY(-1px);box-shadow:0 6px 20px rgba(30,86,49,.35)}
+.gate-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.gate-gps-ok{padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;font-size:12px;color:#166534;margin:10px 0;text-align:left}
+.gate-err{color:#dc2626;font-size:13px;margin:8px 0;display:none;padding:8px 12px;background:#fef2f2;border-radius:8px}
+.gate-pulse{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1E5631,#2D7A45);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(30,86,49,.4)}70%{box-shadow:0 0 0 22px rgba(30,86,49,0)}100%{box-shadow:0 0 0 0 rgba(30,86,49,0)}}
+.gate-pulse{animation:pulse-ring 2s infinite}
+.gate-waiting-title{font-size:1.2rem;font-weight:800;color:#1a7a3c;margin-bottom:8px}
+.gate-waiting-sub{font-size:13px;color:#555;line-height:1.75;margin-bottom:18px}
+.gate-device-info{font-size:11px;color:#aaa;margin-top:8px;font-family:monospace}
+.gate-resend-btn{margin-top:12px;padding:9px 20px;background:none;border:1.5px solid #1E5631;color:#1E5631;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.2s}
+.gate-resend-btn:hover{background:#f0fdf4}
+.gate-note{font-size:11px;color:#9ca3af;margin-top:16px;padding-top:12px;border-top:1px solid #f3f4f6}
+/* Admin user management */
+.ua-list{display:grid;gap:10px;margin-bottom:14px}
+.ua-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ua-card-info{flex:1;min-width:0}
+.ua-card-name{font-size:14px;font-weight:700;color:#111}
+.ua-card-meta{font-size:12px;color:#6b7280;margin-top:2px}
+.ua-card-actions{display:flex;gap:6px;flex-shrink:0}
+.ua-btn-sm{padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:'Inter',sans-serif}
+.ua-btn-edit{background:#dbeafe;color:#1d4ed8}
+.ua-btn-del{background:#fee2e2;color:#dc2626}
+.ua-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ACCESS GATE — Contrôle d'accès sécurisé par Jawad (super administrateur)
+     Bloque l'accès jusqu'à autorisation. GPS obligatoire envoyé à Jawad.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div id="access-gate">
+  <div class="gate-box">
+    <!-- Logo Vita Fresh -->
+    <div class="gate-logo-wrap">
+      <img src="https://f-l.vercel.app/vita-fresh-logo.svg" class="gate-logo-img" alt="Vita Fresh"
+           onerror="this.style.display='none';document.getElementById('gate-logo-fb').style.display='flex'"/>
+      <div id="gate-logo-fb" class="gate-logo-fallback" style="display:none">🌿</div>
+    </div>
+    <div class="gate-badge">🔐 Accès Sécurisé</div>
+    <!-- ÉTAPE 1 — Formulaire de demande -->
+    <div id="gate-step-request">
+      <h2 class="gate-title">Site réservé — Accès privé</h2>
+      <p class="gate-sub">Ce site est accessible uniquement aux personnes autorisées par<br><strong>Jawad — Super Administrateur.</strong><br>Entrez vos informations pour soumettre une demande d'accès.</p>
+      <form class="gate-form" onsubmit="gateSubmit(event)">
+        <div class="gate-field">
+          <label>👤 Votre nom complet</label>
+          <input id="gate-nom" type="text" placeholder="Prénom et Nom" autocomplete="name" required/>
+        </div>
+        <div class="gate-field">
+          <label>📱 Téléphone WhatsApp</label>
+          <input id="gate-phone" type="tel" placeholder="06 XX XX XX XX" autocomplete="tel" required/>
+        </div>
+        <div id="gate-gps-status" class="gate-gps-ok" style="display:none"></div>
+        <div id="gate-err" class="gate-err"></div>
+        <button class="gate-btn" id="gate-btn" type="submit">
+          <span>📍</span><span>Demander l'accès + Partager ma position</span>
+        </button>
+      </form>
+      <p class="gate-note">📍 Votre position GPS sera envoyée à Jawad pour validation.<br>La demande est traitée manuellement — réponse sous quelques minutes.</p>
+    </div>
+    <!-- ÉTAPE 2 — En attente d'autorisation -->
+    <div id="gate-step-waiting" style="display:none">
+      <div class="gate-pulse">⏳</div>
+      <h3 class="gate-waiting-title">Demande envoyée avec succès !</h3>
+      <p class="gate-waiting-sub">
+        📲 Votre demande a été transmise à <strong>Jawad</strong> via WhatsApp.<br>
+        📍 Votre position GPS a été partagée.<br>
+        🔄 Le site vérifie automatiquement l'autorisation toutes les <strong>30 secondes</strong>.<br><br>
+        ⏱️ Temps d'attente habituel : <strong>quelques minutes</strong>.
+      </p>
+      <div id="gate-device-info" class="gate-device-info"></div>
+      <button class="gate-resend-btn" onclick="gateResend()">🔔 Renvoyer la notification à Jawad</button>
+      <p class="gate-note">Si vous avez déjà été autorisé et que le site ne s'ouvre pas,<br>rechargez la page (F5 / Actualiser).</p>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── NAVBAR SCROLL CLASS ──
 window.addEventListener('scroll',function(){
@@ -1163,6 +1256,8 @@ function setLang(lang){
     <button class="cfg-tab"    onclick="cfgTab(this,'s-livraison')">🚚 Livraison</button>
     <button class="cfg-tab"    onclick="cfgTab(this,'s-supabase')">🔗 Connexion ERP</button>
     <button class="cfg-tab"    onclick="cfgTab(this,'s-galerie')">🖼️ Galerie</button>
+    <button class="cfg-tab"    onclick="cfgTab(this,'s-users');loadAdminUsers()">👥 Comptes</button>
+    <button class="cfg-tab"    onclick="cfgTab(this,'s-access');loadAccessRequests()">🔐 Accès</button>
     <button class="cfg-tab"    onclick="cfgTab(this,'s-guide')">📖 Guide</button>
   </div>
   <div class="cfg-body">
@@ -1257,6 +1352,70 @@ function setLang(lang){
       </div>
       <div style="font-size:11px;color:var(--gy);margin-top:10px">Entrez des URLs directes d'images (.jpg/.png/.webp) ou de vidéos (.mp4). Vous pouvez utiliser des liens Supabase Storage ou tout hébergement public.</div>
     </div>
+    <!-- ── GESTION COMPTES UTILISATEURS ── -->
+    <div class="cfg-sec" id="s-users">
+      <div class="cfg-grp">👥 Comptes utilisateurs du site</div>
+      <div style="font-size:12px;color:var(--gy);margin-bottom:14px;line-height:1.7">Gérez les comptes de connexion (espace client). Modifiez les mots de passe ou créez de nouveaux comptes.</div>
+
+      <!-- Créer un nouveau compte -->
+      <div style="background:#f0fdf4;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #bbf7d0">
+        <div style="font-weight:700;color:#166534;margin-bottom:12px;font-size:13px">➕ Créer un nouveau compte</div>
+        <div class="ua-form-grid">
+          <div class="cfg-f"><label>Nom</label><input id="ua-new-nom" type="text" placeholder="Nom complet"/></div>
+          <div class="cfg-f"><label>Téléphone</label><input id="ua-new-phone" type="tel" placeholder="0661234567"/></div>
+          <div class="cfg-f"><label>Mot de passe</label><input id="ua-new-pass" type="text" placeholder="Mot de passe" autocomplete="new-password"/></div>
+          <div class="cfg-f"><label>Rôle</label>
+            <select id="ua-new-role">
+              <option value="client">Client</option>
+              <option value="chr">CHR</option>
+              <option value="marchand">Marchand</option>
+              <option value="fournisseur">Fournisseur</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="cfg-f"><label>Email (optionnel)</label><input id="ua-new-email" type="email" placeholder="client@email.com"/></div>
+        <button onclick="adminCreateUser()" style="padding:10px 20px;background:linear-gradient(135deg,#1E5631,#2D7A45);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✅ Créer le compte</button>
+        <div id="ua-create-msg" style="font-size:13px;margin-top:8px"></div>
+      </div>
+
+      <!-- Liste des comptes -->
+      <div style="font-weight:700;color:#374151;margin-bottom:10px;font-size:13px">📋 Comptes existants</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="ua-search" type="text" placeholder="🔍 Rechercher par nom ou téléphone..." style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;font-family:'Inter',sans-serif" oninput="filterAdminUsers()"/>
+        <button onclick="loadAdminUsers()" style="padding:9px 14px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:9px;font-size:12px;cursor:pointer">🔄 Actualiser</button>
+      </div>
+      <div id="ua-list" class="ua-list"><div style="color:var(--gy);font-size:13px;padding:10px">Cliquez sur l'onglet pour charger les comptes...</div></div>
+
+      <!-- Modal changement de mot de passe -->
+      <div id="ua-pwd-modal" style="display:none;background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:18px;margin-top:12px">
+        <div style="font-weight:700;color:#374151;margin-bottom:12px">🔑 Changer le mot de passe</div>
+        <input type="hidden" id="ua-edit-id"/>
+        <div class="cfg-f"><label>Nouveau mot de passe</label><input id="ua-edit-pass" type="text" placeholder="Nouveau mot de passe" autocomplete="new-password"/></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="adminSavePassword()" style="padding:9px 18px;background:var(--g1);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">💾 Enregistrer</button>
+          <button onclick="document.getElementById('ua-pwd-modal').style.display='none'" style="padding:9px 16px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:9px;font-size:13px;cursor:pointer">Annuler</button>
+        </div>
+        <div id="ua-pwd-msg" style="font-size:13px;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- ── DEMANDES D'ACCÈS SITE ── -->
+    <div class="cfg-sec" id="s-access">
+      <div class="cfg-grp">🔐 Demandes d'accès au site</div>
+      <div style="font-size:12px;color:var(--gy);margin-bottom:14px;line-height:1.7">Gérez les demandes d'accès soumises depuis le portail sécurisé. Approuvez ou bloquez chaque appareil.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <select id="acc-filter" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;font-family:'Inter',sans-serif" onchange="loadAccessRequests()">
+          <option value="en_attente">⏳ En attente</option>
+          <option value="autorise">✅ Autorisés</option>
+          <option value="bloque">🚫 Bloqués</option>
+          <option value="">Tous</option>
+        </select>
+        <button onclick="loadAccessRequests()" style="padding:9px 14px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:9px;font-size:12px;cursor:pointer">🔄 Actualiser</button>
+      </div>
+      <div id="acc-list" style="display:grid;gap:10px"><div style="color:var(--gy);font-size:13px;padding:10px">Chargement...</div></div>
+    </div>
+
     <div class="cfg-sec" id="s-guide">
       <div class="cfg-grp">🚀 Comment publier ce site</div>
       <div style="font-size:13px;color:var(--gy);line-height:1.8;margin-bottom:14px">Ce site est un fichier HTML autonome. Déployez-le en glissant le dossier sur <a href="https://netlify.com/drop" target="_blank" style="color:var(--g1);font-weight:700">netlify.com/drop</a>.</div>
@@ -1280,27 +1439,14 @@ GET  /api/ext/commandes/:id → suivi commande</div>
 <nav class="navbar">
   <div class="nav-inner">
     <a href="#" class="nav-brand">
-<svg width="180" height="56" viewBox="0 0 360 112" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Apple mark -->
-  <g transform="translate(0,4)">
-    <!-- Apple body -->
-    <path d="M44 18C31 18,21 28,21 42C21 56,31 64,44 64C57 64,67 56,67 42C67 28,57 18,44 18Z" fill="#6CBC4E"/>
-    <!-- V on apple -->
-    <path d="M32 32L44 56L56 32" stroke="white" stroke-width="7" fill="none" stroke-linejoin="miter"/>
-    <!-- Stem -->
-    <rect x="42" y="11" width="4" height="9" fill="#2D7A45"/>
-    <!-- Leaf -->
-    <path d="M46 13C52 6,63 5,68 9C64 18,53 19,46 13Z" fill="#2D7A45"/>
-  </g>
-  <!-- VITA in green -->
-  <text x="84" y="44" font-family="'DM Sans','Inter',sans-serif" font-size="28" font-weight="900" fill="#4ade80" letter-spacing="1">VITA</text>
-  <!-- FRESH in gold -->
-  <text x="155" y="44" font-family="'DM Sans','Inter',sans-serif" font-size="28" font-weight="900" fill="#D4A843" letter-spacing="1">FRESH</text>
-  <!-- Separator line -->
-  <line x1="84" y1="51" x2="348" y2="51" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
-  <!-- Tagline -->
-  <text x="84" y="66" font-family="'Inter',sans-serif" font-size="9" fill="rgba(255,255,255,0.55)" letter-spacing="1.8">FRUITS &amp; LÉGUMES · CASABLANCA · VITACORE</text>
-</svg>
+      <img src="https://f-l.vercel.app/vita-fresh-logo.svg"
+           class="nav-logo" alt="Vita Fresh"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="nav-logo-fallback">🌿</div>
+      <div class="nav-brand-text">
+        <span class="nav-brand-name">VITA FRESH</span>
+        <span class="nav-brand-sub">FRUITS &amp; LÉGUMES · CASABLANCA</span>
+      </div>
     </a>
     <ul class="nav-links">
       <li><a href="#services"   data-i18n="nav_services">Services</a></li>
@@ -2338,12 +2484,9 @@ GET  /api/ext/commandes/:id → suivi commande</div>
 <div class="modal-overlay" id="loginModal" onclick="closeLoginOutside(event)">
   <div class="modal-box">
     <button class="modal-close" onclick="closeLogin()">✕</button>
-    <svg width="64" height="64" viewBox="0 0 130 130" class="modal-logo" aria-label="Vita Fresh logo" style="display:block;margin:0 auto 12px">
-  <path d="M65 32C41 32,22 52,22 78C22 104,41 120,65 120C89 120,108 104,108 78C108 52,89 32,65 32Z" fill="#6CBC4E"/>
-  <path d="M41 58L65 100L89 58" stroke="white" stroke-width="12" fill="none" stroke-linejoin="miter"/>
-  <rect x="62" y="22" width="6" height="14" fill="#2D7A45"/>
-  <path d="M68 26C80 12,100 10,110 17C103 34,84 38,68 26Z" fill="#2D7A45"/>
-</svg>
+    <img src="https://f-l.vercel.app/vita-fresh-logo.svg" class="modal-logo"
+         alt="Vita Fresh" style="display:block;margin:0 auto 12px;height:56px;width:auto;object-fit:contain"
+         onerror="this.outerHTML='<div style=&quot;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#1E5631,#2D7A45);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px&quot;>🌿</div>'"/>
     <!-- Tabs: Connexion / Créer un compte -->
     <div style="display:flex;border-bottom:2px solid #eee;margin-bottom:18px">
       <button id="tabLogin" onclick="switchLoginTab('login')" style="flex:1;padding:10px;border:none;background:none;font-weight:700;font-size:15px;color:var(--g1);border-bottom:3px solid var(--g1);cursor:pointer">Se connecter</button>
@@ -2462,6 +2605,402 @@ function initSupabase(){
     return window.supabase.createClient(CFG.sbUrl,CFG.sbKey);
   }catch(e){ console.error("[Supabase] init:",e); return null; }
 }
+
+// ══════════════════════════════════════════════════════════════════
+// ACCESS GATE — Contrôle d'accès sécurisé
+// Jawad (super admin) doit autoriser chaque appareil.
+// GPS obligatoire envoyé via WhatsApp à Jawad à la première visite.
+// ══════════════════════════════════════════════════════════════════
+var JAWAD_WA = CONFIG.WA_EQUIPE_1 || "212647333456";
+var GATE_STORAGE_KEY = "vf_access_v3";
+var GATE_DEVICE_KEY  = "vf_did_v3";
+var gatePollingTimer = null;
+var gateDeviceId     = null;
+
+function gateGetDeviceId(){
+  var id = localStorage.getItem(GATE_DEVICE_KEY);
+  if(!id){ id = "did_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8); localStorage.setItem(GATE_DEVICE_KEY, id); }
+  return id;
+}
+
+function initAccessGate(){
+  // Dev bypass: add ?bypass=VitaFresh2026 to URL to skip gate
+  if(new URLSearchParams(location.search).get("bypass") === ADMIN_PIN){ hideGate(); return; }
+
+  var saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(GATE_STORAGE_KEY)||"null"); }catch(e){}
+  gateDeviceId = gateGetDeviceId();
+
+  if(saved && saved.statut === "autorise"){
+    // Verify with Supabase (background — show site immediately then recheck)
+    hideGate();
+    if(!sb) sb = initSupabase();
+    if(sb){
+      sb.from("fl_site_access").select("statut").eq("device_id", gateDeviceId).single()
+        .then(function(r){
+          if(!r.error && r.data){
+            if(r.data.statut === "bloque"){ clearGateSession(); location.reload(); }
+          }
+        }).catch(function(){});
+    }
+    return;
+  }
+
+  if(saved && saved.statut === "en_attente"){
+    // Still waiting — show waiting screen
+    document.getElementById("gate-step-request").style.display = "none";
+    document.getElementById("gate-step-waiting").style.display = "block";
+    var di = document.getElementById("gate-device-info");
+    if(di) di.textContent = "ID Appareil : " + gateDeviceId;
+    startGatePolling(gateDeviceId);
+    return;
+  }
+
+  // First visit or no record — show form
+  showGate();
+}
+
+function showGate(){
+  var g = document.getElementById("access-gate");
+  if(g){ g.style.display = "flex"; g.classList.remove("fade-out"); document.body.style.overflow = "hidden"; }
+}
+
+function hideGate(){
+  var g = document.getElementById("access-gate");
+  if(g){ g.classList.add("fade-out"); setTimeout(function(){ g.style.display = "none"; document.body.style.overflow = ""; }, 600); }
+}
+
+function clearGateSession(){
+  localStorage.removeItem(GATE_STORAGE_KEY);
+}
+
+function gateSubmit(e){
+  e.preventDefault();
+  var nom   = (document.getElementById("gate-nom").value||"").trim();
+  var phone = (document.getElementById("gate-phone").value||"").trim();
+  if(!nom || !phone){ gateShowErr("Nom et téléphone sont obligatoires."); return; }
+
+  var btn = document.getElementById("gate-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span><span>Envoi en cours...</span>';
+  gateShowErr("");
+
+  // Request GPS — obligatoire
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(pos){ gateDoSubmit(nom, phone, pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy); },
+      function(err){ gateDoSubmit(nom, phone, null, null, null); },
+      { timeout:9000, maximumAge:0, enableHighAccuracy:true }
+    );
+  } else {
+    gateDoSubmit(nom, phone, null, null, null);
+  }
+}
+
+function gateDoSubmit(nom, phone, lat, lng, acc){
+  var deviceId = gateGetDeviceId();
+  gateDeviceId = deviceId;
+  var now = new Date().toISOString();
+
+  var rowData = {
+    id: deviceId, device_id: deviceId, nom: nom, telephone: phone,
+    statut: "en_attente", user_agent: navigator.userAgent.slice(0,200),
+    first_visit_at: now
+  };
+  if(lat !== null){ rowData.gps_lat = lat; rowData.gps_lng = lng; rowData.gps_precision = acc; }
+
+  // 1. Save to Supabase fl_site_access
+  if(!sb) sb = initSupabase();
+  var saveOp = sb
+    ? sb.from("fl_site_access").upsert([rowData], { onConflict:"device_id" })
+    : Promise.resolve({});
+
+  saveOp.then(function(){
+    // 2. Send WhatsApp to Jawad
+    var mapsUrl = (lat !== null) ? ("https://maps.google.com/?q="+lat.toFixed(6)+","+lng.toFixed(6)) : "GPS non disponible";
+    var msg = "🔐 *DEMANDE D'ACCÈS — Site Vita Fresh*\n";
+    msg += "━━━━━━━━━━━━━━━━━━━━\n";
+    msg += "👤 *Nom :* " + nom + "\n";
+    msg += "📱 *Tél :* " + phone + "\n";
+    msg += "🔑 *Device ID :* " + deviceId + "\n";
+    if(lat !== null){
+      msg += "📍 *GPS :* " + lat.toFixed(6) + ", " + lng.toFixed(6) + "\n";
+      msg += "🗺️ *Maps :* " + mapsUrl + "\n";
+      if(acc) msg += "📐 *Précision :* " + Math.round(acc) + "m\n";
+    } else {
+      msg += "📍 *GPS :* Non partagé (refusé par l'utilisateur)\n";
+    }
+    msg += "🕒 *Date :* " + new Date().toLocaleString("fr-FR") + "\n";
+    msg += "━━━━━━━━━━━━━━━━━━━━\n";
+    msg += "✅ *Pour autoriser :*\n";
+    msg += "FreshLink ERP → Admin → Accès Site → Approuver\n";
+    msg += "Ou répondez *AUTORISE "+deviceId+"*";
+
+    window.open("https://wa.me/" + JAWAD_WA + "?text=" + encodeURIComponent(msg), "_blank");
+
+    // 3. Update UI
+    if(lat !== null){
+      var gs = document.getElementById("gate-gps-status");
+      if(gs){ gs.style.display = "block"; gs.textContent = "📍 Position GPS partagée avec Jawad ✅"; }
+    }
+
+    localStorage.setItem(GATE_STORAGE_KEY, JSON.stringify({ statut:"en_attente", deviceId:deviceId, nom:nom, phone:phone, sentAt:now }));
+
+    document.getElementById("gate-step-request").style.display = "none";
+    document.getElementById("gate-step-waiting").style.display  = "block";
+    var di = document.getElementById("gate-device-info");
+    if(di) di.textContent = "ID Appareil : " + deviceId;
+
+    startGatePolling(deviceId);
+  }).catch(function(err){
+    console.error("[AccessGate]", err);
+    gateShowErr("Erreur réseau. Vérifiez votre connexion.");
+    var btn = document.getElementById("gate-btn");
+    if(btn){ btn.disabled = false; btn.innerHTML = '<span>📍</span><span>Demander l\'accès + Partager ma position</span>'; }
+  });
+}
+
+function startGatePolling(deviceId){
+  if(gatePollingTimer) clearInterval(gatePollingTimer);
+  gatePollingTimer = setInterval(function(){
+    if(!sb) sb = initSupabase();
+    if(!sb) return;
+    sb.from("fl_site_access").select("statut").eq("device_id", deviceId).single()
+      .then(function(r){
+        if(!r.error && r.data){
+          if(r.data.statut === "autorise"){
+            clearInterval(gatePollingTimer);
+            var saved = JSON.parse(localStorage.getItem(GATE_STORAGE_KEY)||"{}");
+            saved.statut = "autorise";
+            localStorage.setItem(GATE_STORAGE_KEY, JSON.stringify(saved));
+            showToast("✅ Accès autorisé par Jawad ! Bienvenue sur Vita Fresh 🌿");
+            hideGate();
+          } else if(r.data.statut === "bloque"){
+            clearInterval(gatePollingTimer);
+            clearGateSession();
+            document.getElementById("gate-step-waiting").innerHTML =
+              '<div style="font-size:48px;margin-bottom:16px">🚫</div>'
+              +'<h3 style="color:#dc2626;font-size:1.1rem;font-weight:800;margin-bottom:8px">Accès refusé</h3>'
+              +'<p style="font-size:13px;color:#666">Votre demande a été refusée par l\'administrateur.<br>Contactez Jawad pour plus d\'informations.</p>';
+          }
+        }
+      }).catch(function(){});
+  }, 30000); // check every 30s
+}
+
+function gateResend(){
+  var saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(GATE_STORAGE_KEY)||"null"); }catch(e){}
+  if(!saved) return;
+  var msg = "🔔 *RAPPEL — Demande d'accès Vita Fresh*\n\n";
+  msg += "👤 Nom : " + (saved.nom||"?") + "\n📱 Tél : " + (saved.phone||"?") + "\n🔑 Device : " + (saved.deviceId||"?") + "\n\n";
+  msg += "✅ Pour autoriser : FreshLink ERP → Accès Site → Approuver";
+  window.open("https://wa.me/" + JAWAD_WA + "?text=" + encodeURIComponent(msg), "_blank");
+  showToast("🔔 Notification renvoyée à Jawad");
+}
+
+function gateShowErr(msg){
+  var el = document.getElementById("gate-err");
+  if(!el) return;
+  if(msg){ el.textContent = msg; el.style.display = "block"; }
+  else { el.style.display = "none"; }
+  var btn = document.getElementById("gate-btn");
+  if(btn && msg){ btn.disabled = false; btn.innerHTML = '<span>📍</span><span>Demander l\'accès + Partager ma position</span>'; }
+}
+window.gateSubmit  = gateSubmit;
+window.gateResend  = gateResend;
+
+// ══════════════════════════════════════════════════════════════════
+// ADMIN USER MANAGEMENT — Gestion comptes + Mots de passe
+// ══════════════════════════════════════════════════════════════════
+var adminUsersCache = [];
+
+function loadAdminUsers(){
+  var listEl = document.getElementById("ua-list");
+  if(!listEl) return;
+  if(!sb) sb = initSupabase();
+  if(!sb){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">Supabase non connecté.</div>'; return; }
+  listEl.innerHTML = '<div style="color:var(--gy);font-size:13px;padding:8px">⏳ Chargement...</div>';
+  sb.from("fl_users").select("id,name,email,telephone,phone,role,actif,password").order("name")
+    .then(function(r){
+      if(r.error){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">Erreur : '+r.error.message+'</div>'; return; }
+      adminUsersCache = r.data || [];
+      renderAdminUsers(adminUsersCache);
+    }).catch(function(err){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">'+err+'</div>'; });
+}
+
+function filterAdminUsers(){
+  var q = (document.getElementById("ua-search").value||"").toLowerCase();
+  if(!q){ renderAdminUsers(adminUsersCache); return; }
+  renderAdminUsers(adminUsersCache.filter(function(u){
+    return (u.name||"").toLowerCase().includes(q) || (u.telephone||u.phone||"").includes(q);
+  }));
+}
+
+function renderAdminUsers(users){
+  var listEl = document.getElementById("ua-list");
+  if(!listEl) return;
+  if(!users.length){ listEl.innerHTML = '<div style="color:var(--gy);font-size:13px;padding:8px">Aucun compte trouvé.</div>'; return; }
+  listEl.innerHTML = users.map(function(u){
+    var roleColor = u.role==="admin"||u.role==="superadmin" ? "#7c3aed" : u.role==="fournisseur" ? "#b45309" : "#1d4ed8";
+    return '<div class="ua-card">'
+      +'<div class="ua-card-info">'
+        +'<div class="ua-card-name">'+(u.name||"—")+'</div>'
+        +'<div class="ua-card-meta">'+(u.telephone||u.phone||"—")+' · <span style="color:'+roleColor+';font-weight:700">'+(u.role||"client")+'</span>'+(u.actif===false?' · <span style="color:#dc2626">Inactif</span>':'')+'</div>'
+      +'</div>'
+      +'<div class="ua-card-actions">'
+        +'<button class="ua-btn-sm ua-btn-edit" onclick="adminEditPassword(\''+u.id+'\')">🔑 MDP</button>'
+        +'<button class="ua-btn-sm ua-btn-del" onclick="adminToggleActive(\''+u.id+'\','+(u.actif===false?'true':'false')+')">'+( u.actif===false?'✅':'🚫')+'</button>'
+      +'</div>'
+    +'</div>';
+  }).join("");
+}
+
+function adminEditPassword(userId){
+  document.getElementById("ua-edit-id").value = userId;
+  document.getElementById("ua-edit-pass").value = "";
+  document.getElementById("ua-pwd-msg").textContent = "";
+  document.getElementById("ua-pwd-modal").style.display = "block";
+  setTimeout(function(){ document.getElementById("ua-edit-pass").focus(); }, 100);
+}
+
+function adminSavePassword(){
+  var userId = document.getElementById("ua-edit-id").value;
+  var newPass = (document.getElementById("ua-edit-pass").value||"").trim();
+  var msgEl   = document.getElementById("ua-pwd-msg");
+  if(!newPass){ msgEl.textContent = "❌ Mot de passe vide."; msgEl.style.color = "#dc2626"; return; }
+  if(!sb) sb = initSupabase();
+  if(!sb){ msgEl.textContent = "❌ Supabase non connecté."; msgEl.style.color = "#dc2626"; return; }
+  msgEl.textContent = "⏳ Enregistrement..."; msgEl.style.color = "#6b7280";
+  // Update payload JSONB password field
+  sb.rpc("update_user_password", { p_user_id: userId, p_password: newPass })
+    .then(function(r){
+      if(r.error){
+        // Fallback: direct JSONB update
+        return sb.from("fl_users").select("payload").eq("id", userId).single().then(function(sel){
+          if(sel.error || !sel.data) throw new Error(sel.error?.message||"User not found");
+          var payload = Object.assign({}, sel.data.payload, { password: newPass });
+          return sb.from("fl_users").update({ payload: payload, updated_at: new Date().toISOString() }).eq("id", userId);
+        });
+      }
+      return r;
+    })
+    .then(function(res){
+      if(res && res.error) throw new Error(res.error.message);
+      msgEl.textContent = "✅ Mot de passe mis à jour !"; msgEl.style.color = "#166534";
+      setTimeout(function(){ document.getElementById("ua-pwd-modal").style.display = "none"; loadAdminUsers(); }, 1500);
+    })
+    .catch(function(err){ msgEl.textContent = "❌ Erreur : " + err.message; msgEl.style.color = "#dc2626"; });
+}
+
+function adminToggleActive(userId, newActive){
+  if(!sb) sb = initSupabase();
+  if(!sb) return;
+  sb.from("fl_users").select("payload").eq("id", userId).single()
+    .then(function(r){
+      if(r.error || !r.data) return;
+      var payload = Object.assign({}, r.data.payload, { actif: newActive });
+      return sb.from("fl_users").update({ payload: payload, updated_at: new Date().toISOString() }).eq("id", userId);
+    })
+    .then(function(){ loadAdminUsers(); showToast(newActive ? "✅ Compte activé" : "🚫 Compte désactivé"); })
+    .catch(function(err){ showToast("❌ Erreur : "+err.message); });
+}
+
+function adminCreateUser(){
+  var nom   = (document.getElementById("ua-new-nom").value||"").trim();
+  var phone = (document.getElementById("ua-new-phone").value||"").trim();
+  var pass  = (document.getElementById("ua-new-pass").value||"").trim();
+  var role  = document.getElementById("ua-new-role").value||"client";
+  var email = (document.getElementById("ua-new-email").value||"").trim();
+  var msgEl = document.getElementById("ua-create-msg");
+  if(!nom||!phone||!pass){ msgEl.textContent = "❌ Nom, téléphone et mot de passe requis."; msgEl.style.color = "#dc2626"; return; }
+  if(!sb) sb = initSupabase();
+  if(!sb){ msgEl.textContent = "❌ Supabase non connecté."; msgEl.style.color = "#dc2626"; return; }
+  msgEl.textContent = "⏳ Création en cours..."; msgEl.style.color = "#6b7280";
+  var userId = "usr_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
+  var payload = {
+    id: userId, name: nom, telephone: phone, phone: phone, role: role,
+    password: pass, email: email||null, actif: true,
+    createdAt: new Date().toISOString(), createdBy: "admin-site"
+  };
+  sb.from("fl_users").insert([{ id: userId, payload: payload, updated_at: new Date().toISOString() }])
+    .then(function(r){
+      if(r.error) throw new Error(r.error.message);
+      msgEl.textContent = "✅ Compte créé : " + nom + " (" + phone + ")"; msgEl.style.color = "#166534";
+      ["ua-new-nom","ua-new-phone","ua-new-pass","ua-new-email"].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=""; });
+      loadAdminUsers();
+    })
+    .catch(function(err){ msgEl.textContent = "❌ Erreur : " + err.message; msgEl.style.color = "#dc2626"; });
+}
+
+window.loadAdminUsers    = loadAdminUsers;
+window.filterAdminUsers  = filterAdminUsers;
+window.adminEditPassword = adminEditPassword;
+window.adminSavePassword = adminSavePassword;
+window.adminToggleActive = adminToggleActive;
+window.adminCreateUser   = adminCreateUser;
+
+// ══════════════════════════════════════════════════════════════════
+// GESTION DEMANDES D'ACCÈS — panneau admin
+// ══════════════════════════════════════════════════════════════════
+function loadAccessRequests(){
+  var listEl = document.getElementById("acc-list");
+  if(!listEl) return;
+  var statut = (document.getElementById("acc-filter")||{}).value||"en_attente";
+  if(!sb) sb = initSupabase();
+  if(!sb){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">Supabase non connecté.</div>'; return; }
+  listEl.innerHTML = '<div style="color:var(--gy);font-size:13px;padding:8px">⏳ Chargement...</div>';
+  var q = sb.from("fl_site_access").select("*").order("first_visit_at", {ascending:false}).limit(50);
+  if(statut) q = q.eq("statut", statut);
+  q.then(function(r){
+    if(r.error){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">'+r.error.message+'</div>'; return; }
+    var rows = r.data||[];
+    if(!rows.length){ listEl.innerHTML = '<div style="color:var(--gy);font-size:13px;padding:8px">Aucune demande.</div>'; return; }
+    listEl.innerHTML = rows.map(function(row){
+      var stColor = row.statut==="autorise"?"#166534":row.statut==="bloque"?"#dc2626":"#b45309";
+      var stBg    = row.statut==="autorise"?"#f0fdf4":row.statut==="bloque"?"#fef2f2":"#fffbe6";
+      var dt = row.first_visit_at ? new Date(row.first_visit_at).toLocaleString("fr-FR") : "?";
+      var gpsLink = (row.gps_lat&&row.gps_lng) ? '<a href="https://maps.google.com/?q='+row.gps_lat+','+row.gps_lng+'" target="_blank" style="color:#1d4ed8;font-size:11px">📍 Voir sur Maps</a>' : '<span style="color:#9ca3af;font-size:11px">GPS non disponible</span>';
+      return '<div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">'
+          +'<div>'
+            +'<div style="font-weight:700;font-size:14px;color:#111">'+(row.nom||"—")+'</div>'
+            +'<div style="font-size:12px;color:#6b7280;margin-top:2px">'+(row.telephone||"—")+' · '+dt+'</div>'
+            +'<div style="margin-top:4px">'+gpsLink+'</div>'
+            +'<div style="font-size:11px;color:#9ca3af;margin-top:2px;word-break:break-all">ID : '+(row.device_id||"—")+'</div>'
+          +'</div>'
+          +'<span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:'+stBg+';color:'+stColor+'">'+row.statut+'</span>'
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'
+          +(row.statut!=="autorise" ? '<button onclick="accessAction(\''+row.device_id+'\',\'autorise\')" style="padding:7px 14px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Autoriser</button>' : '')
+          +(row.statut!=="bloque"   ? '<button onclick="accessAction(\''+row.device_id+'\',\'bloque\')"   style="padding:7px 14px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🚫 Bloquer</button>' : '')
+          +(row.statut!=="en_attente" ? '<button onclick="accessAction(\''+row.device_id+'\',\'en_attente\')" style="padding:7px 14px;background:#f9fafb;color:#374151;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;cursor:pointer">↩️ Remettre en attente</button>' : '')
+          +'<button onclick="accessAction(\''+row.device_id+'\',\'DELETE\')" style="padding:7px 14px;background:#f9fafb;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;cursor:pointer">🗑️ Supprimer</button>'
+        +'</div>'
+      +'</div>';
+    }).join("");
+  }).catch(function(err){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">'+err+'</div>'; });
+}
+
+function accessAction(deviceId, action){
+  if(!sb) sb = initSupabase();
+  if(!sb) return;
+  if(action === "DELETE"){
+    sb.from("fl_site_access").delete().eq("device_id", deviceId)
+      .then(function(){ showToast("🗑️ Supprimé"); loadAccessRequests(); });
+    return;
+  }
+  sb.from("fl_site_access").update({ statut: action, updated_at: new Date().toISOString(),
+    autorise_par: "admin-site", autorise_at: action==="autorise"?new Date().toISOString():null
+  }).eq("device_id", deviceId)
+    .then(function(r){
+      if(r.error) showToast("❌ "+r.error.message);
+      else { showToast(action==="autorise"?"✅ Accès autorisé !":action==="bloque"?"🚫 Accès bloqué":"↩️ Remis en attente"); loadAccessRequests(); }
+    });
+}
+
+window.loadAccessRequests = loadAccessRequests;
+window.accessAction       = accessAction;
 
 // ── EMOJI MAP ──
 var EMOJI_MAP={tomate:"🍅",avocat:"🥑",orange:"🍊",carotte:"🥕",citron:"🍋",brocoli:"🥦",oignon:"🧅",raisin:"🍇",laitue:"🥬",salade:"🥬",aubergine:"🍆",mais:"🌽",fraise:"🍓",concombre:"🥒",banane:"🍌",poivron:"🫑",pomme:"🍎",pasteque:"🍉",courgette:"🥬",ail:"🧄",mangue:"🥭",peche:"🍑",poire:"🍐",prune:"🍑",melon:"🍈",kiwi:"🥝",ananas:"🍍",cerise:"🍒",abricot:"🍑",figues:"🍇",grenade:"🧃",epinard:"🌿",chou:"🥬",haricot:"🟢",pois:"🫘",celeri:"🌿",persil:"🌿",coriandre:"🌿",menthe:"🌿",gingembre:"🫚",patate:"🥔",betterave:"🟣"};
@@ -3569,13 +4108,17 @@ function initReveal(){
 
 // ── INIT ──
 document.addEventListener("DOMContentLoaded",function(){
+  // Access gate must be initialized first — it may block the site
+  sb=initSupabase();
+  initAccessGate();
+
   updateContactLinks(); renderStats(); renderZones();
   setLang(currentLang);
   showSkeletons(8);
   loadGalleryState(); renderGallery();
   renderStorageTabs(); renderStorageCard();
   currentRecipeIdx=new Date().getDay(); renderRecipe(); renderRecipeNav();
-  sb=initSupabase(); syncFromSupabase(); loadCompanyContacts();
+  syncFromSupabase(); loadCompanyContacts();
   // Auto-refresh catalogue every 5 minutes
   setInterval(function(){ syncFromSupabase(); }, 5*60*1000);
   renderProds(); updateCatCounts(); initReveal(); loadAvis();
