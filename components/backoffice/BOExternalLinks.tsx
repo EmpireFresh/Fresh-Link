@@ -17,7 +17,7 @@ interface SiteEntry {
 
 const DEFAULT_SITES: SiteEntry[] = [
   {
-    id: "vita_fresh", name: "Vita Fresh", nameAr: "إمبير فريش",
+    id: "vita_fresh", name: "Vita Fresh", nameAr: "فيتا فريش",
     url: "https://vita-fresh.netlify.app/",
     description: "Site vitrine et catalogue en ligne — présentez vos produits à vos clients",
     descriptionAr: "موقع العرض والكتالوج الإلكتروني",

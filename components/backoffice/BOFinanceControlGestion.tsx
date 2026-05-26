@@ -9,8 +9,8 @@ function fmtPct(n: number) { return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%` }
 
 const RAPPORT_EMAIL_KEY = "fl_rapport_email"
 function getRapportEmail(): string {
-  if (typeof window === "undefined") return "fresh.empire.contact@gmail.com"
-  return localStorage.getItem(RAPPORT_EMAIL_KEY) || "fresh.empire.contact@gmail.com"
+  if (typeof window === "undefined") return "fresh.vitafresh.contact@gmail.com"
+  return localStorage.getItem(RAPPORT_EMAIL_KEY) || "fresh.vitafresh.contact@gmail.com"
 }
 
 // ── Prévisionnels P&L (modifiables par Jawad seulement) ──────────────────────

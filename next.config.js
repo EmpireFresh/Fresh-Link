@@ -10,8 +10,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 'jwdrwapuetqoqnankgma.supabase.co' },
-      { protocol: 'https', hostname: 'empire-fresh.netlify.app' },
-      { protocol: 'https', hostname: 'empire-fresh.co.site' },
+      { protocol: 'https', hostname: 'vita-fresh.netlify.app' },
+      { protocol: 'https', hostname: 'vita-fresh.co.site' },
     ],
   },
 

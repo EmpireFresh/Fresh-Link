@@ -9,7 +9,7 @@ const PRECACHE_URLS = [
   '/icon-512.png',
   '/apple-touch-icon.png',
   '/icon.svg',
-  '/empire-fresh-logo.png',
+  '/vita-fresh-logo.png',
 ]
 
 // ── Install: precache critical assets ─────────────────────────────────────────

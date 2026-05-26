@@ -916,7 +916,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
             </div>
             <div className="grid grid-cols-2 gap-4">
               {([
-                { key: "instagram", label: "Instagram", placeholder: "@empire.fresh" },
+                { key: "instagram", label: "Instagram", placeholder: "@vita.fresh" },
                 { key: "facebook",  label: "Facebook",  placeholder: "facebook.com/VitaFresh" },
                 { key: "linkedin",  label: "LinkedIn",   placeholder: "linkedin.com/in/VitaFresh" },
                 { key: "tiktok",    label: "TikTok",    placeholder: "@VitaFresh" },

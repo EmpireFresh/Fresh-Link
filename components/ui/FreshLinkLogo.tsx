@@ -18,7 +18,7 @@ export const BRAND = {
   logoPath: "/vita-fresh-logo.png",
 }
 
-function EFIcon({ size }: { size: number }) {
+function VFIcon({ size }: { size: number }) {
   return (
     <svg
       width={size}
@@ -38,7 +38,7 @@ function EFIcon({ size }: { size: number }) {
 export default function FreshLinkLogo({ size = 40, variant = "full", className = "", showAppName = true }: Props) {
   const logoSize = variant === "icon-only" ? size : Math.round(size * 1.1)
 
-  const Logo = <EFIcon size={logoSize} />
+  const Logo = <VFIcon size={logoSize} />
 
   if (variant === "icon-only") {
     return <span className={`inline-block ${className}`}>{Logo}</span>
@@ -47,7 +47,7 @@ export default function FreshLinkLogo({ size = 40, variant = "full", className =
   if (variant === "stacked") {
     return (
       <div className={`flex flex-col items-center gap-1.5 ${className}`}>
-        <EFIcon size={size} />
+        <VFIcon size={size} />
         <div className="text-center leading-none">
           <div className="font-black tracking-tight" style={{ fontSize: size * 0.28, color: BRAND.primaryGreen }}>
             {BRAND.company}

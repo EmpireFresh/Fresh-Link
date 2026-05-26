@@ -5,7 +5,7 @@ import { useState } from "react"
 const LANG_LABELS = {
   fr: { title: "Dossier Investisseur", sub: "FreshLink Pro — Vita Fresh Distribution" },
   en: { title: "Investor Dossier", sub: "FreshLink Pro — Vita Fresh Distribution" },
-  ar: { title: "ملف المستثمر", sub: "فريشلينك برو — توزيع إمبير فريش" },
+  ar: { title: "ملف المستثمر", sub: "فريشلينك برو — توزيع فيتا فريش" },
 }
 
 type Lang = "fr" | "en" | "ar"
@@ -32,7 +32,7 @@ const SECTIONS = [
       ],
       ar: [
         { tag: "الرؤية", text: "فريشلينك برو هو أول منصة ERP متكاملة مخصصة لتوزيع الفواكه والخضروات في المغرب، مصممة من قبل المشغلين المحليين ولأجلهم." },
-        { tag: "الانجاز", text: "تعمل بالفعل لدى إمبير فريش للتوزيع (الدار البيضاء)، وتدير في الوقت الفعلي: الطلبات الميدانية، والمخزون، والخدمات اللوجستية، والمالية، ووكلاء الذكاء الاصطناعي التجاري." },
+        { tag: "الانجاز", text: "تعمل بالفعل لدى فيتا فريش للتوزيع (الدار البيضاء)، وتدير في الوقت الفعلي: الطلبات الميدانية، والمخزون، والخدمات اللوجستية، والمالية، ووكلاء الذكاء الاصطناعي التجاري." },
         { tag: "النموذج", text: "SaaS B2B معياري — اشتراك شهري لكل مستخدم. أول عميل نشط. التوسع المستهدف: 50+ موزعاً مغربياً بحلول 2026." },
         { tag: "جمع التمويل", text: "البحث عن 2-5 مليون درهم (seed) لتسريع التسويق وفريق المبيعات والبنية التحتية السحابية." },
       ],
@@ -332,7 +332,7 @@ export default function BOInvestissement() {
           ? "Document confidentiel — FreshLink Pro © 2026 Vita Fresh Distribution. Tous droits réservés."
           : lang === "en"
           ? "Confidential document — FreshLink Pro © 2026 Vita Fresh Distribution. All rights reserved."
-          : "وثيقة سرية — فريشلينك برو © 2026 إمبير فريش للتوزيع. جميع الحقوق محفوظة."}
+          : "وثيقة سرية — فريشلينك برو © 2026 فيتا فريش للتوزيع. جميع الحقوق محفوظة."}
       </p>
     </div>
   )
