@@ -2054,7 +2054,8 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                                     // Auto-apply permissions + accessType for the selected role
                                     const defaultPerms = DEFAULT_PERMS_BY_ROLE[r] ?? ALL_OFF
                                     const autoPerms    = autoAssignPermissions(r)
-                                    setForm(prev => ({ ...prev, role: r, ...defaultPerms, accessType: autoPerms.accessType }))
+                                    // Reset subtype and roles when primary role changes
+                                    setForm(prev => ({ ...prev, role: r, subtype: undefined, roles: undefined, ...defaultPerms, accessType: autoPerms.accessType }))
                                   }}
                                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${form.role === r ? "text-primary-foreground border-transparent shadow-sm bg-primary" : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary"}`}>
                                   {ROLE_LABELS[r]}
@@ -2066,6 +2067,103 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                       })}
                     </div>
                   </div>
+
+                  {/* ── Subtype selector — Client ──────────────────────────────── */}
+                  {form.role === "client" && (
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground">Type de client / نوع الزبون</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          { val: "particulier",  icon: "🛒", label: "Particulier",   sub: "Achat direct" },
+                          { val: "marchand",     icon: "🏪", label: "Marchand",      sub: "Commerce détail" },
+                          { val: "chr",          icon: "🏨", label: "CHR / HORECA",  sub: "Hôtel, resto, café" },
+                        ] as const).map(opt => (
+                          <button key={opt.val} type="button"
+                            onClick={() => setForm(prev => ({ ...prev, subtype: opt.val }))}
+                            className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-center
+                              ${(form as { subtype?: string }).subtype === opt.val
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border bg-background text-muted-foreground hover:border-primary/50"}`}>
+                            <span className="text-xl">{opt.icon}</span>
+                            <span className="text-[10px] font-bold leading-tight">{opt.label}</span>
+                            <span className="text-[9px] opacity-60">{opt.sub}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {!(form as { subtype?: string }).subtype && (
+                        <p className="text-[10px] text-amber-600">⚠️ Sélectionnez un type de client pour affiner la connexion</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Subtype selector — Fournisseur ─────────────────────────── */}
+                  {form.role === "fournisseur" && (
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground">Type de fournisseur / نوع المورد</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          { val: "ferme",         icon: "🌾", label: "Ferme",         sub: "Production agricole" },
+                          { val: "vendeur",        icon: "🏬", label: "Vendeur",       sub: "Grossiste / marché" },
+                          { val: "intermediaire",  icon: "🤝", label: "Intermédiaire", sub: "Courtier / agent" },
+                        ] as const).map(opt => (
+                          <button key={opt.val} type="button"
+                            onClick={() => setForm(prev => ({ ...prev, subtype: opt.val }))}
+                            className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-center
+                              ${(form as { subtype?: string }).subtype === opt.val
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border bg-background text-muted-foreground hover:border-primary/50"}`}>
+                            <span className="text-xl">{opt.icon}</span>
+                            <span className="text-[10px] font-bold leading-tight">{opt.label}</span>
+                            <span className="text-[9px] opacity-60">{opt.sub}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {!(form as { subtype?: string }).subtype && (
+                        <p className="text-[10px] text-amber-600">⚠️ Sélectionnez un type de fournisseur</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Multi-role — rôles supplémentaires ────────────────────── */}
+                  {!["client", "fournisseur"].includes(form.role) && (
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        Rôles supplémentaires
+                        <span className="text-[9px] font-normal text-muted-foreground">(optionnel — active le Switch de rôle sur mobile)</span>
+                      </label>
+                      <div className="flex flex-wrap gap-1.5 p-3 rounded-xl border border-border bg-muted/30">
+                        {([
+                          "prevendeur","acheteur","magasinier","livreur","dispatcheur","ctrl_achat","ctrl_prep","resp_logistique","resp_commercial","team_leader","cash_man","financier","comptable",
+                        ] as UserRole[])
+                          .filter(r => r !== form.role && creatableRoles.includes(r))
+                          .map(r => {
+                            const currentRoles: UserRole[] = (form as { roles?: UserRole[] }).roles ?? [form.role as UserRole]
+                            const isChecked = currentRoles.includes(r)
+                            return (
+                              <button key={r} type="button"
+                                onClick={() => {
+                                  const base = (form as { roles?: UserRole[] }).roles ?? [form.role as UserRole]
+                                  const next = isChecked
+                                    ? base.filter(x => x !== r)
+                                    : [...base, r]
+                                  setForm(prev => ({ ...prev, roles: next.length > 1 ? next : undefined }))
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all
+                                  ${isChecked
+                                    ? "bg-violet-600 text-white border-violet-600 shadow-sm"
+                                    : "bg-background border-border text-muted-foreground hover:border-violet-400"}`}>
+                                {isChecked ? "✓ " : ""}{ROLE_LABELS[r]}
+                              </button>
+                            )
+                          })}
+                      </div>
+                      {((form as { roles?: UserRole[] }).roles?.length ?? 0) > 1 && (
+                        <p className="text-[10px] text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-3 py-1.5">
+                          ✓ Switch activé : {((form as { roles?: UserRole[] }).roles ?? []).map(r => ROLE_LABELS[r]).join(" ↔ ")}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Access Type */}
                   <div className="flex flex-col gap-1 sm:col-span-2">

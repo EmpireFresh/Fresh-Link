@@ -109,20 +109,28 @@ type DemoGroup = typeof DEMO_GROUPS[number]
 
 const DEMO_EXTERNAL = [
   {
-    subtype: "client" as const,
-    label: "Demo Client",
+    subtype: "particulier" as ExternalType,
+    label: "Demo Client Particulier",
     name: "Demo Client",
     email: "client.demo@freshlink.ma",
     phone: "0600000001",
-    note: "Epicerie Al Baraka — lié au compte client",
+    note: "Particulier — accès portail client",
   },
   {
-    subtype: "fournisseur" as const,
+    subtype: "marchand" as ExternalType,
+    label: "Demo Marchand",
+    name: "Demo Marchand",
+    email: "marchand.demo@freshlink.ma",
+    phone: "0600000003",
+    note: "Marchand — accès portail client",
+  },
+  {
+    subtype: "fournisseur" as ExternalType,
     label: "Demo Fournisseur",
     name: "Demo Fournisseur",
     email: "fournisseur.demo@freshlink.ma",
     phone: "0600000002",
-    note: "Marché Central Casa — lié au compte fournisseur",
+    note: "Fournisseur — accès portail fournisseur",
   },
 ]
 
@@ -169,7 +177,7 @@ export default function LoginPage({ onLogin }: Props) {
   const [forgotStatus, setForgotStatus] = useState<"idle" | "sending" | "sent" | "notfound">("idle")
   const [showDemo, setShowDemo] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<DemoGroup>("Direction")
-  const [externalType, setExternalType] = useState<ExternalType>("client")
+  const [externalType, setExternalType] = useState<ExternalType>("particulier")
 
   // ── Must-change-password flow ────────────────────────────────────────────────
   const [mustChangePwd, setMustChangePwd]     = useState<User | null>(null)
@@ -322,7 +330,7 @@ export default function LoginPage({ onLogin }: Props) {
       const isPhone = /^[\+0]/.test(raw) && raw.replace(/[\s\-\.]/g, "").length >= 8
       const isEmail = raw.includes("@")
       // Map UI type to store login type
-      const loginSubtype = externalType === "chr" ? "chr" : externalType === "fournisseur" ? "fournisseur" : "client"
+      const loginSubtype = externalType  // pass the full subtype directly to loginExternal
       if (externalType === "chr" && !isPhone && !isEmail) {
         setError("CHR : utilisez votre email ou téléphone / CHR: دير الإيميل ولا الهاتف")
         setLoading(false); return
@@ -1054,12 +1062,12 @@ export default function LoginPage({ onLogin }: Props) {
                     <div key={acc.email} className="rounded-lg border border-slate-100 overflow-hidden">
                       <div className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50">
                         <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0"
-                          style={{ background: acc.subtype === "client" ? "#16a34a" : "#2563eb" }}>
-                          {acc.subtype === "client" ? "C" : "F"}
+                          style={{ background: acc.subtype === "fournisseur" ? "#2563eb" : "#16a34a" }}>
+                          {acc.subtype === "fournisseur" ? "F" : "C"}
                         </div>
                         <p className="text-[10px] font-bold text-slate-700">{acc.label}</p>
                         <span className={`ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
-                          acc.subtype === "client" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                          acc.subtype === "fournisseur" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
                         }`}>{acc.subtype}</span>
                       </div>
                       <div className="p-1.5 flex flex-col gap-0.5">
@@ -1071,7 +1079,7 @@ export default function LoginPage({ onLogin }: Props) {
                           <button key={opt.label} type="button"
                             onClick={() => {
                               setIdentifier(opt.label)
-                              setExternalType(acc.subtype)
+                              setExternalType(acc.subtype as ExternalType)
                               setClientMode(true); setError(""); setShowDemo(false)
                             }}
                             className="w-full flex items-center gap-2 px-2 py-1 rounded-md hover:bg-green-50 transition-colors text-left">

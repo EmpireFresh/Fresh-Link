@@ -78,6 +78,8 @@ export interface User {
   // Portal linking — links a user account to a fournisseur or client record
   fournisseurId?: string   // for role === "fournisseur" — their fournisseur record id
   clientId?: string        // for role === "client" — their client record id
+  // Subtype — categorise client (particulier/marchand/chr) or fournisseur (ferme/vendeur/intermediaire)
+  subtype?: "particulier" | "marchand" | "chr" | "ferme" | "vendeur" | "intermediaire"
   telephone?: string       // WhatsApp number for notifications (intl format ex: 212661234567)
   // Profile photo — base64 data URL or external URL
   photoUrl?: string
@@ -2091,16 +2093,25 @@ export const store = {
   loginClient: (name: string): User | null => store.loginExternal(name, "client"),
 
   // External login — by name, phone, or email; subtype filters role
-  loginExternal: (identifier: string, subtype?: "client" | "fournisseur" | "chr"): User | null => {
+  loginExternal: (identifier: string, subtype?: "client" | "fournisseur" | "chr" | "particulier" | "marchand" | "ferme" | "vendeur" | "intermediaire"): User | null => {
     const users = store.getUsers()
     const raw = identifier.trim()
     const lower = raw.toLowerCase()
     const cleanPhone = raw.replace(/[\s\-\.\(\)]/g, "")
+    // Resolve which role this subtype maps to
+    const isFournisseurSubtype = subtype === "fournisseur" || subtype === "ferme" || subtype === "vendeur" || subtype === "intermediaire"
+    const isClientSubtype     = subtype === "client" || subtype === "chr" || subtype === "particulier" || subtype === "marchand"
     return users.find(u => {
       if (!u.actif) return false
       if (u.role !== "client" && u.role !== "fournisseur") return false
-      if (subtype === "fournisseur" && u.role !== "fournisseur") return false
-      if ((subtype === "client" || subtype === "chr") && u.role !== "client") return false
+      if (isFournisseurSubtype && u.role !== "fournisseur") return false
+      if (isClientSubtype && u.role !== "client") return false
+      // If user has a stored subtype, it must match (allows "particulier" to not match a "chr" user)
+      if (u.subtype && subtype && u.subtype !== subtype) {
+        // Group chr separately; particulier/marchand can cross-match with each other
+        const chrOnly = subtype === "chr" || u.subtype === "chr"
+        if (chrOnly && subtype !== u.subtype) return false
+      }
       if (u.email && u.email.toLowerCase() === lower) return true
       if (u.phone && u.phone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
       if (u.telephone && u.telephone.replace(/[\s\-\.\(\)]/g, "") === cleanPhone) return true
