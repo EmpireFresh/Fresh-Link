@@ -5,6 +5,7 @@ import { verifyDeviceToken, verifySadminToken, DEVICE_COOKIE, DEVICE_BYPASS, SAD
 const PUBLIC_PATHS = [
   "/device-blocked",
   "/api/device/",          // toutes les routes device (register, request-access, check-and-token…)
+  "/api/admin-session",    // login admin-bypass (Jawad) — nécessaire avant d'avoir le sadmin cookie
   "/api/ext/",             // API publique site web
   "/_next/",
   "/favicon",

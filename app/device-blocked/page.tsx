@@ -40,29 +40,55 @@ async function generateFingerprint(): Promise<string> {
     .join("")
 }
 
+// ── GPS en arrière-plan (silencieux) ──────────────────────────────────────────
+function requestGpsSilent(): Promise<GpsCoords | null> {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) { resolve(null); return }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+      () => resolve(null),
+      { timeout: 10_000, maximumAge: 0, enableHighAccuracy: true }
+    )
+  })
+}
+
+// ── Supabase (depuis les variables d'env publiques) ────────────────────────────
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  return { url, key }
+}
+
 // ── Numéro WhatsApp de Jawad (super admin) ─────────────────────────────────────
 const JAWAD_WA = "212647333456"
 const STORAGE_KEY = "vf_erp_gate_v1"
 
 // ── Composant principal ────────────────────────────────────────────────────────
 function AccessGateContent() {
-  const params  = useSearchParams()
-  const router  = useRouter()
-  const reason  = params.get("reason") ?? "no-token"
+  const params   = useSearchParams()
+  const router   = useRouter()
   const fromPath = params.get("from") ?? "/"
 
-  const [step,         setStep]         = useState<Step>("form")
-  const [nom,          setNom]          = useState("")
-  const [phone,        setPhone]        = useState("")
-  const [gps,          setGps]          = useState<GpsCoords | null>(null)
-  const [gpsStatus,    setGpsStatus]    = useState<"idle" | "requesting" | "ok" | "denied">("idle")
-  const [error,        setError]        = useState("")
-  const [loading,      setLoading]      = useState(false)
-  const [fingerprint,  setFingerprint]  = useState("")
-  const [pollSeconds,  setPollSeconds]  = useState(0)
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [step,        setStep]        = useState<Step>("form")
+  const [nom,         setNom]         = useState("")
+  const [phone,       setPhone]       = useState("")
+  const [error,       setError]       = useState("")
+  const [loading,     setLoading]     = useState(false)
+  const [fingerprint, setFingerprint] = useState("")
+  const [pollSeconds, setPollSeconds] = useState(0)
 
-  // ── Charger état sauvegardé ───────────────────────────────────────────────
+  // ── Admin login caché ──────────────────────────────────────────────────────
+  const [logoClicks,   setLogoClicks]   = useState(0)
+  const [showAdmin,    setShowAdmin]    = useState(false)
+  const [adminEmail,   setAdminEmail]   = useState("")
+  const [adminPass,    setAdminPass]    = useState("")
+  const [adminError,   setAdminError]   = useState("")
+  const [adminLoading, setAdminLoading] = useState(false)
+
+  const pollingRef  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const logoTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Charger état sauvegardé ────────────────────────────────────────────────
   useEffect(() => {
     generateFingerprint().then(fp => {
       setFingerprint(fp)
@@ -76,36 +102,83 @@ function AccessGateContent() {
         }
       } catch {}
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Demande GPS ────────────────────────────────────────────────────────────
-  function requestGps(): Promise<GpsCoords | null> {
-    return new Promise(resolve => {
-      setGpsStatus("requesting")
-      if (!navigator.geolocation) { setGpsStatus("denied"); resolve(null); return }
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }
-          setGps(coords)
-          setGpsStatus("ok")
-          resolve(coords)
-        },
-        () => { setGpsStatus("denied"); resolve(null) },
-        { timeout: 10_000, maximumAge: 0, enableHighAccuracy: true }
-      )
-    })
+  // ── Clic logo → activer panel admin (5 clics en 3s) ───────────────────────
+  function handleLogoClick() {
+    const next = logoClicks + 1
+    setLogoClicks(next)
+    if (logoTimer.current) clearTimeout(logoTimer.current)
+    logoTimer.current = setTimeout(() => setLogoClicks(0), 3000)
+    if (next >= 5) {
+      setLogoClicks(0)
+      setShowAdmin(v => !v)
+    }
   }
 
-  // ── Soumission formulaire ──────────────────────────────────────────────────
+  // ── Login admin (Supabase → sadmin cookie) ─────────────────────────────────
+  async function handleAdminLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setAdminError(""); setAdminLoading(true)
+    try {
+      const { url, key } = getSupabase()
+      if (!url || !key) { setAdminError("Supabase non configuré."); setAdminLoading(false); return }
+
+      // 1. Authentifier via Supabase REST
+      const authRes = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${key}` },
+        body: JSON.stringify({ email: adminEmail, password: adminPass }),
+      })
+      const authData = await authRes.json()
+      if (!authRes.ok || !authData.user) {
+        setAdminError("Email ou mot de passe incorrect.")
+        setAdminLoading(false); return
+      }
+
+      const userId = authData.user.id as string
+
+      // 2. Vérifier le rôle dans fl_users
+      const profileRes = await fetch(
+        `${url}/rest/v1/fl_users?id=eq.${userId}&select=role`,
+        { headers: { apikey: key, Authorization: `Bearer ${authData.access_token}` } }
+      )
+      const profiles = (await profileRes.json()) as Array<{ role: string }>
+      const role = profiles?.[0]?.role ?? ""
+      if (!["admin", "superadmin", "super_admin", "super_super_admin"].includes(role)) {
+        setAdminError("Accès refusé — compte non administrateur.")
+        setAdminLoading(false); return
+      }
+
+      // 3. Poser le cookie sadmin (bypass device guard)
+      const sadminRes = await fetch("/api/admin-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      })
+      if (!sadminRes.ok) { setAdminError("Erreur serveur."); setAdminLoading(false); return }
+
+      // 4. Rediriger vers l'app
+      setStep("approved")
+      setTimeout(() => router.replace(fromPath), 800)
+
+    } catch (err) {
+      setAdminError("Erreur réseau : " + String(err))
+    }
+    setAdminLoading(false)
+  }
+
+  // ── Soumission formulaire utilisateur ──────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!nom.trim() || !phone.trim()) { setError("Nom et téléphone sont obligatoires."); return }
     setError(""); setLoading(true)
 
-    // 1. GPS
-    const coords = await requestGps()
+    // GPS en arrière-plan (silencieux, pas affiché à l'utilisateur)
+    const coords = await requestGpsSilent()
 
-    // 2. Enregistrer dans Supabase
+    // Enregistrer dans Supabase
     try {
       await fetch("/api/device/request-access", {
         method:  "POST",
@@ -122,10 +195,10 @@ function AccessGateContent() {
       })
     } catch { /* continuer même si Supabase KO */ }
 
-    // 3. WhatsApp vers Jawad
+    // WhatsApp vers Jawad (avec GPS pour sa référence, invisible pour l'user)
     const mapsUrl = coords
       ? `https://maps.google.com/?q=${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
-      : "GPS non disponible"
+      : ""
 
     const msg = [
       "🔐 *DEMANDE D'ACCÈS — FreshLink ERP*",
@@ -134,18 +207,20 @@ function AccessGateContent() {
       `📱 *Tél :* ${phone.trim()}`,
       `🔑 *Device ID :* ${fingerprint.slice(0, 16)}...`,
       coords
-        ? `📍 *GPS :* ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}\n🗺️ *Maps :* ${mapsUrl}\n📐 *Précision :* ${Math.round(coords.accuracy)}m`
-        : "📍 *GPS :* non partagé",
+        ? `📍 *Position :* ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}\n🗺️ *Maps :* ${mapsUrl}\n📐 *Précision :* ${Math.round(coords.accuracy)}m`
+        : "📍 *Position :* non disponible",
       `🕒 *Date :* ${new Date().toLocaleString("fr-FR")}`,
       "━━━━━━━━━━━━━━━━━━━━",
       "✅ *Pour autoriser :*",
-      "FreshLink ERP → Admin → Accès Site → Approuver",
+      "FreshLink ERP → Admin → Accès Appareils → Approuver",
     ].join("\n")
 
     window.open(`https://wa.me/${JAWAD_WA}?text=${encodeURIComponent(msg)}`, "_blank")
 
-    // 4. Sauvegarder l'état
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ fingerprint, nom: nom.trim(), phone: phone.trim(), step: "waiting", sentAt: new Date().toISOString() }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      fingerprint, nom: nom.trim(), phone: phone.trim(),
+      step: "waiting", sentAt: new Date().toISOString(),
+    }))
 
     setLoading(false)
     setStep("waiting")
@@ -179,7 +254,10 @@ function AccessGateContent() {
     }, 30_000)
   }
 
-  useEffect(() => () => { if (pollingRef.current) clearInterval(pollingRef.current) }, [])
+  useEffect(() => () => {
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    if (logoTimer.current) clearTimeout(logoTimer.current)
+  }, [])
 
   // ── Renvoyer notification ──────────────────────────────────────────────────
   function resend() {
@@ -188,23 +266,18 @@ function AccessGateContent() {
       const msg = [
         "🔔 *RAPPEL — Demande accès FreshLink ERP*",
         `👤 ${saved.nom ?? "?"}  📱 ${saved.phone ?? "?"}`,
-        `🔑 Device : ${fingerprint.slice(0,16)}...`,
+        `🔑 Device : ${fingerprint.slice(0, 16)}...`,
         "✅ Pour autoriser : FreshLink ERP → Admin → Accès Appareils → Approuver",
       ].join("\n")
       window.open(`https://wa.me/${JAWAD_WA}?text=${encodeURIComponent(msg)}`, "_blank")
     } catch {}
   }
 
-  // ── Réinitialiser (nouvelle demande) ──────────────────────────────────────
+  // ── Réinitialiser ─────────────────────────────────────────────────────────
   function reset() {
     localStorage.removeItem(STORAGE_KEY)
     if (pollingRef.current) clearInterval(pollingRef.current)
-    setStep("form")
-    setNom("")
-    setPhone("")
-    setGps(null)
-    setGpsStatus("idle")
-    setError("")
+    setStep("form"); setNom(""); setPhone(""); setError("")
   }
 
   // ── Rendu ──────────────────────────────────────────────────────────────────
@@ -213,33 +286,74 @@ function AccessGateContent() {
       className="min-h-screen flex flex-col items-center justify-center p-5"
       style={{ background: "linear-gradient(135deg,#060d0a 0%,#0d2218 50%,#060d0a 100%)" }}
     >
-      {/* Logo */}
+      {/* Logo (5 clics → panel admin) */}
       <div className="mb-7 flex flex-col items-center gap-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
         <img
           src="/vita-fresh-logo.svg"
           alt="Vita Fresh"
-          className="h-14 w-auto object-contain"
+          className="h-16 w-auto object-contain cursor-pointer select-none"
+          onClick={handleLogoClick}
+          draggable={false}
           onError={e => {
             const el = e.currentTarget as HTMLImageElement
             el.style.display = "none"
-            const fb = el.nextElementSibling as HTMLElement | null
-            if (fb) fb.style.display = "flex"
           }}
         />
-        <div
-          style={{ display: "none" }}
-          className="w-14 h-14 rounded-2xl items-center justify-center text-2xl font-black"
-          data-fallback="logo"
-        >
-          <span style={{ background: "linear-gradient(135deg,#1a4f2a,#2d7a46)", borderRadius: 12, width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 28px rgba(26,79,42,.5)", fontSize: 28, color: "#b8962e" }}>VF</span>
-        </div>
         <p className="text-xs font-bold tracking-widest uppercase" style={{ color: "#4ade80" }}>
-          FreshLink Pro — Accès sécurisé
+          FreshLink Pro — Espace sécurisé
         </p>
       </div>
 
-      {/* ── Carte ── */}
+      {/* ── Panel admin caché ── */}
+      {showAdmin && (
+        <div
+          className="w-full max-w-md rounded-3xl overflow-hidden mb-4"
+          style={{ background: "rgba(184,150,46,0.08)", border: "1px solid rgba(184,150,46,0.25)" }}
+        >
+          <form onSubmit={handleAdminLogin} className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-lg">🔑</span>
+              <h3 className="font-black text-sm" style={{ color: "#b8962e" }}>Connexion Administrateur</h3>
+            </div>
+            <div className="space-y-3 mb-4">
+              <input
+                type="email"
+                value={adminEmail}
+                onChange={e => setAdminEmail(e.target.value)}
+                placeholder="Email"
+                required
+                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#f1f5f9" }}
+              />
+              <input
+                type="password"
+                value={adminPass}
+                onChange={e => setAdminPass(e.target.value)}
+                placeholder="Mot de passe"
+                required
+                className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#f1f5f9" }}
+              />
+            </div>
+            {adminError && (
+              <div className="mb-3 px-3 py-2 rounded-lg text-xs" style={{ background: "rgba(220,38,38,0.1)", color: "#fca5a5" }}>
+                {adminError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={adminLoading}
+              className="w-full py-2.5 rounded-xl font-bold text-sm"
+              style={{ background: adminLoading ? "rgba(184,150,46,0.3)" : "linear-gradient(135deg,#b8962e,#d4a93a)", color: "#fff", cursor: adminLoading ? "not-allowed" : "pointer" }}
+            >
+              {adminLoading ? "Connexion..." : "Se connecter"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── Carte principale ── */}
       <div
         className="w-full max-w-md rounded-3xl overflow-hidden"
         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", backdropFilter: "blur(24px)" }}
@@ -251,7 +365,7 @@ function AccessGateContent() {
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(220,38,38,0.15)", border: "1px solid rgba(220,38,38,0.3)" }}>
-                <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="#f87171" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -263,16 +377,15 @@ function AccessGateContent() {
             </div>
 
             <p className="text-sm mb-6 leading-relaxed" style={{ color: "#94a3b8" }}>
-              FreshLink Pro est réservé aux membres de l&apos;équipe autorisés par
-              {" "}<strong style={{ color: "#4ade80" }}>Jawad — Super Administrateur</strong>.
-              <br />Entrez vos informations et partagez votre position GPS pour soumettre une demande d&apos;accès.
+              FreshLink Pro est réservé aux membres de l&apos;équipe.
+              Entrez vos informations pour soumettre une demande d&apos;accès à{" "}
+              <strong style={{ color: "#4ade80" }}>Jawad — Super Administrateur</strong>.
             </p>
 
-            {/* Champs */}
-            <div className="space-y-4 mb-5">
+            <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#64748b" }}>
-                  👤 Nom complet
+                  Nom complet
                 </label>
                 <input
                   type="text"
@@ -288,7 +401,7 @@ function AccessGateContent() {
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#64748b" }}>
-                  📱 Téléphone WhatsApp
+                  Téléphone WhatsApp
                 </label>
                 <input
                   type="tel"
@@ -304,36 +417,21 @@ function AccessGateContent() {
               </div>
             </div>
 
-            {/* GPS status */}
-            {gpsStatus === "ok" && gps && (
-              <div className="mb-4 px-4 py-3 rounded-xl text-xs" style={{ background: "rgba(26,79,42,0.3)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
-                📍 Position GPS capturée ✅ — Précision : {Math.round(gps.accuracy)}m
-              </div>
-            )}
-            {gpsStatus === "denied" && (
-              <div className="mb-4 px-4 py-3 rounded-xl text-xs" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b" }}>
-                ⚠️ GPS refusé — La demande sera quand même envoyée à Jawad sans position.
-              </div>
-            )}
-            {gpsStatus === "requesting" && (
-              <div className="mb-4 px-4 py-3 rounded-xl text-xs" style={{ background: "rgba(255,255,255,0.04)", color: "#94a3b8" }}>
-                📍 Acquisition GPS en cours...
-              </div>
-            )}
-
-            {/* Erreur */}
             {error && (
               <div className="mb-4 px-4 py-3 rounded-xl text-xs" style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)", color: "#fca5a5" }}>
                 {error}
               </div>
             )}
 
-            {/* Bouton */}
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
-              style={{ background: loading ? "rgba(26,79,42,0.4)" : "linear-gradient(135deg,#1a4f2a,#2d7a46)", color: loading ? "#4ade8080" : "#fff", cursor: loading ? "not-allowed" : "pointer" }}
+              style={{
+                background: loading ? "rgba(26,79,42,0.4)" : "linear-gradient(135deg,#1a4f2a,#2d7a46)",
+                color: loading ? "#4ade8080" : "#fff",
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
             >
               {loading ? (
                 <>
@@ -344,12 +442,12 @@ function AccessGateContent() {
                   Envoi en cours...
                 </>
               ) : (
-                <>📍 Demander l&apos;accès + Envoyer ma position</>
+                "Demander l'accès"
               )}
             </button>
 
             <p className="mt-4 text-center text-[11px]" style={{ color: "#374151" }}>
-              🔒 La demande est transmise à Jawad via WhatsApp avec votre position GPS.
+              🔒 Votre demande sera examinée par l&apos;administrateur.
             </p>
           </form>
         )}
@@ -357,45 +455,41 @@ function AccessGateContent() {
         {/* ══ ÉTAPE 2 : En attente ══ */}
         {step === "waiting" && (
           <div className="p-8 text-center">
-            {/* Icône pulsante */}
-            <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center text-2xl"
-              style={{ background: "linear-gradient(135deg,#1a4f2a,#2d7a46)", boxShadow: "0 0 0 0 rgba(26,79,42,.4)", animation: "pulseRing 2s infinite" }}>
+            <div
+              className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center text-2xl"
+              style={{ background: "linear-gradient(135deg,#1a4f2a,#2d7a46)", animation: "pulseRing 2s infinite" }}
+            >
               ⏳
             </div>
             <h2 className="text-lg font-black mb-2" style={{ color: "#f1f5f9" }}>Demande envoyée !</h2>
             <p className="text-sm leading-relaxed mb-5" style={{ color: "#94a3b8" }}>
-              Votre demande a été transmise à <strong style={{ color: "#4ade80" }}>Jawad</strong> via WhatsApp.
-              <br />📍 Votre position GPS a été partagée.
+              Votre demande a été transmise à{" "}
+              <strong style={{ color: "#4ade80" }}>Jawad</strong> via WhatsApp.
               <br /><br />
-              Le site vérifie l&apos;autorisation automatiquement.<br />
-              Temps d&apos;attente habituel : <strong style={{ color: "#f1f5f9" }}>quelques minutes</strong>.
+              L&apos;accès est vérifié automatiquement.<br />
+              Durée habituelle : <strong style={{ color: "#f1f5f9" }}>quelques minutes</strong>.
             </p>
 
-            {/* Timer */}
             {pollSeconds > 0 && (
               <div className="mb-5 text-xs" style={{ color: "#475569" }}>
-                🔄 Dernière vérification il y a {pollSeconds < 60 ? `${pollSeconds}s` : `${Math.floor(pollSeconds/60)}min`}
+                🔄 Dernière vérification : {pollSeconds < 60 ? `${pollSeconds}s` : `${Math.floor(pollSeconds / 60)}min`}
               </div>
             )}
-
-            {/* Fingerprint tronqué */}
-            <div className="px-4 py-2 rounded-xl mb-5 text-[11px] font-mono"
-              style={{ background: "rgba(0,0,0,0.3)", color: "#374151", border: "1px solid rgba(255,255,255,0.05)" }}>
-              Device : {fingerprint ? fingerprint.slice(0,20) + "..." : "—"}
-            </div>
 
             <div className="flex gap-3 justify-center flex-wrap">
               <button
                 onClick={resend}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                style={{ background: "rgba(26,79,42,0.2)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
-                🔔 Renvoyer à Jawad
+                style={{ background: "rgba(26,79,42,0.2)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}
+              >
+                🔔 Renvoyer
               </button>
               <button
                 onClick={reset}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>
-                ↩️ Nouvelle demande
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}
+              >
+                ↩️ Recommencer
               </button>
             </div>
 
@@ -408,8 +502,10 @@ function AccessGateContent() {
         {/* ══ ÉTAPE 3 : Bloqué ══ */}
         {step === "blocked" && (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl"
-              style={{ background: "rgba(220,38,38,0.15)", border: "1px solid rgba(220,38,38,0.3)" }}>
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl"
+              style={{ background: "rgba(220,38,38,0.15)", border: "1px solid rgba(220,38,38,0.3)" }}
+            >
               🚫
             </div>
             <h2 className="text-lg font-black mb-2" style={{ color: "#f1f5f9" }}>Accès refusé</h2>
@@ -418,11 +514,12 @@ function AccessGateContent() {
               Contactez Jawad pour plus d&apos;informations.
             </p>
             <a
-              href={`https://wa.me/${JAWAD_WA}?text=${encodeURIComponent("Bonjour, mon accès à FreshLink Pro a été refusé. Pouvez-vous m'aider ?")}`}
+              href={`https://wa.me/${JAWAD_WA}?text=${encodeURIComponent("Bonjour Jawad, mon accès à FreshLink Pro a été refusé. Pouvez-vous m'aider ?")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block px-6 py-3 rounded-xl text-sm font-bold"
-              style={{ background: "#25d366", color: "#fff" }}>
+              style={{ background: "#25d366", color: "#fff" }}
+            >
               💬 Contacter Jawad
             </a>
           </div>
@@ -431,8 +528,10 @@ function AccessGateContent() {
         {/* ══ ÉTAPE 4 : Approuvé ══ */}
         {step === "approved" && (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 text-3xl"
-              style={{ background: "linear-gradient(135deg,#1a4f2a,#2d7a46)", boxShadow: "0 0 32px rgba(26,79,42,.6)" }}>
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 text-3xl"
+              style={{ background: "linear-gradient(135deg,#1a4f2a,#2d7a46)", boxShadow: "0 0 32px rgba(26,79,42,.6)" }}
+            >
               ✅
             </div>
             <h2 className="text-lg font-black mb-2" style={{ color: "#4ade80" }}>Accès autorisé !</h2>
@@ -452,10 +551,9 @@ function AccessGateContent() {
 
       {/* Footer */}
       <p className="mt-6 text-[10px] font-semibold tracking-wider" style={{ color: "#1e293b" }}>
-        ⚡ FreshLink Pro · Vita Fresh · Powered by <span style={{ color: "#1a4f2a" }}>Vita tech</span>
+        ⚡ FreshLink Pro · Vita Fresh · Powered by Vita Tech
       </p>
 
-      {/* Animation CSS inline */}
       <style>{`
         @keyframes pulseRing {
           0%   { box-shadow: 0 0 0 0   rgba(26,79,42,.4); }
