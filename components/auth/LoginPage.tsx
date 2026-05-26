@@ -350,6 +350,14 @@ export default function LoginPage({ onLogin }: Props) {
     if (!identifier.trim() || !password.trim()) { setError("Remplissez tous les champs"); setLoading(false); return }
     const user = store.login(identifier.trim(), password)
     if (user) {
+      // ── Super admin bypass: exempt du Device Guard (pas de validation MAC) ──
+      if (user.role === "super_super_admin") {
+        fetch("/api/admin-session", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ userId: user.id }),
+        }).catch(() => {/* silently ignore — app still works without it */})
+      }
       // First-login: must change password before continuing
       if (user.mustChangePassword) {
         setMustChangePwd(user)

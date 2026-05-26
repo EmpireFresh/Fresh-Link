@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyDeviceToken, isDeviceAllowed, DEVICE_COOKIE, DEVICE_BYPASS } from "@/lib/deviceGuard"
+import { verifyDeviceToken, verifySadminToken, isDeviceAllowed, DEVICE_COOKIE, DEVICE_BYPASS, SADMIN_COOKIE } from "@/lib/deviceGuard"
 import type { DeviceEntry } from "@/lib/deviceGuard"
 
 // ── Paths toujours accessibles (pas de device check) ──────────────────────────
@@ -38,7 +38,14 @@ export function middleware(request: NextRequest) {
   // ── 1. Laisser passer les chemins publics ──────────────────────────────────
   if (isPublicPath(pathname)) return NextResponse.next()
 
-  // ── 2. Bypass key (admin/debug) ───────────────────────────────────────────
+  // ── 2a. Super-admin bypass (Jawad — exempt de device guard) ─────────────────
+  // Si un cookie sadmin valide est présent, on laisse passer sans vérification device.
+  const sadminCookie = request.cookies.get(SADMIN_COOKIE)?.value
+  if (sadminCookie && verifySadminToken(sadminCookie)) {
+    return NextResponse.next()
+  }
+
+  // ── 2b. Bypass key (admin/debug via header ou query param) ───────────────────
   const bypassHeader = request.headers.get("x-vita-bypass")
   const bypassQuery  = request.nextUrl.searchParams.get("bypass")
   if (bypassHeader === DEVICE_BYPASS || bypassQuery === DEVICE_BYPASS) {

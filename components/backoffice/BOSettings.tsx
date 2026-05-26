@@ -267,6 +267,44 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [tab, setTab] = useState<"entreprise" | "contacts" | "process" | "workflow" | "emails" | "emailjs" | "motifs" | "contenants" | "dataguard" | "ai_config" | "alertes" | "transporteurs" | "moncompte" | "systeme" | "siteweb">("entreprise")
   const [restartMsg, setRestartMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [restartLoading, setRestartLoading] = useState(false)
+
+  // ── Supabase connectivity check state ──────────────────────────────────────
+  interface SbCheckResult {
+    connected: boolean
+    tables_exist: number
+    tables_total: number
+    missing: string[]
+    ready: boolean
+    supabase_sql_editor?: string
+  }
+  const [sbCheck, setSbCheck]         = useState<SbCheckResult | null>(null)
+  const [sbChecking, setSbChecking]   = useState(false)
+  const [sbSyncing, setSbSyncing]     = useState(false)
+  const [sbSyncResult, setSbSyncResult] = useState<{ ok: boolean; tables: string[]; errors: string[] } | null>(null)
+
+  const handleSbCheck = async () => {
+    setSbChecking(true); setSbCheck(null)
+    try {
+      const res  = await fetch("/api/setup-tables")
+      const data = await res.json() as SbCheckResult
+      setSbCheck(data)
+    } catch (e) {
+      setSbCheck({ connected: false, tables_exist: 0, tables_total: 22, missing: [], ready: false })
+    }
+    setSbChecking(false)
+  }
+
+  const handleSbSync = async () => {
+    setSbSyncing(true); setSbSyncResult(null)
+    try {
+      const { syncFromSupabase } = await import("@/lib/supabase/db")
+      const result = await syncFromSupabase()
+      setSbSyncResult(result)
+    } catch (e) {
+      setSbSyncResult({ ok: false, tables: [], errors: [String(e)] })
+    }
+    setSbSyncing(false)
+  }
   const [transporteurs, setTransporteurs] = useState<TransportCompany[]>([])
   const [editingTransport, setEditingTransport] = useState<TransportCompany | null>(null)
   const [showTransportForm, setShowTransportForm] = useState(false)
@@ -2714,6 +2752,159 @@ To: {{to_email}}
                   )}
                   Redémarrer tous les appareils
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Supabase Connectivity ── */}
+          <div className="rounded-2xl border border-blue-200 overflow-hidden">
+            <div className="px-5 py-4 bg-blue-50 flex items-center justify-between gap-3 border-b border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-bold text-blue-900 text-sm">Connectivité Supabase</p>
+                  <p className="text-xs text-blue-700">Projet : jwdrwapuetqoqnankgma</p>
+                </div>
+              </div>
+              <button
+                onClick={handleSbCheck}
+                disabled={sbChecking}
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-60 shadow-sm">
+                {sbChecking
+                  ? <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Test…</>
+                  : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Tester</>
+                }
+              </button>
+            </div>
+
+            <div className="p-5 bg-white flex flex-col gap-4">
+
+              {/* Env vars checklist */}
+              <div>
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Variables d&apos;environnement (Vercel)</p>
+                <div className="space-y-2">
+                  {[
+                    { key: "NEXT_PUBLIC_SUPABASE_URL",    label: "Supabase URL",          required: true,  hint: "https://jwdrwapuetqoqnankgma.supabase.co" },
+                    { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", label: "Anon Key (lecture)",  required: true,  hint: "eyJhb... (clé publique)" },
+                    { key: "SUPABASE_SERVICE_ROLE_KEY",   label: "Service Role Key",       required: true,  hint: "eyJhb... ⚠️ CONFIDENTIEL — nécessaire pour sync-write" },
+                    { key: "RESEND_API_KEY",              label: "Resend (email)",          required: false, hint: "re_... — Notifications email" },
+                    { key: "CALLMEBOT_APIKEY",            label: "CallMeBot (WhatsApp)",    required: false, hint: "Clé gratuite callmebot.com" },
+                    { key: "DEVICE_SECRET",               label: "Device Guard Secret",     required: false, hint: "Défaut: vt_device_secret_2026" },
+                  ].map(env => (
+                    <div key={env.key} className="flex items-start gap-2 text-xs">
+                      <span className={`shrink-0 w-4 h-4 mt-0.5 rounded-full flex items-center justify-center text-[9px] font-black
+                        ${env.required ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
+                        {env.required ? "!" : "○"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-bold text-slate-800">{env.key}</span>
+                          {env.required && <span className="text-[9px] font-bold text-amber-600 uppercase">Requis</span>}
+                        </div>
+                        <div className="text-slate-400 text-[10px] mt-0.5">{env.hint}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  <span>
+                    Configurer sur :&nbsp;
+                    <a href="https://vercel.com/dashboard" target="_blank" rel="noopener"
+                      className="font-bold text-blue-600 hover:underline">vercel.com/dashboard</a>
+                    &nbsp;→ Settings → Environment Variables
+                  </span>
+                </div>
+              </div>
+
+              {/* Test results */}
+              {sbCheck && (
+                <div className={`rounded-xl border p-4 ${sbCheck.connected ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`w-3 h-3 rounded-full ${sbCheck.connected ? "bg-emerald-500" : "bg-red-500"}`} />
+                    <span className={`text-sm font-bold ${sbCheck.connected ? "text-emerald-800" : "text-red-800"}`}>
+                      {sbCheck.connected ? "✅ Connecté à Supabase" : "❌ Connexion échouée"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs mb-3">
+                    <div className={`rounded-lg p-2 ${sbCheck.ready ? "bg-emerald-100" : "bg-amber-100"}`}>
+                      <div className={`text-xl font-black ${sbCheck.ready ? "text-emerald-700" : "text-amber-700"}`}>{sbCheck.tables_exist}</div>
+                      <div className={`text-[10px] ${sbCheck.ready ? "text-emerald-600" : "text-amber-600"}`}>Tables OK</div>
+                    </div>
+                    <div className="rounded-lg p-2 bg-slate-100">
+                      <div className="text-xl font-black text-slate-700">{sbCheck.tables_total}</div>
+                      <div className="text-[10px] text-slate-500">Tables total</div>
+                    </div>
+                    <div className={`rounded-lg p-2 ${sbCheck.missing.length === 0 ? "bg-emerald-100" : "bg-red-100"}`}>
+                      <div className={`text-xl font-black ${sbCheck.missing.length === 0 ? "text-emerald-700" : "text-red-700"}`}>{sbCheck.missing.length}</div>
+                      <div className={`text-[10px] ${sbCheck.missing.length === 0 ? "text-emerald-600" : "text-red-600"}`}>Manquantes</div>
+                    </div>
+                  </div>
+                  {sbCheck.missing.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-bold text-red-700 mb-1">Tables manquantes :</p>
+                      <div className="flex flex-wrap gap-1">
+                        {sbCheck.missing.map(t => (
+                          <span key={t} className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-mono rounded border border-red-200">{t}</span>
+                        ))}
+                      </div>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        <span>
+                          Créer les tables via le&nbsp;
+                          <a href={sbCheck.supabase_sql_editor ?? "https://supabase.com/dashboard/project/jwdrwapuetqoqnankgma/sql/new"}
+                            target="_blank" rel="noopener" className="font-bold text-blue-600 hover:underline">
+                            SQL Editor Supabase
+                          </a>
+                          &nbsp;— appeler GET /api/setup-tables pour le script SQL.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {sbCheck.ready && (
+                    <p className="text-xs text-emerald-700 font-semibold">🎉 Toutes les tables sont prêtes — synchronisation possible</p>
+                  )}
+                </div>
+              )}
+
+              {/* Sync button */}
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleSbSync}
+                  disabled={sbSyncing}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-60 shadow-sm w-fit">
+                  {sbSyncing
+                    ? <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Synchronisation…</>
+                    : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Sync Supabase → localStorage</>
+                  }
+                </button>
+                {sbSyncResult && (
+                  <div className={`flex items-start gap-2 px-3 py-2 rounded-xl text-xs border ${sbSyncResult.ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                    <span>
+                      {sbSyncResult.ok ? "✅" : "⚠️"}{" "}
+                      {sbSyncResult.tables.length} table(s) synchronisée(s)
+                      {sbSyncResult.errors.length > 0 && ` — ${sbSyncResult.errors.length} erreur(s): ${sbSyncResult.errors.slice(0, 2).join(", ")}`}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Device Guard status */}
+              <div className="flex items-start gap-2 px-3 py-2.5 bg-violet-50 border border-violet-200 rounded-xl text-xs text-violet-800">
+                <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>
+                  <strong>Device Guard :</strong> Votre compte super_super_admin est automatiquement exempt de la validation d&apos;appareil. Le cookie de bypass est valide 30 jours.
+                </span>
               </div>
             </div>
           </div>

@@ -16,8 +16,9 @@ import { createHmac } from "crypto"
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEVICE_SECRET = process.env.DEVICE_SECRET ?? "vt_device_secret_2026"
-export const DEVICE_COOKIE = "fl_device_token"
-export const DEVICE_BYPASS = process.env.DEVICE_BYPASS_KEY ?? "vita-bypass-2026"
+export const DEVICE_COOKIE  = "fl_device_token"
+export const DEVICE_BYPASS  = process.env.DEVICE_BYPASS_KEY ?? "vita-bypass-2026"
+export const SADMIN_COOKIE  = "fl_sadmin_bypass"  // cookie bypass device guard pour super_super_admin
 
 // ── Server-side helpers ────────────────────────────────────────────────────────
 
@@ -42,6 +43,30 @@ export function verifyDeviceToken(token: string): string | null {
   } catch {
     return null
   }
+}
+
+// ── Super-Admin bypass token (30 jours, exempt de device-guard) ───────────────
+
+/** Signe un token super-admin pour exempter un userId du device guard */
+export function signSadminToken(userId: string, expiresIn = 30 * 86_400_000): string {
+  const payload = JSON.stringify({ id: userId, sadmin: true, exp: Date.now() + expiresIn })
+  const data    = Buffer.from(payload).toString("base64url")
+  const sig     = createHmac("sha256", DEVICE_SECRET).update(data + ":sadmin").digest("base64url")
+  return `${data}.${sig}`
+}
+
+/** Vérifie un token super-admin. Retourne le userId ou null */
+export function verifySadminToken(token: string): string | null {
+  try {
+    const [data, sig] = token.split(".")
+    if (!data || !sig) return null
+    const expected = createHmac("sha256", DEVICE_SECRET).update(data + ":sadmin").digest("base64url")
+    if (expected !== sig) return null
+    const payload = JSON.parse(Buffer.from(data, "base64url").toString()) as { id?: string; sadmin?: boolean; exp?: number }
+    if (!payload.sadmin) return null
+    if (payload.exp && payload.exp < Date.now()) return null
+    return payload.id ?? null
+  } catch { return null }
 }
 
 /** Vérifie si un fingerprint est dans la whitelist */
