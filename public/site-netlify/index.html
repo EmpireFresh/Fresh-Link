@@ -260,6 +260,98 @@
     .tier-card.particulier .tier-label { color: var(--gray-700); }
     .tier-desc { font-size: 13px; color: var(--gray-500); }
 
+    /* ── CATALOGUE PRODUITS ── */
+    .cat-toolbar {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 28px; flex-wrap: wrap;
+    }
+    .cat-search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .cat-search-wrap input {
+      width: 100%; padding: 11px 14px 11px 40px; border: 1.5px solid var(--gray-200);
+      border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s;
+    }
+    .cat-search-wrap input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+    .cat-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+    .cat-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cat-filter-btn {
+      padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      border: 1.5px solid var(--gray-200); background: var(--white); cursor: pointer;
+      transition: all .2s; color: var(--gray-700); white-space: nowrap;
+    }
+    .cat-filter-btn:hover { border-color: var(--green); color: var(--green); }
+    .cat-filter-btn.active { background: var(--green); color: var(--white); border-color: var(--green); }
+    .products-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;
+      margin-bottom: 40px;
+    }
+    .product-card {
+      background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 16px;
+      overflow: hidden; transition: all .25s; position: relative; cursor: pointer;
+    }
+    .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--green-dark); }
+    .product-img-wrap { width: 100%; height: 180px; overflow: hidden; background: var(--gray-100); position: relative; }
+    .product-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+    .product-card:hover .product-img-wrap img { transform: scale(1.06); }
+    .product-badge {
+      position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    }
+    .product-badge.nouveau  { background: #dbeafe; color: #1d4ed8; }
+    .product-badge.promo    { background: #fee2e2; color: #dc2626; }
+    .product-badge.short    { background: #fef9c3; color: #854d0e; }
+    .product-badge.hors     { background: var(--gray-200); color: var(--gray-500); }
+    .product-body { padding: 14px 16px 16px; }
+    .product-nom  { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 2px; }
+    .product-ar   { font-size: 12px; color: var(--gray-500); margin-bottom: 8px; direction: rtl; }
+    .product-fam  {
+      display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px;
+      border-radius: 6px; background: var(--green-light); color: var(--green-dark); margin-bottom: 10px;
+    }
+    .product-prices { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .product-price-main { font-size: 18px; font-weight: 800; color: var(--green); }
+    .product-price-old  { font-size: 13px; color: var(--gray-400); text-decoration: line-through; }
+    .product-unite { font-size: 11px; color: var(--gray-500); }
+    .product-desc  { font-size: 12px; color: var(--gray-500); line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .btn-add-cart {
+      width: 100%; padding: 10px; border-radius: 10px; border: none;
+      background: var(--green); color: var(--white); font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: background .2s; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-add-cart:hover { background: var(--green-dark); }
+    /* Skeleton loading */
+    .product-skeleton { background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 16px; overflow: hidden; }
+    .skeleton-img  { height: 180px; background: var(--gray-200); animation: shimmer 1.4s infinite; }
+    .skeleton-body { padding: 14px 16px; }
+    .skeleton-line { height: 14px; border-radius: 6px; background: var(--gray-200); animation: shimmer 1.4s infinite; margin-bottom: 8px; }
+    .skeleton-line.short { width: 60%; }
+    @keyframes shimmer { 0%,100%{opacity:.6}50%{opacity:1} }
+    /* Cart bar */
+    .cart-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+      background: var(--green-dark); color: var(--white);
+      padding: 14px 20px; display: none; align-items: center; justify-content: space-between;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.2);
+    }
+    .cart-bar.visible { display: flex; }
+    .cart-bar-info { font-size: 15px; font-weight: 700; }
+    .cart-bar-sub  { font-size: 12px; opacity: .8; }
+    .btn-cart-wa {
+      background: #25d366; color: var(--white); border: none; border-radius: 10px;
+      padding: 12px 20px; font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: background .2s;
+    }
+    .btn-cart-wa:hover { background: #128c7e; }
+    .btn-cart-clear { background: rgba(255,255,255,.2); color: var(--white); border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; transition: background .2s; }
+    .btn-cart-clear:hover { background: rgba(255,255,255,.35); }
+    .cat-empty { text-align: center; padding: 60px 20px; color: var(--gray-500); }
+    .cat-empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .cat-count { font-size: 13px; color: var(--gray-500); margin-left: auto; padding-right: 4px; white-space: nowrap; }
+    @media (max-width: 600px) {
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .product-img-wrap { height: 130px; }
+      .cart-bar { flex-direction: column; gap: 10px; text-align: center; }
+    }
+
     /* ── ESPACE PRO ── */
     #espace-pro { background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%); }
     .pro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
@@ -469,8 +561,8 @@ const CONFIG = {
   WHATSAPP:        "212600000000",          // sans + ni espaces
   WHATSAPP_GROUP:  "https://chat.whatsapp.com/D11jvGbbWd5Kc2pyXl79SK",
 
-  /* API Vercel (votre application Next.js) */
-  API_URL: "https://fresh-link-ef.vercel.app",
+  /* API Vercel (votre application Next.js) — même domaine = URL relative */
+  API_URL: (function(){ const h = location.hostname; return (h === 'localhost' || h === '127.0.0.1') ? 'http://localhost:3000' : location.origin })(),
 
   /* Horaires */
   HOURS: "Lun–Sam : 06h00 – 18h00",
@@ -892,23 +984,51 @@ function setLang(lang) {
       <h2 class="section-title" data-i18n="cat_title">Nos produits</h2>
       <p class="section-sub"   data-i18n="cat_sub">Des prix adaptés à chaque profil client</p>
     </div>
-    <div class="catalogue-info">
-      <span class="catalogue-info-icon">🥦</span>
-      <div>
-        <h3 data-i18n="cat_info_h">Prix personnalisés selon votre profil</h3>
-        <p  data-i18n="cat_info_p">Connectez-vous pour voir vos tarifs.</p>
+    <!-- Barre de recherche + filtres -->
+    <div class="cat-toolbar">
+      <div class="cat-search-wrap">
+        <span class="cat-search-icon">🔍</span>
+        <input type="search" id="catSearch" placeholder="Rechercher un produit..." oninput="filterProducts()" />
       </div>
-      <a href="#" class="btn-wa" onclick="orderWhatsApp(event)">
-        <span data-i18n="cat_wa">📦 Commander par WhatsApp</span>
-      </a>
+      <span class="cat-count" id="catCount"></span>
     </div>
-    <div class="price-tiers">
+    <div class="cat-filters" id="catFilters">
+      <button class="cat-filter-btn active" data-fam="all"      onclick="setFilter('all',this)">🌿 Tous</button>
+      <button class="cat-filter-btn"        data-fam="Légumes"  onclick="setFilter('Légumes',this)">🥦 Légumes</button>
+      <button class="cat-filter-btn"        data-fam="Fruits"   onclick="setFilter('Fruits',this)">🍓 Fruits</button>
+      <button class="cat-filter-btn"        data-fam="Agrumes"  onclick="setFilter('Agrumes',this)">🍊 Agrumes</button>
+      <button class="cat-filter-btn"        data-fam="Herbes"   onclick="setFilter('Herbes',this)">🌿 Herbes</button>
+      <button class="cat-filter-btn"        data-fam="Tropicaux" onclick="setFilter('Tropicaux',this)">🥭 Tropicaux</button>
+    </div>
+
+    <!-- Grille produits -->
+    <div class="products-grid" id="productsGrid">
+      <!-- Skeletons de chargement -->
+      ${[...Array(8)].map ? [...Array(8)].map(()=>`
+      <div class="product-skeleton"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
+      `).join('') : ''}
+    </div>
+
+    <!-- Tarifs par type de client -->
+    <div class="price-tiers" style="margin-top:8px">
       <div class="tier-card chr">        <div class="tier-icon">🏨</div><div class="tier-label" data-i18n="tier_chr_l">CHR</div>       <div class="tier-desc" data-i18n="tier_chr_d">Hôtels, restaurants, cafés — meilleurs tarifs</div></div>
       <div class="tier-card marchand">   <div class="tier-icon">🛒</div><div class="tier-label" data-i18n="tier_mar_l">Marchand</div>  <div class="tier-desc" data-i18n="tier_mar_d">Épiceries, supérettes — tarifs grossiste</div></div>
       <div class="tier-card particulier"><div class="tier-icon">👤</div><div class="tier-label" data-i18n="tier_par_l">Particulier</div><div class="tier-desc" data-i18n="tier_par_d">Particuliers et familles — prix public</div></div>
     </div>
   </div>
 </section>
+
+<!-- Cart bar (sticky bottom) -->
+<div class="cart-bar" id="cartBar">
+  <div>
+    <div class="cart-bar-info" id="cartBarInfo">🛒 0 article — 0.00 DH</div>
+    <div class="cart-bar-sub">Appuyez sur WhatsApp pour finaliser votre commande</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn-cart-clear" onclick="clearCart()">✕ Vider</button>
+    <button class="btn-cart-wa" onclick="sendCartWhatsApp()">📲 Commander sur WhatsApp</button>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════
      MON ESPACE — portail client
@@ -1368,6 +1488,194 @@ async function submitProForm(e) {
   btn.disabled = false; btn.textContent = t("btn_submit")
 }
 
+/* ════════════════════════════════════════════════════
+   CATALOGUE PRODUITS — fetch API + fallback statique
+════════════════════════════════════════════════════ */
+
+/* Produits statiques de fallback (si API indisponible) */
+const STATIC_PRODUCTS = [
+  { id:"s1",  nom:"Tomates Rondes",    nom_ar:"طماطم",         famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=400&h=300&fit=crop&q=80", prix_public:4.50,  unite:"kg",    description:"Tomates rondes fraîches du Souss, récoltées chaque matin." },
+  { id:"s2",  nom:"Pommes de Terre",   nom_ar:"بطاطس",         famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&h=300&fit=crop&q=80", prix_public:2.80,  unite:"kg",    description:"Pommes de terre de Meknès, variétés Bintje." },
+  { id:"s3",  nom:"Carottes",          nom_ar:"جزر",           famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=300&fit=crop&q=80", prix_public:2.40,  unite:"kg",    description:"Carottes fraîches de Meknès, croquantes et sucrées." },
+  { id:"s4",  nom:"Oignons Blancs",    nom_ar:"بصل أبيض",      famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1508747703725-719777637510?w=400&h=300&fit=crop&q=80", prix_public:2.00,  unite:"kg",    description:"Oignons blancs frais, incontournables de la cuisine marocaine." },
+  { id:"s5",  nom:"Poivrons Rouges",   nom_ar:"فلفل أحمر",     famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=300&fit=crop&q=80", prix_public:8.50,  unite:"kg",    description:"Poivrons rouges charnus du Gharb." },
+  { id:"s6",  nom:"Aubergines",        nom_ar:"قرع أحمر",      famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1659118280850-8ccf0c41e7e1?w=400&h=300&fit=crop&q=80", prix_public:5.50,  unite:"kg",    description:"Aubergines violettes brillantes pour le zaâlouk." },
+  { id:"s7",  nom:"Concombres",        nom_ar:"خيار",          famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=400&h=300&fit=crop&q=80", prix_public:3.50,  unite:"kg",    description:"Concombres frais et croquants pour la salade marocaine." },
+  { id:"s8",  nom:"Courgettes",        nom_ar:"كوسة",          famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop&q=80", prix_public:4.00,  unite:"kg",    description:"Courgettes tendres et savoureuses pour tajines." },
+  { id:"s9",  nom:"Ail Frais",         nom_ar:"ثوم طازج",      famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1587049014078-3e50c0a5e42c?w=400&h=300&fit=crop&q=80", prix_public:18.00, unite:"kg",    description:"Ail frais de Meknès, très parfumé." },
+  { id:"s10", nom:"Haricots Verts",    nom_ar:"لوبيا خضرا",    famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1582515073490-39981397c445?w=400&h=300&fit=crop&q=80", prix_public:10.50, unite:"kg",    description:"Haricots verts fins et croquants." },
+  { id:"s11", nom:"Chou-fleur",        nom_ar:"قرنبيط",        famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1510627489930-0c1b0bfb6785?w=400&h=300&fit=crop&q=80", prix_public:6.50,  unite:"pièce", description:"Chou-fleur blanc et ferme." },
+  { id:"s12", nom:"Salade Laitue",     nom_ar:"خس",            famille:"Légumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop&q=80", prix_public:3.00,  unite:"pièce", description:"Laitue fraîche croquante." },
+  { id:"s13", nom:"Fraises Kenitra",   nom_ar:"فراولة",        famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1601004890657-6646e1ff5e20?w=400&h=300&fit=crop&q=80", prix_public:28.00, unite:"kg",    description:"Fraises de Kenitra, sucrées et parfumées.", prix_promo:25.00, etiquette:"Saison !" },
+  { id:"s14", nom:"Avocats Hass",      nom_ar:"أفوكادو",       famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=300&fit=crop&q=80", prix_public:35.00, unite:"kg",    description:"Avocats Hass du Souss, crémeux et nutritifs." },
+  { id:"s15", nom:"Pommes Golden",     nom_ar:"تفاح ذهبي",     famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400&h=300&fit=crop&q=80", prix_public:8.50,  unite:"kg",    description:"Pommes Golden du Moyen Atlas." },
+  { id:"s16", nom:"Poires Williams",   nom_ar:"إجاص",          famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1514756331096-242fdeb70d4a?w=400&h=300&fit=crop&q=80", prix_public:10.00, unite:"kg",    description:"Poires Williams juteuses et parfumées." },
+  { id:"s17", nom:"Raisins Rouges",    nom_ar:"عنب أحمر",      famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1537640538966-cf936f9c6d67?w=400&h=300&fit=crop&q=80", prix_public:15.00, unite:"kg",    description:"Raisins rouges charnus de Meknès." },
+  { id:"s18", nom:"Pastèque",          nom_ar:"دلاح",          famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1563114773-84221bd62daa?w=400&h=300&fit=crop&q=80", prix_public:2.50,  unite:"kg",    description:"Pastèques sucrées et juteuses." },
+  { id:"s19", nom:"Melon Cantaloup",   nom_ar:"بطيخ أصفر",     famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1571575173700-afb9492e6a50?w=400&h=300&fit=crop&q=80", prix_public:6.00,  unite:"kg",    description:"Melon cantaloup parfumé et sucré." },
+  { id:"s20", nom:"Mangue Keitt",      nom_ar:"مانجو",         famille:"Fruits Tropicaux",statut:"disponible", photo:"https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop&q=80", prix_public:22.00, unite:"kg",    description:"Mangues Keitt juteuses.", etiquette:"Nouveau" },
+  { id:"s21", nom:"Kiwi",              nom_ar:"كيوي",          famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1585059895524-72359e06133a?w=400&h=300&fit=crop&q=80", prix_public:18.00, unite:"kg",    description:"Kiwis verts juteux, riches en vitamine C." },
+  { id:"s22", nom:"Pêches",            nom_ar:"خوخ",           famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1629828874514-17c66f7b5d3b?w=400&h=300&fit=crop&q=80", prix_public:12.00, unite:"kg",    description:"Pêches juteuses de Beni Mellal." },
+  { id:"s23", nom:"Figues Fraîches",   nom_ar:"تين طازج",      famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1601648764658-cf37e8c89b70?w=400&h=300&fit=crop&q=80", prix_public:22.00, unite:"kg",    description:"Figues fraîches sucrées de Boulemane." },
+  { id:"s24", nom:"Grenade",           nom_ar:"رمان",          famille:"Fruits",          statut:"disponible", photo:"https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=400&h=300&fit=crop&q=80", prix_public:12.00, unite:"kg",    description:"Grenades rouges juteuses et antioxydantes." },
+  { id:"s25", nom:"Oranges Navel",     nom_ar:"برتقال نافل",   famille:"Agrumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1547514701-42782101795e?w=400&h=300&fit=crop&q=80", prix_public:6.00,  unite:"kg",    description:"Oranges Navel du Souss, sans pépins." },
+  { id:"s26", nom:"Citrons Eureka",    nom_ar:"ليمون يوريكا",  famille:"Agrumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1588165171850-4e5f119d2d78?w=400&h=300&fit=crop&q=80", prix_public:7.00,  unite:"kg",    description:"Citrons Eureka juteux pour sauces et marinades." },
+  { id:"s27", nom:"Clémentines",       nom_ar:"يوسفي",         famille:"Agrumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1547514701-42782101795e?w=400&h=300&fit=crop&q=80", prix_public:7.50,  unite:"kg",    description:"Clémentines marocaines sans pépins." },
+  { id:"s28", nom:"Pamplemousse",      nom_ar:"برتقال هندي",   famille:"Agrumes",         statut:"disponible", photo:"https://images.unsplash.com/photo-1572144883195-36b50c5a9ce5?w=400&h=300&fit=crop&q=80", prix_public:5.50,  unite:"kg",    description:"Pamplemousses frais légèrement acidulés." },
+  { id:"s29", nom:"Bananes Cavendish", nom_ar:"موز",           famille:"Fruits Tropicaux",statut:"disponible", photo:"https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=300&fit=crop&q=80", prix_public:10.00, unite:"kg",    description:"Bananes Cavendish fraîches importées." },
+  { id:"s30", nom:"Coriandre Fraîche", nom_ar:"قزبر",          famille:"Herbes",          statut:"disponible", photo:"https://images.unsplash.com/photo-1600857544200-b2f468e09e53?w=400&h=300&fit=crop&q=80", prix_public:2.50,  unite:"botte", description:"Coriandre fraîche, base de la cuisine marocaine." },
+  { id:"s31", nom:"Persil Plat",       nom_ar:"معدنوس",        famille:"Herbes",          statut:"disponible", photo:"https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400&h=300&fit=crop&q=80", prix_public:2.00,  unite:"botte", description:"Persil plat frais pour sauces et marinades." },
+  { id:"s32", nom:"Menthe Fraîche",    nom_ar:"نعناع",         famille:"Herbes",          statut:"disponible", photo:"https://images.unsplash.com/photo-1628556270448-4d4e4148e1b1?w=400&h=300&fit=crop&q=80", prix_public:2.00,  unite:"botte", description:"Menthe fraîche marocaine pour le thé." },
+  { id:"s33", nom:"Basilic Frais",     nom_ar:"ريحان",         famille:"Herbes",          statut:"disponible", photo:"https://images.unsplash.com/photo-1618375531912-867984bdfd87?w=400&h=300&fit=crop&q=80", prix_public:5.00,  unite:"pot",   description:"Basilic frais parfumé." },
+  { id:"s34", nom:"Thym Frais",        nom_ar:"زعتر",          famille:"Herbes",          statut:"disponible", photo:"https://images.unsplash.com/photo-1559589689-577ded92465b?w=400&h=300&fit=crop&q=80", prix_public:5.00,  unite:"botte", description:"Thym frais pour marinades et tajines." },
+  { id:"s35", nom:"Romarin Frais",     nom_ar:"إكليل الجبل",   famille:"Herbes",          statut:"disponible", photo:"https://images.unsplash.com/photo-1564525632696-6e2d4aafc1e4?w=400&h=300&fit=crop&q=80", prix_public:6.00,  unite:"botte", description:"Romarin très parfumé pour viandes grillées." },
+  { id:"s36", nom:"Céleri Branche",    nom_ar:"كرفس",          famille:"Herbes",          statut:"disponible", photo:"https://images.unsplash.com/photo-1615485736407-5bcb4ea3cf40?w=400&h=300&fit=crop&q=80", prix_public:4.00,  unite:"botte", description:"Céleri en branches frais pour soupes." },
+]
+
+let allProducts   = []
+let filteredProds = []
+let activeFamily  = "all"
+let cart = JSON.parse(localStorage.getItem("fl_cart") || "[]")
+
+/* ── Charger le catalogue depuis API ou fallback ── */
+async function loadCatalogue() {
+  const grid = document.getElementById("productsGrid")
+  grid.innerHTML = Array(8).fill(`<div class="product-skeleton"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>`).join("")
+
+  try {
+    const res = await fetch(CONFIG.API_URL + "/api/ext/catalogue?statut=disponible", {
+      signal: AbortSignal.timeout(6000)
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        allProducts = data.map(a => ({
+          id:          a.id,
+          nom:         a.nom,
+          nom_ar:      a.nom_ar || a.nomAr || "",
+          famille:     a.famille || "Autre",
+          statut:      a.statut || a.marketplace_statut || "disponible",
+          photo:       a.photo || a.marketplace_photo || "",
+          prix_public: a.prix_public ?? a.marketplace_prix_public ?? a.pv_valeur ?? 0,
+          prix_promo:  a.promo_prix ?? a.marketplace_promo?.prixPromo,
+          etiquette:   a.etiquette ?? a.marketplace_promo?.etiquette,
+          unite:       a.unite || "kg",
+          description: a.description || a.marketplace_description || "",
+        }))
+        renderProducts()
+        return
+      }
+    }
+  } catch {}
+  /* Fallback statique */
+  allProducts = STATIC_PRODUCTS
+  renderProducts()
+}
+
+/* ── Filtrer et rendre les produits ── */
+function renderProducts() {
+  const q   = (document.getElementById("catSearch")?.value || "").toLowerCase().trim()
+  const fam = activeFamily
+
+  filteredProds = allProducts.filter(p => {
+    if (fam !== "all") {
+      if (fam === "Tropicaux") { if (!p.famille.toLowerCase().includes("tropical")) return false }
+      else if (!p.famille.toLowerCase().includes(fam.toLowerCase())) return false
+    }
+    if (q && !p.nom.toLowerCase().includes(q) && !p.nom_ar.includes(q) && !p.famille.toLowerCase().includes(q)) return false
+    return true
+  })
+
+  const grid = document.getElementById("productsGrid")
+  const countEl = document.getElementById("catCount")
+  if (countEl) countEl.textContent = filteredProds.length + " produit" + (filteredProds.length !== 1 ? "s" : "")
+
+  if (!filteredProds.length) {
+    grid.innerHTML = `<div class="cat-empty" style="grid-column:1/-1"><div class="cat-empty-icon">🔍</div><p>Aucun produit trouvé</p></div>`
+    return
+  }
+
+  grid.innerHTML = filteredProds.map(p => {
+    const isPromo   = p.prix_promo && p.prix_promo < p.prix_public
+    const displayPx = isPromo ? p.prix_promo : p.prix_public
+    const statLower = (p.statut || "").toLowerCase()
+    let badge = ""
+    if (p.etiquette)                 badge = `<span class="product-badge promo">${p.etiquette}</span>`
+    else if (statLower === "nouveau")badge = `<span class="product-badge nouveau">Nouveau</span>`
+    else if (statLower === "short_stock") badge = `<span class="product-badge short">Stock limité</span>`
+    else if (statLower === "hors_saison") badge = `<span class="product-badge hors">Hors saison</span>`
+
+    const cartQty = (cart.find(c => c.id === p.id) || {}).qty || 0
+
+    return `<div class="product-card" id="pc-${p.id}">
+      <div class="product-img-wrap">
+        <img src="${p.photo || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop&q=80'}"
+             alt="${p.nom}" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop&q=80'">
+        ${badge}
+      </div>
+      <div class="product-body">
+        <div class="product-fam">${p.famille}</div>
+        <div class="product-nom">${p.nom}</div>
+        <div class="product-ar">${p.nom_ar}</div>
+        ${p.description ? `<div class="product-desc">${p.description}</div>` : ""}
+        <div class="product-prices">
+          <span class="product-price-main">${displayPx.toFixed(2)} DH</span>
+          ${isPromo ? `<span class="product-price-old">${p.prix_public.toFixed(2)} DH</span>` : ""}
+          <span class="product-unite">/ ${p.unite}</span>
+        </div>
+        <button class="btn-add-cart" onclick="addToCart('${p.id}')">
+          ${cartQty > 0 ? `✅ Dans le panier (${cartQty})` : "🛒 Ajouter"}
+        </button>
+      </div>
+    </div>`
+  }).join("")
+}
+
+function setFilter(fam, btn) {
+  activeFamily = fam
+  document.querySelectorAll(".cat-filter-btn").forEach(b => b.classList.remove("active"))
+  btn.classList.add("active")
+  renderProducts()
+}
+function filterProducts() { renderProducts() }
+
+/* ── Panier ── */
+function addToCart(id) {
+  const p = allProducts.find(a => a.id === id)
+  if (!p) return
+  const idx = cart.findIndex(c => c.id === id)
+  if (idx >= 0) cart[idx].qty++
+  else cart.push({ id: p.id, nom: p.nom, prix: p.prix_promo || p.prix_public, unite: p.unite, qty: 1 })
+  localStorage.setItem("fl_cart", JSON.stringify(cart))
+  updateCartBar()
+  renderProducts()
+  showToast(`✅ ${p.nom} ajouté au panier`, "green")
+}
+function clearCart() {
+  cart = []
+  localStorage.removeItem("fl_cart")
+  updateCartBar()
+  renderProducts()
+}
+function updateCartBar() {
+  const total = cart.reduce((s, c) => s + c.prix * c.qty, 0)
+  const count = cart.reduce((s, c) => s + c.qty, 0)
+  const bar   = document.getElementById("cartBar")
+  const info  = document.getElementById("cartBarInfo")
+  if (bar)  bar.classList.toggle("visible", count > 0)
+  if (info) info.textContent = `🛒 ${count} article${count !== 1 ? "s" : ""} — ${total.toFixed(2)} DH`
+}
+function sendCartWhatsApp() {
+  if (!cart.length) return
+  const lines = cart.map(c => `• ${c.nom} × ${c.qty} ${c.unite} = ${(c.prix * c.qty).toFixed(2)} DH`).join("\n")
+  const total = cart.reduce((s, c) => s + c.prix * c.qty, 0)
+  const msg = encodeURIComponent(
+    `🛒 *Commande Vita Fresh*\n\n${lines}\n\n*Total : ${total.toFixed(2)} DH*\n\nMerci de confirmer la livraison 🙏`
+  )
+  window.open(`https://wa.me/${CONFIG.WHATSAPP}?text=${msg}`, "_blank")
+}
+
 /* ── Toast ── */
 function showToast(msg, type) {
   const el = document.getElementById("toast")
@@ -1381,6 +1689,10 @@ function showToast(msg, type) {
 document.addEventListener("DOMContentLoaded", () => {
   applyConfig()
   setLang(currentLang)
+
+  /* Catalogue produits */
+  loadCatalogue()
+  updateCartBar()
 
   /* Restaurer session existante */
   const sess = getSession()
