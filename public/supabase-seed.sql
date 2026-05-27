@@ -28,7 +28,33 @@ CREATE INDEX IF NOT EXISTS idx_fl_site_access_statut ON public.fl_site_access (s
 ALTER TABLE public.fl_site_access DISABLE ROW LEVEL SECURITY;
 GRANT ALL ON public.fl_site_access TO anon, authenticated, service_role;
 
--- ── 2. Table fl_articles — créer si elle n'existe pas ────────────────────────
+-- ── 2. Table fl_account_requests (demandes de compte depuis le site) ─────────
+CREATE TABLE IF NOT EXISTS public.fl_account_requests (
+  id          TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  type        TEXT NOT NULL DEFAULT 'client',
+  sous_type   TEXT DEFAULT '',
+  nom         TEXT NOT NULL,
+  email       TEXT,
+  telephone   TEXT NOT NULL,
+  societe     TEXT,
+  ice         TEXT,
+  ville       TEXT,
+  message     TEXT,
+  statut      TEXT NOT NULL DEFAULT 'en_attente',
+  created_at  TIMESTAMPTZ DEFAULT now(),
+  updated_at  TIMESTAMPTZ DEFAULT now(),
+  traite_par  TEXT,
+  traite_at   TIMESTAMPTZ,
+  notes_admin TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_fl_account_requests_statut    ON public.fl_account_requests (statut);
+CREATE INDEX IF NOT EXISTS idx_fl_account_requests_telephone ON public.fl_account_requests (telephone);
+
+ALTER TABLE public.fl_account_requests DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON public.fl_account_requests TO anon, authenticated, service_role;
+
+-- ── 3. Table fl_articles — créer si elle n'existe pas ────────────────────────
 CREATE TABLE IF NOT EXISTS public.fl_articles (
   id                      TEXT PRIMARY KEY,
   nom                     TEXT NOT NULL,

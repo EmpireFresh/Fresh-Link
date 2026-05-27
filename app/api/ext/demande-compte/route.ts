@@ -1,143 +1,158 @@
 import { NextRequest, NextResponse } from "next/server"
 
-function corsHeaders(origin: string | null, allowed: string[]): HeadersInit {
-  const allow =
-    !allowed.length || (origin && (allowed.includes(origin) || allowed.includes("*")))
-      ? origin ?? "*"
-      : "null"
+function corsHeaders(origin: string | null): HeadersInit {
   return {
-    "Access-Control-Allow-Origin":  allow,
+    "Access-Control-Allow-Origin":  origin ?? "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Api-Key",
   }
 }
 
 // ── POST /api/ext/demande-compte ──────────────────────────────────────────────
-// Crée une demande de compte depuis le site web externe
-// Auth: public si demandesComptes=true dans la config
-
 export async function POST(req: NextRequest) {
-  const origin = req.headers.get("origin")
+  const origin      = req.headers.get("origin")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json(
+      { error: "ERP backend non configuré. Contactez l'administrateur." },
+      { status: 503, headers: corsHeaders(origin) }
+    )
+  }
+
+  const sbHeaders = {
+    apikey:         supabaseKey,
+    Authorization:  `Bearer ${supabaseKey}`,
+    "Content-Type": "application/json",
+  }
+
+  // ── Parse body ──────────────────────────────────────────────────────────────
+  let body: Record<string, string>
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Corps JSON invalide." }, { status: 400, headers: corsHeaders(origin) })
+  }
+
+  const { type, nom, email, telephone, societe, ice, ville, message } = body
+
+  // ── Validation ──────────────────────────────────────────────────────────────
+  const VALID_TYPES = ["client", "chr", "marchand", "particulier", "fournisseur"]
+  if (!type || !VALID_TYPES.includes(type)) {
+    return NextResponse.json({ error: "Type invalide." }, { status: 400, headers: corsHeaders(origin) })
+  }
+  if (!nom?.trim() || !telephone?.trim()) {
+    return NextResponse.json({ error: "Nom et téléphone requis." }, { status: 400, headers: corsHeaders(origin) })
+  }
+  if (email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return NextResponse.json({ error: "Email invalide." }, { status: 400, headers: corsHeaders(origin) })
+  }
+
+  const typeMap: Record<string, string> = {
+    chr: "client", marchand: "client", particulier: "client",
+    client: "client", fournisseur: "fournisseur",
+  }
+  const canonicalType = typeMap[type] ?? "client"
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: "ERP backend not configured" }, { status: 503 })
-    }
-
-    // Read config
-    const cfgRes = await fetch(
-      `${supabaseUrl}/rest/v1/fl_web_integration?id=eq.main&select=*`,
-      { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
-    )
-    const cfgArr = await cfgRes.json()
-    const cfg = cfgArr?.[0]
-
-    if (!cfg?.enabled) {
-      return NextResponse.json({ error: "API externe désactivée." }, { status: 403, headers: corsHeaders(origin, []) })
-    }
-
-    const allowedOrigins: string[] = cfg.allowed_origins ?? []
-
-    // Default true if column missing (backwards compat with old fl_web_integration rows)
-    if (cfg.demandes_comptes === false) {
-      return NextResponse.json(
-        { error: "Les demandes de compte sont désactivées pour le moment." },
-        { status: 403, headers: corsHeaders(origin, allowedOrigins) }
+    // ── Vérifier doublon par téléphone ─────────────────────────────────────────
+    try {
+      const dupRes = await fetch(
+        `${supabaseUrl}/rest/v1/fl_account_requests?telephone=eq.${encodeURIComponent(telephone.trim())}&statut=eq.en_attente&select=id`,
+        { headers: sbHeaders }
       )
-    }
+      if (dupRes.ok) {
+        const dups = await dupRes.json()
+        if (Array.isArray(dups) && dups.length > 0) {
+          return NextResponse.json(
+            { error: "Une demande avec ce numéro est déjà en cours d'examen." },
+            { status: 409, headers: corsHeaders(origin) }
+          )
+        }
+      }
+    } catch { /* table peut ne pas exister encore — on continue */ }
 
-    // Parse body
-    const body = await req.json()
-    const { type, nom, email, telephone, societe, ice, ville, message } = body
-
-    // Accepted types: client, chr, marchand, particulier, fournisseur
-    const VALID_TYPES = ["client", "chr", "marchand", "particulier", "fournisseur"]
-    if (!type || !VALID_TYPES.includes(type)) {
-      return NextResponse.json({ error: "Type invalide." }, { status: 400 })
-    }
-    if (!nom?.trim() || !telephone?.trim()) {
-      return NextResponse.json({ error: "Champs requis manquants: nom, téléphone." }, { status: 400 })
-    }
-    // Email optional — validate only if provided
-    if (email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      return NextResponse.json({ error: "Email invalide." }, { status: 400 })
-    }
-
-    // Map frontend types to canonical ERP types
-    const typeMap: Record<string, string> = {
-      chr: "client", marchand: "client", particulier: "client",
-      client: "client", fournisseur: "fournisseur"
-    }
-    const canonicalType = typeMap[type] ?? "client"
-
-    // Check for duplicate by phone (more reliable than email)
-    const dupRes = await fetch(
-      `${supabaseUrl}/rest/v1/fl_account_requests?telephone=eq.${encodeURIComponent(telephone.trim())}&statut=eq.en_attente&select=id`,
-      { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
-    )
-    const dups = await dupRes.json()
-    if (Array.isArray(dups) && dups.length > 0) {
-      return NextResponse.json(
-        { error: "Une demande avec ce numéro est déjà en cours d'examen." },
-        { status: 409, headers: corsHeaders(origin, allowedOrigins) }
-      )
-    }
-
-    // Insert request
+    // ── Insérer la demande ─────────────────────────────────────────────────────
     const insertRes = await fetch(
       `${supabaseUrl}/rest/v1/fl_account_requests`,
       {
         method: "POST",
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          "Content-Type": "application/json",
-          Prefer: "return=representation",
-        },
+        headers: { ...sbHeaders, Prefer: "return=representation" },
         body: JSON.stringify({
-          type:      canonicalType,
-          sous_type: type.trim(),        // preserve original (chr, marchand…)
-          nom:       nom.trim(),
-          email:     email?.trim()?.toLowerCase() ?? null,
-          telephone: telephone.trim(),
-          societe:   societe?.trim() ?? null,
-          ice:       ice?.trim() ?? null,
-          ville:     ville?.trim() ?? null,
-          message:   message?.trim() ?? null,
-          statut:    "en_attente",
+          type:       canonicalType,
+          sous_type:  type.trim(),
+          nom:        nom.trim(),
+          email:      email?.trim()?.toLowerCase() ?? null,
+          telephone:  telephone.trim(),
+          societe:    societe?.trim() ?? null,
+          ice:        ice?.trim() ?? null,
+          ville:      ville?.trim() ?? null,
+          message:    message?.trim() ?? null,
+          statut:     "en_attente",
+          created_at: new Date().toISOString(),
         }),
       }
     )
 
+    // ── Si la table n'existe pas → fallback sur fl_site_access ────────────────
+    if (!insertRes.ok) {
+      const errBody = await insertRes.json().catch(() => ({})) as Record<string, unknown>
+      const errMsg  = String(errBody?.message ?? errBody?.error ?? "")
+
+      if (insertRes.status === 404 || errMsg.includes("does not exist") || errMsg.includes("relation")) {
+        const fallbackRes = await fetch(
+          `${supabaseUrl}/rest/v1/fl_site_access`,
+          {
+            method: "POST",
+            headers: { ...sbHeaders, Prefer: "return=representation" },
+            body: JSON.stringify({
+              device_id: `demande-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+              nom:       nom.trim(),
+              telephone: telephone.trim(),
+              statut:    "en_attente",
+              notes:     JSON.stringify({ type, email, societe, ice, ville, message }),
+            }),
+          }
+        )
+        if (fallbackRes.ok) {
+          return NextResponse.json(
+            { statut: "en_attente", message: "Votre demande a été enregistrée. Vous serez contacté sous 24-48h." },
+            { status: 201, headers: corsHeaders(origin) }
+          )
+        }
+      }
+
+      console.error("[API /ext/demande-compte] Insert error:", errBody)
+      return NextResponse.json(
+        { error: "Erreur enregistrement. Réessayez ou contactez-nous directement." },
+        { status: 500, headers: corsHeaders(origin) }
+      )
+    }
+
     const result = await insertRes.json()
 
-    if (!insertRes.ok) {
-      console.error("[API /ext/demande-compte] Insert error:", result)
-      return NextResponse.json({ error: "Erreur enregistrement." }, { status: 500 })
-    }
-
-    // Trigger webhook if configured
-    if (cfg.webhook_url) {
-      fetch(cfg.webhook_url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(cfg.webhook_secret ? { "X-Webhook-Secret": cfg.webhook_secret } : {}) },
-        body: JSON.stringify({ event: "nouvelle_demande_compte", data: result[0] }),
-      }).catch(() => {}) // fire-and-forget
-    }
-
     return NextResponse.json(
-      { id: result[0]?.id, statut: "en_attente", message: "Votre demande a été enregistrée. Vous serez contacté sous 24-48h." },
-      { status: 201, headers: corsHeaders(origin, allowedOrigins) }
+      {
+        id:      result[0]?.id,
+        statut:  "en_attente",
+        message: "Votre demande a été enregistrée. Vous serez contacté sous 24-48h.",
+      },
+      { status: 201, headers: corsHeaders(origin) }
     )
+
   } catch (err) {
     console.error("[API /ext/demande-compte]", err)
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 })
+    return NextResponse.json(
+      { error: "Erreur serveur. Réessayez dans quelques instants." },
+      { status: 500, headers: corsHeaders(origin) }
+    )
   }
 }
 
 export async function OPTIONS(req: NextRequest) {
-  return new NextResponse(null, { status: 204, headers: corsHeaders(req.headers.get("origin"), ["*"]) })
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(req.headers.get("origin")),
+  })
 }

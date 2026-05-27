@@ -50,15 +50,6 @@ function genNum() {
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin")
   try {
-    const cfg: any = (await sbGet("fl_web_integration?id=eq.main&select=*"))?.[0]
-
-    if (!cfg?.enabled) {
-      return NextResponse.json({ error: "Service temporairement indisponible." }, { status: 503, headers: cors(origin) })
-    }
-    if (!cfg.panier_enabled) {
-      return NextResponse.json({ error: "Les commandes en ligne sont désactivées." }, { status: 403, headers: cors(origin) })
-    }
-
     const body = await req.json()
     const { nom_client, telephone, email, adresse_livraison, lignes, date_souhaitee, creneau, instructions, client_id, prospect_id } = body
 
@@ -66,14 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "nom_client, telephone et lignes[] sont requis." }, { status: 400, headers: cors(origin) })
     }
 
-    // Vérifier montant minimum
     const total = lignes.reduce((s: number, l: any) => s + (Number(l.montant) || 0), 0)
-    if (cfg.commande_min && total < cfg.commande_min) {
-      return NextResponse.json(
-        { error: `Montant minimum de commande : ${cfg.commande_min} DH. Total actuel : ${total.toFixed(2)} DH.` },
-        { status: 422, headers: cors(origin) }
-      )
-    }
 
     const commande = {
       numero:            genNum(),
