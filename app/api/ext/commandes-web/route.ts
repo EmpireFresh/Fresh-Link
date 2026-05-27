@@ -92,17 +92,32 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ── GET — suivi commande ───────────────────────────────────────
+// ── GET — suivi commande ou liste par téléphone ──────────────
+// ?tel=... → liste toutes les commandes de ce numéro
+// ?numero=...&tel=... → suivi d'une commande précise
 export async function GET(req: NextRequest) {
   const origin = req.headers.get("origin")
   const numero = req.nextUrl.searchParams.get("numero")
   const tel    = req.nextUrl.searchParams.get("tel")
-  if (!numero || !tel) {
-    return NextResponse.json({ error: "numero et tel requis." }, { status: 400, headers: cors(origin) })
+
+  if (!tel) {
+    return NextResponse.json({ error: "tel requis." }, { status: 400, headers: cors(origin) })
   }
+
   try {
-    const data = await sbGet(`fl_commandes_web?numero=eq.${encodeURIComponent(numero)}&telephone=eq.${encodeURIComponent(tel)}&select=numero,statut,montant_total,date_souhaitee,created_at`)
-    return NextResponse.json(data?.[0] ?? null, { headers: cors(origin) })
+    if (numero) {
+      // Single order tracking
+      const data = await sbGet(
+        `fl_commandes_web?numero=eq.${encodeURIComponent(numero)}&telephone=eq.${encodeURIComponent(tel)}&select=id,numero,statut,montant_total,date_souhaitee,lignes,created_at`
+      )
+      return NextResponse.json(data?.[0] ?? null, { headers: cors(origin) })
+    } else {
+      // List all orders for this phone number
+      const data = await sbGet(
+        `fl_commandes_web?telephone=eq.${encodeURIComponent(tel)}&order=created_at.desc&select=id,numero,statut,montant_total,date_souhaitee,lignes,created_at`
+      )
+      return NextResponse.json(Array.isArray(data) ? data : [], { headers: cors(origin) })
+    }
   } catch {
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500, headers: cors(origin) })
   }
