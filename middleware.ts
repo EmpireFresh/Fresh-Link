@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { DEVICE_COOKIE, DEVICE_BYPASS, SADMIN_COOKIE } from "@/lib/deviceGuard"
+import { DEVICE_COOKIE, DEVICE_BYPASS, SADMIN_COOKIE } from "@/lib/deviceGuard.edge"
 
 // ── Paths toujours accessibles (pas de device check) ──────────────────────────
 const PUBLIC_PATHS = [

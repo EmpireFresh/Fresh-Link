@@ -1,0 +1,109 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- VITA FRESH — Supabase Seed SQL
+-- Exécuter dans : https://supabase.com/dashboard/project/jwdrwapuetqoqnankgma/sql/new
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ── 1. Table fl_site_access (contrôle d'accès appareils) ─────────────────────
+CREATE TABLE IF NOT EXISTS public.fl_site_access (
+  id              TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  device_id       TEXT NOT NULL UNIQUE,
+  nom             TEXT,
+  telephone       TEXT,
+  statut          TEXT NOT NULL DEFAULT 'en_attente',
+  gps_lat         DOUBLE PRECISION,
+  gps_lng         DOUBLE PRECISION,
+  gps_precision   FLOAT,
+  user_agent      TEXT,
+  first_visit_at  TIMESTAMPTZ DEFAULT now(),
+  updated_at      TIMESTAMPTZ DEFAULT now(),
+  autorise_par    TEXT,
+  autorise_at     TIMESTAMPTZ,
+  bloque_at       TIMESTAMPTZ,
+  notes           TEXT
+);
+
+-- Index
+CREATE INDEX IF NOT EXISTS idx_fl_site_access_device  ON public.fl_site_access (device_id);
+CREATE INDEX IF NOT EXISTS idx_fl_site_access_statut  ON public.fl_site_access (statut);
+
+-- Permissions
+ALTER TABLE public.fl_site_access DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON public.fl_site_access TO anon, authenticated, service_role;
+
+-- ── 2. Table fl_articles (catalogue) ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.fl_articles (
+  id              TEXT PRIMARY KEY,
+  nom             TEXT NOT NULL,
+  nom_ar          TEXT DEFAULT '',
+  famille         TEXT DEFAULT '',
+  unite           TEXT DEFAULT 'kg',
+  prix_public     NUMERIC(10,2) DEFAULT 0,
+  marketplace_actif BOOLEAN DEFAULT true,
+  marketplace_prix_public NUMERIC(10,2) DEFAULT 0,
+  image_url       TEXT DEFAULT '',
+  description     TEXT DEFAULT '',
+  tags            JSONB DEFAULT '[]',
+  ordre           INT DEFAULT 99,
+  statut          TEXT DEFAULT 'actif',
+  updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.fl_articles DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON public.fl_articles TO anon, authenticated, service_role;
+
+-- ── 3. Vue marketplace ────────────────────────────────────────────────────────
+CREATE OR REPLACE VIEW public.v_marketplace_catalogue AS
+SELECT
+  id, nom, nom_ar, famille, unite,
+  prix_public, marketplace_actif, marketplace_prix_public,
+  image_url, description, tags, ordre, statut, updated_at
+FROM public.fl_articles
+WHERE marketplace_actif = true AND statut = 'actif';
+
+GRANT SELECT ON public.v_marketplace_catalogue TO anon, authenticated;
+
+-- ── 4. Seed catalogue complet (Fruits, Légumes, Herbes) ──────────────────────
+INSERT INTO public.fl_articles
+  (id, nom, nom_ar, famille, unite, prix_public, marketplace_actif, marketplace_prix_public, image_url, description, tags, ordre, statut)
+VALUES
+-- FRUITS
+('fruit-tomate','Tomates','طماطم','Fruits','kg',4.5,true,4.5,'https://images.unsplash.com/photo-1546094096-0df4bcaad337?w=400&h=400&fit=crop&auto=format&q=80','Tomates fraîches de saison, gorgées de soleil. Idéales pour salades, sauces et tajines.','["frais","local","saison"]',1,'actif'),
+('fruit-orange','Oranges','برتقال','Fruits','kg',5,true,5,'https://images.unsplash.com/photo-1547514701-42782101795e?w=400&h=400&fit=crop&auto=format&q=80','Oranges juteuses du Maroc, riches en vitamine C.','["vitaminé","jus","local"]',2,'actif'),
+('fruit-pomme','Pommes','تفاح','Fruits','kg',7,true,7,'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop&auto=format&q=80','Pommes croquantes et sucrées, variétés sélectionnées.','["croquant","sucré"]',3,'actif'),
+('fruit-banane','Bananes','موز','Fruits','kg',6,true,6,'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop&auto=format&q=80','Bananes mûres à point, riches en potassium.','["énergie","sport"]',4,'actif'),
+('fruit-citron','Citrons','ليمون','Fruits','kg',5,true,5,'https://images.unsplash.com/photo-1590502593747-42a996133562?w=400&h=400&fit=crop&auto=format&q=80','Citrons frais acides et parfumés. Indispensables en cuisine marocaine.','["acidulé","cuisine","vitaminé"]',5,'actif'),
+('fruit-pasteque','Pastèque','دلاح','Fruits','pièce',20,true,20,'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&h=400&fit=crop&auto=format&q=80','Pastèque fraîche et sucrée. Désaltérante en été.','["été","frais","sucré"]',6,'actif'),
+('fruit-raisin','Raisin','عنب','Fruits','kg',12,true,12,'https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=400&h=400&fit=crop&auto=format&q=80','Raisin frais, noir et blanc. Goût sucré intense.','["sucré","premium"]',7,'actif'),
+('fruit-fraise','Fraises','فراولة','Fruits','kg',15,true,15,'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop&auto=format&q=80','Fraises rouges et parfumées du Maroc.','["dessert","parfumé","premium"]',8,'actif'),
+('fruit-peche','Pêches','خوخ','Fruits','kg',9,true,9,'https://images.unsplash.com/photo-1595475207225-428b62bda831?w=400&h=400&fit=crop&auto=format&q=80','Pêches juteuses et sucrées de saison.','["saison","juteux"]',9,'actif'),
+('fruit-melon','Melon','بطيخ أصفر','Fruits','pièce',18,true,18,'https://images.unsplash.com/photo-1571575173700-afb9492d8584?w=400&h=400&fit=crop&auto=format&q=80','Melon jaune sucré et parfumé. Chair fondante.','["été","sucré","parfumé"]',10,'actif'),
+('fruit-clementine','Clémentines','يوسفي','Fruits','kg',6,true,6,'https://images.unsplash.com/photo-1580005893-e3c284cc0ae1?w=400&h=400&fit=crop&auto=format&q=80','Clémentines marocaines sans pépins.','["hiver","vitaminé","sans pépins"]',11,'actif'),
+('fruit-avocat','Avocats','أفوكادو','Fruits','pièce',5,true,5,'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=400&h=400&fit=crop&auto=format&q=80','Avocats crémeux, riches en bons lipides.','["healthy","premium","tendance"]',12,'actif'),
+('fruit-grenade','Grenade','رمان','Fruits','pièce',4,true,4,'https://images.unsplash.com/photo-1615485736778-ca0a23af9993?w=400&h=400&fit=crop&auto=format&q=80','Grenade fraîche aux arilles rubis, riche en antioxydants.','["antioxydant","hiver","local"]',13,'actif'),
+-- LÉGUMES
+('leg-carotte','Carottes','جزر','Légumes','kg',3,true,3,'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=400&fit=crop&auto=format&q=80','Carottes fraîches et croquantes, riches en bêta-carotène.','["vitaminé","croquant","local"]',20,'actif'),
+('leg-pomme-de-terre','Pommes de terre','بطاطس','Légumes','kg',3.5,true,3.5,'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&h=400&fit=crop&auto=format&q=80','Pommes de terre fraîches pour toutes préparations.','["polyvalent","local","essentiel"]',21,'actif'),
+('leg-oignon','Oignons','بصل','Légumes','kg',2.5,true,2.5,'https://images.unsplash.com/photo-1618512496248-a4f7b6ed0e3d?w=400&h=400&fit=crop&auto=format&q=80','Oignons rouges et blancs, base de toute bonne cuisine.','["essentiel","cuisine","local"]',22,'actif'),
+('leg-courgette','Courgettes','كوسة','Légumes','kg',4,true,4,'https://images.unsplash.com/photo-1566842600175-97dca3c5ad8d?w=400&h=400&fit=crop&auto=format&q=80','Courgettes tendres. Excellentes grillées ou en tajine.','["léger","été","tajine"]',23,'actif'),
+('leg-concombre','Concombres','خيار','Légumes','kg',3.5,true,3.5,'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=400&h=400&fit=crop&auto=format&q=80','Concombres frais et croquants. Parfaits en salades.','["frais","salade","hydratant"]',24,'actif'),
+('leg-poivron','Poivrons','فلفل أحمر','Légumes','kg',8,true,8,'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=400&fit=crop&auto=format&q=80','Poivrons rouges, verts et jaunes, sucrés et croquants.','["coloré","vitaminé","cuisine"]',25,'actif'),
+('leg-aubergine','Aubergines','باذنجان','Légumes','kg',5,true,5,'https://images.unsplash.com/photo-1501426026826-31c667bdf23d?w=400&h=400&fit=crop&auto=format&q=80','Aubergines brillantes, idéales pour zaalouk et tajine.','["zaalouk","tajine","marocain"]',26,'actif'),
+('leg-chou','Chou','كرنب','Légumes','pièce',4,true,4,'https://images.unsplash.com/photo-1598030304671-5aa1d6f2e82c?w=400&h=400&fit=crop&auto=format&q=80','Chou vert tendre et croquant. Excellent en salade.','["hivernal","fibre"]',27,'actif'),
+('leg-haricot','Haricots verts','لوبيا خضراء','Légumes','kg',7,true,7,'https://images.unsplash.com/photo-1556030814-1b8dd21f9a25?w=400&h=400&fit=crop&auto=format&q=80','Haricots verts fins et tendres. En tajine ou vapeur.','["fin","vapeur","tajine"]',28,'actif'),
+('leg-piment','Piments','هريسة خضراء','Légumes','kg',6,true,6,'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&auto=format&q=80','Piments verts et rouges frais. Cuisine marocaine.','["épicé","marocain","cuisine"]',29,'actif'),
+('leg-epinard','Épinards','سبانخ','Légumes','botte',4,true,4,'https://images.unsplash.com/photo-1576045057995-568f1167e03e?w=400&h=400&fit=crop&auto=format&q=80','Épinards frais et tendres. Riches en fer.','["santé","fer","vitamines"]',30,'actif'),
+('leg-ail','Ail','ثوم','Légumes','tête',2,true,2,'https://images.unsplash.com/photo-1622205313610-696b0f8c9d0f?w=400&h=400&fit=crop&auto=format&q=80','Ail frais blanc. Indispensable en cuisine marocaine.','["aromate","essentiel","marocain"]',31,'actif'),
+-- HERBES
+('herbe-menthe','Menthe fraîche','نعناع','Herbes','botte',2,true,2,'https://images.unsplash.com/photo-1628556270448-4d4e4148e1b1?w=400&h=400&fit=crop&auto=format&q=80','Menthe fraîche marocaine. Thé à la menthe et cuisine.','["thé","marocain","parfumé","essentiel"]',40,'actif'),
+('herbe-coriandre','Coriandre','قصبر','Herbes','botte',2,true,2,'https://images.unsplash.com/photo-1607305387299-a3d9611cd469?w=400&h=400&fit=crop&auto=format&q=80','Coriandre fraîche. Base de la cuisine marocaine.','["marocain","essentiel","parfumé"]',41,'actif'),
+('herbe-persil','Persil','معدنوس','Herbes','botte',2,true,2,'https://images.unsplash.com/photo-1574481611-04f3d34cfade?w=400&h=400&fit=crop&auto=format&q=80','Persil plat frais et parfumé. Pour toutes les sauces.','["essentiel","sauce","garnir"]',42,'actif'),
+('herbe-thym','Thym','زعتر','Herbes','botte',3,true,3,'https://images.unsplash.com/photo-1543158181-e6f9f6f6b8b0?w=400&h=400&fit=crop&auto=format&q=80','Thym frais, aromatique. Pour grillades et marinades.','["aromatique","grillades","marinade"]',43,'actif'),
+('herbe-romarin','Romarin','إكليل الجبل','Herbes','botte',3,true,3,'https://images.unsplash.com/photo-1591922959680-3b4dbfb0f01a?w=400&h=400&fit=crop&auto=format&q=80','Romarin frais au parfum méditerranéen intense.','["méditerranéen","viande","rôti"]',44,'actif'),
+('herbe-basilic','Basilic','ريحان','Herbes','botte',3,true,3,'https://images.unsplash.com/photo-1629397685945-4a4c2f6cb8e7?w=400&h=400&fit=crop&auto=format&q=80','Basilic frais au parfum délicat. Salades et sauces.','["délicat","salade","italienne"]',45,'actif')
+ON CONFLICT (id) DO UPDATE SET
+  nom = EXCLUDED.nom, image_url = EXCLUDED.image_url,
+  prix_public = EXCLUDED.prix_public, updated_at = now();
+
+-- ── 5. Vérification ───────────────────────────────────────────────────────────
+SELECT famille, count(*) FROM public.fl_articles GROUP BY famille ORDER BY famille;
+SELECT id, statut, nom, telephone FROM public.fl_site_access ORDER BY first_visit_at DESC LIMIT 10;

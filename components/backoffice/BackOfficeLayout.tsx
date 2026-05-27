@@ -112,6 +112,7 @@ const BODocuments            = dynamic(() => import("./BODocuments"),           
 const BOCategoryPricing      = dynamic(() => import("./BOCategoryPricing"),      { ssr: false, loading: L("Chargement tarifs catégories...") })
 const BOFirebaseArchive      = dynamic(() => import("./BOFirebaseArchive"),      { ssr: false, loading: L("Chargement archivage Firebase...") })
 const BOExternalLinks        = dynamic(() => import("./BOExternalLinks"),         { ssr: false, loading: L("Chargement liens...") })
+const BODeviceAccess         = dynamic(() => import("./BODeviceAccess"),          { ssr: false, loading: L("Chargement accès appareils...") })
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -143,6 +144,7 @@ export type Tab =
   | "category_pricing"
   | "firebase_archive"
   | "liens_externes"
+  | "device_access"
 
 interface NavItem {
   id: Tab
@@ -319,6 +321,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Administration", labelAr: "الإدارة والإعدادات",
     items: [
+      { id: "device_access",    label: "Accès Appareils",        labelAr: "أجهزة الوصول",     permKey: "canViewDatabase", icon: <Icon d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /> },
       { id: "users",            label: "Utilisateurs & Roles",   labelAr: "المستخدمون",        permKey: "canViewDatabase", icon: <Icon d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /> },
       { id: "depots",           label: "Multi-Depots",           labelAr: "المستودعات",        permKey: "canViewDatabase", icon: <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /> },
       { id: "web_integration",  label: "Integration Site Web",   labelAr: "ربط الموقع",        permKey: "canViewDatabase", icon: <Icon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /> },
@@ -409,6 +412,7 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   finance_cdg:          (u) => <BOFinanceControlGestion user={u} />,
   sourcing:              (u)  => <BOSourcing user={u} />,
   pricing:               (u)  => <BOPricing  user={u} />,
+  device_access:         (u)  => <BODeviceAccess user={u} />,
 }
 
 // ─────────────────────────────────────────────────────────────
