@@ -87,16 +87,25 @@ ALTER TABLE public.fl_commandes_web DISABLE ROW LEVEL SECURITY;
 GRANT ALL ON public.fl_commandes_web TO anon, authenticated, service_role;
 
 -- ── 4. Table fl_articles — créer si elle n'existe pas ────────────────────────
--- Si "nom" est une colonne générée (GENERATED ALWAYS), la convertir en colonne normale
+-- Convertir toutes les colonnes générées en colonnes normales (évite l'erreur 428C9)
 DO $$
+DECLARE
+  col TEXT;
+  cols TEXT[] := ARRAY['nom', 'nomAr', 'famille', 'unite', 'prix_public',
+                        'marketplace_actif', 'marketplace_prix_public',
+                        'image_url', 'description', 'tags', 'ordre', 'statut'];
 BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'fl_articles'
-      AND column_name = 'nom'
-      AND is_generated = 'ALWAYS'
-  ) THEN
-    ALTER TABLE public.fl_articles ALTER COLUMN nom DROP EXPRESSION;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'fl_articles') THEN
+    FOREACH col IN ARRAY cols LOOP
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'fl_articles'
+          AND column_name = col
+          AND is_generated = 'ALWAYS'
+      ) THEN
+        EXECUTE format('ALTER TABLE public.fl_articles ALTER COLUMN %I DROP EXPRESSION', col);
+      END IF;
+    END LOOP;
   END IF;
 END $$;
 
