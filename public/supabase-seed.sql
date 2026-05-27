@@ -54,7 +54,52 @@ CREATE INDEX IF NOT EXISTS idx_fl_account_requests_telephone ON public.fl_accoun
 ALTER TABLE public.fl_account_requests DISABLE ROW LEVEL SECURITY;
 GRANT ALL ON public.fl_account_requests TO anon, authenticated, service_role;
 
--- ── 3. Table fl_articles — créer si elle n'existe pas ────────────────────────
+-- ── 3. Table fl_commandes_web (commandes depuis vitafresh.vercel.app) ─────────
+CREATE TABLE IF NOT EXISTS public.fl_commandes_web (
+  id                TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  numero            TEXT NOT NULL UNIQUE,
+  client_id         TEXT,
+  prospect_id       TEXT,
+  nom_client        TEXT NOT NULL,
+  telephone         TEXT NOT NULL,
+  email             TEXT,
+  adresse_livraison TEXT,
+  lignes            JSONB DEFAULT '[]',
+  montant_total     NUMERIC(10,2) DEFAULT 0,
+  date_souhaitee    DATE,
+  creneau           TEXT,
+  instructions      TEXT,
+  statut            TEXT NOT NULL DEFAULT 'nouveau',
+  source            TEXT DEFAULT 'site_web',
+  ip_address        TEXT,
+  traite_par        TEXT,
+  traite_at         TIMESTAMPTZ,
+  notes_admin       TEXT,
+  created_at        TIMESTAMPTZ DEFAULT now(),
+  updated_at        TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_fl_commandes_web_statut    ON public.fl_commandes_web (statut);
+CREATE INDEX IF NOT EXISTS idx_fl_commandes_web_telephone ON public.fl_commandes_web (telephone);
+CREATE INDEX IF NOT EXISTS idx_fl_commandes_web_created   ON public.fl_commandes_web (created_at DESC);
+
+ALTER TABLE public.fl_commandes_web DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON public.fl_commandes_web TO anon, authenticated, service_role;
+
+-- ── 4. Table fl_articles — créer si elle n'existe pas ────────────────────────
+-- Si "nom" est une colonne générée (GENERATED ALWAYS), la convertir en colonne normale
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'fl_articles'
+      AND column_name = 'nom'
+      AND is_generated = 'ALWAYS'
+  ) THEN
+    ALTER TABLE public.fl_articles ALTER COLUMN nom DROP EXPRESSION;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.fl_articles (
   id                      TEXT PRIMARY KEY,
   nom                     TEXT NOT NULL,
@@ -113,7 +158,7 @@ END $$;
 ALTER TABLE public.fl_articles DISABLE ROW LEVEL SECURITY;
 GRANT ALL ON public.fl_articles TO anon, authenticated, service_role;
 
--- ── 3. Vue marketplace (utilise "nomAr" avec guillemets) ──────────────────────
+-- ── 5. Vue marketplace (utilise "nomAr" avec guillemets) ──────────────────────
 DROP VIEW IF EXISTS public.v_marketplace_catalogue;
 CREATE VIEW public.v_marketplace_catalogue AS
 SELECT
@@ -125,7 +170,7 @@ WHERE marketplace_actif = true AND statut = 'actif';
 
 GRANT SELECT ON public.v_marketplace_catalogue TO anon, authenticated;
 
--- ── 4. Seed catalogue complet (33 produits) ───────────────────────────────────
+-- ── 6. Seed catalogue complet (33 produits) ───────────────────────────────────
 INSERT INTO public.fl_articles
   (id, nom, "nomAr", famille, unite, prix_public, marketplace_actif, marketplace_prix_public, image_url, description, tags, ordre, statut)
 VALUES
@@ -178,6 +223,6 @@ ON CONFLICT (id) DO UPDATE SET
   statut                  = EXCLUDED.statut,
   updated_at              = now();
 
--- ── 5. Vérification ───────────────────────────────────────────────────────────
+-- ── 7. Vérification ───────────────────────────────────────────────────────────
 SELECT famille, count(*) as total FROM public.fl_articles GROUP BY famille ORDER BY famille;
 SELECT id, statut, nom, telephone FROM public.fl_site_access ORDER BY first_visit_at DESC LIMIT 10;

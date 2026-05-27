@@ -108,10 +108,9 @@ export async function POST(req: NextRequest) {
             headers: { ...sbHeaders, Prefer: "return=representation" },
             body: JSON.stringify({
               device_id: `demande-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-              nom:       nom.trim(),
               telephone: telephone.trim(),
               statut:    "en_attente",
-              notes:     JSON.stringify({ type, email, societe, ice, ville, message }),
+              notes:     JSON.stringify({ nom: nom.trim(), type, email, societe, ice, ville, message }),
             }),
           }
         )
