@@ -21,7 +21,8 @@ const STATUT_CFG: Record<string, { label: string; cls: string }> = {
 
 function canAccess(user: User): boolean {
   return [
-    "super_super_admin", "super_admin", "admin",
+    "master_admin", "super_admin", "admin", "super_super_admin",
+    "directeur_general", "directeur_commercial",
     "resp_commercial", "resp_logistique", "resp_achat",
   ].includes(user.role)
 }
@@ -61,6 +62,7 @@ export default function BODemandesComptes({ user }: Props) {
       const fromSb: AccountRequest[] = (data as Record<string, unknown>[]).map(row => ({
         id:        String(row.id),
         type:      String(row.type ?? "client") as "client" | "fournisseur",
+        sous_type: row.sous_type ? String(row.sous_type) : undefined,
         nom:       String(row.nom ?? ""),
         email:     String(row.email ?? ""),
         telephone: String(row.telephone ?? ""),
@@ -380,10 +382,13 @@ export default function BODemandesComptes({ user }: Props) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
                     <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${cfg.cls}`}>{cfg.label}</span>
                     <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${req.type === "client" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>
-                      {req.type === "client" ? "Client" : "Fournisseur"}
+                      {(req as any).sous_type
+                        ? ({ chr: "CHR", marchand: "Marchand", particulier: "Particulier", fournisseur: "Fournisseur", client: "Client" }[(req as any).sous_type] ?? (req as any).sous_type)
+                        : (req.type === "client" ? "Client" : "Fournisseur")
+                      }
                     </span>
                   </div>
                 </div>
