@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- VITA FRESH — Supabase Seed SQL
+-- VITA FRESH — Supabase Seed SQL (v2 — compatible colonne nomAr existante)
 -- Exécuter dans : https://supabase.com/dashboard/project/jwdrwapuetqoqnankgma/sql/new
 -- ═══════════════════════════════════════════════════════════════════════════
 
@@ -22,39 +22,76 @@ CREATE TABLE IF NOT EXISTS public.fl_site_access (
   notes           TEXT
 );
 
--- Index
-CREATE INDEX IF NOT EXISTS idx_fl_site_access_device  ON public.fl_site_access (device_id);
-CREATE INDEX IF NOT EXISTS idx_fl_site_access_statut  ON public.fl_site_access (statut);
+CREATE INDEX IF NOT EXISTS idx_fl_site_access_device ON public.fl_site_access (device_id);
+CREATE INDEX IF NOT EXISTS idx_fl_site_access_statut ON public.fl_site_access (statut);
 
--- Permissions
 ALTER TABLE public.fl_site_access DISABLE ROW LEVEL SECURITY;
 GRANT ALL ON public.fl_site_access TO anon, authenticated, service_role;
 
--- ── 2. Table fl_articles (catalogue) ─────────────────────────────────────────
+-- ── 2. Table fl_articles — créer si elle n'existe pas ────────────────────────
 CREATE TABLE IF NOT EXISTS public.fl_articles (
-  id              TEXT PRIMARY KEY,
-  nom             TEXT NOT NULL,
-  nom_ar          TEXT DEFAULT '',
-  famille         TEXT DEFAULT '',
-  unite           TEXT DEFAULT 'kg',
-  prix_public     NUMERIC(10,2) DEFAULT 0,
-  marketplace_actif BOOLEAN DEFAULT true,
+  id                      TEXT PRIMARY KEY,
+  nom                     TEXT NOT NULL,
+  "nomAr"                 TEXT DEFAULT '',
+  famille                 TEXT DEFAULT '',
+  unite                   TEXT DEFAULT 'kg',
+  prix_public             NUMERIC(10,2) DEFAULT 0,
+  marketplace_actif       BOOLEAN DEFAULT true,
   marketplace_prix_public NUMERIC(10,2) DEFAULT 0,
-  image_url       TEXT DEFAULT '',
-  description     TEXT DEFAULT '',
-  tags            JSONB DEFAULT '[]',
-  ordre           INT DEFAULT 99,
-  statut          TEXT DEFAULT 'actif',
-  updated_at      TIMESTAMPTZ DEFAULT now()
+  image_url               TEXT DEFAULT '',
+  description             TEXT DEFAULT '',
+  tags                    JSONB DEFAULT '[]',
+  ordre                   INT DEFAULT 99,
+  statut                  TEXT DEFAULT 'actif',
+  updated_at              TIMESTAMPTZ DEFAULT now()
 );
+
+-- Ajouter les colonnes manquantes si la table existait déjà sans elles
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='nomAr') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN "nomAr" TEXT DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='marketplace_actif') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN marketplace_actif BOOLEAN DEFAULT true;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='marketplace_prix_public') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN marketplace_prix_public NUMERIC(10,2) DEFAULT 0;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='image_url') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN image_url TEXT DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='description') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN description TEXT DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='tags') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN tags JSONB DEFAULT '[]';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='ordre') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN ordre INT DEFAULT 99;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='statut') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN statut TEXT DEFAULT 'actif';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='famille') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN famille TEXT DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='unite') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN unite TEXT DEFAULT 'kg';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='fl_articles' AND column_name='prix_public') THEN
+    ALTER TABLE public.fl_articles ADD COLUMN prix_public NUMERIC(10,2) DEFAULT 0;
+  END IF;
+END $$;
 
 ALTER TABLE public.fl_articles DISABLE ROW LEVEL SECURITY;
 GRANT ALL ON public.fl_articles TO anon, authenticated, service_role;
 
--- ── 3. Vue marketplace ────────────────────────────────────────────────────────
-CREATE OR REPLACE VIEW public.v_marketplace_catalogue AS
+-- ── 3. Vue marketplace (utilise "nomAr" avec guillemets) ──────────────────────
+DROP VIEW IF EXISTS public.v_marketplace_catalogue;
+CREATE VIEW public.v_marketplace_catalogue AS
 SELECT
-  id, nom, nom_ar, famille, unite,
+  id, nom, "nomAr", famille, unite,
   prix_public, marketplace_actif, marketplace_prix_public,
   image_url, description, tags, ordre, statut, updated_at
 FROM public.fl_articles
@@ -62,9 +99,9 @@ WHERE marketplace_actif = true AND statut = 'actif';
 
 GRANT SELECT ON public.v_marketplace_catalogue TO anon, authenticated;
 
--- ── 4. Seed catalogue complet (Fruits, Légumes, Herbes) ──────────────────────
+-- ── 4. Seed catalogue complet (33 produits) ───────────────────────────────────
 INSERT INTO public.fl_articles
-  (id, nom, nom_ar, famille, unite, prix_public, marketplace_actif, marketplace_prix_public, image_url, description, tags, ordre, statut)
+  (id, nom, "nomAr", famille, unite, prix_public, marketplace_actif, marketplace_prix_public, image_url, description, tags, ordre, statut)
 VALUES
 -- FRUITS
 ('fruit-tomate','Tomates','طماطم','Fruits','kg',4.5,true,4.5,'https://images.unsplash.com/photo-1546094096-0df4bcaad337?w=400&h=400&fit=crop&auto=format&q=80','Tomates fraîches de saison, gorgées de soleil. Idéales pour salades, sauces et tajines.','["frais","local","saison"]',1,'actif'),
@@ -101,9 +138,20 @@ VALUES
 ('herbe-romarin','Romarin','إكليل الجبل','Herbes','botte',3,true,3,'https://images.unsplash.com/photo-1591922959680-3b4dbfb0f01a?w=400&h=400&fit=crop&auto=format&q=80','Romarin frais au parfum méditerranéen intense.','["méditerranéen","viande","rôti"]',44,'actif'),
 ('herbe-basilic','Basilic','ريحان','Herbes','botte',3,true,3,'https://images.unsplash.com/photo-1629397685945-4a4c2f6cb8e7?w=400&h=400&fit=crop&auto=format&q=80','Basilic frais au parfum délicat. Salades et sauces.','["délicat","salade","italienne"]',45,'actif')
 ON CONFLICT (id) DO UPDATE SET
-  nom = EXCLUDED.nom, image_url = EXCLUDED.image_url,
-  prix_public = EXCLUDED.prix_public, updated_at = now();
+  nom                     = EXCLUDED.nom,
+  "nomAr"                 = EXCLUDED."nomAr",
+  famille                 = EXCLUDED.famille,
+  unite                   = EXCLUDED.unite,
+  prix_public             = EXCLUDED.prix_public,
+  marketplace_actif       = EXCLUDED.marketplace_actif,
+  marketplace_prix_public = EXCLUDED.marketplace_prix_public,
+  image_url               = EXCLUDED.image_url,
+  description             = EXCLUDED.description,
+  tags                    = EXCLUDED.tags,
+  ordre                   = EXCLUDED.ordre,
+  statut                  = EXCLUDED.statut,
+  updated_at              = now();
 
 -- ── 5. Vérification ───────────────────────────────────────────────────────────
-SELECT famille, count(*) FROM public.fl_articles GROUP BY famille ORDER BY famille;
+SELECT famille, count(*) as total FROM public.fl_articles GROUP BY famille ORDER BY famille;
 SELECT id, statut, nom, telephone FROM public.fl_site_access ORDER BY first_visit_at DESC LIMIT 10;

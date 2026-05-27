@@ -121,7 +121,7 @@ function byOrdre(a: Record<string, unknown>, b: Record<string, unknown>) {
 function normalize(a: Record<string, unknown>): Record<string, unknown> {
   return {
     ...a,
-    nomAr:           a.nom_ar ?? "",
+    nomAr:           a.nomAr ?? a.nom_ar ?? "",
     prix:            a.prix_public ?? a.marketplace_prix_public ?? a.prix ?? 0,
     prixVente:       a.prix_public ?? a.prix ?? 0,
     stockDisponible: 99,
