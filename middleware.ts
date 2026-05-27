@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   "/device-blocked",
   "/api/device/",
   "/api/admin-session",
+  "/api/test-sync",
   "/api/ext/",
   "/_next/",
   "/favicon",
