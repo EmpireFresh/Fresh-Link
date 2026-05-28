@@ -60,6 +60,31 @@ export default function App() {
           if (ok) window.dispatchEvent(new CustomEvent("fl_store_updated", { detail: { table: "all" } }))
         }).catch(() => {/* offline OK */})
       })
+
+      // ── Auto-push utilisateurs + articles → Supabase si admin ─────────────────
+      // Garantit que fl_users et fl_articles sont toujours à jour sans action manuelle
+      if (["super_super_admin", "super_admin", "admin"].includes(loggedUser.role)) {
+        try {
+          const allUsers = store.getUsers()
+          if (allUsers.length > 3) {
+            const upserts = allUsers.map(u => { const { id, ...payload } = u; return { id, payload, updated_at: new Date().toISOString() } })
+            fetch("/api/sync-write", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ table: "fl_users", upserts }),
+            }).then(() => console.log("[FreshLink] ✅ Auto-sync fl_users → Supabase"))
+              .catch(() => {})
+          }
+          const allArticles = store.getArticles()
+          if (allArticles.length > 0) {
+            const upserts = allArticles.map(a => { const { id, ...payload } = a; return { id, payload, updated_at: new Date().toISOString() } })
+            fetch("/api/sync-write", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ table: "fl_articles", upserts }),
+            }).then(() => console.log("[FreshLink] ✅ Auto-sync fl_articles → Supabase"))
+              .catch(() => {})
+          }
+        } catch { /* offline OK */ }
+      }
     } catch (e: unknown) {
       console.error("Login error:", e)
     }

@@ -38,6 +38,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, errors: ["table manquante"] }, { status: 400 })
     }
 
+    // ── Whitelist des tables autorisées ───────────────────────────────────────
+    const ALLOWED_TABLES = [
+      "fl_users", "fl_clients", "fl_articles", "fl_fournisseurs",
+      "fl_commandes", "fl_commandes_web", "fl_bons_livraison",
+      "fl_bons_preparation", "fl_retours", "fl_trips",
+      "fl_site_access", "fl_account_requests", "fl_prospects",
+      "fl_company_contacts", "fl_depots", "fl_documents",
+      "fl_bons_achat", "fl_purchase_orders", "fl_receptions",
+      "fl_caisses_vides", "fl_charges", "fl_caisse_entries",
+      "fl_salaries", "fl_actionnaires", "fl_livreurs",
+    ]
+    if (!ALLOWED_TABLES.includes(body.table)) {
+      return NextResponse.json({ ok: false, errors: [`Table non autorisée: ${body.table}`] }, { status: 403 })
+    }
+
     const { table, upserts, deletes, clearAll, preserveId } = body
     const errors: string[] = []
     const sb = getAdminClient()

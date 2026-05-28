@@ -214,8 +214,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
+      // Si on utilise le fallback (Supabase vide), signaler que le compte n'existe pas encore
+      const usingFallback = sbUsers.length === 0
+      const errMsg = usingFallback
+        ? "Compte introuvable. Contactez votre commercial pour activer votre accès."
+        : "Numéro ou mot de passe incorrect."
       return NextResponse.json(
-        { error: "Numéro ou mot de passe incorrect." },
+        { error: errMsg },
         { status: 401, headers: cors(origin) }
       )
     }
