@@ -318,7 +318,12 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null)
   const [testing, setTesting] = useState(false)
   const [dgMsg, setDgMsg] = useState<{ ok: boolean; text: string } | null>(null)
-  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [showClearConfirm, setShowClearConfirm]   = useState(false)
+  const [showWipeConfirm, setShowWipeConfirm]     = useState(false)
+  const [showResetConfirm, setShowResetConfirm]   = useState(false)
+  const [wipingAll, setWipingAll]                 = useState(false)
+  const [resetingDemo, setResetingDemo]           = useState(false)
+  const [showAdvancedReset, setShowAdvancedReset] = useState(false)
   const [clearMode, setClearMode] = useState<"local" | "supabase" | "both">("both")
   const [clearTables, setClearTables] = useState<Set<string>>(() => new Set([
     "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
@@ -560,6 +565,60 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
       setDgMsg({ ok: false, text: "Erreur lors de l'effacement." })
     }
     setTimeout(() => setDgMsg(null), 6000)
+  }
+
+  const ALL_TABLES_KEYS = [
+    "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
+    "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
+    "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
+    "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
+    "fl_account_requests","fl_commandes_web","fl_prospects","fl_contrats",
+    "fl_caisse_vides","fl_incentives","fl_perf_commercial",
+  ]
+
+  const handleWipeAllExceptJawad = async () => {
+    setWipingAll(true); setShowWipeConfirm(false)
+    try {
+      // 1. Vider localStorage
+      ALL_TABLES_KEYS.forEach(k => localStorage.removeItem(k))
+      // 2. Vider Supabase (préserver Jawad dans fl_users)
+      for (const table of ERP_TABLES_SYNC) {
+        try {
+          await fetch("/api/sync-write", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ table, clearAll: true, ...(table === "fl_users" ? { preserveId: "u_jawad_root" } : {}) }),
+          })
+        } catch {}
+      }
+      // 3. Ré-injecter Jawad dans Supabase (garantie)
+      await fetch("/api/sync-write", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: "fl_users",
+          upserts: [{ id: "u_jawad_root", payload: { name:"Jawad", email:"jawad@vita-fresh.ma", telephone:"0647333456", password:"Medghaly@22", role:"super_super_admin", actif:true }, updated_at: new Date().toISOString() }],
+        }),
+      })
+      setDgMsg({ ok: true, text: "✅ Toutes les données effacées. Seul le compte Jawad est conservé. Rechargement..." })
+      setTimeout(() => window.location.reload(), 2000)
+    } catch {
+      setDgMsg({ ok: false, text: "Erreur lors de l'effacement total." })
+    }
+    setWipingAll(false)
+  }
+
+  const handleResetToDemo = async () => {
+    setResetingDemo(true); setShowResetConfirm(false)
+    try {
+      // 1. Vider localStorage
+      ALL_TABLES_KEYS.forEach(k => localStorage.removeItem(k))
+      // 2. Charger les données démo
+      await seedDemoData()
+      setDgMsg({ ok: true, text: "✅ Données démo rechargées avec succès. Rechargement..." })
+      setTimeout(() => window.location.reload(), 2000)
+    } catch {
+      setDgMsg({ ok: false, text: "Erreur lors de la réinitialisation démo." })
+    }
+    setResetingDemo(false)
   }
 
   const handleTestSupabase = async () => {
@@ -2134,7 +2193,8 @@ To: {{to_email}}
           </div>
 
           {/* Réinitialisation */}
-          <div className="bg-card rounded-2xl border border-red-200 p-6 flex flex-col gap-4">
+          <div className="bg-card rounded-2xl border border-red-200 p-6 flex flex-col gap-5">
+            {/* Header */}
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-red-50">
                 <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2143,137 +2203,194 @@ To: {{to_email}}
               </div>
               <div>
                 <h3 className="font-semibold text-red-700 text-sm">Réinitialiser les données / مسح البيانات</h3>
-                <p className="text-xs text-muted-foreground">Sélectionnez les catégories à effacer — local et/ou Supabase</p>
+                <p className="text-xs text-muted-foreground">Choisissez le type de réinitialisation</p>
               </div>
             </div>
 
-            {/* Scope local/supabase */}
-            <div className="flex gap-2 flex-wrap">
-              {([
-                { val: "local",    label: "Local uniquement",    desc: "Navigateur seulement" },
-                { val: "supabase", label: "Supabase uniquement", desc: "Base de données distante" },
-                { val: "both",     label: "Les deux",            desc: "Reset complet" },
-              ] as const).map(opt => (
-                <button key={opt.val} onClick={() => setClearMode(opt.val)}
-                  className={`flex flex-col items-start px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${clearMode === opt.val ? "bg-red-100 border-red-400 text-red-800" : "border-border text-muted-foreground hover:bg-muted"}`}>
-                  <span>{opt.label}</span>
-                  <span className="text-[10px] opacity-70">{opt.desc}</span>
-                </button>
-              ))}
-            </div>
+            {/* ── Deux actions principales ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-            {/* Checklist par catégorie de données */}
-            <div className="border border-red-100 rounded-xl p-4 flex flex-col gap-3 bg-red-50/30">
-              {/* Définition de toutes les catégories */}
-              {(() => {
-                const ALL_CATS = [
-                  "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
-                  "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
-                  "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
-                  "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
-                  "fl_account_requests","fl_commandes_web","fl_prospects","fl_contrats",
-                  "fl_caisse_vides","fl_incentives","fl_perf_commercial",
-                ]
-                return (
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-red-700">Catégories à effacer ({clearTables.size}/{ALL_CATS.length})</span>
-                <div className="flex gap-2">
-                  <button onClick={() => setClearTables(new Set(ALL_CATS))}
-                    className="text-[11px] font-semibold text-red-600 hover:underline px-2 py-0.5 rounded hover:bg-red-100 transition-colors">
-                    Tout sélectionner
-                  </button>
-                  <button onClick={() => setClearTables(new Set())}
-                    className="text-[11px] font-semibold text-muted-foreground hover:underline px-2 py-0.5 rounded hover:bg-muted transition-colors">
-                    Tout décocher
-                  </button>
+              {/* Action 1 : Tout effacer sauf Jawad */}
+              <div className="border-2 border-red-200 rounded-2xl p-5 bg-red-50/40 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🗑️</span>
+                  <div>
+                    <p className="text-sm font-black text-red-700">Tout effacer sauf Jawad</p>
+                    <p className="text-[11px] text-red-500 mt-0.5">Local + Supabase · Irréversible</p>
+                  </div>
                 </div>
-              </div>
-                )
-              })()}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                {([
-                  { key: "fl_clients",          label: "Clients",              emoji: "👥" },
-                  { key: "fl_fournisseurs",     label: "Fournisseurs",         emoji: "🏭" },
-                  { key: "fl_articles",         label: "Articles / Catalogue", emoji: "📦" },
-                  { key: "fl_commandes",        label: "Commandes Terrain",    emoji: "🛒" },
-                  { key: "fl_commandes_web",    label: "Commandes Web",        emoji: "🌐" },
-                  { key: "fl_bons_livraison",   label: "Bons de livraison",    emoji: "🚚" },
-                  { key: "fl_bons_preparation", label: "Bons de préparation",  emoji: "📋" },
-                  { key: "fl_bons_achat",       label: "Bons d'achat",         emoji: "🧾" },
-                  { key: "fl_purchase_orders",  label: "Commandes achat",      emoji: "📄" },
-                  { key: "fl_receptions",       label: "Réceptions",           emoji: "📥" },
-                  { key: "fl_trips",            label: "Tournées",             emoji: "🗺️" },
-                  { key: "fl_retours",          label: "Retours",              emoji: "↩️" },
-                  { key: "fl_visites",          label: "Visites / Prospection",emoji: "📍" },
-                  { key: "fl_transferts_stock", label: "Transferts stock",     emoji: "🔄" },
-                  { key: "fl_demandes_achat",   label: "Demandes achat",       emoji: "📝" },
-                  { key: "fl_messages",         label: "Messages",             emoji: "💬" },
-                  { key: "fl_notices",          label: "Notices / Alertes",    emoji: "🔔" },
-                  { key: "fl_non_achats",       label: "Non-achats",           emoji: "❌" },
-                  { key: "fl_depots",           label: "Dépôts",               emoji: "🏪" },
-                  { key: "fl_livreurs",         label: "Livreurs",             emoji: "🏍️" },
-                  { key: "fl_users",            label: "Utilisateurs",         emoji: "👤" },
-                  { key: "fl_account_requests", label: "Demandes de compte",   emoji: "📋" },
-                  { key: "fl_prospects",        label: "Prospects",            emoji: "👀" },
-                  { key: "fl_contrats",         label: "Contrats",             emoji: "📑" },
-                  { key: "fl_caisse_vides",     label: "Caisses vides",        emoji: "📦" },
-                  { key: "fl_incentives",       label: "Incentives",           emoji: "🎯" },
-                  { key: "fl_perf_commercial",  label: "Perf. commerciale",    emoji: "📊" },
-                ] as const).map(t => {
-                  const checked = clearTables.has(t.key)
-                  return (
-                    <label key={t.key}
-                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer text-xs font-medium transition-colors select-none
-                        ${checked ? "bg-red-100 border-red-300 text-red-800" : "bg-white border-gray-200 text-muted-foreground hover:border-red-200"}`}>
-                      <input type="checkbox" checked={checked} onChange={e => {
-                        const next = new Set(clearTables)
-                        if (e.target.checked) next.add(t.key); else next.delete(t.key)
-                        setClearTables(next)
-                      }} className="accent-red-600 w-3.5 h-3.5 shrink-0" />
-                      <span>{t.emoji}</span>
-                      <span className="truncate">{t.label}</span>
-                    </label>
-                  )
-                })}
-              </div>
-            </div>
-
-            {user.role === "super_super_admin" && (
-              <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                <span>Votre compte super_admin est protégé et ne sera jamais supprimé même lors d&apos;un reset total.</span>
-              </div>
-            )}
-
-            {clearTables.size === 0 && (
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                ⚠️ Aucune catégorie sélectionnée — cochez au moins une catégorie pour activer la suppression.
-              </p>
-            )}
-
-            {!showClearConfirm ? (
-              <button onClick={() => setShowClearConfirm(true)} disabled={clearTables.size === 0}
-                className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Effacer {clearTables.size} catégorie{clearTables.size > 1 ? "s" : ""} ({clearMode === "local" ? "local" : clearMode === "supabase" ? "Supabase" : "local + Supabase"})
-              </button>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-semibold text-red-700">
-                  Confirmer la suppression de {clearTables.size} catégorie{clearTables.size > 1 ? "s" : ""} ({clearMode === "both" ? "local + Supabase" : clearMode === "supabase" ? "Supabase" : "local"}) ?
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Supprime <strong>toutes les données</strong> (clients, commandes, articles, utilisateurs…).
+                  Seul le compte Jawad est conservé.
                 </p>
-                <div className="flex gap-2">
-                  <button onClick={handleClearAll}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors">
-                    Oui, effacer
+                {!showWipeConfirm ? (
+                  <button onClick={() => setShowWipeConfirm(true)} disabled={wipingAll}
+                    className="mt-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50">
+                    {wipingAll ? "Effacement..." : "Tout effacer sauf Jawad"}
                   </button>
-                  <button onClick={() => setShowClearConfirm(false)}
-                    className="px-4 py-2 rounded-xl text-sm font-semibold border border-border hover:bg-muted transition-colors">
-                    Annuler
-                  </button>
+                ) : (
+                  <div className="mt-auto flex flex-col gap-2">
+                    <p className="text-xs font-bold text-red-700">Confirmer ? Cette action est irréversible.</p>
+                    <div className="flex gap-2">
+                      <button onClick={handleWipeAllExceptJawad}
+                        className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition-colors">
+                        Oui, effacer tout
+                      </button>
+                      <button onClick={() => setShowWipeConfirm(false)}
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold border border-border hover:bg-muted transition-colors">
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action 2 : Réinitialiser aux données démo */}
+              <div className="border-2 border-amber-200 rounded-2xl p-5 bg-amber-50/40 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🔄</span>
+                  <div>
+                    <p className="text-sm font-black text-amber-700">Données démo</p>
+                    <p className="text-[11px] text-amber-500 mt-0.5">Local uniquement · Restaure l&apos;état démo</p>
+                  </div>
                 </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Recharge les <strong>données d&apos;exemple</strong> du système : clients démo, articles, commandes types, utilisateurs demo…
+                </p>
+                {!showResetConfirm ? (
+                  <button onClick={() => setShowResetConfirm(true)} disabled={resetingDemo}
+                    className="mt-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-amber-800 bg-amber-100 border border-amber-300 hover:bg-amber-200 transition-colors disabled:opacity-50">
+                    {resetingDemo ? "Réinitialisation..." : "Réinitialiser aux données démo"}
+                  </button>
+                ) : (
+                  <div className="mt-auto flex flex-col gap-2">
+                    <p className="text-xs font-bold text-amber-700">Les données actuelles seront remplacées.</p>
+                    <div className="flex gap-2">
+                      <button onClick={handleResetToDemo}
+                        className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors">
+                        Oui, réinitialiser
+                      </button>
+                      <button onClick={() => setShowResetConfirm(false)}
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold border border-border hover:bg-muted transition-colors">
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Mode avancé (sélection manuelle) ── */}
+            <button onClick={() => setShowAdvancedReset(v => !v)}
+              className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors self-start">
+              <svg className={`w-3.5 h-3.5 transition-transform ${showAdvancedReset ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              Mode avancé — sélection manuelle des catégories
+            </button>
+
+            {showAdvancedReset && (
+              <div className="flex flex-col gap-4 border border-border rounded-2xl p-4 bg-muted/20">
+                {/* Scope */}
+                <div className="flex gap-2 flex-wrap">
+                  {([
+                    { val: "local",    label: "Local uniquement",    desc: "Navigateur seulement" },
+                    { val: "supabase", label: "Supabase uniquement", desc: "Base de données distante" },
+                    { val: "both",     label: "Les deux",            desc: "Reset complet" },
+                  ] as const).map(opt => (
+                    <button key={opt.val} onClick={() => setClearMode(opt.val)}
+                      className={`flex flex-col items-start px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${clearMode === opt.val ? "bg-red-100 border-red-400 text-red-800" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                      <span>{opt.label}</span>
+                      <span className="text-[10px] opacity-70">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Checklist */}
+                <div className="border border-red-100 rounded-xl p-4 flex flex-col gap-3 bg-red-50/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-red-700">Catégories à effacer ({clearTables.size}/27)</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setClearTables(new Set(ALL_TABLES_KEYS))}
+                        className="text-[11px] font-semibold text-red-600 hover:underline px-2 py-0.5 rounded hover:bg-red-100 transition-colors">Tout sélectionner</button>
+                      <button onClick={() => setClearTables(new Set())}
+                        className="text-[11px] font-semibold text-muted-foreground hover:underline px-2 py-0.5 rounded hover:bg-muted transition-colors">Tout décocher</button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {([
+                      { key: "fl_clients",          label: "Clients",              emoji: "👥" },
+                      { key: "fl_fournisseurs",     label: "Fournisseurs",         emoji: "🏭" },
+                      { key: "fl_articles",         label: "Articles / Catalogue", emoji: "📦" },
+                      { key: "fl_commandes",        label: "Commandes Terrain",    emoji: "🛒" },
+                      { key: "fl_commandes_web",    label: "Commandes Web",        emoji: "🌐" },
+                      { key: "fl_bons_livraison",   label: "Bons de livraison",    emoji: "🚚" },
+                      { key: "fl_bons_preparation", label: "Bons de préparation",  emoji: "📋" },
+                      { key: "fl_bons_achat",       label: "Bons d'achat",         emoji: "🧾" },
+                      { key: "fl_purchase_orders",  label: "Commandes achat",      emoji: "📄" },
+                      { key: "fl_receptions",       label: "Réceptions",           emoji: "📥" },
+                      { key: "fl_trips",            label: "Tournées",             emoji: "🗺️" },
+                      { key: "fl_retours",          label: "Retours",              emoji: "↩️" },
+                      { key: "fl_visites",          label: "Visites / Prospection",emoji: "📍" },
+                      { key: "fl_transferts_stock", label: "Transferts stock",     emoji: "🔄" },
+                      { key: "fl_demandes_achat",   label: "Demandes achat",       emoji: "📝" },
+                      { key: "fl_messages",         label: "Messages",             emoji: "💬" },
+                      { key: "fl_notices",          label: "Notices / Alertes",    emoji: "🔔" },
+                      { key: "fl_non_achats",       label: "Non-achats",           emoji: "❌" },
+                      { key: "fl_depots",           label: "Dépôts",               emoji: "🏪" },
+                      { key: "fl_livreurs",         label: "Livreurs",             emoji: "🏍️" },
+                      { key: "fl_users",            label: "Utilisateurs",         emoji: "👤" },
+                      { key: "fl_account_requests", label: "Demandes de compte",   emoji: "📋" },
+                      { key: "fl_prospects",        label: "Prospects",            emoji: "👀" },
+                      { key: "fl_contrats",         label: "Contrats",             emoji: "📑" },
+                      { key: "fl_caisse_vides",     label: "Caisses vides",        emoji: "📦" },
+                      { key: "fl_incentives",       label: "Incentives",           emoji: "🎯" },
+                      { key: "fl_perf_commercial",  label: "Perf. commerciale",    emoji: "📊" },
+                    ] as const).map(t => {
+                      const checked = clearTables.has(t.key)
+                      return (
+                        <label key={t.key}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer text-xs font-medium transition-colors select-none
+                            ${checked ? "bg-red-100 border-red-300 text-red-800" : "bg-white border-gray-200 text-muted-foreground hover:border-red-200"}`}>
+                          <input type="checkbox" checked={checked} onChange={e => {
+                            const next = new Set(clearTables)
+                            if (e.target.checked) next.add(t.key); else next.delete(t.key)
+                            setClearTables(next)
+                          }} className="accent-red-600 w-3.5 h-3.5 shrink-0" />
+                          <span>{t.emoji}</span>
+                          <span className="truncate">{t.label}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {clearTables.size === 0 && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                    ⚠️ Aucune catégorie sélectionnée.
+                  </p>
+                )}
+
+                {!showClearConfirm ? (
+                  <button onClick={() => setShowClearConfirm(true)} disabled={clearTables.size === 0}
+                    className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    Effacer {clearTables.size} catégorie{clearTables.size > 1 ? "s" : ""} ({clearMode === "local" ? "local" : clearMode === "supabase" ? "Supabase" : "local + Supabase"})
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-semibold text-red-700">
+                      Confirmer la suppression de {clearTables.size} catégorie{clearTables.size > 1 ? "s" : ""} ?
+                    </p>
+                    <div className="flex gap-2">
+                      <button onClick={handleClearAll} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors">
+                        Oui, effacer
+                      </button>
+                      <button onClick={() => setShowClearConfirm(false)} className="px-4 py-2 rounded-xl text-sm font-semibold border border-border hover:bg-muted transition-colors">
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
