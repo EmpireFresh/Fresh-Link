@@ -1320,8 +1320,32 @@ function setLang(lang){
         </div>
         <div id="ua-pwd-msg" style="font-size:13px;margin-top:8px"></div>
       </div>
+
+      <!-- Modal modification compte complet -->
+      <div id="ua-full-modal" style="display:none;background:#fff;border:2px solid #2563eb;border-radius:14px;padding:18px;margin-top:12px">
+        <div style="font-weight:700;color:#2563eb;margin-bottom:12px;font-size:15px">✏️ Modifier le compte</div>
+        <input type="hidden" id="ua-full-id"/>
+        <div class="cfg-f"><label>Nom complet</label><input id="ua-full-name" type="text" placeholder="Prénom Nom"/></div>
+        <div class="cfg-f"><label>Téléphone</label><input id="ua-full-phone" type="tel" placeholder="06XXXXXXXX"/></div>
+        <div class="cfg-f"><label>Email</label><input id="ua-full-email" type="email" placeholder="email@exemple.com"/></div>
+        <div class="cfg-f"><label>Rôle</label>
+          <select id="ua-full-role" style="width:100%;padding:9px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px">
+            <option value="client">client</option>
+            <option value="fournisseur">fournisseur</option>
+            <option value="resp_commercial">resp_commercial</option>
+            <option value="admin">admin</option>
+            <option value="super_admin">super_admin</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button onclick="adminSaveFullUser()" style="padding:9px 18px;background:#2563eb;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">💾 Enregistrer</button>
+          <button onclick="adminCloseFullEdit()" style="padding:9px 16px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:9px;font-size:13px;cursor:pointer">Annuler</button>
+        </div>
+        <div id="ua-full-msg" style="font-size:13px;margin-top:8px"></div>
+      </div>
     </div>
 
+    <!-- ── COMMANDES UNIFIÉES ── -->
     <!-- ── DEMANDES D'ACCÈS SITE ── -->
     <div class="cfg-sec" id="s-access">
       <div class="cfg-grp">🔐 Demandes d'accès au site</div>
@@ -1623,11 +1647,12 @@ GET  /api/ext/commandes/:id → suivi commande</div>
       </div>
       <a href="#" class="btn-wa-green" onclick="orderWhatsApp(event)"><span data-i18n="cat_wa">📦 Commander par WhatsApp</span></a>
     </div>
-    <div class="cats">
-      <div class="ccat on" onclick="fcat('tous',this)"><span class="ccat-em">🛒</span><div class="ccat-n" data-i18n="cat_all">Tout voir</div><div class="ccat-c" id="cat-count-tous">...</div></div>
-      <div class="ccat" onclick="fcat('fruits',this)"><span class="ccat-em">🍎</span><div class="ccat-n" data-i18n="nav_catalogue">Fruits frais</div><div class="ccat-c" id="cat-count-fruits">...</div><div class="ccat-new">Saison</div></div>
-      <div class="ccat" onclick="fcat('legumes',this)"><span class="ccat-em">🥦</span><div class="ccat-n">Légumes</div><div class="ccat-c" id="cat-count-legumes">...</div></div>
-      <div class="ccat" onclick="fcat('prepare',this)"><span class="ccat-em">🔪</span><div class="ccat-n" data-i18n="cat_peeled">Prêt à cuisiner</div><div class="ccat-c" id="cat-count-prepare">...</div><div class="ccat-new">Nouveau</div></div>
+    <div class="cats" style="grid-template-columns:repeat(5,1fr)" id="cats-grid">
+      <div class="ccat on" onclick="fcat('tous',this)" data-cat="tous"><span class="ccat-em">🛒</span><div class="ccat-n" data-i18n="cat_all">Tout voir</div><div class="ccat-c" id="cat-count-tous">...</div></div>
+      <div class="ccat" onclick="fcat('fruits',this)" data-cat="fruits"><span class="ccat-em">🍎</span><div class="ccat-n" data-i18n="nav_catalogue">Fruits frais</div><div class="ccat-c" id="cat-count-fruits">...</div><span class="ccat-new" id="ccat-new-fruits" style="display:none">Saison</span></div>
+      <div class="ccat" onclick="fcat('legumes',this)" data-cat="legumes"><span class="ccat-em">🥦</span><div class="ccat-n">Légumes</div><div class="ccat-c" id="cat-count-legumes">...</div><span class="ccat-new" id="ccat-new-legumes" style="display:none">Nouveau</span></div>
+      <div class="ccat" onclick="fcat('herbes',this)" data-cat="herbes"><span class="ccat-em">🌿</span><div class="ccat-n">Herbes fraîches</div><div class="ccat-c" id="cat-count-herbes">...</div><span class="ccat-new" id="ccat-new-herbes" style="display:none">Nouveau</span></div>
+      <div class="ccat" onclick="fcat('prepare',this)" data-cat="prepare"><span class="ccat-em">🔪</span><div class="ccat-n" data-i18n="cat_peeled">Prêt à cuisiner</div><div class="ccat-c" id="cat-count-prepare">...</div><span class="ccat-new" id="ccat-new-prepare" style="display:none">Nouveau</span></div>
     </div>
   </div>
 </section>
@@ -1702,12 +1727,6 @@ GET  /api/ext/commandes/:id → suivi commande</div>
               <div id="uid-adr" style="font-weight:600;color:#374151;font-size:12px">—</div>
             </div>
           </div>
-          <!-- Champs cachés pour la soumission -->
-          <input id="f-nom" type="hidden">
-          <input id="f-tel" type="hidden">
-          <input id="f-email" type="hidden">
-          <input id="f-adr" type="hidden">
-          <input id="f-co" type="hidden">
           <div class="fg" style="margin-top:10px">
             <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">📍 Adresse de livraison (modifiable)</label>
             <input id="f-adr-visible" type="text" placeholder="N° rue, quartier, bâtiment..." style="border-color:#16a34a;background:#fff" oninput="document.getElementById('f-adr').value=this.value">
@@ -1789,8 +1808,8 @@ GET  /api/ext/commandes/:id → suivi commande</div>
           </div>
           <a id="vir-wa-btn" href="#" target="_blank" style="display:inline-block;margin-top:8px;background:#25d366;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;font-weight:700;text-decoration:none">📸 Envoyer le justificatif sur WhatsApp</a>
         </div>
-        <button class="sbtn" id="submit-btn" onclick="submitOrder()">
-          ✅ Envoyer ma commande — <span id="total-btn">0 MAD</span>
+        <button class="sbtn" id="submit-btn" onclick="openOrderCheck()">
+          🔍 Vérifier ma commande — <span id="total-btn">0 MAD</span>
         </button>
       </div>
       <div class="osum">
@@ -1803,7 +1822,7 @@ GET  /api/ext/commandes/:id → suivi commande</div>
           <div class="tr"><span>Livraison</span><span id="t-del">Gratuite</span></div>
           <div class="tf2"><div class="tl2">Total</div><div class="ta" id="t-tot">0 MAD</div></div>
           <div class="erp-note"><strong>🔗 Synchronisé avec FreshLink ERP</strong>Commande enregistrée — bon de livraison — notification WhatsApp</div>
-          <button class="cbtn" onclick="submitOrder()">⚡ Confirmer — <span id="t-conf">0 MAD</span></button>
+          <button class="cbtn" onclick="openOrderCheck()">🔍 Vérifier ma commande — <span id="t-conf">0 MAD</span></button>
         </div>
       </div>
     </div>
@@ -2549,6 +2568,9 @@ GET  /api/ext/commandes/:id → suivi commande</div>
           <input type="password" id="loginPass" placeholder="Mot de passe" autocomplete="current-password" required/>
         </div>
         <button type="submit" class="btn-submit" id="btnLoginSubmit" data-i18n="btn_login_ok">Se connecter</button>
+        <div style="text-align:center;margin-top:12px">
+          <a href="#" onclick="showForgotPassword();return false;" style="font-size:12px;color:#6b7280;text-decoration:none;border-bottom:1px dashed #ccc">🔑 Mot de passe oublié ?</a>
+        </div>
       </form>
       <p style="margin-top:12px;text-align:center;font-size:13px;color:var(--gy)">
         <span>Pas encore de compte ?</span>
@@ -2597,6 +2619,38 @@ GET  /api/ext/commandes/:id → suivi commande</div>
         <span>Déjà un compte ?</span>
         <a href="#" onclick="switchLoginTab('login');return false" style="color:var(--g1);font-weight:600;margin-left:6px">Se connecter</a>
       </p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VERIFICATION COMMANDE -->
+<div id="order-check-modal" style="display:none;position:fixed;inset:0;z-index:3100;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeOrderCheck()">
+  <div style="background:#fff;border-radius:20px;max-width:560px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.35)">
+    <div style="background:linear-gradient(135deg,#1e5631,#2d9a4e);border-radius:20px 20px 0 0;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#fff">🔍 Vérification commande</div>
+        <div style="font-size:12px;color:#a7f3d0;margin-top:2px">Confirmez avant envoi</div>
+      </div>
+      <button onclick="closeOrderCheck()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:700">✕</button>
+    </div>
+    <div style="padding:20px 24px">
+      <!-- Client -->
+      <div style="background:#f0fdf4;border-radius:12px;padding:14px 16px;margin-bottom:16px;border:1px solid #d1fae5">
+        <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📋 Informations livraison</div>
+        <div id="oc-client-content" style="font-size:13px;line-height:1.8;color:#1e5631"></div>
+      </div>
+      <!-- Articles -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🛒 Articles commandés</div>
+        <div id="oc-items"></div>
+      </div>
+      <!-- Totaux -->
+      <div id="oc-totals" style="background:#f9fafb;border-radius:12px;padding:14px 16px;border:1px solid #e5e7eb;margin-bottom:20px"></div>
+      <!-- Actions -->
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+        <button onclick="closeOrderCheck()" style="padding:14px;border-radius:12px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:14px;font-weight:700;cursor:pointer">✏️ Modifier</button>
+        <button id="oc-confirm-btn" onclick="confirmAndSend()" style="padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#1e5631,#2d9a4e);color:#fff;font-size:14px;font-weight:800;cursor:pointer">✅ Confirmer et envoyer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2686,9 +2740,11 @@ function renderAdminUsers(users){
         +'<div class="ua-card-name">'+(u.name||"—")+'</div>'
         +'<div class="ua-card-meta">'+(u.telephone||u.phone||"—")+' · <span style="color:'+roleColor+';font-weight:700">'+(u.role||"client")+'</span>'+(u.actif===false?' · <span style="color:#dc2626">Inactif</span>':'')+'</div>'
       +'</div>'
-      +'<div class="ua-card-actions">'
+      +'<div class="ua-card-actions" style="display:flex;gap:6px;flex-wrap:wrap">'
+        +'<button class="ua-btn-sm" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer" onclick="adminEditUser(\''+u.id+'\')">✏️ Modifier</button>'
         +'<button class="ua-btn-sm ua-btn-edit" onclick="adminEditPassword(\''+u.id+'\')">🔑 MDP</button>'
-        +'<button class="ua-btn-sm ua-btn-del" onclick="adminToggleActive(\''+u.id+'\','+(u.actif===false?'true':'false')+')">'+( u.actif===false?'✅':'🚫')+'</button>'
+        +'<button class="ua-btn-sm ua-btn-del" onclick="adminToggleActive(\''+u.id+'\','+(u.actif===false?'true':'false')+')">'+( u.actif===false?'✅ Activer':'🚫 Désactiver')+'</button>'
+        +'<button class="ua-btn-sm" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer" onclick="adminDeleteUser(\''+u.id+'\')">🗑️</button>'
       +'</div>'
     +'</div>';
   }).join("");
@@ -2871,16 +2927,19 @@ var DEFAULT_PRODS=[
   {id:"t6",em:"🧅",n:"Oignons",no:"بصل",o:"Settat",p:7,u:"kg",cat:"legumes",tags:["frais","epluche"],t:"epluche",dispo:true,img:"https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=400&q=80"},
   {id:"t7",em:"🍇",n:"Raisins Meknès",no:"عنب مكناس",o:"Meknès",p:28,u:"kg",cat:"fruits",tags:["frais","promo"],t:"promo",dispo:true,img:"https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=400&q=80"},
   {id:"t8",em:"🧄",n:"Ail épluché",no:"ثوم مقشّر",o:"Meknès",p:40,u:"kg",cat:"legumes",tags:["epluche"],t:"epluche",dispo:true,img:"https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80"},
-  {id:"t9",em:"🍋",n:"Citrons Eureka",no:"ليمون يوريكا",o:"Souss",p:7,u:"kg",cat:"fruits",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1590502593747-42a996133562?w=400&q=80"},
-  {id:"t10",em:"🥔",n:"Pommes de Terre",no:"بطاطا",o:"Azilal",p:4,u:"kg",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80"},
+  {id:"t9",em:"🍋",n:"Citrons Eureka",no:"ليمون يوريكا",o:"Souss",p:7,u:"kg",packInfo:"caisse 20 kg",cat:"fruits",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1590502593747-42a996133562?w=400&q=80"},
+  {id:"t10",em:"🥔",n:"Pommes de Terre",no:"بطاطا",o:"Azilal",p:4,u:"kg",packInfo:"caisse 30 kg",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=80"},
   {id:"t11",em:"🍌",n:"Bananes",no:"موز",o:"Canaries/Maroc",p:9,u:"kg",cat:"fruits",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&q=80"},
   {id:"t12",em:"🍎",n:"Pommes Gala",no:"تفاح غالا",o:"Maroc",p:13,u:"kg",cat:"fruits",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=400&q=80"},
   {id:"t13",em:"🫑",n:"Poivrons",no:"فلفل رومي",o:"Agadir",p:12,u:"kg",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&q=80"},
   {id:"t14",em:"🍆",n:"Aubergines",no:"دنجال",o:"Souss",p:9,u:"kg",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1605027990121-cbae9e0642df?w=400&q=80"},
   {id:"t15",em:"🥬",n:"Salade Laitue",no:"خس",o:"Gharb",p:5,u:"pièce",cat:"legumes",tags:["frais","lave"],t:"lave",dispo:true,img:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80"},
-  {id:"t16",em:"🌿",n:"Coriandre",no:"قصبر",o:"Maroc",p:3,u:"botte",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&q=80"},
-  {id:"t17",em:"🌿",n:"Persil",no:"معدنوس",o:"Maroc",p:3,u:"botte",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1601362840469-51e4d8d58785?w=400&q=80"},
-  {id:"t18",em:"🌿",n:"Menthe fraîche",no:"نعناع",o:"Maroc",p:2.5,u:"botte",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1628556270448-4d4e4148e1b1?w=400&q=80"},
+  {id:"t16",em:"🌿",n:"Coriandre",no:"قصبر",o:"Maroc",p:3,u:"botte",cat:"herbes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&q=80"},
+  {id:"t17",em:"🌿",n:"Persil",no:"معدنوس",o:"Maroc",p:3,u:"botte",cat:"herbes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1601362840469-51e4d8d58785?w=400&q=80"},
+  {id:"t18",em:"🌿",n:"Menthe fraîche",no:"نعناع",o:"Maroc",p:2.5,u:"botte",cat:"herbes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1628556270448-4d4e4148e1b1?w=400&q=80"},
+  {id:"t26",em:"🌱",n:"Thym frais",no:"زعتر",o:"Maroc",p:3,u:"botte",cat:"herbes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1550747528-cdb45925b3f7?w=400&q=80"},
+  {id:"t27",em:"🌿",n:"Basilic",no:"ريحان",o:"Maroc",p:4,u:"botte",cat:"herbes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1618375531912-867984bdfd87?w=400&q=80"},
+  {id:"t28",em:"🌿",n:"Fenugrec (Helba)",no:"الحلبة",o:"Maroc",p:2,u:"botte",cat:"herbes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1604537466608-109fa2f16c3b?w=400&q=80"},
   {id:"t19",em:"🥒",n:"Concombres",no:"خيار",o:"Souss",p:6,u:"kg",cat:"legumes",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=400&q=80"},
   {id:"t20",em:"🥭",n:"Mangues Keitt",no:"مانجو كيط",o:"Maroc",p:32,u:"kg",cat:"fruits",tags:["frais"],t:"frais",dispo:true,img:"https://images.unsplash.com/photo-1605027990121-cbae9e0642df?w=400&q=80"},
   {id:"t21",em:"🍓",n:"Fraises Kenitra",no:"فراولة القنيطرة",o:"Gharb",p:22,u:"kg",cat:"fruits",tags:["frais","promo"],t:"promo",dispo:true,img:"https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&q=80"},
@@ -2911,7 +2970,8 @@ function mapERPArticle(row){
   // dispo: always show available (stock tracking optional)
   var dispo=row.statut!=="rupture"&&row.statut!=="out_of_stock"&&row.statut!=="indisponible";
   var stock=row.stock_disponible||row.stockDisponible||99;
-  return{id:row.id,em:getEmoji(row.nom,cat),n:row.nom||"",no:nomAr,o:origin,p:prix,prixBase:prixBase,u:row.unite||"kg",cat:cat,tags:tags,t:firstTag,dispo:dispo,stock:stock,img:row.photo||"",promo:!!promoObj,promoLabel:promoLabel,fromERP:true};
+  var packInfo=row.conditionnement||row.pack_info||row.packInfo||null;
+  return{id:row.id,em:getEmoji(row.nom,cat),n:row.nom||"",no:nomAr,o:origin,p:prix,prixBase:prixBase,u:row.unite||"kg",packInfo:packInfo,cat:cat,tags:tags,t:firstTag,dispo:dispo,stock:stock,img:row.photo||"",promo:!!promoObj,promoLabel:promoLabel,fromERP:true};
 }
 // Map Supabase fl_articles row (payload JSONB) to internal PROD object
 function mapSBArticle(row){
@@ -2934,7 +2994,7 @@ function mapSBArticle(row){
     id:row.id, em:getEmoji(p.nom,cat), n:p.nom||"", no:p.nomAr||"",
     o:p.marketplaceDescription||p.marketplaceCommentaire||p.famille||"Maroc",
     p:prix, prixBase:prixBase,
-    u:p.unite||"kg", cat:cat, tags:tags, t:firstTag,
+    u:p.unite||"kg", packInfo:p.conditionnement||p.pack_info||p.packInfo||null, cat:cat, tags:tags, t:firstTag,
     dispo:p.marketplaceStatut!=="out_of_stock"&&(p.stockDisponible||0)>0,
     stock:p.stockDisponible||0, img:p.photo||(p.photos&&p.photos[0])||"",
     promo:!!promoObj, promoLabel:promoLabel, fromSB:true,
@@ -3113,14 +3173,16 @@ function renderProds(f){
     var prixHtml=p.promo&&p.prixBase&&p.prixBase!==p.p?p.p+' MAD <del>'+p.prixBase+'</del><span>/ '+p.u+'</span>':p.p+' MAD <span>/ '+p.u+'</span>';
     var imgHtml=p.img?'<img src="'+p.img+'" alt="'+p.n+'" onerror="this.style.display=\'none\'" loading="lazy">':'';
     var tagsHtml=(p.tags||[]).map(function(tg){return TL[tg]?'<span class="po">'+TL[tg]+'</span>':'';}).join("");
-    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+(outStock?'<div class="out-badge">Rupture de stock</div>':'')+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+(p.stock!==undefined?'<div style="font-size:10px;color:var(--gy);margin-bottom:5px">Stock : '+p.stock+' '+p.u+'</div>':'')+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)"'+(outStock?' disabled':'')+'>−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' disabled title="Rupture"':'')+'>+</button></div></div></div></div>';
+    var unitBadge='<span style="display:inline-block;background:#f0fdf4;color:#1e5631;border:1px solid #d1fae5;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:4px">⚖️ '+p.u+'</span>';
+    var packHtml=p.packInfo?'<div style="margin-bottom:4px"><span style="font-size:10px;color:#1e5631;font-weight:700;background:#dcfce7;border-radius:6px;padding:2px 7px;display:inline-block">📦 '+p.packInfo+'</span></div>':'';
+    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+(outStock?'<div class="out-badge">Rupture de stock</div>':'')+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+(p.stock!==undefined?'<div style="font-size:10px;color:var(--gy);margin-bottom:5px">Stock : '+p.stock+' '+p.u+'</div>':'')+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)"'+(outStock?' disabled':'')+'>−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' disabled title="Rupture"':'')+'>+</button></div></div></div></div>';
   }).join("");
 }
 
 function updateCatCounts(){
-  var counts={tous:0,fruits:0,legumes:0,prepare:0};
+  var counts={tous:0,fruits:0,legumes:0,herbes:0,prepare:0};
   PRODS.forEach(function(p){ if(p.dispo){counts.tous++;if(counts[p.cat]!==undefined)counts[p.cat]++;} });
-  ["tous","fruits","legumes","prepare"].forEach(function(k){ var el=document.getElementById("cat-count-"+k); if(el) el.textContent=counts[k]+" produit"+(counts[k]>1?"s":""); });
+  ["tous","fruits","legumes","herbes","prepare"].forEach(function(k){ var el=document.getElementById("cat-count-"+k); if(el) el.textContent=counts[k]+" produit"+(counts[k]>1?"s":""); });
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -3233,8 +3295,16 @@ function submitOrder(){
     // 1. Vider le panier
     cart={};
     updateCartUI();
-    // 2. Réinitialiser le bouton & afficher confirmation
-    btn.disabled=false; btn.innerHTML="✅ Commande envoyée — <span id='total-btn'>"+tot+" MAD</span>";
+    // 2. Remettre le bouton à zéro
+    btn.disabled=false; btn.innerHTML="🔍 Vérifier ma commande — <span id='total-btn'>0 MAD</span>";
+    // 3. Réinitialiser le formulaire (si pas connecté)
+    var gst=document.getElementById("guest-form-block");
+    if(gst&&gst.style.display!=="none"){
+      ["f-nom","f-tel","f-email","f-adr","f-co"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
+    }
+    ["f-notes","vir-ref"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
+    var fzone=document.getElementById("f-zone"); if(fzone) fzone.selectedIndex=0;
+    var fpay=document.getElementById("f-pay"); if(fpay) fpay.selectedIndex=0;
     var orderNumEl=document.getElementById("mod-order-num");
     if(orderNumEl) orderNumEl.textContent=num||cmdRef;
     document.getElementById("modal").classList.add("show");
@@ -3333,6 +3403,7 @@ function refreshPriceBox(){
   var std=parseInt(document.getElementById("c-std").value)||CFG.std;
   var box=document.getElementById("price-box"); if(box) box.innerHTML='<strong>📊 Aperçu actuel</strong>Express : <b>'+exp+' MAD</b> — Standard gratuite dès <b>'+free+' MAD</b> — Sinon <b>'+std+' MAD</b>';
 }
+
 function saveConfig(){
   function get(id){var el=document.getElementById(id);return el?el.value.trim():"";}
   CFG.wa=get("c-wa")||CFG.wa; CFG.email=get("c-email")||CFG.email; CFG.addr=get("c-addr")||CFG.addr;
@@ -3586,18 +3657,10 @@ function showPortal(data){
   var uidTel=document.getElementById("uid-tel"); if(uidTel) uidTel.textContent=userTel||"—";
   var uidAdr=document.getElementById("uid-adr"); if(uidAdr) uidAdr.textContent=userAdr||"—";
 
-  // Champs cachés pour la soumission de commande
-  var setHidden=function(id,val){var el=document.getElementById(id);if(el)el.value=val||"";};
-  setHidden("f-nom",userName); setHidden("f-tel",userTel); setHidden("f-email",userEmail); setHidden("f-adr",userAdr);
+  // Pré-remplir les champs du formulaire invité (masqué) pour la soumission de commande
+  var setVal=function(id,val){var el=document.getElementById(id);if(el)el.value=val||"";};
+  setVal("f-nom",userName); setVal("f-tel",userTel); setVal("f-email",userEmail); setVal("f-adr",userAdr);
   var adrVis=document.getElementById("f-adr-visible"); if(adrVis&&userAdr) adrVis.value=userAdr;
-  var orders=data.commandes||[], listEl=document.getElementById("orderList");
-  if(!orders.length) listEl.innerHTML='<p style="color:var(--gy);font-size:14px">'+t("portal_no_orders")+'</p>';
-  else listEl.innerHTML=orders.map(function(o){
-    var sc=o.statut==="livree"?"livree":o.statut==="annulee"?"annulee":"en_cours";
-    var loc=currentLang==="ar"?"ar-MA":currentLang==="en"?"en-GB":"fr-FR";
-    var dt=o.date?new Date(o.date).toLocaleDateString(loc):"—";
-    return'<div class="order-item"><div><div class="order-ref">#'+(o.numero||(o.id||"").slice(0,8)||"—")+'</div><div class="order-date">'+dt+'</div></div><span class="order-status '+sc+'">'+o.statut+'</span><div class="order-amt">'+((o.montant||0).toLocaleString())+' DH</div></div>';
-  }).join("");
 }
 function logout(){
   clearSession();
@@ -3642,6 +3705,102 @@ function saveConfigCompte(){
   setTimeout(function(){closeConfigCompte();},1200);
   showToast("✅ Compte mis à jour !");
 }
+// ── ORDER CHECK / VERIFICATION ──────────────────────────────────────────
+// ── ORDER CHECK / VERIFICATION ──────────────────────────────────────────
+function openOrderCheck(){
+  var nom=document.getElementById("f-nom").value.trim();
+  var tel=document.getElementById("f-tel").value.trim();
+  var adr=document.getElementById("f-adr").value.trim();
+  if(!nom||!tel){showToast("⚠️ Remplissez au minimum nom et téléphone");return;}
+  if(!Object.keys(cart).length){showToast("🛒 Panier vide — ajoutez des produits");return;}
+  var items=Object.values(cart);
+  var sub=items.reduce(function(s,p){return s+p.p*p.qty;},0);
+  var df=delMode==="exp"?CFG.exp:(sub>=CFG.free?0:CFG.std), tot=sub+df;
+  var zone=(document.getElementById("f-zone")||{}).value||"";
+  var pay=(document.getElementById("f-pay")||{}).value||"Espèces";
+  var co=(document.getElementById("f-co")||{}).value||"";
+  // Infos client
+  var clientLines='<strong>👤 '+nom+(co?" — "+co:"")+'</strong><br>📱 '+tel;
+  if(adr) clientLines+='<br>📍 '+adr+(zone?" — "+zone:"");
+  clientLines+='<br>💳 '+pay+(delMode==="exp"?"  ·  ⚡ Express "+CFG.expDelay:"  ·  🚚 Standard 24h");
+  document.getElementById("oc-client-content").innerHTML=clientLines;
+  // Articles
+  document.getElementById("oc-items").innerHTML=items.map(function(p){
+    var lineTotal=Math.round(p.p*p.qty*100)/100;
+    return'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6">'
+      +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+p.em+'</span>'
+      +'<div><div style="font-size:13px;font-weight:700;color:#111">'+p.n+'</div>'
+      +(p.packInfo?'<div style="font-size:11px;color:#1e5631;font-weight:600">📦 '+p.packInfo+'</div>':'')
+      +'<div style="font-size:12px;color:#6b7280">'+p.qty+' '+p.u+' × '+p.p+' MAD</div></div></div>'
+      +'<div style="font-size:14px;font-weight:800;color:#1e5631;white-space:nowrap">'+lineTotal+' MAD</div></div>';
+  }).join("");
+  // Totaux
+  document.getElementById("oc-totals").innerHTML=
+    '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:#6b7280">Sous-total ('+items.length+' article'+(items.length>1?"s":"")+')</span><span>'+sub.toFixed(2)+' MAD</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px"><span style="color:#6b7280">Livraison</span><span>'+(df===0?'<span style="color:#16a34a;font-weight:700">✅ Gratuite</span>':'+'+df+' MAD')+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800;color:#1e5631;border-top:2px solid #e5e7eb;padding-top:12px"><span>Total</span><span>'+tot.toFixed(2)+' MAD</span></div>';
+  document.getElementById("order-check-modal").style.display="flex";
+}
+function closeOrderCheck(){ document.getElementById("order-check-modal").style.display="none"; }
+function confirmAndSend(){
+  var btn=document.getElementById("oc-confirm-btn");
+  btn.disabled=true; btn.textContent="⏳ Envoi en cours...";
+  closeOrderCheck();
+  submitOrder();
+}
+
+// ── MOT DE PASSE OUBLIÉ ─────────────────────────────────────────────────
+function showForgotPassword(){
+  var phone=document.getElementById("loginPhone").value.trim();
+  var msg=phone
+    ?"🔑 Réinitialisation mot de passe Vita Fresh\nTéléphone : "+phone+"\nMerci de me réinitialiser l'accès."
+    :"🔑 Réinitialisation mot de passe Vita Fresh\nMon numéro : [votre numéro]\nMerci de me réinitialiser l'accès.";
+  window.open("https://wa.me/"+CONFIG.WA_EQUIPE_1+"?text="+encodeURIComponent(msg),"_blank");
+  showToast("📲 WhatsApp ouvert — notre équipe vous réinitialisera l'accès sous 1h.");
+}
+
+// ── ADMIN EDIT COMPTE COMPLET ────────────────────────────────────────────
+function adminEditUser(userId){
+  var u=adminUsersCache.find(function(x){return x.id===userId;})||{};
+  document.getElementById("ua-full-id").value=userId;
+  document.getElementById("ua-full-name").value=u.name||"";
+  document.getElementById("ua-full-phone").value=u.telephone||u.phone||"";
+  document.getElementById("ua-full-email").value=u.email||"";
+  document.getElementById("ua-full-role").value=u.role||"client";
+  document.getElementById("ua-full-msg").textContent="";
+  document.getElementById("ua-full-modal").style.display="block";
+}
+function adminCloseFullEdit(){ document.getElementById("ua-full-modal").style.display="none"; }
+function adminSaveFullUser(){
+  var id=document.getElementById("ua-full-id").value;
+  var name=(document.getElementById("ua-full-name").value||"").trim();
+  var phone=(document.getElementById("ua-full-phone").value||"").trim();
+  var email=(document.getElementById("ua-full-email").value||"").trim();
+  var role=(document.getElementById("ua-full-role").value||"client").trim();
+  var msgEl=document.getElementById("ua-full-msg");
+  if(!name||!phone){msgEl.textContent="⚠️ Nom et téléphone requis.";return;}
+  if(!sb){msgEl.textContent="⚠️ Supabase non connecté.";return;}
+  msgEl.textContent="⏳ Enregistrement...";
+  sb.from("fl_users").update({name:name,telephone:phone,email:email,role:role}).eq("id",id)
+    .then(function(r){
+      if(r.error){msgEl.textContent="❌ "+r.error.message;return;}
+      msgEl.textContent="✅ Compte mis à jour !";
+      loadAdminUsers();
+      setTimeout(function(){adminCloseFullEdit();},1200);
+    }).catch(function(e){msgEl.textContent="❌ "+e;});
+}
+function adminDeleteUser(userId){
+  var u=adminUsersCache.find(function(x){return x.id===userId;})||{};
+  if(!confirm("⚠️ Supprimer le compte de "+( u.name||userId)+" ? Cette action est irréversible.")) return;
+  if(!sb){showToast("❌ Supabase non connecté");return;}
+  sb.from("fl_users").delete().eq("id",userId)
+    .then(function(r){
+      if(r.error){showToast("❌ "+r.error.message);return;}
+      showToast("✅ Compte supprimé.");
+      loadAdminUsers();
+    }).catch(function(e){showToast("❌ "+e);});
+}
+
 function saveSession(d){ localStorage.setItem("fl_session",JSON.stringify(Object.assign({},d,{_savedAt:Date.now()}))); }
 function getSession(){
   try{var raw=localStorage.getItem("fl_session");if(!raw)return null;
@@ -4346,6 +4505,10 @@ window.footerSecretClick=footerSecretClick; window.checkAdminPin=checkAdminPin;
 window.openLegal=openLegal; window.closeLegal=closeLegal;
 window.toggleChat=toggleChat; window.chatAction=chatAction; window.chatSend=chatSend;
 window.showLoginForm=showLoginForm; window.openProApp=openProApp; window.switchLoginTab=switchLoginTab; window.doSignup=doSignup; window.showProAppLink=showProAppLink;
+window.doLogin=doLogin; window.openConfigCompte=openConfigCompte; window.closeConfigCompte=closeConfigCompte; window.saveConfigCompte=saveConfigCompte;
+window.openOrderCheck=openOrderCheck; window.closeOrderCheck=closeOrderCheck; window.confirmAndSend=confirmAndSend;
+window.showForgotPassword=showForgotPassword;
+window.adminEditUser=adminEditUser; window.adminCloseFullEdit=adminCloseFullEdit; window.adminSaveFullUser=adminSaveFullUser; window.adminDeleteUser=adminDeleteUser;
 window.renderZones=renderZones; window.renderStats=renderStats; window.renderProducts=renderProducts;
 window.activeCategory=activeCategory;
 

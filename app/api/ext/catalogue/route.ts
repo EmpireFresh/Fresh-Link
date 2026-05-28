@@ -126,5 +126,8 @@ function normalize(a: Record<string, unknown>): Record<string, unknown> {
     prixVente:       a.prix_public ?? a.prix ?? 0,
     stockDisponible: 99,
     marketplaceActif: a.marketplace_actif ?? true,
+    // Conditionnement / UM transmis tels quels depuis l'ERP
+    unite:           a.unite ?? "kg",
+    conditionnement: a.conditionnement ?? a.pack_info ?? null,
   }
 }

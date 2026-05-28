@@ -114,6 +114,7 @@ const BOFirebaseArchive      = dynamic(() => import("./BOFirebaseArchive"),     
 const BOExternalLinks        = dynamic(() => import("./BOExternalLinks"),         { ssr: false, loading: L("Chargement liens...") })
 const BODeviceAccess         = dynamic(() => import("./BODeviceAccess"),          { ssr: false, loading: L("Chargement accès appareils...") })
 const BOCommandesWeb         = dynamic(() => import("./BOCommandesWeb"),           { ssr: false, loading: L("Chargement commandes web...") })
+const BOCommandesUnifiees    = dynamic(() => import("./BOCommandesUnifiees"),      { ssr: false, loading: L("Chargement commandes...") })
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -147,6 +148,7 @@ export type Tab =
   | "liens_externes"
   | "device_access"
   | "commandes_web"
+  | "commandes_unifiees"
 
 interface NavItem {
   id: Tab
@@ -252,7 +254,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Commercial & Clients", labelAr: "التجاري والعملاء",
     items: [
-      { id: "commercial",        label: "Commandes",              labelAr: "الطلبيات",          permKey: "canViewCommercial", icon: <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /> },
+      { id: "commandes_unifiees", label: "📦 Toutes les Commandes", labelAr: "كل الطلبيات",       permKey: "canViewCommercial", icon: <Icon d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /> },
+      { id: "commercial",        label: "Commandes Terrain",       labelAr: "طلبيات الميدان",    permKey: "canViewCommercial", icon: <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /> },
       { id: "affectation",       label: "Affectation Commerciale",labelAr: "التوزيع التجاري",   permKey: "canViewCommercial", icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
       { id: "cash",              label: "Cash & BL",              labelAr: "النقديات",          permKey: "canViewCash",       icon: <Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /> },
       { id: "category_pricing",  label: "Tarifs par Categorie",   labelAr: "أسعار الفئات",      permKey: "canViewCommercial", icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /> },
@@ -278,7 +281,6 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "forecast",    label: "Forecast & Achat Auto", labelAr: "التوقعات",          permKey: "canViewStock", icon: <Icon d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
       { id: "caisses_vides",label: "Caisses Vides",        labelAr: "الصناديق الفارغة",  permKey: "canViewLogistique", icon: <Icon d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /> },
       { id: "marketplace",    label: "Marketplace & Web",     labelAr: "المتجر الإلكتروني", permKey: "canViewCommercial", icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /> },
-      { id: "commandes_web",  label: "Commandes Site Web",    labelAr: "طلبات الموقع",      permKey: "canViewCommercial", icon: <Icon d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /> },
       { id: "demandes_comptes", label: "Demandes Comptes",    labelAr: "طلبات الحسابات",    permKey: "canViewExternal",  icon: <Icon d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /> },
     ],
   },
@@ -375,7 +377,8 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   depots:            (u) => <BODepots user={u} />,
   database:          (u) => <BODatabase user={u} />,
   marketplace:       (u) => <BOMarketplace user={u} />,
-  commandes_web:     (u) => <BOCommandesWeb user={u} />,
+  commandes_web:       (u) => <BOCommandesWeb user={u} />,
+  commandes_unifiees:  (u) => <BOCommandesUnifiees user={u} />,
   category_pricing:  (_u) => <BOCategoryPricing />,
   documents:         (u) => <BODocuments user={u} />,
   firebase_archive:  (_u) => <BOFirebaseArchive />,
