@@ -694,6 +694,7 @@ const DEFAULT_PERMS_BY_ROLE: Partial<Record<UserRole, PermFlags>> = {
 const EMPTY_USER: Omit<User, "id"> = {
   name: "", email: "", password: "1234", role: "prevendeur", accessType: undefined, secteur: "", depotId: undefined,
   phone: "", actif: true,
+  mustChangePassword: true,   // ← forcer changement mot de passe à la première connexion
   canViewAchat: false, canViewCommercial: false, canViewLogistique: false,
   canViewStock: false, canViewCash: false, canViewFinance: false, canViewRecap: false,
   canViewDatabase: false, canViewRH: false, canViewExternal: false, canCreateCommandeBO: false,

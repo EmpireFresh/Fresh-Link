@@ -254,8 +254,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Commercial & Clients", labelAr: "التجاري والعملاء",
     items: [
-      { id: "commandes_unifiees", label: "📦 Toutes les Commandes", labelAr: "كل الطلبيات",       permKey: "canViewCommercial", icon: <Icon d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /> },
-      { id: "commercial",        label: "Commandes Terrain",       labelAr: "طلبيات الميدان",    permKey: "canViewCommercial", icon: <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /> },
+      { id: "commandes_unifiees", label: "📦 Commandes",            labelAr: "الطلبيات",           permKey: "canViewCommercial", icon: <Icon d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /> },
       { id: "affectation",       label: "Affectation Commerciale",labelAr: "التوزيع التجاري",   permKey: "canViewCommercial", icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
       { id: "cash",              label: "Cash & BL",              labelAr: "النقديات",          permKey: "canViewCash",       icon: <Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /> },
       { id: "category_pricing",  label: "Tarifs par Categorie",   labelAr: "أسعار الفئات",      permKey: "canViewCommercial", icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /> },
@@ -502,6 +501,24 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
   }, [sidebarOpen])
+
+  // ── Écouter les actions globales super admin (force logout / reload) ──
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "fl_force_logout" && e.newValue) {
+        // Ne pas déconnecter le super_super_admin lui-même
+        if (!isSuperSuperAdmin(user)) {
+          store.logout()
+          onLogout()
+        }
+      }
+      if (e.key === "fl_force_reload" && e.newValue) {
+        window.location.reload()
+      }
+    }
+    window.addEventListener("storage", onStorage)
+    return () => window.removeEventListener("storage", onStorage)
+  }, [user, onLogout])
 
   const isVisible = useCallback((item: NavItem): boolean => {
     // Super Administrateur voit TOUT
@@ -1073,7 +1090,7 @@ function TabPill({ id, activeTab, navigate, label }: {
 }
 
 // ─────────────────────────────────────────────────────────────
-// PROFIL MODAL
+// PROFIL MODAL — self-edit : password, email ; Jawad : permissions
 // ─────────────────────────────────────────────────────────────
 
 function ProfilModal({ user, profilPhoto, setProfilPhoto, onClose, canUseCamera }: {
@@ -1081,17 +1098,55 @@ function ProfilModal({ user, profilPhoto, setProfilPhoto, onClose, canUseCamera 
   profilPhoto: string
   setProfilPhoto: (url: string) => void
   onClose: () => void
-  canUseCamera: boolean   // true only for super_admin
+  canUseCamera: boolean
 }) {
+  const isJawad = isSuperSuperAdmin(user)
+
   const PERM_KEYS: (keyof User)[] = [
     "canViewAchat","canViewCommercial","canViewLogistique",
-    "canViewStock","canViewCash","canViewFinance","canViewRecap","canViewDatabase",
+    "canViewStock","canViewCash","canViewFinance","canViewRecap","canViewDatabase","canViewRH","canViewExternal","canViewInvestisseur",
   ]
   const PERM_MAP: Partial<Record<keyof User, string>> = {
     canViewAchat: "Achats", canViewCommercial: "Commercial",
     canViewLogistique: "Logistique", canViewStock: "Stock",
     canViewCash: "Cash", canViewFinance: "Finance",
     canViewRecap: "Récap", canViewDatabase: "Base données",
+    canViewRH: "RH", canViewExternal: "Clients/Fourn.", canViewInvestisseur: "Investisseur",
+  }
+
+  // ── Edit mode state ──
+  const [editMode, setEditMode]       = useState(false)
+  const [editEmail, setEditEmail]     = useState(user.email)
+  const [editPwd1, setEditPwd1]       = useState("")
+  const [editPwd2, setEditPwd2]       = useState("")
+  const [editPerms, setEditPerms]     = useState<Partial<Record<keyof User, boolean>>>(
+    Object.fromEntries(PERM_KEYS.map(k => [k, !!(user as Record<string,unknown>)[k as string]])) as Partial<Record<keyof User, boolean>>
+  )
+  const [saveMsg, setSaveMsg]         = useState<{ ok: boolean; text: string } | null>(null)
+  const [saving, setSaving]           = useState(false)
+
+  const handleSave = () => {
+    setSaveMsg(null)
+    if (editPwd1 && editPwd1.length < 6) { setSaveMsg({ ok: false, text: "Mot de passe : minimum 6 caractères" }); return }
+    if (editPwd1 && editPwd1 !== editPwd2) { setSaveMsg({ ok: false, text: "Les mots de passe ne correspondent pas" }); return }
+    if (!editEmail.includes("@")) { setSaveMsg({ ok: false, text: "Email invalide" }); return }
+    setSaving(true)
+    const users = store.getUsers()
+    const idx = users.findIndex(u => u.id === user.id)
+    if (idx >= 0) {
+      users[idx] = {
+        ...users[idx],
+        email: editEmail.trim(),
+        ...(editPwd1 ? { password: editPwd1 } : {}),
+        // Jawad peut aussi modifier ses propres permissions
+        ...(isJawad ? Object.fromEntries(PERM_KEYS.map(k => [k, editPerms[k] ?? false])) : {}),
+      }
+      store.saveUsers(users)
+    }
+    setSaving(false)
+    setSaveMsg({ ok: true, text: "✅ Modifications enregistrées — rechargement en cours…" })
+    // Reload après 1.5s pour prendre en compte les nouveaux droits
+    setTimeout(() => window.location.reload(), 1500)
   }
 
   return (
@@ -1101,105 +1156,164 @@ function ProfilModal({ user, profilPhoto, setProfilPhoto, onClose, canUseCamera 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 bg-slate-50 border-b border-slate-200">
           <h2 className="font-bold text-sm text-slate-800">Mon Profil / ملفي الشخصي</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setEditMode(v => !v); setSaveMsg(null) }}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${editMode ? "bg-slate-200 text-slate-700" : "bg-green-100 text-green-700 hover:bg-green-200"}`}>
+              {editMode ? "Annuler" : "✏️ Modifier"}
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[80vh]">
+        <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[82vh]">
 
           {/* Avatar */}
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
               {profilPhoto ? (
-                <img src={profilPhoto} alt={user.name}
-                  className="w-20 h-20 rounded-full object-cover border-4 border-primary shadow-lg" />
+                <img src={profilPhoto} alt={user.name} className="w-20 h-20 rounded-full object-cover border-4 border-primary shadow-lg" />
               ) : (
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-black text-white border-4 border-slate-200 shadow-md ${ROLE_COLORS[user.role]}`}>
                   {user.name[0]?.toUpperCase()}
                 </div>
               )}
-              {canUseCamera ? (
-                <label className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer shadow border-2 border-card hover:opacity-90 transition-opacity" title="Modifier la photo (super admin)">
+              {canUseCamera && (
+                <label className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer shadow border-2 border-card hover:opacity-90 transition-opacity">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <input type="file" accept="image/*" capture="environment" className="hidden"
                     onChange={e => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
+                      const file = e.target.files?.[0]; if (!file) return
                       const reader = new FileReader()
                       reader.onload = ev => {
                         const url = ev.target?.result as string
                         setProfilPhoto(url)
-                        const users = store.getUsers()
-                        const idx = users.findIndex(u => u.id === user.id)
+                        const users = store.getUsers(); const idx = users.findIndex(u => u.id === user.id)
                         if (idx >= 0) { users[idx] = { ...users[idx], photoUrl: url }; store.saveUsers(users) }
                       }
                       reader.readAsDataURL(file)
                     }} />
                 </label>
-              ) : (
-                <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-muted border-2 border-card flex items-center justify-center" title="Camera/micro: super admin uniquement">
-                  <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
               )}
             </div>
             <div className="text-center">
               <p className="text-lg font-bold text-foreground">{user.name}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
+              {isJawad && <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 font-bold border border-yellow-300">👑 Super Admin</span>}
             </div>
           </div>
 
-          {/* Info grid */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="rounded-xl bg-muted/40 border border-border p-3">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Role</p>
-              <span className={`text-xs font-bold px-2 py-1 rounded-full text-white inline-block ${ROLE_COLORS[user.role]}`}>
-                {ROLE_LABELS[user.role]}
-              </span>
-            </div>
-            <div className="rounded-xl bg-muted/40 border border-border p-3">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Accès</p>
-              <p className="text-sm font-semibold text-foreground capitalize">{user.accessType ?? "standard"}</p>
-            </div>
-            {user.secteur && (
-              <div className="col-span-2 rounded-xl bg-muted/40 border border-border p-3">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Secteur</p>
-                <p className="text-sm font-semibold text-foreground">{user.secteur}</p>
+          {/* ── Edit mode form ── */}
+          {editMode ? (
+            <div className="flex flex-col gap-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700 font-medium">
+                ✏️ Modifiez vos informations ci-dessous. Laissez le mot de passe vide pour le conserver.
               </div>
-            )}
-            <div className="col-span-2 rounded-xl bg-muted/40 border border-border p-3">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">ID</p>
-              <p className="text-xs font-mono text-muted-foreground">{user.id}</p>
-            </div>
-          </div>
 
-          {/* Permissions */}
-          <div>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Permissions</p>
-            <div className="flex flex-wrap gap-1.5">
-              {PERM_KEYS.filter(k => user[k]).map(k => (
-                <span key={k} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
-                  {PERM_MAP[k]}
-                </span>
-              ))}
-              {PERM_KEYS.filter(k => user[k]).length === 0 && (
-                <span className="text-xs text-muted-foreground">Aucune permission spécifique</span>
+              {/* Email */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-slate-600">Email</label>
+                <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+              </div>
+
+              {/* Password */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-slate-600">Nouveau mot de passe <span className="text-slate-400 font-normal">(laisser vide = inchangé)</span></label>
+                <input type="password" value={editPwd1} onChange={e => setEditPwd1(e.target.value)}
+                  placeholder="Min. 6 caractères"
+                  className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-slate-600">Confirmer le mot de passe</label>
+                <input type="password" value={editPwd2} onChange={e => setEditPwd2(e.target.value)}
+                  placeholder="Répétez le mot de passe"
+                  className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+              </div>
+
+              {/* ── Super admin can also modify own permissions ── */}
+              {isJawad && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-slate-600">Mes permissions / صلاحياتي</label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {PERM_KEYS.map(k => (
+                      <label key={k} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 text-xs">
+                        <input type="checkbox" checked={!!editPerms[k]}
+                          onChange={e => setEditPerms(prev => ({ ...prev, [k]: e.target.checked }))}
+                          className="accent-green-600 w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate font-medium">{PERM_MAP[k]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
-          </div>
 
-          <button onClick={onClose}
-            className="w-full py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95"
-            style={{ background: "#1a4f2a", color: "white" }}>
-            Fermer
-          </button>
+              {saveMsg && (
+                <div className={`px-3 py-2 rounded-xl text-xs font-medium border ${saveMsg.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-700"}`}>
+                  {saveMsg.text}
+                </div>
+              )}
+
+              <button onClick={handleSave} disabled={saving}
+                className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-colors disabled:opacity-60"
+                style={{ background: "#1a4f2a" }}>
+                {saving ? "Enregistrement…" : "💾 Enregistrer les modifications"}
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Info grid — lecture seule */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-xl bg-muted/40 border border-border p-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Rôle</p>
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full text-white inline-block ${ROLE_COLORS[user.role]}`}>
+                    {ROLE_LABELS[user.role]}
+                  </span>
+                </div>
+                <div className="rounded-xl bg-muted/40 border border-border p-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Accès</p>
+                  <p className="text-sm font-semibold text-foreground capitalize">{user.accessType ?? "standard"}</p>
+                </div>
+                {user.secteur && (
+                  <div className="col-span-2 rounded-xl bg-muted/40 border border-border p-3">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Secteur</p>
+                    <p className="text-sm font-semibold text-foreground">{user.secteur}</p>
+                  </div>
+                )}
+                <div className="col-span-2 rounded-xl bg-muted/40 border border-border p-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">ID</p>
+                  <p className="text-xs font-mono text-muted-foreground">{user.id}</p>
+                </div>
+              </div>
+
+              {/* Permissions */}
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Permissions actives</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {PERM_KEYS.filter(k => user[k as keyof User]).map(k => (
+                    <span key={k} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
+                      {PERM_MAP[k]}
+                    </span>
+                  ))}
+                  {PERM_KEYS.filter(k => user[k as keyof User]).length === 0 && (
+                    <span className="text-xs text-muted-foreground">Accès global (rôle admin)</span>
+                  )}
+                </div>
+              </div>
+
+              <button onClick={onClose}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                style={{ background: "#1a4f2a", color: "white" }}>
+                Fermer
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

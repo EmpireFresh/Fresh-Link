@@ -2254,6 +2254,79 @@ To: {{to_email}}
             )}
           </div>
 
+          {/* ── Actions globales appareils ──────────────────────────────────── */}
+          {user.role === "super_super_admin" && (
+            <div className="bg-card rounded-2xl border border-orange-200 p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-orange-50">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-orange-700 text-sm">Actions globales / إجراءات عامة</h3>
+                  <p className="text-xs text-muted-foreground">Déconnecter tous les utilisateurs ou redémarrer tous les appareils</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                {/* Déconnecter tous les comptes */}
+                <div className="flex items-start justify-between gap-3 p-4 rounded-xl bg-orange-50 border border-orange-200">
+                  <div>
+                    <p className="text-sm font-semibold text-orange-800">🔓 Déconnecter tous les comptes</p>
+                    <p className="text-xs text-orange-600 mt-0.5">Force la déconnexion de tous les appareils connectés lors de leur prochaine interaction.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!confirm("Confirmer la déconnexion forcée de tous les utilisateurs ?")) return
+                      // Écrire un timestamp de force-logout dans localStorage + broadcast
+                      const ts = Date.now().toString()
+                      localStorage.setItem("fl_force_logout", ts)
+                      // Essayer aussi via Supabase si dispo
+                      try {
+                        fetch("/api/sync-write", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ table: "fl_notices", upserts: [{ id: "force_logout_cmd", payload: { action: "force_logout", ts }, updated_at: new Date().toISOString() }] }),
+                        }).catch(() => {})
+                      } catch { /* offline */ }
+                      alert("✅ Signal de déconnexion envoyé. Tous les appareils seront déconnectés à la prochaine interaction.")
+                    }}
+                    className="shrink-0 px-4 py-2 rounded-xl text-xs font-bold border border-orange-400 text-orange-700 bg-white hover:bg-orange-100 transition-colors whitespace-nowrap"
+                  >
+                    Déconnecter tout
+                  </button>
+                </div>
+
+                {/* Redémarrer tous les appareils */}
+                <div className="flex items-start justify-between gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                  <div>
+                    <p className="text-sm font-semibold text-blue-800">🔄 Redémarrer tous les appareils</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Force le rechargement de l&apos;application sur tous les navigateurs connectés (mise à jour déploiement).</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!confirm("Forcer le rechargement de tous les appareils actifs ?")) return
+                      const ts = Date.now().toString()
+                      localStorage.setItem("fl_force_reload", ts)
+                      try {
+                        fetch("/api/sync-write", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ table: "fl_notices", upserts: [{ id: "force_reload_cmd", payload: { action: "force_reload", ts }, updated_at: new Date().toISOString() }] }),
+                        }).catch(() => {})
+                      } catch { /* offline */ }
+                      // Recharger cet appareil immédiatement
+                      setTimeout(() => window.location.reload(), 500)
+                    }}
+                    className="shrink-0 px-4 py-2 rounded-xl text-xs font-bold border border-blue-400 text-blue-700 bg-white hover:bg-blue-100 transition-colors whitespace-nowrap"
+                  >
+                    Redémarrer tout
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Guide de mise en production */}
           <div className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
             <div className="flex items-center gap-3">
