@@ -3297,11 +3297,10 @@ function submitOrder(){
     updateCartUI();
     // 2. Remettre le bouton à zéro
     btn.disabled=false; btn.innerHTML="🔍 Vérifier ma commande — <span id='total-btn'>0 MAD</span>";
-    // 3. Réinitialiser le formulaire (si pas connecté)
-    var gst=document.getElementById("guest-form-block");
-    if(gst&&gst.style.display!=="none"){
-      ["f-nom","f-tel","f-email","f-adr","f-co"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
-    }
+    // 3. Réinitialiser le formulaire (toujours — connecté ou non)
+    ["f-nom","f-tel","f-email","f-adr","f-co"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
+    var fadrVis=document.getElementById("f-adr-visible"); if(fadrVis) fadrVis.value="";
+    var fzone2=document.getElementById("f-zone"); if(fzone2) fzone2.selectedIndex=0;
     ["f-notes","vir-ref"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
     var fzone=document.getElementById("f-zone"); if(fzone) fzone.selectedIndex=0;
     var fpay=document.getElementById("f-pay"); if(fpay) fpay.selectedIndex=0;

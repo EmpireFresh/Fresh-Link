@@ -49,6 +49,12 @@ export default function BODeviceAccess({ user }: Props) {
   const [msg,     setMsg]     = useState<{ ok: boolean; text: string } | null>(null)
   const [search,  setSearch]  = useState("")
 
+  // ── Edit modal ─────────────────────────────────────────────────────────────
+  const [editRow,  setEditRow]  = useState<DeviceRequest | null>(null)
+  const [editNom,  setEditNom]  = useState("")
+  const [editNotes,setEditNotes]= useState("")
+  const [editTel,  setEditTel]  = useState("")
+
   const sb = createClient()
 
   const load = useCallback(async () => {
@@ -95,10 +101,33 @@ export default function BODeviceAccess({ user }: Props) {
     }
   }
 
-  async function deleteRow(deviceId: string) {
-    if (!confirm("Supprimer cette demande ?")) return
+  async function deleteRow(deviceId: string, nom: string | null) {
+    if (!confirm(`Supprimer la demande de ${nom ?? deviceId} ? Action irréversible.`)) return
     await sb.from("fl_site_access").delete().eq("device_id", deviceId)
     load()
+  }
+
+  function openEdit(row: DeviceRequest) {
+    setEditRow(row)
+    setEditNom(row.nom ?? "")
+    setEditTel(row.telephone ?? "")
+    setEditNotes(row.notes ?? "")
+  }
+
+  async function saveEdit() {
+    if (!editRow) return
+    const { error } = await sb
+      .from("fl_site_access")
+      .update({ nom: editNom.trim() || null, telephone: editTel.trim() || null, notes: editNotes.trim() || null, updated_at: new Date().toISOString() })
+      .eq("device_id", editRow.device_id)
+    if (error) {
+      setMsg({ ok: false, text: `Erreur : ${error.message}` })
+    } else {
+      setMsg({ ok: true, text: "✅ Appareil mis à jour." })
+      setTimeout(() => setMsg(null), 3000)
+      setEditRow(null)
+      load()
+    }
   }
 
   if (!canAccess(user)) {
@@ -136,6 +165,50 @@ export default function BODeviceAccess({ user }: Props) {
   // ── Rendu ──────────────────────────────────────────────────────────────────
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
+
+      {/* ── EDIT MODAL ────────────────────────────────────────────────────── */}
+      {editRow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-blue-700 text-base">✏️ Modifier l&apos;appareil</h3>
+              <button onClick={() => setEditRow(null)} className="text-gray-400 hover:text-gray-700">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 font-mono bg-gray-50 rounded-lg px-3 py-2">
+              🔑 {editRow.device_id.slice(0, 24)}...
+            </p>
+            {[
+              { label: "Nom / Prénom", val: editNom,   set: setEditNom,   type: "text", ph: "Mohammed Alami" },
+              { label: "Téléphone",   val: editTel,   set: setEditTel,   type: "tel",  ph: "+212 6XX XXX XXX" },
+            ].map(f => (
+              <div key={f.label} className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-700">{f.label}</label>
+                <input type={f.type} value={f.val} placeholder={f.ph}
+                  onChange={e => f.set(e.target.value)}
+                  className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              </div>
+            ))}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-700">Notes internes</label>
+              <textarea rows={2} value={editNotes} onChange={e => setEditNotes(e.target.value)}
+                placeholder="Notes sur cet appareil ou utilisateur…"
+                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
+            </div>
+            <div className="flex gap-3 pt-2 border-t border-gray-100">
+              <button onClick={saveEdit}
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition-all">
+                💾 Enregistrer
+              </button>
+              <button onClick={() => setEditRow(null)}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-all">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -307,9 +380,24 @@ export default function BODeviceAccess({ user }: Props) {
                         🚫 Bloquer
                       </button>
                     )}
+                    {row.statut !== "en_attente" && (
+                      <button
+                        onClick={() => setStatut(row.device_id, "autorise", row.nom)}
+                        className="px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-bold transition-all"
+                        title="Remettre en attente"
+                      >
+                        ⏳ En attente
+                      </button>
+                    )}
                     <button
-                      onClick={() => deleteRow(row.device_id)}
-                      className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold transition-all"
+                      onClick={() => openEdit(row)}
+                      className="px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-all"
+                    >
+                      ✏️ Modifier
+                    </button>
+                    <button
+                      onClick={() => deleteRow(row.device_id, row.nom)}
+                      className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 text-xs font-semibold transition-all"
                     >
                       🗑️ Supprimer
                     </button>

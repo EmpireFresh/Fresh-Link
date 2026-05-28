@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { store, type Commande, type LigneCommande } from "@/lib/store"
 import type { User } from "@/lib/store"
 
 interface Props { user: User }
@@ -226,6 +227,76 @@ export default function BOCommandesUnifiees({ user }: Props) {
     }
     setUpdating(false)
     setTimeout(() => setMsg(null), 3500)
+  }
+
+  // ── Injecter commande web dans pipeline logistique ERP ──────────────────────
+  const injecterDansERP = async (cmd: CmdUnifiee) => {
+    if (cmd.source !== "web") return
+    if (!confirm(`Injecter la commande ${cmd.numero} de ${cmd.nom_client} dans la logistique ERP ?\n\nElle apparaîtra dans Préparation, Dispatch et Stock.`)) return
+
+    // Trouver ou créer un client par nom/téléphone
+    const clients = store.getClients()
+    let client = clients.find(c =>
+      c.telephone === cmd.telephone || c.nom.toLowerCase() === cmd.nom_client.toLowerCase()
+    )
+    if (!client) {
+      client = {
+        id:           store.genId(),
+        nom:          cmd.nom_client,
+        secteur:      "Site Web",
+        zone:         cmd.zone ?? "Casablanca",
+        type:         "particulier" as const,
+        taille:       "0-50kg" as const,
+        typeProduits: "mixte" as const,
+        rotation:     "ponctuel" as const,
+        telephone:    cmd.telephone ?? "",
+        email:        "",
+        adresse:      cmd.adresse ?? "",
+        createdBy:    user.id,
+        createdAt:    new Date().toISOString(),
+      }
+      store.saveClients([...clients, client])
+    }
+
+    // Convertir les lignes
+    const lignes: LigneCommande[] = cmd.lignes.map(l => ({
+      articleId:    (l as Record<string, unknown>).articleId as string ?? store.genId(),
+      articleNom:   l.nom ?? l.articleNom ?? "Article",
+      unite:        l.unite ?? "kg",
+      quantite:     l.quantite,
+      prixUnitaire: l.prixUnitaire ?? 0,
+      prixVente:    l.prixUnitaire ?? 0,
+      total:        l.total ?? (l.prixUnitaire ?? 0) * l.quantite,
+    }))
+
+    // Créer la commande ERP
+    const newCmd: Commande = {
+      id:               store.genId(),
+      date:             cmd.date ? cmd.date.split("T")[0] : new Date().toISOString().split("T")[0],
+      commercialId:     "site_web",
+      commercialNom:    "Site Web",
+      clientId:         client.id,
+      clientNom:        client.nom,
+      secteur:          client.secteur ?? "Site Web",
+      zone:             cmd.zone ?? client.zone ?? "Casablanca",
+      gpsLat:           0,
+      gpsLng:           0,
+      lignes,
+      heurelivraison:   cmd.zone ?? "Standard 24h",
+      statut:           "en_attente",
+      emailDestinataire:"",
+      notes:            `[Web] Réf: ${cmd.numero}${cmd.notes ? " — " + cmd.notes : ""}`,
+    }
+
+    store.saveCommandes([...store.getCommandes(), newCmd])
+
+    // Marquer la commande web comme "confirmee" dans Supabase
+    const sb = createClient()
+    await sb.from("fl_commandes_web").update({ statut: "confirmee" }).eq("id", cmd.rawId)
+
+    setMsg({ ok: true, text: `✅ ${cmd.numero} injectée dans la logistique ERP (Préparation / Dispatch / Stock).` })
+    setTimeout(() => setMsg(null), 5000)
+    load()
   }
 
   // ── Accès ────────────────────────────────────────────────────────────────────
@@ -462,19 +533,30 @@ export default function BOCommandesUnifiees({ user }: Props) {
                         {sc.icon} {sc.label}
                       </span>
                     </td>
-                    {/* Action rapide */}
+                    {/* Actions */}
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                      <select
-                        value={cmd.statut}
-                        onChange={e => updateStatut(cmd, e.target.value)}
-                        disabled={updating}
-                        className="text-xs px-2 py-1.5 rounded-lg border border-border bg-white text-slate-600 cursor-pointer hover:border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:opacity-40"
-                      >
-                        {nextStats.map(s => {
-                          const cfg = getStatutCfg(s, cmd.source)
-                          return <option key={s} value={s}>{cfg.icon} {cfg.label}</option>
-                        })}
-                      </select>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <select
+                          value={cmd.statut}
+                          onChange={e => updateStatut(cmd, e.target.value)}
+                          disabled={updating}
+                          className="text-xs px-2 py-1.5 rounded-lg border border-border bg-white text-slate-600 cursor-pointer hover:border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:opacity-40"
+                        >
+                          {nextStats.map(s => {
+                            const cfg = getStatutCfg(s, cmd.source)
+                            return <option key={s} value={s}>{cfg.icon} {cfg.label}</option>
+                          })}
+                        </select>
+                        {cmd.source === "web" && cmd.statut !== "confirmee" && cmd.statut !== "livre" && (
+                          <button
+                            onClick={() => injecterDansERP(cmd)}
+                            title="Injecter dans la logistique ERP (Préparation / Dispatch / Stock)"
+                            className="px-2 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition-colors whitespace-nowrap"
+                          >
+                            🚀 ERP
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -612,6 +694,22 @@ export default function BOCommandesUnifiees({ user }: Props) {
                   })}
                 </div>
               </div>
+
+              {/* Injecter dans ERP logistique */}
+              {selected.source === "web" && selected.statut !== "confirmee" && selected.statut !== "livre" && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col gap-2">
+                  <p className="text-xs font-bold text-emerald-700 uppercase">🚀 Logistique ERP</p>
+                  <p className="text-xs text-emerald-600">
+                    Injecte cette commande web dans la chaîne logistique ERP — elle apparaîtra dans Préparation, Dispatch et Stock.
+                  </p>
+                  <button
+                    onClick={() => { injecterDansERP(selected); setSelected(null) }}
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors"
+                  >
+                    🚀 Injecter dans la logistique ERP
+                  </button>
+                </div>
+              )}
 
               {/* Message dans le drawer */}
               {msg && (

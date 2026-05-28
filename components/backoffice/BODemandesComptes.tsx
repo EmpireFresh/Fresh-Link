@@ -9,14 +9,12 @@ function generatePassword(len = 10): string {
   return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
 }
 
-interface Props {
-  user: User
-}
+interface Props { user: User }
 
-const STATUT_CFG: Record<string, { label: string; cls: string }> = {
-  en_attente: { label: "En attente",  cls: "bg-amber-100 text-amber-700 border-amber-300" },
-  approuve:   { label: "Approuvé",    cls: "bg-green-100 text-green-700 border-green-300" },
-  rejete:     { label: "Rejeté",      cls: "bg-red-100 text-red-700 border-red-300" },
+const STATUT_CFG: Record<string, { label: string; cls: string; icon: string }> = {
+  en_attente: { label: "En attente", cls: "bg-amber-100 text-amber-700 border-amber-300",  icon: "⏳" },
+  approuve:   { label: "Approuvé",   cls: "bg-green-100 text-green-700 border-green-300",  icon: "✅" },
+  rejete:     { label: "Rejeté",     cls: "bg-red-100 text-red-700 border-red-300",         icon: "❌" },
 }
 
 function canAccess(user: User): boolean {
@@ -28,16 +26,29 @@ function canAccess(user: User): boolean {
 }
 
 export default function BODemandesComptes({ user }: Props) {
-  const [requests, setRequests] = useState<AccountRequest[]>([])
-  const [filter, setFilter] = useState<"tous" | "en_attente" | "approuve" | "rejete">("en_attente")
-  const [selected, setSelected] = useState<AccountRequest | null>(null)
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
-  const [generatedPwd, setGeneratedPwd] = useState<string | null>(null)
+  const [requests, setRequests]     = useState<AccountRequest[]>([])
+  const [filter, setFilter]         = useState<"tous" | "en_attente" | "approuve" | "rejete">("en_attente")
+  const [selected, setSelected]     = useState<AccountRequest | null>(null)
+  const [msg, setMsg]               = useState<{ ok: boolean; text: string } | null>(null)
+
+  // ── Approve form ────────────────────────────────────────────────────────────
   const [approveForm, setApproveForm] = useState({ email: "", nom: "", password: "" })
   const [showApprove, setShowApprove] = useState(false)
-  const [rejectReason, setRejectReason] = useState("")
-  const [showReject, setShowReject] = useState(false)
 
+  // ── Reject form ─────────────────────────────────────────────────────────────
+  const [rejectReason, setRejectReason] = useState("")
+  const [showReject, setShowReject]     = useState(false)
+
+  // ── Edit form ───────────────────────────────────────────────────────────────
+  const [showEdit, setShowEdit]         = useState(false)
+  const [editForm, setEditForm]         = useState({
+    nom: "", telephone: "", email: "", ville: "", societe: "", message: "", statut: "en_attente",
+  })
+
+  // ── Supabase client ─────────────────────────────────────────────────────────
+  const sb = createClient()
+
+  // ── LocalStorage helpers ────────────────────────────────────────────────────
   const getAccountRequests = (): AccountRequest[] => {
     try { return JSON.parse(localStorage.getItem("fl_account_requests") ?? "[]") } catch { return [] }
   }
@@ -47,16 +58,14 @@ export default function BODemandesComptes({ user }: Props) {
 
   const refresh = () => setRequests(getAccountRequests())
 
-  // Sync depuis Supabase fl_account_requests (demandes du site web externe)
+  // ── Sync depuis Supabase ────────────────────────────────────────────────────
   const syncFromSupabase = async () => {
     try {
-      const sb = createClient()
       const { data, error } = await sb
         .from("fl_account_requests")
         .select("*")
         .order("created_at", { ascending: false })
       if (error || !data) return
-      // Mapper vers AccountRequest et fusionner avec le localStorage
       const local = getAccountRequests()
       const localIds = new Set(local.map((r: AccountRequest) => r.id))
       const fromSb: AccountRequest[] = (data as Record<string, unknown>[]).map(row => ({
@@ -73,7 +82,6 @@ export default function BODemandesComptes({ user }: Props) {
         statut:    String(row.statut ?? "en_attente") as AccountRequest["statut"],
         createdAt: String(row.created_at ?? new Date().toISOString()),
       }))
-      // Nouvelles demandes Supabase absentes du local → les ajouter
       const newFromSb = fromSb.filter(r => !localIds.has(r.id))
       if (newFromSb.length > 0) {
         const merged = [...newFromSb, ...local]
@@ -102,13 +110,14 @@ export default function BODemandesComptes({ user }: Props) {
   const filtered = requests.filter(r => filter === "tous" || r.statut === filter)
   const countPending = requests.filter(r => r.statut === "en_attente").length
 
+  // ── Open modals ─────────────────────────────────────────────────────────────
   const openApprove = (req: AccountRequest) => {
     const pwd = generatePassword()
     setSelected(req)
-    setGeneratedPwd(pwd)
     setApproveForm({ email: req.email, nom: req.nom, password: pwd })
     setShowApprove(true)
     setShowReject(false)
+    setShowEdit(false)
     setMsg(null)
   }
 
@@ -117,8 +126,28 @@ export default function BODemandesComptes({ user }: Props) {
     setRejectReason("")
     setShowReject(true)
     setShowApprove(false)
+    setShowEdit(false)
     setMsg(null)
   }
+
+  const openEdit = (req: AccountRequest) => {
+    setSelected(req)
+    setEditForm({
+      nom:       req.nom,
+      telephone: req.telephone,
+      email:     req.email,
+      ville:     req.ville ?? "",
+      societe:   req.societe ?? "",
+      message:   req.message ?? "",
+      statut:    req.statut,
+    })
+    setShowEdit(true)
+    setShowApprove(false)
+    setShowReject(false)
+    setMsg(null)
+  }
+
+  // ── CRUD actions ─────────────────────────────────────────────────────────────
 
   const handleApprove = () => {
     if (!selected) return
@@ -126,8 +155,6 @@ export default function BODemandesComptes({ user }: Props) {
       setMsg({ ok: false, text: "Tous les champs sont requis." })
       return
     }
-
-    // Create User account
     const newUser: User = {
       id: store.genId(),
       name: approveForm.nom.trim(),
@@ -137,55 +164,35 @@ export default function BODemandesComptes({ user }: Props) {
       actif: true,
       accessType: "both",
       ...(selected.type === "client" && selected._linkedClientId
-        ? { clientId: selected._linkedClientId }
-        : {}),
+        ? { clientId: selected._linkedClientId } : {}),
       ...(selected.type === "fournisseur" && selected._linkedFournisseurId
-        ? { fournisseurId: selected._linkedFournisseurId }
-        : {}),
+        ? { fournisseurId: selected._linkedFournisseurId } : {}),
     }
-
-    // If type client, create Client record if not linked
     if (selected.type === "client" && !selected._linkedClientId) {
       const client: Client = {
         id: store.genId(),
         nom: selected.societe || selected.nom,
-        secteur: "",
-        zone: "",
-        type: "autre",
-        taille: "50-100kg",
-        typeProduits: "moyenne",
-        rotation: "journalier",
-        telephone: selected.telephone,
-        email: selected.email,
+        secteur: "", zone: "", type: "autre", taille: "50-100kg",
+        typeProduits: "moyenne", rotation: "journalier",
+        telephone: selected.telephone, email: selected.email,
         adresse: selected.ville ?? "",
-        createdBy: user.id,
-        createdAt: new Date().toISOString(),
+        createdBy: user.id, createdAt: new Date().toISOString(),
       }
       store.saveClients([...store.getClients(), client])
       newUser.clientId = client.id
     }
-
-    // If type fournisseur, create Fournisseur record if not linked
     if (selected.type === "fournisseur" && !selected._linkedFournisseurId) {
       const fourn: Fournisseur = {
         id: store.genId(),
         nom: selected.societe || selected.nom,
-        contact: selected.nom,
-        telephone: selected.telephone,
-        email: selected.email,
-        ville: selected.ville,
-        ice: selected.ice,
-        specialites: [],
-        itineraires: [],
+        contact: selected.nom, telephone: selected.telephone,
+        email: selected.email, ville: selected.ville,
+        ice: selected.ice, specialites: [], itineraires: [],
       }
       store.saveFournisseurs([...store.getFournisseurs(), fourn])
       newUser.fournisseurId = fourn.id
     }
-
-    // Save user
     store.saveUsers([...store.getUsers(), newUser])
-
-    // Update request status
     const updated = requests.map(r =>
       r.id === selected.id
         ? { ...r, statut: "approuve" as const, approvedAt: new Date().toISOString(), approvedBy: user.id }
@@ -193,10 +200,12 @@ export default function BODemandesComptes({ user }: Props) {
     )
     saveAccountRequests(updated)
     setRequests(updated)
+    // Sync statut to Supabase
+    sb.from("fl_account_requests").update({ statut: "approuve" }).eq("id", selected.id).then(() => {})
     setShowApprove(false)
     setSelected(null)
-    setMsg({ ok: true, text: `Compte créé pour ${approveForm.nom}. Mot de passe : ${approveForm.password}` })
-    setTimeout(() => setMsg(null), 8000)
+    setMsg({ ok: true, text: `✅ Compte créé pour ${approveForm.nom}. Mot de passe : ${approveForm.password}` })
+    setTimeout(() => setMsg(null), 10000)
   }
 
   const handleReject = () => {
@@ -208,19 +217,73 @@ export default function BODemandesComptes({ user }: Props) {
     )
     saveAccountRequests(updated)
     setRequests(updated)
+    sb.from("fl_account_requests").update({ statut: "rejete", reject_reason: rejectReason }).eq("id", selected.id).then(() => {})
     setShowReject(false)
     setSelected(null)
     setMsg({ ok: false, text: "Demande rejetée." })
     setTimeout(() => setMsg(null), 4000)
   }
 
+  const handleEdit = async () => {
+    if (!selected) return
+    const { nom, telephone, email, ville, societe, message, statut } = editForm
+    if (!nom.trim() || !telephone.trim()) {
+      setMsg({ ok: false, text: "Nom et téléphone sont requis." })
+      return
+    }
+    // Update localStorage
+    const updated = requests.map(r =>
+      r.id === selected.id
+        ? { ...r, nom: nom.trim(), telephone: telephone.trim(), email: email.trim(),
+            ville: ville.trim() || undefined, societe: societe.trim() || undefined,
+            message: message.trim() || undefined,
+            statut: statut as AccountRequest["statut"] }
+        : r
+    )
+    saveAccountRequests(updated)
+    setRequests(updated)
+    // Sync to Supabase
+    await sb.from("fl_account_requests").update({
+      nom: nom.trim(), telephone: telephone.trim(), email: email.trim(),
+      ville: ville.trim() || null, societe: societe.trim() || null,
+      message: message.trim() || null, statut,
+    }).eq("id", selected.id)
+    setShowEdit(false)
+    setSelected(null)
+    setMsg({ ok: true, text: "✅ Demande mise à jour." })
+    setTimeout(() => setMsg(null), 4000)
+  }
+
+  const handleDelete = async (req: AccountRequest) => {
+    if (!confirm(`Supprimer la demande de ${req.nom} ? Cette action est irréversible.`)) return
+    const updated = requests.filter(r => r.id !== req.id)
+    saveAccountRequests(updated)
+    setRequests(updated)
+    await sb.from("fl_account_requests").delete().eq("id", req.id)
+    setMsg({ ok: true, text: `🗑️ Demande de ${req.nom} supprimée.` })
+    setTimeout(() => setMsg(null), 4000)
+  }
+
+  const handleChangeStatut = async (req: AccountRequest, newStatut: AccountRequest["statut"]) => {
+    const updated = requests.map(r =>
+      r.id === req.id ? { ...r, statut: newStatut } : r
+    )
+    saveAccountRequests(updated)
+    setRequests(updated)
+    await sb.from("fl_account_requests").update({ statut: newStatut }).eq("id", req.id)
+    setMsg({ ok: true, text: `Statut mis à jour → ${STATUT_CFG[newStatut]?.label}` })
+    setTimeout(() => setMsg(null), 3000)
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-5">
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            Demandes de compte
+            📋 Demandes de compte
             {countPending > 0 && (
               <span className="px-2 py-0.5 text-xs font-black rounded-full bg-amber-100 text-amber-700 border border-amber-300">
                 {countPending} en attente
@@ -229,17 +292,15 @@ export default function BODemandesComptes({ user }: Props) {
           </h2>
           <p className="text-sm text-muted-foreground">Demandes de création de compte depuis le portail externe</p>
         </div>
+        <button onClick={() => { refresh(); syncFromSupabase() }}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-colors">
+          🔄 Actualiser
+        </button>
       </div>
 
-      {/* Msg */}
+      {/* Message */}
       {msg && (
         <div className={`flex items-start gap-2 px-4 py-3 rounded-xl border text-sm ${msg.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
-          <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {msg.ok
-              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            }
-          </svg>
           <span className="font-medium">{msg.text}</span>
         </div>
       )}
@@ -262,71 +323,62 @@ export default function BODemandesComptes({ user }: Props) {
         ))}
       </div>
 
-      {/* Approve modal */}
+      {/* ── APPROVE MODAL ───────────────────────────────────────────────────── */}
       {showApprove && selected && (
         <div className="bg-card border-2 border-green-300 rounded-2xl p-6 flex flex-col gap-4 shadow-md">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-green-700 flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-              Approuver — Créer le compte
-            </h3>
+            <h3 className="font-bold text-green-700 flex items-center gap-2">✅ Approuver — Créer le compte</h3>
             <button onClick={() => setShowApprove(false)} className="text-muted-foreground hover:text-foreground">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-
           <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-800">
             <p><strong>Demandeur :</strong> {selected.nom} — {selected.societe}</p>
             <p><strong>Type :</strong> {selected.type === "client" ? "Client" : "Fournisseur"}</p>
-            <p><strong>Email :</strong> {selected.email}</p>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
+            {([
               { f: "nom", label: "Nom affiché *", type: "text" },
               { f: "email", label: "Email de connexion *", type: "email" },
-            ].map(({ f, label, type }) => (
+            ] as const).map(({ f, label, type }) => (
               <div key={f} className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-foreground">{label}</label>
-                <input type={type} value={approveForm[f as keyof typeof approveForm]}
+                <input type={type} value={approveForm[f]}
                   onChange={e => setApproveForm(p => ({ ...p, [f]: e.target.value }))}
                   className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
             ))}
           </div>
-
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-foreground">Mot de passe initial *</label>
             <div className="flex gap-2">
               <input type="text" value={approveForm.password}
                 onChange={e => setApproveForm(p => ({ ...p, password: e.target.value }))}
                 className="flex-1 px-3 py-2.5 rounded-xl border border-border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
-              <button onClick={() => { const p = generatePassword(); setApproveForm(f => ({ ...f, password: p })) }}
+              <button onClick={() => setApproveForm(f => ({ ...f, password: generatePassword() }))}
                 className="px-3 py-2 rounded-xl border border-border text-xs hover:bg-muted transition-colors">
                 Générer
               </button>
             </div>
-            <p className="text-[10px] text-muted-foreground">Ce mot de passe doit être communiqué au partenaire de façon sécurisée.</p>
           </div>
-
           <div className="flex gap-3 pt-2 border-t border-border">
             <button onClick={handleApprove}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              Approuver & Créer le compte
+              className="px-5 py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors">
+              ✅ Approuver & Créer le compte
             </button>
-            <button onClick={() => setShowApprove(false)} className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
+            <button onClick={() => setShowApprove(false)}
+              className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
               Annuler
             </button>
           </div>
         </div>
       )}
 
-      {/* Reject modal */}
+      {/* ── REJECT MODAL ────────────────────────────────────────────────────── */}
       {showReject && selected && (
         <div className="bg-card border-2 border-red-300 rounded-2xl p-6 flex flex-col gap-4 shadow-md">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-red-700">Rejeter la demande</h3>
+            <h3 className="font-bold text-red-700">❌ Rejeter la demande</h3>
             <button onClick={() => setShowReject(false)} className="text-muted-foreground hover:text-foreground">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -340,17 +392,70 @@ export default function BODemandesComptes({ user }: Props) {
           </div>
           <div className="flex gap-3">
             <button onClick={handleReject}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors">
+              className="px-5 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors">
               Confirmer le rejet
             </button>
-            <button onClick={() => setShowReject(false)} className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
+            <button onClick={() => setShowReject(false)}
+              className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
               Annuler
             </button>
           </div>
         </div>
       )}
 
-      {/* Table */}
+      {/* ── EDIT MODAL ──────────────────────────────────────────────────────── */}
+      {showEdit && selected && (
+        <div className="bg-card border-2 border-blue-300 rounded-2xl p-6 flex flex-col gap-4 shadow-md">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-blue-700">✏️ Modifier la demande</h3>
+            <button onClick={() => setShowEdit(false)} className="text-muted-foreground hover:text-foreground">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {([
+              { f: "nom",       label: "Nom *",       type: "text"  },
+              { f: "telephone", label: "Téléphone *",  type: "tel"   },
+              { f: "email",     label: "Email",        type: "email" },
+              { f: "ville",     label: "Ville",        type: "text"  },
+              { f: "societe",   label: "Société",      type: "text"  },
+            ] as const).map(({ f, label, type }) => (
+              <div key={f} className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-foreground">{label}</label>
+                <input type={type} value={editForm[f]}
+                  onChange={e => setEditForm(p => ({ ...p, [f]: e.target.value }))}
+                  className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+              </div>
+            ))}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-foreground">Statut</label>
+              <select value={editForm.statut} onChange={e => setEditForm(p => ({ ...p, statut: e.target.value }))}
+                className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="en_attente">⏳ En attente</option>
+                <option value="approuve">✅ Approuvé</option>
+                <option value="rejete">❌ Rejeté</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-foreground">Message / Notes</label>
+            <textarea rows={2} value={editForm.message} onChange={e => setEditForm(p => ({ ...p, message: e.target.value }))}
+              className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none" />
+          </div>
+          <div className="flex gap-3 pt-2 border-t border-border">
+            <button onClick={handleEdit}
+              className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
+              💾 Enregistrer
+            </button>
+            <button onClick={() => setShowEdit(false)}
+              className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── LISTE ───────────────────────────────────────────────────────────── */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <svg className="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -361,9 +466,11 @@ export default function BODemandesComptes({ user }: Props) {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map(req => {
-            const cfg = STATUT_CFG[req.statut] ?? { label: req.statut, cls: "bg-muted text-muted-foreground border-border" }
+            const cfg = STATUT_CFG[req.statut] ?? { label: req.statut, cls: "bg-muted text-muted-foreground border-border", icon: "?" }
             return (
               <div key={req.id} className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-3">
+
+                {/* Top row */}
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${req.type === "client" ? "bg-blue-50" : "bg-amber-50"}`}>
@@ -383,10 +490,10 @@ export default function BODemandesComptes({ user }: Props) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${cfg.cls}`}>{cfg.label}</span>
+                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${cfg.cls}`}>{cfg.icon} {cfg.label}</span>
                     <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${req.type === "client" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>
-                      {(req as any).sous_type
-                        ? ({ chr: "CHR", marchand: "Marchand", particulier: "Particulier", fournisseur: "Fournisseur", client: "Client" }[(req as any).sous_type] ?? (req as any).sous_type)
+                      {(req as Record<string,unknown>).sous_type
+                        ? ({ chr: "CHR", marchand: "Marchand", particulier: "Particulier", fournisseur: "Fournisseur", client: "Client" }[String((req as Record<string,unknown>).sous_type)] ?? String((req as Record<string,unknown>).sous_type))
                         : (req.type === "client" ? "Client" : "Fournisseur")
                       }
                     </span>
@@ -414,26 +521,51 @@ export default function BODemandesComptes({ user }: Props) {
                   </div>
                 )}
 
-                {req.rejectReason && (
+                {(req as Record<string,unknown>).rejectReason && (
                   <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-700">
-                    <strong>Motif rejet :</strong> {req.rejectReason}
+                    <strong>Motif rejet :</strong> {String((req as Record<string,unknown>).rejectReason)}
                   </div>
                 )}
 
-                {req.statut === "en_attente" && (
-                  <div className="flex gap-2 pt-1 border-t border-border">
+                {/* ── Actions ────────────────────────────────────────────── */}
+                <div className="flex gap-2 pt-2 border-t border-border flex-wrap">
+
+                  {/* Approuver — disponible si pas encore approuvé */}
+                  {req.statut !== "approuve" && (
                     <button onClick={() => openApprove(req)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                      Approuver
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors">
+                      ✅ Approuver
                     </button>
+                  )}
+
+                  {/* Rejeter — disponible si pas encore rejeté */}
+                  {req.statut !== "rejete" && (
                     <button onClick={() => openReject(req)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-300 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      Rejeter
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-300 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors">
+                      ❌ Rejeter
                     </button>
-                  </div>
-                )}
+                  )}
+
+                  {/* Remettre en attente */}
+                  {req.statut !== "en_attente" && (
+                    <button onClick={() => handleChangeStatut(req, "en_attente")}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-300 text-amber-700 text-xs font-semibold hover:bg-amber-50 transition-colors">
+                      ⏳ En attente
+                    </button>
+                  )}
+
+                  {/* Modifier */}
+                  <button onClick={() => openEdit(req)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-300 text-blue-700 text-xs font-semibold hover:bg-blue-50 transition-colors">
+                    ✏️ Modifier
+                  </button>
+
+                  {/* Supprimer */}
+                  <button onClick={() => handleDelete(req)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-500 text-xs font-semibold hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors ml-auto">
+                    🗑️ Supprimer
+                  </button>
+                </div>
               </div>
             )
           })}
