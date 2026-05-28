@@ -30,15 +30,32 @@ export async function POST(req: NextRequest) {
       table: string
       upserts?: Array<{ id: string; payload: unknown; updated_at: string }>
       deletes?: string[]
+      clearAll?: boolean          // ← supprime TOUTES les lignes (reset)
+      preserveId?: string         // ← ID à préserver lors du clearAll (ex: super_admin)
     }
 
     if (!body.table) {
       return NextResponse.json({ ok: false, errors: ["table manquante"] }, { status: 400 })
     }
 
-    const { table, upserts, deletes } = body
+    const { table, upserts, deletes, clearAll, preserveId } = body
     const errors: string[] = []
     const sb = getAdminClient()
+
+    // ── Suppression complète de la table (service role bypass RLS) ────────────
+    if (clearAll) {
+      let q = sb.from(table).delete()
+      if (preserveId) {
+        // @ts-ignore — PostgREST filter chaining
+        q = q.neq("id", preserveId)
+      } else {
+        // @ts-ignore
+        q = q.not("id", "is", null)
+      }
+      const { error } = await q
+      if (error) errors.push(`clearAll ${table}: ${error.message}`)
+      return NextResponse.json({ ok: errors.length === 0, errors })
+    }
 
     if (upserts && upserts.length > 0) {
       const { error } = await sb

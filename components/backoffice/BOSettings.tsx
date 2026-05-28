@@ -515,7 +515,6 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
 
   const handleClearAll = async () => {
     if (clearTables.size === 0) return
-    // Protection super_admin : leur compte ne peut jamais être supprimé
     const isSuperAdmin = user.role === "super_super_admin"
     setShowClearConfirm(false)
 
@@ -528,31 +527,37 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
         })
       }
 
-      // 2. Effacer Supabase (si demandé, uniquement les tables sélectionnées)
+      // 2. Effacer Supabase via /api/sync-write (service role → bypass RLS)
       if (clearMode === "supabase" || clearMode === "both") {
-        const sb = createClient()
         let sbErrors = 0
         for (const table of ERP_TABLES_SYNC) {
           if (!clearTables.has(table)) continue
           try {
-            if (table === "fl_users" && isSuperAdmin) {
-              await sb.from(table).delete().neq("id", user.id)
-            } else {
-              await sb.from(table).delete().gte("id", "")
-            }
+            const res = await fetch("/api/sync-write", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                table,
+                clearAll: true,
+                // Préserver le compte super_admin dans fl_users
+                ...(table === "fl_users" && isSuperAdmin ? { preserveId: user.id } : {}),
+              }),
+            })
+            const data = await res.json()
+            if (!data.ok) sbErrors++
           } catch { sbErrors++ }
         }
         if (sbErrors > 0) {
-          setDgMsg({ ok: false, text: `Effacement partiel — ${sbErrors} tables Supabase inaccessibles.` })
-          setTimeout(() => setDgMsg(null), 5000)
+          setDgMsg({ ok: false, text: `Effacement partiel — ${sbErrors} table(s) Supabase non effacée(s). Vérifiez les logs.` })
+          setTimeout(() => setDgMsg(null), 6000)
           return
         }
       }
 
-      const scopeLabel = clearMode === "local" ? "locales" : clearMode === "supabase" ? "Supabase" : "local + Supabase"
-      setDgMsg({ ok: true, text: `${clearTables.size} catégorie(s) effacée(s) (${scopeLabel}). Rechargez la page.` })
+      const scopeLabel = clearMode === "local" ? "local" : clearMode === "supabase" ? "Supabase" : "local + Supabase"
+      setDgMsg({ ok: true, text: `✅ ${clearTables.size} catégorie(s) effacée(s) (${scopeLabel}). Rechargez la page.` })
     } catch {
-      setDgMsg({ ok: false, text: "Erreur lors de l'effacement. Vérifiez la connexion Supabase." })
+      setDgMsg({ ok: false, text: "Erreur lors de l'effacement." })
     }
     setTimeout(() => setDgMsg(null), 6000)
   }

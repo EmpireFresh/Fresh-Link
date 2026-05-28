@@ -601,43 +601,41 @@ export default function BOCommandesUnifiees({ user }: Props) {
                     </td>
                     {/* Actions */}
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <select
-                          value={cmd.statut}
-                          onChange={e => updateStatut(cmd, e.target.value)}
-                          disabled={updating}
-                          className="text-xs px-2 py-1.5 rounded-lg border border-border bg-white text-slate-600 cursor-pointer hover:border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:opacity-40"
-                        >
-                          {nextStats.map(s => {
-                            const cfg = getStatutCfg(s, cmd.source)
-                            return <option key={s} value={s}>{cfg.icon} {cfg.label}</option>
-                          })}
-                        </select>
-                        {/* WhatsApp update button */}
+                      <div className="flex items-center gap-1.5">
+                        {/* WhatsApp — envoyer statut */}
                         {tel && (
                           <button
                             onClick={() => {
                               const sc = getStatutCfg(cmd.statut, cmd.source)
                               const waMsg = encodeURIComponent(
-                                `Bonjour ${cmd.nom_client} 👋\n\nVotre commande N° ${cmd.numero.slice(0,12)} est maintenant : ${sc.icon} ${sc.label}\n\n— Vita Fresh 🍃`
+                                `Bonjour ${cmd.nom_client} 👋\n\nVotre commande N° ${cmd.numero.slice(0,12)} : ${sc.icon} ${sc.label}\n\n— Vita Fresh 🍃`
                               )
                               window.open(`https://wa.me/${tel}?text=${waMsg}`, "_blank")
                             }}
-                            title="Envoyer statut par WhatsApp"
-                            className="px-1.5 py-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 text-xs border border-green-200 transition-colors"
+                            title="Notifier par WhatsApp"
+                            className="px-2 py-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 text-xs border border-green-200 transition-colors"
                           >
                             📲
                           </button>
                         )}
+                        {/* Injecter dans ERP (commandes web seulement) */}
                         {cmd.source === "web" && cmd.statut !== "confirmee" && cmd.statut !== "livre" && (
                           <button
                             onClick={() => injecterDansERP(cmd)}
-                            title="Injecter dans la logistique ERP (Préparation / Dispatch / Stock)"
+                            title="Injecter dans la logistique ERP"
                             className="px-2 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition-colors whitespace-nowrap"
                           >
                             🚀 ERP
                           </button>
                         )}
+                        {/* Ouvrir le détail */}
+                        <button
+                          onClick={() => setSelected(cmd)}
+                          className="px-2 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs border border-slate-200 transition-colors"
+                          title="Voir détail / changer statut"
+                        >
+                          ✏️
+                        </button>
                       </div>
                     </td>
                   </tr>
