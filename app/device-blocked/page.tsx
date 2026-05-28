@@ -117,45 +117,45 @@ function AccessGateContent() {
     }
   }
 
-  // ── Login admin (Supabase → sadmin cookie) ─────────────────────────────────
+  // ── Login admin (fl_users via /api/ext/auth → sadmin cookie) ─────────────
   async function handleAdminLogin(e: React.FormEvent) {
     e.preventDefault()
     setAdminError(""); setAdminLoading(true)
     try {
-      const { url, key } = getSupabase()
-      if (!url || !key) { setAdminError("Supabase non configuré."); setAdminLoading(false); return }
+      // Détecter si l'identifiant est un téléphone (chiffres/espaces/+) ou un email
+      const identifier = adminEmail.trim()
+      const isPhone    = /^[\d\s\+\-\.\(\)]{6,}$/.test(identifier)
+      const authBody   = isPhone
+        ? { phone: identifier, password: adminPass }
+        : { email: identifier, password: adminPass }
 
-      // 1. Authentifier via Supabase REST
-      const authRes = await fetch(`${url}/auth/v1/token?grant_type=password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", apikey: key, Authorization: `Bearer ${key}` },
-        body: JSON.stringify({ email: adminEmail, password: adminPass }),
+      // 1. Authentifier via fl_users (service role — bypass RLS)
+      const authRes = await fetch("/api/ext/auth", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(authBody),
       })
       const authData = await authRes.json()
+
       if (!authRes.ok || !authData.user) {
-        setAdminError("Email ou mot de passe incorrect.")
+        setAdminError(authData?.error ?? "Identifiant ou mot de passe incorrect.")
         setAdminLoading(false); return
       }
 
-      const userId = authData.user.id as string
+      const { id: userId, role } = authData.user as { id: string; role: string }
 
-      // 2. Vérifier le rôle dans fl_users
-      const profileRes = await fetch(
-        `${url}/rest/v1/fl_users?id=eq.${userId}&select=role`,
-        { headers: { apikey: key, Authorization: `Bearer ${authData.access_token}` } }
-      )
-      const profiles = (await profileRes.json()) as Array<{ role: string }>
-      const role = profiles?.[0]?.role ?? ""
-      if (!["admin", "superadmin", "super_admin", "super_super_admin"].includes(role)) {
-        setAdminError("Accès refusé — compte non administrateur.")
+      // 2. Seul Jawad (super_super_admin) peut débloquer les appareils.
+      //    Un autre admin doit avoir été promu super_super_admin par Jawad.
+      if (role !== "super_super_admin") {
+        setAdminError("Accès refusé — seul Jawad peut débloquer les appareils.")
         setAdminLoading(false); return
       }
 
       // 3. Poser le cookie sadmin (bypass device guard)
       const sadminRes = await fetch("/api/admin-session", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body:    JSON.stringify({ userId }),
       })
       if (!sadminRes.ok) { setAdminError("Erreur serveur."); setAdminLoading(false); return }
 
@@ -318,10 +318,10 @@ function AccessGateContent() {
             </div>
             <div className="space-y-3 mb-4">
               <input
-                type="email"
+                type="text"
                 value={adminEmail}
                 onChange={e => setAdminEmail(e.target.value)}
-                placeholder="Email"
+                placeholder="Email ou téléphone"
                 required
                 className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#f1f5f9" }}

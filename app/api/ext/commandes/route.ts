@@ -10,14 +10,65 @@ function corsHeaders(origin: string | null): HeadersInit {
 
 const SUCCESS_MSG = "Commande enregistrée avec succès."
 
+const SB_URL        = process.env.NEXT_PUBLIC_SUPABASE_URL     ?? "https://jwdrwapuetqoqnankgma.supabase.co"
+// Service role — contourne RLS, obligatoire pour écrire dans fl_commandes
+const SB_SERVER_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY    ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
+
+// ── Injection automatique vers la logistique ERP ────────────────────────────
+// Crée un bon de livraison dans fl_bons_livraison (ou fl_bons_preparation)
+// dès qu'une commande web est enregistrée. Fire-and-forget.
+async function injectToLogistique(
+  sbUrl: string,
+  sbKey: string,
+  commande: Record<string, unknown>
+): Promise<void> {
+  const bonId = "BL-" + String(commande.numero).replace("WEB-", "")
+  const bonPayload = {
+    num_bon:           bonId,
+    commande_id:       commande.numero,
+    client:            commande.nom_client,
+    telephone:         commande.telephone,
+    adresse_livraison: commande.adresse_livraison ?? null,
+    lignes:            commande.lignes,
+    montant_total:     commande.montant_total,
+    creneau:           commande.creneau ?? "Standard 24h",
+    instructions:      commande.instructions ?? null,
+    statut:            "a_preparer",
+    source:            "site_web",
+    created_at:        commande.created_at,
+  }
+  const headers = {
+    apikey:         sbKey,
+    Authorization:  `Bearer ${sbKey}`,
+    "Content-Type": "application/json",
+    Prefer:         "return=minimal",
+  }
+  for (const table of ["fl_bons_livraison", "fl_bons_preparation"]) {
+    // Essai format JSONB {id, payload, updated_at}
+    try {
+      const r = await fetch(`${sbUrl}/rest/v1/${table}`, {
+        method: "POST", headers,
+        body: JSON.stringify({ id: bonId, payload: bonPayload, updated_at: commande.created_at }),
+      })
+      if (r.ok) { console.log(`[commandes] ✅ Bon injecté dans ${table} (JSONB):`, bonId); return }
+    } catch { /* essayer format plat */ }
+    // Essai format plat
+    try {
+      const r = await fetch(`${sbUrl}/rest/v1/${table}`, {
+        method: "POST", headers,
+        body: JSON.stringify({ id: bonId, ...bonPayload }),
+      })
+      if (r.ok) { console.log(`[commandes] ✅ Bon injecté dans ${table} (flat):`, bonId); return }
+    } catch { /* essayer table suivante */ }
+  }
+  console.warn("[commandes] injectToLogistique: aucune table disponible pour", bonId)
+}
+
 // ── POST /api/ext/commandes ─────────────────────────────────────────────────
-// Commandes web vitafresh → enregistrées dans fl_commandes (table unifiée ERP)
-// + fallback fl_commandes_web si la table principale est indisponible
+// Commandes web vitafresh → enregistrées dans fl_commandes (table {id, payload})
 // Format attendu : { nom_client, telephone, lignes[], montant_total, ... }
 export async function POST(req: NextRequest) {
-  const origin      = req.headers.get("origin")
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const origin = req.headers.get("origin")
 
   let body: Record<string, unknown> = {}
   try { body = await req.json() } catch {
@@ -30,7 +81,6 @@ export async function POST(req: NextRequest) {
     statut = "nouveau", source = "site_web",
   } = body as Record<string, unknown>
 
-  // Validation minimale
   if (!nom_client || !telephone) {
     return NextResponse.json({ error: "nom_client et telephone sont requis." }, { status: 400, headers: corsHeaders(origin) })
   }
@@ -38,11 +88,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "lignes[] ne peut pas être vide." }, { status: 400, headers: corsHeaders(origin) })
   }
 
-  const numero = "WEB-" + Date.now().toString().slice(-8)
-  const total  = Number(montant_total) || (lignes as Record<string, number>[]).reduce((s, l) => s + (l.total ?? l.prixUnitaire * l.quantite ?? 0), 0)
+  const numero  = "WEB-" + Date.now().toString().slice(-8)
+  const total   = Number(montant_total) || (lignes as Record<string, number>[]).reduce((s, l) => s + (l.total ?? l.prixUnitaire * l.quantite ?? 0), 0)
+  const now     = new Date().toISOString()
 
-  // Payload format commun fl_commandes (table ERP principale)
-  const payloadERP = {
+  // Payload complet (format ERP)
+  const payloadData = {
     numero,
     nom_client:        String(nom_client).trim(),
     telephone:         String(telephone).trim(),
@@ -53,45 +104,75 @@ export async function POST(req: NextRequest) {
     creneau:           creneau ? String(creneau) : "Standard 24h",
     instructions:      instructions ? String(instructions) : null,
     statut:            String(statut),
-    source:            String(source),   // "site_web" pour filtrer si besoin
-    created_at:        new Date().toISOString(),
+    source:            String(source),   // "site_web"
+    created_at:        now,
   }
 
   // Sans Supabase configuré → succès silencieux (logué)
-  if (!supabaseUrl || !supabaseKey) {
+  if (!SB_URL || !SB_SERVER_KEY) {
     console.warn("[commandes] Supabase non configuré — commande non persistée", { numero, nom_client, telephone })
     return NextResponse.json({ numero, statut: "nouveau", message: SUCCESS_MSG }, { status: 201, headers: corsHeaders(origin) })
   }
 
   const sbH = {
-    apikey:        supabaseKey,
-    Authorization: `Bearer ${supabaseKey}`,
+    apikey:         SB_SERVER_KEY,
+    Authorization:  `Bearer ${SB_SERVER_KEY}`,
     "Content-Type": "application/json",
-    Prefer:        "return=minimal",
+    Prefer:         "return=minimal",
   }
 
-  // ── Tentative 1 : fl_commandes (table unifiée ERP — commandes normales + web) ──
+  // ── Tentative 1 : fl_commandes format {id, payload} (table ERP unifiée) ───
+  // Les tables fl_* utilisent le format JSONB : { id, payload, updated_at }
   try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/fl_commandes`, {
-      method: "POST", headers: sbH, body: JSON.stringify(payloadERP),
+    const res = await fetch(`${SB_URL}/rest/v1/fl_commandes`, {
+      method: "POST",
+      headers: sbH,
+      body: JSON.stringify({
+        id:         numero,
+        payload:    payloadData,
+        updated_at: now,
+      }),
     })
     if (res.ok) {
-      console.log("[commandes] ✅ Enregistré dans fl_commandes:", numero)
+      console.log("[commandes] ✅ Enregistré dans fl_commandes (JSONB):", numero)
+      void injectToLogistique(SB_URL, SB_SERVER_KEY, payloadData)
       return NextResponse.json({ numero, statut: "nouveau", message: SUCCESS_MSG }, { status: 201, headers: corsHeaders(origin) })
     }
     const errText = await res.text().catch(() => "")
-    console.warn("[commandes] fl_commandes failed:", res.status, errText)
+    console.warn("[commandes] fl_commandes JSONB failed:", res.status, errText)
+    // Si l'erreur est liée à un format différent (ancienne table plate), essai flat
   } catch (e) {
-    console.warn("[commandes] fl_commandes exception:", e)
+    console.warn("[commandes] fl_commandes JSONB exception:", e)
   }
 
-  // ── Tentative 2 : fl_commandes_web (fallback table dédiée web) ────────────
+  // ── Tentative 2 : fl_commandes format plat (ancienne structure) ───────────
   try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/fl_commandes_web`, {
-      method: "POST", headers: sbH, body: JSON.stringify(payloadERP),
+    const res = await fetch(`${SB_URL}/rest/v1/fl_commandes`, {
+      method: "POST",
+      headers: sbH,
+      body: JSON.stringify({ id: numero, ...payloadData }),
     })
     if (res.ok) {
-      console.log("[commandes] ✅ Enregistré dans fl_commandes_web (fallback):", numero)
+      console.log("[commandes] ✅ Enregistré dans fl_commandes (flat):", numero)
+      void injectToLogistique(SB_URL, SB_SERVER_KEY, payloadData)
+      return NextResponse.json({ numero, statut: "nouveau", message: SUCCESS_MSG }, { status: 201, headers: corsHeaders(origin) })
+    }
+    const errText = await res.text().catch(() => "")
+    console.warn("[commandes] fl_commandes flat failed:", res.status, errText)
+  } catch (e) {
+    console.warn("[commandes] fl_commandes flat exception:", e)
+  }
+
+  // ── Tentative 3 : fl_commandes_web (table dédiée web, format plat) ────────
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/fl_commandes_web`, {
+      method: "POST",
+      headers: sbH,
+      body: JSON.stringify({ id: numero, ...payloadData }),
+    })
+    if (res.ok) {
+      console.log("[commandes] ✅ Enregistré dans fl_commandes_web:", numero)
+      void injectToLogistique(SB_URL, SB_SERVER_KEY, payloadData)
       return NextResponse.json({ numero, statut: "nouveau", message: SUCCESS_MSG }, { status: 201, headers: corsHeaders(origin) })
     }
     const errText = await res.text().catch(() => "")
@@ -100,27 +181,8 @@ export async function POST(req: NextRequest) {
     console.warn("[commandes] fl_commandes_web exception:", e)
   }
 
-  // ── Tentative 3 : fl_site_access (fallback JSONB ultime) ──────────────────
-  try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/fl_site_access`, {
-      method: "POST", headers: sbH,
-      body: JSON.stringify({
-        device_id: `order-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        telephone: String(telephone).trim(),
-        statut:    "en_attente",
-        notes:     JSON.stringify({ _source: "commande-web", ...payloadERP }),
-      }),
-    })
-    if (res.ok) {
-      return NextResponse.json({ numero, statut: "nouveau", message: SUCCESS_MSG }, { status: 201, headers: corsHeaders(origin) })
-    }
-    console.warn("[commandes] fl_site_access fallback failed:", res.status)
-  } catch (e) {
-    console.warn("[commandes] fl_site_access exception:", e)
-  }
-
-  // ── Toujours confirmer à l'utilisateur (commande loggée côté serveur) ──────
-  console.error("[commandes] TOUTES tentatives échouées — commande loggée:", { numero, nom_client, telephone, total })
+  // ── Toujours confirmer à l'utilisateur (commande loggée) ──────────────────
+  console.error("[commandes] TOUTES tentatives Supabase échouées — commande loggée:", { numero, nom_client, telephone, total })
   return NextResponse.json(
     { numero, statut: "nouveau", message: SUCCESS_MSG },
     { status: 201, headers: corsHeaders(origin) }
@@ -128,26 +190,44 @@ export async function POST(req: NextRequest) {
 }
 
 // ── GET /api/ext/commandes?tel=xxx ──────────────────────────────────────────
-// Lit depuis fl_commandes (table unifiée) + fallback fl_commandes_web
+// Lit les commandes d'un client depuis fl_commandes ou fl_commandes_web
 export async function GET(req: NextRequest) {
-  const origin      = req.headers.get("origin")
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const origin = req.headers.get("origin")
 
-  if (!supabaseUrl || !supabaseKey) {
+  if (!SB_URL || !SB_SERVER_KEY) {
     return NextResponse.json([], { headers: corsHeaders(origin) })
   }
 
-  const sbH = { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+  const sbH = { apikey: SB_SERVER_KEY, Authorization: `Bearer ${SB_SERVER_KEY}` }
   const tel = req.nextUrl.searchParams.get("tel") || req.nextUrl.searchParams.get("telephone")
   if (!tel) return NextResponse.json({ error: "tel requis." }, { status: 400, headers: corsHeaders(origin) })
 
-  const telEnc = encodeURIComponent(tel)
+  const telEnc = encodeURIComponent(tel.trim())
 
-  // Essayer fl_commandes d'abord (table unifiée)
+  // ── Essai 1 : fl_commandes format JSONB — filtre sur payload->>telephone ──
   try {
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/fl_commandes?telephone=eq.${telEnc}&order=created_at.desc&limit=30`,
+      `${SB_URL}/rest/v1/fl_commandes?payload->>telephone=eq.${telEnc}&order=updated_at.desc&limit=50`,
+      { headers: sbH }
+    )
+    if (res.ok) {
+      const rows: { id: string; payload: Record<string, unknown>; updated_at: string }[] = await res.json()
+      if (Array.isArray(rows) && rows.length > 0) {
+        // Aplatir payload pour le client
+        const flat = rows.map(r => ({
+          id:         r.id,
+          updated_at: r.updated_at,
+          ...((r.payload && typeof r.payload === "object") ? r.payload : {}),
+        }))
+        return NextResponse.json(flat, { headers: corsHeaders(origin) })
+      }
+    }
+  } catch { /* fallback */ }
+
+  // ── Essai 2 : fl_commandes format plat — filtre direct sur telephone ──────
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/fl_commandes?telephone=eq.${telEnc}&order=created_at.desc&limit=50`,
       { headers: sbH }
     )
     if (res.ok) {
@@ -158,10 +238,10 @@ export async function GET(req: NextRequest) {
     }
   } catch { /* fallback */ }
 
-  // Fallback fl_commandes_web
+  // ── Essai 3 : fl_commandes_web ────────────────────────────────────────────
   try {
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/fl_commandes_web?telephone=eq.${telEnc}&order=created_at.desc&limit=30`,
+      `${SB_URL}/rest/v1/fl_commandes_web?telephone=eq.${telEnc}&order=created_at.desc&limit=50`,
       { headers: sbH }
     )
     const data = await res.json()

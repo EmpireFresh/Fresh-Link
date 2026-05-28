@@ -17,6 +17,27 @@ const SB_ANON       = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
 const SB_SERVER_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY    ?? SB_ANON
 const AUTH_SECRET   = process.env.AUTH_SECRET                  ?? "fl_auth_secret_2026"
 
+// ── Utilisateurs de secours hardcodés ─────────────────────────────────────────
+// Utilisés si fl_users Supabase est vide ou inaccessible.
+// Permettent à l'admin de toujours pouvoir se connecter.
+const FALLBACK_USERS = [
+  {
+    id: "u_jawad_root", name: "Jawad",
+    email: "jawad@vita-fresh.ma", telephone: "0647333456",
+    password: "Medghaly@22", role: "super_super_admin", actif: true,
+  },
+  {
+    id: "u1", name: "Super Admin",
+    email: "admin@freshlink.ma",
+    password: "admin2024", role: "super_admin", actif: true,
+  },
+  {
+    id: "u_admin", name: "Directeur",
+    email: "directeur@freshlink.ma",
+    password: "admin1234", role: "admin", actif: true,
+  },
+]
+
 function cors(origin: string | null): HeadersInit {
   return {
     "Access-Control-Allow-Origin":  origin ?? "*",
@@ -105,11 +126,54 @@ async function getClientById(clientId: string): Promise<any | null> {
   }
 }
 
+/**
+ * Enregistre ou vérifie un appareil dans fl_site_access.
+ * Retourne: "autorise" | "en_attente" | "bloque" | "skip" (pas de device_id)
+ */
+async function checkDevice(deviceId: string | null, nom: string | null, userAgent: string | null): Promise<"autorise" | "en_attente" | "bloque" | "skip"> {
+  if (!deviceId?.trim()) return "skip"
+  try {
+    // Vérifier si le device existe déjà
+    const res = await fetch(
+      `${SB_URL}/rest/v1/fl_site_access?device_id=eq.${encodeURIComponent(deviceId)}&select=statut&limit=1`,
+      { headers: { apikey: SB_SERVER_KEY, Authorization: `Bearer ${SB_SERVER_KEY}` } }
+    )
+    if (res.ok) {
+      const rows: { statut: string }[] = await res.json()
+      if (rows?.[0]) {
+        const s = rows[0].statut
+        if (s === "autorise") return "autorise"
+        if (s === "bloque")   return "bloque"
+        return "en_attente"
+      }
+    }
+    // Device inconnu — l'enregistrer comme en_attente
+    await fetch(`${SB_URL}/rest/v1/fl_site_access`, {
+      method: "POST",
+      headers: {
+        apikey: SB_SERVER_KEY, Authorization: `Bearer ${SB_SERVER_KEY}`,
+        "Content-Type": "application/json", Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        device_id:      deviceId,
+        nom:            nom ?? null,
+        user_agent:     userAgent ?? null,
+        statut:         "en_attente",
+        first_visit_at: new Date().toISOString(),
+        updated_at:     new Date().toISOString(),
+      }),
+    })
+    return "en_attente"
+  } catch {
+    return "skip" // En cas d'erreur, ne pas bloquer la connexion
+  }
+}
+
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin")
   try {
     const body = await req.json()
-    const { phone, email, password } = body
+    const { phone, email, password, device_id, user_agent } = body
 
     if ((!phone?.trim() && !email?.trim()) || !password?.trim()) {
       return NextResponse.json(
@@ -119,7 +183,9 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Récupérer tous les utilisateurs (aplatit {id, payload}) ──────────────
-    const allUsers = await getAllUsers()
+    // Si Supabase est vide ou inaccessible, on bascule sur les comptes de secours
+    const sbUsers  = await getAllUsers()
+    const allUsers = sbUsers.length > 0 ? sbUsers : FALLBACK_USERS
 
     let user: any = null
 
@@ -139,10 +205,11 @@ export async function POST(req: NextRequest) {
         return phones.has(storedLocal) || phones.has(storedIntl) || phones.has(tel)
       }) ?? null
     } else if (email?.trim()) {
-      // Fallback email
+      // Fallback email OU nom (pour connexion par prénom ex: "jawad")
       const emailLower = email.trim().toLowerCase()
       user = allUsers.find(u =>
-        (u.email ?? "").toString().toLowerCase() === emailLower
+        (u.email ?? "").toString().toLowerCase() === emailLower ||
+        (u.name  ?? "").toString().toLowerCase() === emailLower
       ) ?? null
     }
 
@@ -170,6 +237,30 @@ export async function POST(req: NextRequest) {
         { error: "Compte désactivé. Contactez votre commercial." },
         { status: 403, headers: cors(origin) }
       )
+    }
+
+    // ── Vérification accès appareil (optionnel — ne bloque pas si pas de device_id) ──
+    // Le device_id est envoyé par le site web depuis localStorage.
+    // Si envoyé: vérifie fl_site_access. Non envoyé: login normal (rétrocompatible).
+    if (device_id?.trim()) {
+      const deviceStatus = await checkDevice(
+        device_id.trim(),
+        user.name ?? null,
+        user_agent ?? req.headers.get("user-agent") ?? null
+      )
+      if (deviceStatus === "bloque") {
+        return NextResponse.json(
+          { error: "Cet appareil a été bloqué. Contactez l'administrateur.", device_status: "bloque" },
+          { status: 403, headers: cors(origin) }
+        )
+      }
+      if (deviceStatus === "en_attente") {
+        return NextResponse.json(
+          { error: "Votre appareil est en attente d'approbation par l'administrateur. Vous serez notifié dès que l'accès sera accordé.", device_status: "en_attente" },
+          { status: 403, headers: cors(origin) }
+        )
+      }
+      // deviceStatus === "autorise" ou "skip" → on continue
     }
 
     const ALLOWED = ["client", "fournisseur", "resp_commercial", "admin", "super_admin", "super_super_admin"]

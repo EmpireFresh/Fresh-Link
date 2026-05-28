@@ -493,6 +493,39 @@ html[dir="rtl"] .modal-close{right:auto;left:14px}
 @keyframes truckShake{from{transform:translateX(-2px)}to{transform:translateX(2px)}}
 .harvest-arrow{font-size:24px;color:rgba(255,255,255,.3);padding:0 8px;align-self:center}
 
+/* ── PROMO / PUB SECTION ── */
+.promo-sec{padding:72px 0;background:linear-gradient(135deg,#fafaf5 0%,#f0fdf4 60%,#fffbe6 100%)}
+.promo-banner{position:relative;border-radius:20px;overflow:hidden;background:linear-gradient(120deg,var(--g1),#1a7a3c,#0d4a24);padding:48px 40px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:32px;margin-bottom:40px;box-shadow:0 8px 40px rgba(30,86,49,.25)}
+.promo-banner::before{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.promo-banner-content{position:relative;z-index:1}
+.promo-banner-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+.promo-banner-tag .pdot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulse-dot 2s infinite}
+.promo-banner h3{font-size:clamp(22px,3vw,36px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:10px}
+.promo-banner h3 em{color:var(--o2);font-style:normal}
+.promo-banner p{font-size:15px;color:rgba(255,255,255,.8);margin-bottom:20px;line-height:1.7}
+.promo-banner-cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--o1),var(--o2));color:var(--gd);padding:12px 24px;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none;border:none;cursor:pointer;transition:all .25s}
+.promo-banner-cta:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(184,150,12,.4)}
+.promo-banner-visual{position:relative;z-index:1;font-size:clamp(80px,10vw,140px);line-height:1;filter:drop-shadow(0 8px 24px rgba(0,0,0,.25));animation:floatEmoji 4s ease-in-out infinite}
+@keyframes floatEmoji{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-12px) rotate(5deg)}}
+.promo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.promo-card{position:relative;background:#fff;border-radius:18px;overflow:hidden;border:1.5px solid var(--gl);box-shadow:0 2px 16px rgba(0,0,0,.06);transition:all .3s cubic-bezier(.22,1,.36,1);cursor:pointer}
+.promo-card:hover{transform:translateY(-6px);box-shadow:0 12px 40px rgba(30,86,49,.15);border-color:var(--g2)}
+.promo-card-img{height:160px;display:flex;align-items:center;justify-content:center;font-size:72px;background:linear-gradient(135deg,var(--gp),#f0fdf4)}
+.promo-card-body{padding:18px 20px}
+.promo-card-badge{display:inline-flex;align-items:center;gap:5px;background:#fef3c7;color:#92400e;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;margin-bottom:10px}
+.promo-card-badge.red{background:#fee2e2;color:#991b1b}
+.promo-card-badge.green{background:#dcfce7;color:#14532d}
+.promo-card-title{font-size:17px;font-weight:800;color:var(--gray-900);margin-bottom:4px}
+.promo-card-desc{font-size:13px;color:var(--gray-500);line-height:1.5;margin-bottom:14px}
+.promo-card-price{display:flex;align-items:baseline;gap:10px}
+.promo-card-price .new{font-size:22px;font-weight:900;color:var(--g1)}
+.promo-card-price .old{font-size:14px;color:var(--gray-500);text-decoration:line-through}
+.promo-card-price .pct{font-size:12px;font-weight:800;color:#16a34a;background:#dcfce7;padding:2px 8px;border-radius:6px}
+.promo-card-btn{margin-top:14px;width:100%;padding:10px;border-radius:10px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:opacity .2s}
+.promo-card-btn:hover{opacity:.9}
+@media(max-width:768px){.promo-banner{grid-template-columns:1fr;text-align:center}.promo-banner-visual{display:none}.promo-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.promo-grid{grid-template-columns:1fr}}
+
 /* ── STORAGE TIPS SECTION ── */
 .storage-sec{padding:64px 0;background:#f0fdf4}
 .storage-tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:24px 0 32px}
@@ -530,7 +563,7 @@ html[dir="rtl"] .modal-close{right:auto;left:14px}
 .recipe-nav-btn:hover,.recipe-nav-btn.on{background:var(--o1);color:var(--gd)}
 
 /* RESPONSIVE */
-@media(max-width:1024px){.hero-cards{display:none}.pgrid{grid-template-columns:repeat(3,1fr)}.cats{grid-template-columns:repeat(2,1fr)}.erp-g{grid-template-columns:1fr;gap:32px}.footer-cols{grid-template-columns:1fr 1fr;gap:24px}.cfg-drawer{width:100%;right:-100%}.wa-section-grid{grid-template-columns:1fr}}
+@media(max-width:1024px){.hero-cards{display:none!important}.pgrid{grid-template-columns:repeat(3,1fr)}.cats{grid-template-columns:repeat(2,1fr)}.erp-g{grid-template-columns:1fr;gap:32px}.footer-cols{grid-template-columns:1fr 1fr;gap:24px}.cfg-drawer{width:100%;right:-100%}.wa-section-grid{grid-template-columns:1fr}}
 @media(max-width:768px){.nav-links{display:none}.hamburger{display:flex}.hero-inner{grid-template-columns:1fr}.hero{padding:52px 16px}.hero h1{font-size:32px}.pro-grid{grid-template-columns:1fr}.ogrid{grid-template-columns:1fr}.tg{grid-template-columns:1fr}.footer-cols{grid-template-columns:1fr}.frow{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.zone-grid{grid-template-columns:1fr}.delivery-modes{grid-template-columns:1fr}.pgrid{grid-template-columns:repeat(2,1fr)}.popts{grid-template-columns:repeat(2,1fr)}.dopts{grid-template-columns:1fr}.container{padding:0 16px}}
 @media(max-width:480px){.pgrid{grid-template-columns:1fr}.hero-ctas{flex-direction:column}.btn-hero-primary,.btn-hero-whatsapp,.btn-hero-app{justify-content:center}.cat-wa-banner{flex-direction:column;text-align:center}.btn-wa-green{margin:0 auto}.erp-bar{padding:7px 14px}.strip{padding:12px}}
 /* MEDIA GALLERY */
@@ -827,8 +860,9 @@ const CONFIG = {
 
 const TEXTS = {
   fr: {
-    nav_services:"Services", nav_delivery:"Livraison", nav_catalogue:"Catalogue",
+    nav_services:"Services", nav_promos:"🎯 Promos", nav_delivery:"Livraison", nav_catalogue:"Catalogue",
     nav_pro:"Espace Pro", nav_contact:"Contact", nav_app:"📱 Application",
+    promo_title:"Promotions & Offres Spéciales", promo_sub:"Profitez de nos meilleurs prix cette semaine", promo_cta:"Voir le catalogue",
     btn_login:"Mon Espace",
     hero_badge:"En ligne — Commandes ouvertes",
     hero_h1:"Distribution de <em>Fruits & Légumes Frais</em> au Maroc",
@@ -931,8 +965,9 @@ const TEXTS = {
     avis_form_note:"Note *", avis_form_msg:"Votre avis *", avis_form_btn:"Soumettre mon avis",
   },
   ar: {
-    nav_services:"الخدمات", nav_delivery:"التوصيل", nav_catalogue:"الكتالوج",
+    nav_services:"الخدمات", nav_promos:"🎯 عروض", nav_delivery:"التوصيل", nav_catalogue:"الكتالوج",
     nav_pro:"فضاء المهنيين", nav_contact:"تواصل معانا", nav_app:"📱 التطبيق",
+    promo_title:"العروض والأسعار الخاصة", promo_sub:"استفد من أحسن أثمانو ديال هاد الأسبوع", promo_cta:"شوف الكتالوج",
     btn_login:"حسابي",
     hero_badge:"خدمة مفتوحة — طلبياتك واصلة",
     hero_h1:"توزيع <em>الفواكه والخضرة الطازة</em> فالمغرب",
@@ -1035,8 +1070,9 @@ const TEXTS = {
     avis_form_note:"التقييم *", avis_form_msg:"رأيك *", avis_form_btn:"سيفط الرأي",
   },
   en: {
-    nav_services:"Services", nav_delivery:"Delivery", nav_catalogue:"Catalogue",
+    nav_services:"Services", nav_promos:"🎯 Deals", nav_delivery:"Delivery", nav_catalogue:"Catalogue",
     nav_pro:"Pro Space", nav_contact:"Contact", nav_app:"📱 App",
+    promo_title:"Promotions & Special Offers", promo_sub:"Get our best prices this week", promo_cta:"View catalogue",
     btn_login:"My Account",
     hero_badge:"Online — Orders open",
     hero_h1:"<em>Fresh Fruit & Vegetable</em> Distribution in Morocco",
@@ -1395,10 +1431,11 @@ GET  /api/ext/commandes/:id → suivi commande</div>
       </div>
     </a>
     <ul class="nav-links">
+      <li><a href="#promos"     data-i18n="nav_promos" style="color:#fbbf24">🎯 Promos</a></li>
       <li><a href="#services"   data-i18n="nav_services">Services</a></li>
-      <li><a href="#livraison"  data-i18n="nav_delivery">Livraison</a></li>
       <li><a href="#catalogue"  data-i18n="nav_catalogue">Catalogue</a></li>
       <li><a href="#commander">Commander</a></li>
+      <li><a href="#livraison"  data-i18n="nav_delivery">Livraison</a></li>
       <li><a href="#contact"    data-i18n="nav_contact">Contact</a></li>
     </ul>
     <div class="nav-right">
@@ -1415,10 +1452,12 @@ GET  /api/ext/commandes/:id → suivi commande</div>
   </div>
 </nav>
 <div class="mobile-menu" id="mobileMenu">
+  <a href="#promos"     onclick="closeMobileMenu()" data-i18n="nav_promos" style="color:#fbbf24">🎯 Promos</a>
   <a href="#services"   onclick="closeMobileMenu()" data-i18n="nav_services">Services</a>
-  <a href="#livraison"  onclick="closeMobileMenu()" data-i18n="nav_delivery">Livraison</a>
   <a href="#catalogue"  onclick="closeMobileMenu()" data-i18n="nav_catalogue">Catalogue</a>
   <a href="#commander"  onclick="closeMobileMenu()">Commander</a>
+  <a href="#livraison"  onclick="closeMobileMenu()" data-i18n="nav_delivery">Livraison</a>
+  <a href="#contact"    onclick="closeMobileMenu()" data-i18n="nav_contact">Contact</a>
   <a href="#" onclick="closeMobileMenu();openGuide();return false;">📖 Guide FreshLink</a>
 </div>
 
@@ -1595,6 +1634,33 @@ GET  /api/ext/commandes/:id → suivi commande</div>
     </div>
   </div>
 </div>
+
+<!-- PROMOTIONS / PUB -->
+<section id="promos" class="promo-sec reveal">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">🎯 Offres</span>
+      <h2 class="section-title" data-i18n="promo_title">Promotions &amp; Offres Spéciales</h2>
+      <p class="section-sub" data-i18n="promo_sub">Profitez de nos meilleurs prix cette semaine</p>
+    </div>
+    <!-- Banner promo principale -->
+    <div class="promo-banner" id="promo-main-banner">
+      <div class="promo-banner-content">
+        <div class="promo-banner-tag"><span class="pdot"></span> <span id="pb-tag">Offre Semaine</span></div>
+        <h3 id="pb-title">Fraise &amp; Melon — <em>Saison !</em></h3>
+        <p id="pb-desc">Fruits de saison sélectionnés chaque matin au marché de gros. Livraison express 2–4h disponible sur Casablanca.</p>
+        <button class="promo-banner-cta" onclick="document.getElementById('catalogue')?.scrollIntoView({behavior:'smooth'})">
+          🛒 <span data-i18n="promo_cta">Voir le catalogue</span>
+        </button>
+      </div>
+      <div class="promo-banner-visual" id="pb-emoji">🍓</div>
+    </div>
+    <!-- Grille de promo cards -->
+    <div class="promo-grid" id="promo-cards">
+      <!-- Injected by JS — falls back to hardcoded -->
+    </div>
+  </div>
+</section>
 
 <!-- ── قسم الخدمات — كل الخدمات ديال Vita Fresh ── -->
 <!-- SERVICES -->
@@ -2001,39 +2067,6 @@ GET  /api/ext/commandes/:id → suivi commande</div>
   </div>
 </section>
 
-<!-- ERP SECTION -->
-<section class="erp-sec reveal" id="erp">
-  <div class="container">
-    <div class="slbl" style="font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--o2);font-weight:700;margin-bottom:8px">⚡ Espace Professionnel</div>
-    <div class="erp-g">
-      <div>
-        <div class="erp-t">Rejoignez notre <em>réseau pro</em></div>
-        <div class="erp-d">Accédez à vos prix négociés, suivez vos commandes et gérez votre compte directement depuis l'application ou le web.</div>
-        <div class="efs">
-          <div class="ef"><div class="efi">💰</div><div class="efc"><strong>Prix négociés</strong><span>Tarifs réservés aux professionnels selon votre profil.</span></div></div>
-          <div class="ef"><div class="efi">📋</div><div class="efc"><strong>Suivi de commandes</strong><span>Historique complet, statut temps réel, bons de livraison.</span></div></div>
-          <div class="ef"><div class="efi">⚡</div><div class="efc"><strong>Sync temps réel</strong><span>Stock et prix synchronisés depuis FreshLink ERP.</span></div></div>
-          <div class="ef"><div class="efi">📱</div><div class="efc"><strong>Application mobile</strong><span>Gérez tout depuis <a href="https://vitafresh.vitacore.ma/" target="_blank" style="color:var(--o2);text-decoration:none;font-weight:600">vitafresh.vitacore.ma</a></span></div></div>
-        </div>
-        <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
-          <a href="#commander" style="display:inline-block;padding:12px 24px;background:var(--o2);color:#000;border-radius:10px;font-weight:700;text-decoration:none">Commander maintenant</a>
-          <a href="https://vitafresh.vitacore.ma/" target="_blank" style="display:inline-block;padding:12px 24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px">🌐 Accéder à l'App</a>
-        </div>
-      </div>
-      <div class="ediag">
-        <div class="dl">🔗 Connexion FreshLink ERP — Temps réel</div>
-        <div class="df">
-          <div class="dn hl"><div class="dni">🌐</div><div><div class="dnn">Site web public</div><div class="dns">vitafresh.vitacore.ma</div></div><div class="dst sl">● EN LIGNE</div></div>
-          <div class="da">↕️</div>
-          <div class="dn hl"><div class="dni">⚡</div><div><div class="dnn">Supabase Realtime</div><div class="dns">Mises à jour instantanées</div></div><div class="dst sl">● ACTIF</div></div>
-          <div class="da">↕️</div>
-          <div class="dn"><div class="dni">📦</div><div><div class="dnn">FreshLink ERP</div><div class="dns">Stock · Prix · Commandes</div></div><div class="dst sa">⚡ SYNC</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ZONES LIVRAISON -->
 <section id="livraison" class="z-sec reveal">
   <div class="container">
@@ -2285,6 +2318,39 @@ GET  /api/ext/commandes/:id → suivi commande</div>
     </div>
     <div class="recipe-nav" id="recipe-nav">
       <!-- rendered by renderRecipeNav() -->
+    </div>
+  </div>
+</section>
+
+<!-- ERP SECTION -->
+<section class="erp-sec reveal" id="erp">
+  <div class="container">
+    <div class="slbl" style="font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--o2);font-weight:700;margin-bottom:8px">⚡ Espace Professionnel</div>
+    <div class="erp-g">
+      <div>
+        <div class="erp-t">Rejoignez notre <em>réseau pro</em></div>
+        <div class="erp-d">Accédez à vos prix négociés, suivez vos commandes et gérez votre compte directement depuis l'application ou le web.</div>
+        <div class="efs">
+          <div class="ef"><div class="efi">💰</div><div class="efc"><strong>Prix négociés</strong><span>Tarifs réservés aux professionnels selon votre profil.</span></div></div>
+          <div class="ef"><div class="efi">📋</div><div class="efc"><strong>Suivi de commandes</strong><span>Historique complet, statut temps réel, bons de livraison.</span></div></div>
+          <div class="ef"><div class="efi">⚡</div><div class="efc"><strong>Sync temps réel</strong><span>Stock et prix synchronisés depuis FreshLink ERP.</span></div></div>
+          <div class="ef"><div class="efi">📱</div><div class="efc"><strong>Application mobile</strong><span>Gérez tout depuis <a href="https://vitafresh.vitacore.ma/" target="_blank" style="color:var(--o2);text-decoration:none;font-weight:600">vitafresh.vitacore.ma</a></span></div></div>
+        </div>
+        <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
+          <a href="#commander" style="display:inline-block;padding:12px 24px;background:var(--o2);color:#000;border-radius:10px;font-weight:700;text-decoration:none">Commander maintenant</a>
+          <a href="https://vitafresh.vitacore.ma/" target="_blank" style="display:inline-block;padding:12px 24px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px">🌐 Accéder à l'App</a>
+        </div>
+      </div>
+      <div class="ediag">
+        <div class="dl">🔗 Connexion FreshLink ERP — Temps réel</div>
+        <div class="df">
+          <div class="dn hl"><div class="dni">🌐</div><div><div class="dnn">Site web public</div><div class="dns">vitafresh.vitacore.ma</div></div><div class="dst sl">● EN LIGNE</div></div>
+          <div class="da">↕️</div>
+          <div class="dn hl"><div class="dni">⚡</div><div><div class="dnn">Supabase Realtime</div><div class="dns">Mises à jour instantanées</div></div><div class="dst sl">● ACTIF</div></div>
+          <div class="da">↕️</div>
+          <div class="dn"><div class="dni">📦</div><div><div class="dnn">FreshLink ERP</div><div class="dns">Stock · Prix · Commandes</div></div><div class="dst sa">⚡ SYNC</div></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -2995,7 +3061,7 @@ function mapSBArticle(row){
     o:p.marketplaceDescription||p.marketplaceCommentaire||p.famille||"Maroc",
     p:prix, prixBase:prixBase,
     u:p.unite||"kg", packInfo:p.conditionnement||p.pack_info||p.packInfo||null, cat:cat, tags:tags, t:firstTag,
-    dispo:p.marketplaceStatut!=="out_of_stock"&&(p.stockDisponible||0)>0,
+    dispo:p.marketplaceStatut!=="out_of_stock"&&p.marketplaceStatut!=="rupture"&&p.marketplaceStatut!=="indisponible",
     stock:p.stockDisponible||0, img:p.photo||(p.photos&&p.photos[0])||"",
     promo:!!promoObj, promoLabel:promoLabel, fromSB:true,
     statut:p.marketplaceStatut||"disponible"
@@ -3038,7 +3104,8 @@ function syncFromSupabase(){
         .select("id,payload,updated_at")
         .then(function(r){
           if(r.error) throw r.error;
-          var data=(r.data||[]).filter(function(row){ return row.payload&&row.payload.marketplaceActif===true; });
+          // Montrer tous les articles sauf ceux explicitement désactivés (marketplaceActif!==false)
+          var data=(r.data||[]).filter(function(row){ return row.payload&&row.payload.marketplaceActif!==false; });
           if(!data.length) throw new Error("Aucun article publié");
           data.sort(function(a,b){ return (a.payload.marketplaceOrdre||999)-(b.payload.marketplaceOrdre||999); });
           applyProds(data.map(mapSBArticle),"Supabase direct");
@@ -3174,7 +3241,7 @@ function renderProds(f){
     var imgHtml=p.img?'<img src="'+p.img+'" alt="'+p.n+'" onerror="this.style.display=\'none\'" loading="lazy">':'';
     var tagsHtml=(p.tags||[]).map(function(tg){return TL[tg]?'<span class="po">'+TL[tg]+'</span>':'';}).join("");
     var unitBadge='<span style="display:inline-block;background:#f0fdf4;color:#1e5631;border:1px solid #d1fae5;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:4px">⚖️ '+p.u+'</span>';
-    var packHtml=p.packInfo?'<div style="margin-bottom:4px"><span style="font-size:10px;color:#1e5631;font-weight:700;background:#dcfce7;border-radius:6px;padding:2px 7px;display:inline-block">📦 '+p.packInfo+'</span></div>':'';
+    var packHtml=p.packInfo?'<div style="margin-bottom:4px"><span style="font-size:10px;color:#1e5631;font-weight:700;background:#dcfce7;border-radius:6px;padding:2px 7px;display:inline-block">'+p.packInfo+'</span></div>':'';
     return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+(outStock?'<div class="out-badge">Rupture de stock</div>':'')+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+(p.stock!==undefined?'<div style="font-size:10px;color:var(--gy);margin-bottom:5px">Stock : '+p.stock+' '+p.u+'</div>':'')+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)"'+(outStock?' disabled':'')+'>−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' disabled title="Rupture"':'')+'>+</button></div></div></div></div>';
   }).join("");
 }
@@ -3561,6 +3628,17 @@ function closeLogin(){
 function closeLoginOutside(e){ if(e.target.id==="loginModal") closeLogin(); }
 document.addEventListener("keydown",function(e){if(e.key==="Escape")closeLogin();});
 
+// ── Device ID : généré une seule fois, stocké en localStorage ──
+function getDeviceId(){
+  var k="vf_device_id";
+  var id=localStorage.getItem(k);
+  if(!id){
+    id="dev-"+(Date.now().toString(36))+"-"+(Math.random().toString(36).slice(2,8));
+    localStorage.setItem(k,id);
+  }
+  return id;
+}
+
 async function doLogin(e){
   e.preventDefault();
   var phone=document.getElementById("loginPhone").value.trim(), pass=document.getElementById("loginPass").value.trim();
@@ -3569,9 +3647,24 @@ async function doLogin(e){
   if(!phone||!pass){errEl.textContent=t("login_err_fields");errEl.classList.add("show");return;}
   btnEl.disabled=true; btnEl.textContent="⏳";
   try{
-    var res=await fetch(CONFIG.API_URL+"/api/ext/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,password:pass})});
+    var deviceId=getDeviceId();
+    var res=await fetch(CONFIG.API_URL+"/api/ext/auth",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({phone,password:pass,device_id:deviceId,user_agent:navigator.userAgent})
+    });
     var data=await res.json();
-    if(!res.ok){errEl.textContent=data.error||t("login_err_api");errEl.classList.add("show");}
+    if(!res.ok){
+      // Message spécifique pour les cas de device en attente / bloqué
+      if(data.device_status==="en_attente"){
+        errEl.innerHTML='⏳ <strong>Appareil en cours de vérification</strong><br><span style="font-size:12px">Votre appareil a été enregistré et attend l\'approbation de l\'administrateur. Réessayez dans quelques minutes.</span>';
+      } else if(data.device_status==="bloque"){
+        errEl.innerHTML='🚫 <strong>Accès refusé</strong><br><span style="font-size:12px">Cet appareil a été bloqué. Contactez votre commercial.</span>';
+      } else {
+        errEl.textContent=data.error||t("login_err_api");
+      }
+      errEl.classList.add("show");
+    }
     else{saveSession(data);closeLogin();showPortal(data);showToast("✅ "+(data.user?.name||"Bienvenue !"));setTimeout(function(){document.getElementById("mon-espace").scrollIntoView({behavior:"smooth"});},200);}
   }catch(err){errEl.textContent=t("login_err_api");errEl.classList.add("show");}
   btnEl.disabled=false; btnEl.textContent=t("btn_login_ok");
@@ -3743,7 +3836,7 @@ function openOrderCheck(){
     return'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6">'
       +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+p.em+'</span>'
       +'<div><div style="font-size:13px;font-weight:700;color:#111">'+p.n+'</div>'
-      +(p.packInfo?'<div style="font-size:11px;color:#1e5631;font-weight:600">📦 '+p.packInfo+'</div>':'')
+      +(p.packInfo?'<div style="font-size:11px;color:#1e5631;font-weight:600">'+p.packInfo+'</div>':'')
       +'<div style="font-size:12px;color:#6b7280">'+p.qty+' '+p.u+' × '+p.p+' MAD</div></div></div>'
       +'<div style="font-size:14px;font-weight:800;color:#1e5631;white-space:nowrap">'+lineTotal+' MAD</div></div>';
   }).join("");
@@ -4198,6 +4291,98 @@ function switchRecipe(idx){
   renderRecipe(); renderRecipeNav();
 }
 
+// ── PROMOTIONS / PUB ──────────────────────────────────────────────────────────
+var PROMO_DEFAULTS = [
+  { emoji:"🍓", name_fr:"Fraise Guariguette", name_ar:"فراولة", name_en:"Strawberry",
+    desc_fr:"Fraîche du marché — goût intense",  prix:12.50, old:18.00, unit:"kg",  badge:"🔥 Saison", badgeClass:"red" },
+  { emoji:"🥑", name_fr:"Avocat Premium",     name_ar:"أفوكادو",  name_en:"Avocado",
+    desc_fr:"Sélection premium calibre 16/20",   prix:28.00, old:null,  unit:"kg",  badge:"⭐ Top vente", badgeClass:"green" },
+  { emoji:"🍊", name_fr:"Orange à Jus",       name_ar:"برتقال عصير", name_en:"Juice Orange",
+    desc_fr:"Variété Navel — idéale pour jus",   prix:5.30,  old:6.40,  unit:"kg",  badge:"💰 Promo", badgeClass:"" },
+  { emoji:"🥕", name_fr:"Carotte Bio",         name_ar:"جزر بيو",  name_en:"Organic Carrot",
+    desc_fr:"Certifiée bio — Bouskoura",         prix:4.50,  old:6.00,  unit:"kg",  badge:"🌿 Bio", badgeClass:"green" },
+  { emoji:"🍋", name_fr:"Citron Eureka",       name_ar:"ليمون",    name_en:"Lemon",
+    desc_fr:"Acidité parfaite, peau fine",        prix:6.90,  old:8.30,  unit:"kg",  badge:"🏷️ -17%", badgeClass:"" },
+  { emoji:"🥦", name_fr:"Brocoli Sélection",  name_ar:"بروكلي",   name_en:"Broccoli",
+    desc_fr:"Ferme et vert — livraison J+1",     prix:9.50,  old:null,  unit:"kg",  badge:"✅ Frais", badgeClass:"green" },
+];
+
+var PROMO_BANNER_DATA = [
+  { emoji:"🍓🍉", tag_fr:"Offre Semaine", tag_ar:"عرض الأسبوع", tag_en:"Weekly Deal",
+    title_fr:"Fruits de Saison — <em>Arrivage Direct</em>",
+    title_ar:"فواكه الموسم — <em>وصول مباشر</em>",
+    title_en:"Seasonal Fruits — <em>Direct Arrival</em>",
+    desc_fr:"Fraises, melons, pastèques... Sélection fraîche du marché de gros, livrée chez vous en 24h ou express 2–4h.",
+    desc_ar:"فراولة، شمام، بطيخ... اختيار طازج من سوق الجملة، يُسلَّم إليك خلال 24 ساعة أو سريع 2–4 ساعات.",
+    desc_en:"Strawberries, melons, watermelons... Fresh selection from wholesale market, delivered in 24h or express 2–4h." },
+];
+
+function renderPromos(erpArticles) {
+  var lk = typeof currentLang !== "undefined" ? currentLang : "fr";
+  var lkey = lk === "ar" ? "ar" : lk === "en" ? "en" : "fr";
+  var grid = document.getElementById("promo-cards");
+  if (!grid) return;
+
+  // Banner
+  var bd = PROMO_BANNER_DATA[0];
+  var pb = document.getElementById("pb-tag");   if(pb) pb.textContent = bd["tag_"+lkey]||bd.tag_fr;
+  var pt = document.getElementById("pb-title"); if(pt) pt.innerHTML  = bd["title_"+lkey]||bd.title_fr;
+  var pd = document.getElementById("pb-desc");  if(pd) pd.textContent= bd["desc_"+lkey]||bd.desc_fr;
+
+  // Build promo cards from ERP or defaults
+  var promos = PROMO_DEFAULTS;
+  if (erpArticles && erpArticles.length > 0) {
+    // Take up to 6 articles that have a prix set, prefer those with discounts
+    var withPrice = erpArticles.filter(function(a){ return a.prix > 0 || a.prixVente > 0; });
+    if (withPrice.length >= 3) {
+      promos = withPrice.slice(0, 6).map(function(a) {
+        return {
+          emoji: a.emoji || "🥬",
+          name_fr: a.nom || "Produit",
+          name_ar: a.nom_ar || a.nomAr || a.nom || "منتج",
+          name_en: a.nom || "Product",
+          desc_fr: a.description || (a.famille ? "Famille : " + a.famille : "Produit frais Vita Fresh"),
+          prix: a.prixVente || a.prix || a.prix_public || 0,
+          old: a.prix_ancien || null,
+          unit: a.unite || "kg",
+          badge: a.tags && a.tags.length ? a.tags[0] : "Vita Fresh",
+          badgeClass: "",
+        };
+      });
+    }
+  }
+
+  var orderLbl = lkey === "ar" ? "🛒 طلب" : lkey === "en" ? "🛒 Order" : "🛒 Commander";
+  grid.innerHTML = promos.map(function(p) {
+    var name = p["name_"+lkey] || p.name_fr;
+    var pct  = p.old && p.prix ? Math.round((1 - p.prix/p.old)*100) : 0;
+    return '<div class="promo-card" onclick="document.getElementById(\'catalogue\')?.scrollIntoView({behavior:\'smooth\'})">'
+      +'<div class="promo-card-img">'+p.emoji+'</div>'
+      +'<div class="promo-card-body">'
+      +'<div class="promo-card-badge '+(p.badgeClass||'')+'">'+p.badge+'</div>'
+      +'<div class="promo-card-title">'+name+'</div>'
+      +'<div class="promo-card-desc">'+p.desc_fr+'</div>'
+      +'<div class="promo-card-price">'
+      +(p.prix ? '<span class="new">'+p.prix.toFixed(2)+' MAD</span>' : '')
+      +(p.old  ? '<span class="old">'+p.old.toFixed(2)+' MAD</span>' : '')
+      +(pct > 0 ? '<span class="pct">-'+pct+'%</span>' : '')
+      +'</div>'
+      +'<button class="promo-card-btn">'+orderLbl+' — '+p.unit+'</button>'
+      +'</div></div>';
+  }).join("");
+}
+
+// Load from ERP, fallback to defaults
+function initPromos() {
+  renderPromos(null); // show defaults immediately
+  if (typeof CONFIG !== "undefined" && CONFIG.API_URL) {
+    fetch(CONFIG.API_URL + "/api/ext/catalogue")
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(arts){ if (Array.isArray(arts) && arts.length > 0) renderPromos(arts); })
+      .catch(function(){});
+  }
+}
+
 // ── SCROLL PROGRESS ──
 (function(){
   var bar=document.getElementById("scroll-progress");
@@ -4229,7 +4414,7 @@ document.addEventListener("DOMContentLoaded",function(){
   syncFromSupabase(); loadCompanyContacts();
   // Auto-refresh catalogue every 5 minutes
   setInterval(function(){ syncFromSupabase(); }, 5*60*1000);
-  renderProds(); updateCatCounts(); initReveal(); loadAvis();
+  renderProds(); updateCatCounts(); initReveal(); loadAvis(); initPromos();
   var sess=getSession(); if(sess) showPortal(sess);
   if(sess){
     var userTel=(sess.user&&(sess.user.telephone||sess.user.phone))||"";

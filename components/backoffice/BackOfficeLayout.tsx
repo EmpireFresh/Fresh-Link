@@ -186,10 +186,11 @@ const NAV_I18N_KEYS: Partial<Record<string, keyof typeof T>> = {
 const NAV_GROUP_I18N: Record<string, { fr: string; ar: string; en: string }> = {
   "Vue d'ensemble":       { fr: "Vue d'ensemble",        ar: "نظرة عامة",           en: "Overview" },
   "Achats":               { fr: "Achats",                 ar: "المشتريات",           en: "Purchases" },
-  "Commercial & Clients": { fr: "Commercial & Clients",   ar: "التجاري والعملاء",    en: "Sales & Clients" },
+  "Commercial":           { fr: "Commercial",             ar: "التجاري",             en: "Sales" },
+  "Clients & Web":        { fr: "Clients & Web",          ar: "الزبائن والويب",       en: "Clients & Web" },
   "Stock & Catalogue":    { fr: "Stock & Catalogue",      ar: "المخزون والفهرس",     en: "Stock & Catalog" },
   "Logistique":           { fr: "Logistique",             ar: "اللوجستيك",           en: "Logistics" },
-  "Finance & Pilotage":   { fr: "Finance & Pilotage",     ar: "المالية والتحكم",     en: "Finance & Control" },
+  "Finance & Contrôle":   { fr: "Finance & Contrôle",     ar: "المالية والرقابة",    en: "Finance & Control" },
   "RH & Equipe":          { fr: "RH & Equipe",            ar: "الموارد البشرية",     en: "HR & Team" },
   "Administration":       { fr: "Administration",         ar: "الإدارة والإعدادات",  en: "Administration" },
 }
@@ -230,8 +231,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Vue d'ensemble", labelAr: "نظرة عامة",
     items: [
+      { id: "dashboard",        label: "Tableau de bord",        labelAr: "لوحة التحكم",      icon: <Icon d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /> },
       { id: "recap",            label: "Synthese & Recap",       labelAr: "الملخص",           permKey: "canViewRecap",      icon: <Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> },
-      { id: "finance",          label: "Finance & Caisse",       labelAr: "المالية",           permKey: "canViewFinance",    icon: <Icon d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 11v-1m0-8h.01M20 12a8 8 0 11-16 0 8 8 0 0116 0z" /> },
       { id: "rapport_livraison", label: "Rapport Livraison",     labelAr: "تقرير التوصيل",    permKey: "canViewLogistique", icon: <Icon d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /> },
     ],
   },
@@ -250,49 +251,55 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "analyse_reception", label: "Analyse Reception",      labelAr: "تحليل الاستلام",     permKey: "canViewAchat", icon: <Icon d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /> },
     ],
   },
-  // ── 3. COMMERCIAL & CLIENTS ───────────────────────────────────────────────
+  // ── 3. COMMERCIAL & VENTES ───────────────────────────────────────────────
   {
-    label: "Commercial & Clients", labelAr: "التجاري والعملاء",
+    label: "Commercial", labelAr: "التجاري",
     items: [
-      { id: "commandes_unifiees", label: "📦 Commandes",            labelAr: "الطلبيات",           permKey: "canViewCommercial", icon: <Icon d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /> },
-      { id: "affectation",       label: "Affectation Commerciale",labelAr: "التوزيع التجاري",   permKey: "canViewCommercial", icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
-      { id: "cash",              label: "Cash & BL",              labelAr: "النقديات",          permKey: "canViewCash",       icon: <Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /> },
-      { id: "category_pricing",  label: "Tarifs par Categorie",   labelAr: "أسعار الفئات",      permKey: "canViewCommercial", icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /> },
-      { id: "documents",         label: "Devis & Contrats CHR",   labelAr: "العروض والعقود",    permKey: "canViewCommercial", icon: <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /> },
-      { id: "prospection",       label: "Prospection IA",         labelAr: "الاستهداف الذكي",  permKey: "canViewCommercial", icon: <Icon d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /> },
-      { id: "intelligence_prix", label: "Intelligence Prix",      labelAr: "استخبارات الأسعار",permKey: "canViewCommercial", icon: <Icon d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /> },
-      { id: "comptes_externes",  label: "Gestion Clients",        labelAr: "إدارة الزبائن",      permKey: "canViewExternal",   icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
-      { id: "loyalty",           label: "Promotions & Fidelite",  labelAr: "العروض والولاء",    permKey: "canViewCommercial" as keyof User, icon: <Icon d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /> },
-      { id: "whatsapp",          label: "WhatsApp Pro",           labelAr: "واتساب",            permKey: "canViewCommercial", icon: (
+      { id: "commandes_unifiees", label: "Commandes",              labelAr: "الطلبيات",          permKey: "canViewCommercial", icon: <Icon d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /> },
+      { id: "affectation",        label: "Affectation Commerciale",labelAr: "التوزيع التجاري",   permKey: "canViewCommercial", icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /> },
+      { id: "cash",               label: "Cash & BL",              labelAr: "النقديات",          permKey: "canViewCash",       icon: <Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /> },
+      { id: "category_pricing",   label: "Tarifs par Categorie",   labelAr: "أسعار الفئات",      permKey: "canViewCommercial", icon: <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /> },
+      { id: "documents",          label: "Devis & Contrats CHR",   labelAr: "العروض والعقود",    permKey: "canViewCommercial", icon: <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /> },
+      { id: "prospection",        label: "Prospection IA",         labelAr: "الاستهداف الذكي",  permKey: "canViewCommercial", icon: <Icon d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /> },
+      { id: "intelligence_prix",  label: "Intelligence Prix",      labelAr: "استخبارات الأسعار",permKey: "canViewCommercial", icon: <Icon d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /> },
+      { id: "whatsapp",           label: "WhatsApp Pro",           labelAr: "واتساب",            permKey: "canViewCommercial", icon: (
         <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
         </svg>
       )},
     ],
   },
-  // ── 4. STOCK & CATALOGUE ─────────────────────────────────────────────────
+  // ── 4. CLIENTS & WEB ─────────────────────────────────────────────────────
+  {
+    label: "Clients & Web", labelAr: "الزبائن والويب",
+    items: [
+      { id: "comptes_externes",   label: "Gestion Clients",        labelAr: "إدارة الزبائن",     permKey: "canViewExternal",   icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
+      { id: "loyalty",            label: "Promotions & Fidelite",  labelAr: "العروض والولاء",    permKey: "canViewCommercial" as keyof User, icon: <Icon d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /> },
+      { id: "demandes_comptes",   label: "Demandes Comptes",       labelAr: "طلبات الحسابات",    permKey: "canViewExternal",   icon: <Icon d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /> },
+      { id: "marketplace",        label: "Marketplace & Web",      labelAr: "المتجر الإلكتروني", permKey: "canViewCommercial", icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /> },
+    ],
+  },
+  // ── 5. STOCK & CATALOGUE ─────────────────────────────────────────────────
   {
     label: "Stock & Catalogue", labelAr: "المخزون والفهرس",
     items: [
-      { id: "articles",    label: "Catalogue Produits",    labelAr: "الفواكه والخضر",    permKey: "canViewStock", icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" /> },
-      { id: "stock",       label: "Stock & Inventaire",    labelAr: "المخزون",           permKey: "canViewStock", icon: <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /> },
-      { id: "shelf_life",  label: "Shelf Life & DLC",      labelAr: "تاريخ الصلاحية",   permKey: "canViewStock", icon: <Icon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-      { id: "forecast",    label: "Forecast & Achat Auto", labelAr: "التوقعات",          permKey: "canViewStock", icon: <Icon d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
-      { id: "caisses_vides",label: "Caisses Vides",        labelAr: "الصناديق الفارغة",  permKey: "canViewLogistique", icon: <Icon d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /> },
-      { id: "marketplace",    label: "Marketplace & Web",     labelAr: "المتجر الإلكتروني", permKey: "canViewCommercial", icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /> },
-      { id: "demandes_comptes", label: "Demandes Comptes",    labelAr: "طلبات الحسابات",    permKey: "canViewExternal",  icon: <Icon d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /> },
+      { id: "articles",     label: "Catalogue Produits",    labelAr: "الفواكه والخضر",   permKey: "canViewStock",      icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" /> },
+      { id: "stock",        label: "Stock & Inventaire",    labelAr: "المخزون",          permKey: "canViewStock",      icon: <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /> },
+      { id: "shelf_life",   label: "Shelf Life & DLC",      labelAr: "تاريخ الصلاحية",  permKey: "canViewStock",      icon: <Icon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
+      { id: "forecast",     label: "Forecast & Achat Auto", labelAr: "التوقعات",         permKey: "canViewStock",      icon: <Icon d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
+      { id: "caisses_vides",label: "Caisses Vides",         labelAr: "الصناديق الفارغة", permKey: "canViewLogistique", icon: <Icon d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /> },
     ],
   },
-  // ── 5. LOGISTIQUE & TRANSPORT ─────────────────────────────────────────────
+  // ── 6. LOGISTIQUE & TRANSPORT ─────────────────────────────────────────────
   {
     label: "Logistique", labelAr: "اللوجستيك",
     items: [
-      { id: "dispatch",    label: "Dispatch & Livreurs",   labelAr: "التوزيع",           permKey: "canViewLogistique", icon: <Icon d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /> },
-      { id: "preparation", label: "Preparation",           labelAr: "وصولات التحضير",    permKey: "canViewLogistique", icon: <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /> },
-      { id: "bon_livraison",label: "Bons de Livraison",    labelAr: "وصولات التوصيل",    permKey: "canViewLogistique", icon: <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /> },
-      { id: "retour",      label: "Retours",               labelAr: "المرتجعات",         permKey: "canViewLogistique", icon: <Icon d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /> },
-      { id: "trip_charges",label: "Charges Trip",          labelAr: "مصاريف الرحلة",     permKey: "canViewLogistique", icon: <Icon d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M15 7h.01M9 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7V5a2 2 0 012-2h8a2 2 0 012 2v2" /> },
-      { id: "gps_tracker", label: "GPS Livreurs",          labelAr: "تتبع GPS",          icon: (
+      { id: "dispatch",     label: "Dispatch & Livreurs",  labelAr: "التوزيع",          permKey: "canViewLogistique", icon: <Icon d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /> },
+      { id: "preparation",  label: "Preparation",          labelAr: "وصولات التحضير",   permKey: "canViewLogistique", icon: <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /> },
+      { id: "bon_livraison",label: "Bons de Livraison",    labelAr: "وصولات التوصيل",   permKey: "canViewLogistique", icon: <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /> },
+      { id: "retour",       label: "Retours",              labelAr: "المرتجعات",        permKey: "canViewLogistique", icon: <Icon d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /> },
+      { id: "trip_charges", label: "Charges Trip",         labelAr: "مصاريف الرحلة",    permKey: "canViewLogistique", icon: <Icon d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M15 7h.01M9 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7V5a2 2 0 012-2h8a2 2 0 012 2v2" /> },
+      { id: "gps_tracker",  label: "GPS Livreurs",         labelAr: "تتبع GPS",         icon: (
         <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -300,16 +307,17 @@ const NAV_GROUPS: NavGroup[] = [
       )},
     ],
   },
-  // ── 6. FINANCE & PILOTAGE ────────────────────────────────────────────────
+  // ── 7. FINANCE & CONTRÔLE ────────────────────────────────────────────────
   {
-    label: "Finance & Pilotage", labelAr: "المالية والتحكم",
+    label: "Finance & Contrôle", labelAr: "المالية والرقابة",
     items: [
-      { id: "finance_cdg",           label: "Controle de Gestion",    labelAr: "المالية والرقابة",  permKey: "canViewFinance" as keyof User,      icon: <Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> },
+      { id: "finance",               label: "Finance & Caisse",       labelAr: "المالية والصندوق",  permKey: "canViewFinance",                    icon: <Icon d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 11v-1m0-8h.01M20 12a8 8 0 11-16 0 8 8 0 0116 0z" /> },
+      { id: "finance_cdg",           label: "Controle de Gestion",    labelAr: "مراقبة التسيير",    permKey: "canViewFinance" as keyof User,      icon: <Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> },
       { id: "performance_incentives", label: "Primes & Actionnaires", labelAr: "العلاوات والمساهمون",permKey: "canViewFinance" as keyof User,      icon: <Icon d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /> },
       { id: "investissement",         label: "Dashboard Investisseur", labelAr: "ملف المستثمر",      permKey: "canViewInvestisseur" as keyof User, icon: <Icon d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /> },
     ],
   },
-  // ── 7. RH & EQUIPE ───────────────────────────────────────────────────────
+  // ── 8. RH & EQUIPE ───────────────────────────────────────────────────────
   {
     label: "RH & Equipe", labelAr: "الموارد البشرية",
     items: [
@@ -321,24 +329,22 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "feedback",          label: "Feedbacks & Avis",             labelAr: "الآراء والتقييمات",      icon: <Icon d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /> },
     ],
   },
-  // ── 8. ADMINISTRATION ────────────────────────────────────────────────────
+  // ── 9. ADMINISTRATION ────────────────────────────────────────────────────
   {
     label: "Administration", labelAr: "الإدارة والإعدادات",
     items: [
-      { id: "device_access",    label: "Accès Appareils",        labelAr: "أجهزة الوصول",     permKey: "canViewDatabase", icon: <Icon d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /> },
-      { id: "users",            label: "Utilisateurs & Roles",   labelAr: "المستخدمون",        permKey: "canViewDatabase", icon: <Icon d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /> },
-      { id: "depots",           label: "Multi-Depots",           labelAr: "المستودعات",        permKey: "canViewDatabase", icon: <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /> },
-      { id: "web_integration",  label: "Integration Site Web",   labelAr: "ربط الموقع",        permKey: "canViewDatabase", icon: <Icon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /> },
-      { id: "permissions_matrix",label: "Permissions & Roles",  labelAr: "الصلاحيات والأدوار",permKey: "canViewDatabase", icon: <Icon d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /> },
-      { id: "camera_perms",     label: "Droits Camera",          labelAr: "صلاحيات الكاميرا",  permKey: "canViewDatabase", icon: <Icon d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" /> },
-      { id: "cutoffs",          label: "Notifications Cut-off",  labelAr: "إشعارات الإيقاف",   permKey: "canViewDatabase", icon: <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> },
-      { id: "database",         label: "Base de donnees",        labelAr: "قاعدة البيانات",    permKey: "canViewDatabase", icon: <Icon d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /> },
-      { id: "firebase_archive", label: "Archivage Firebase",     labelAr: "أرشفة Firebase",    permKey: "canViewDatabase", icon: <Icon d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /> },
-      { id: "liens_externes",   label: "Liens Partenaires",      labelAr: "روابط الشركاء",     permKey: "canViewDatabase", icon: <Icon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /> },
-      { id: "settings",         label: "Parametres",             labelAr: "الإعدادات",         permKey: "canViewDatabase", icon: <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> },
-      {
-        id: "gsheets", label: "Google Sheets", labelAr: "جوجل شيتس", permKey: "canViewDatabase" as keyof User,
-        icon: (
+      { id: "users",             label: "Utilisateurs & Roles",  labelAr: "المستخدمون",        permKey: "canViewDatabase", icon: <Icon d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /> },
+      { id: "device_access",     label: "Acces Appareils",       labelAr: "أجهزة الوصول",     permKey: "canViewDatabase", icon: <Icon d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /> },
+      { id: "permissions_matrix",label: "Permissions & Roles",   labelAr: "الصلاحيات والأدوار",permKey: "canViewDatabase", icon: <Icon d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /> },
+      { id: "depots",            label: "Multi-Depots",          labelAr: "المستودعات",        permKey: "canViewDatabase", icon: <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /> },
+      { id: "web_integration",   label: "Integration Site Web",  labelAr: "ربط الموقع",        permKey: "canViewDatabase", icon: <Icon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /> },
+      { id: "camera_perms",      label: "Droits Camera",         labelAr: "صلاحيات الكاميرا",  permKey: "canViewDatabase", icon: <Icon d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" /> },
+      { id: "cutoffs",           label: "Notifications Cut-off", labelAr: "إشعارات الإيقاف",   permKey: "canViewDatabase", icon: <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> },
+      { id: "database",          label: "Base de donnees",       labelAr: "قاعدة البيانات",    permKey: "canViewDatabase", icon: <Icon d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /> },
+      { id: "firebase_archive",  label: "Archivage Firebase",    labelAr: "أرشفة Firebase",    permKey: "canViewDatabase", icon: <Icon d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /> },
+      { id: "liens_externes",    label: "Liens Partenaires",     labelAr: "روابط الشركاء",     permKey: "canViewDatabase", icon: <Icon d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /> },
+      { id: "settings",          label: "Parametres",            labelAr: "الإعدادات",         permKey: "canViewDatabase", icon: <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> },
+      { id: "gsheets",           label: "Google Sheets",         labelAr: "جوجل شيتس",        permKey: "canViewDatabase" as keyof User, icon: (
           <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none">
             <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.8" />
             <path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -558,10 +564,11 @@ export default function BackOfficeLayout({ user, onLogout }: Props) {
   const GROUP_ICON_COLOR: Record<string, string> = {
     "Vue d'ensemble":        "text-emerald-600",
     "Achats":                "text-amber-600",
-    "Commercial & Clients":  "text-lime-600",
+    "Commercial":            "text-lime-600",
+    "Clients & Web":         "text-rose-600",
     "Stock & Catalogue":     "text-orange-600",
     "Logistique":            "text-sky-600",
-    "Finance & Pilotage":    "text-violet-600",
+    "Finance & Contrôle":    "text-violet-600",
     "RH & Equipe":           "text-indigo-600",
     "Administration":        "text-slate-600",
   }

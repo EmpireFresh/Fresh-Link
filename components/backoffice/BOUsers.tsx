@@ -1158,10 +1158,13 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   const [form, setForm] = useState<Omit<User, "id">>(EMPTY_USER)
   const [saved, setSaved] = useState(false)
   const [genPwdState, setGenPwdState] = useState<{ userId: string; pwd: string; sending: boolean; sent: boolean } | null>(null)
+  const [changePwdModal, setChangePwdModal] = useState<{ user: User; pwd: string; mobilePwd: string; saving: boolean; done: boolean } | null>(null)
   const [showRoles, setShowRoles] = useState(false)
   const [showPurge, setShowPurge] = useState(false)
   const [purging, setPurging] = useState(false)
   const [purgeCount, setPurgeCount] = useState(0)
+  const [syncingAllUsers, setSyncingAllUsers] = useState(false)
+  const [syncAllUsersDone, setSyncAllUsersDone] = useState(false)
 
   // Access check — computed AFTER hooks
   const canAccess = currentUser.role === "super_super_admin" || currentUser.role === "admin" || currentUser.role === "super_admin" || currentUser.role === "rh_manager"
@@ -1245,6 +1248,58 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
     setUsers(visible)
   }
 
+  // ── Supabase sync helpers ─────────────────────────────────────────────────
+  const syncAllUsersToSupabase = async () => {
+    setSyncingAllUsers(true)
+    setSyncAllUsersDone(false)
+    try {
+      const all = store.getUsers()
+      const upserts = all.map(u => {
+        const { id, ...payload } = u
+        return { id, payload, updated_at: new Date().toISOString() }
+      })
+      await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_users", upserts }),
+      })
+      setSyncAllUsersDone(true)
+      setTimeout(() => setSyncAllUsersDone(false), 4000)
+    } catch (e) {
+      console.error("[BOUsers] syncAllUsersToSupabase error:", e)
+    } finally {
+      setSyncingAllUsers(false)
+    }
+  }
+
+  const syncUserToSupabase = async (user: User) => {
+    try {
+      const { id, ...payload } = user
+      await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: "fl_users",
+          upserts: [{ id, payload, updated_at: new Date().toISOString() }],
+        }),
+      })
+    } catch (e) {
+      console.error("[BOUsers] syncUserToSupabase error:", e)
+    }
+  }
+
+  const deleteUserFromSupabase = async (userId: string) => {
+    try {
+      await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_users", deletes: [userId] }),
+      })
+    } catch (e) {
+      console.error("[BOUsers] deleteUserFromSupabase error:", e)
+    }
+  }
+
   const handlePurge = async () => {
     setPurging(true)
     const all = store.getUsers()
@@ -1300,14 +1355,21 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   const handleSave = () => {
     if (!(form.name ?? "").trim() || !(form.email ?? "").trim()) return
     const all = store.getUsers()
+    let savedUser: User | null = null
     if (editing) {
       const idx = all.findIndex(u => u.id === editing.id)
-      if (idx >= 0) { all[idx] = { ...all[idx], ...form }; store.saveUsers(all) }
+      if (idx >= 0) {
+        all[idx] = { ...all[idx], ...form }
+        savedUser = all[idx]
+        store.saveUsers(all)
+      }
     } else {
       const newId  = store.genId()
       // Auto-assign permissions based on role — no manual setup needed
       const autoPerms = autoAssignPermissions(form.role as UserRole)
-      all.push({ ...autoPerms, ...form, id: newId })
+      const newUser = { ...autoPerms, ...form, id: newId }
+      all.push(newUser)
+      savedUser = newUser
       store.saveUsers(all)
       // Notifier le RH : nouveau compte cree — dossier administratif a completer
       if (["super_super_admin", "admin", "super_admin"].includes(currentUser.role)) {
@@ -1325,6 +1387,8 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
         })
       }
     }
+    // ── Sync to Supabase (async, non-blocking) ───────────────────────────────
+    if (savedUser) syncUserToSupabase(savedUser)
     reload()
     setShowForm(false)
     setSaved(true)
@@ -1334,7 +1398,12 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
   const toggleActive = (u: User) => {
     const all = store.getUsers()
     const idx = all.findIndex(x => x.id === u.id)
-    if (idx >= 0) { all[idx].actif = !all[idx].actif; store.saveUsers(all); reload() }
+    if (idx >= 0) {
+      all[idx].actif = !all[idx].actif
+      store.saveUsers(all)
+      syncUserToSupabase(all[idx])
+      reload()
+    }
   }
 
   const handleDelete = (u: User) => {
@@ -1342,6 +1411,17 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
     if (!confirm(`Supprimer l'utilisateur "${u.name}" ?`)) return
     const all = store.getUsers().filter(x => x.id !== u.id)
     store.saveUsers(all)
+    deleteUserFromSupabase(u.id)
+    reload()
+  }
+
+  const handleChangePassword = async (userId: string, pwd: string, mobilePwd: string) => {
+    const all = store.getUsers()
+    const idx = all.findIndex(x => x.id === userId)
+    if (idx < 0) return
+    all[idx] = { ...all[idx], password: pwd || all[idx].password, passwordMobile: mobilePwd || all[idx].passwordMobile }
+    store.saveUsers(all)
+    await syncUserToSupabase(all[idx])
     reload()
   }
 
@@ -1351,7 +1431,12 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
     // Save new password
     const all = store.getUsers()
     const idx = all.findIndex(x => x.id === u.id)
-    if (idx >= 0) { all[idx] = { ...all[idx], password: pwd }; store.saveUsers(all); reload() }
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], password: pwd }
+      store.saveUsers(all)
+      syncUserToSupabase(all[idx])
+      reload()
+    }
     // Send via email
     if (u.email && u.email.includes("@")) {
       await sendEmail({
@@ -1485,6 +1570,20 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
               Importer JSON
               <input type="file" accept=".json" className="hidden" onChange={importJSON} />
             </label>
+          )}
+          {isSuperAdmin && (
+            <button
+              onClick={syncAllUsersToSupabase}
+              disabled={syncingAllUsers}
+              title="Synchronise tous les utilisateurs localStorage → Supabase (corrige les connexions website)"
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-60 ${syncAllUsersDone ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"}`}>
+              {syncingAllUsers
+                ? <><span className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />Sync en cours...</>
+                : syncAllUsersDone
+                  ? <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Sync OK !</>
+                  : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Sync Utilisateurs →</>
+              }
+            </button>
           )}
           {canOpenNewForm && (
             <button onClick={openNew}
@@ -1660,6 +1759,77 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
         </div>
       )}
 
+      {/* ── Manual password change modal ─────────────────────────────── */}
+      {changePwdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={e => e.target === e.currentTarget && !changePwdModal.saving && setChangePwdModal(null)}>
+          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md animate-scale-in">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div>
+                <h3 className="font-bold text-foreground">Changer le mot de passe</h3>
+                <p className="text-xs text-muted-foreground">{changePwdModal.user.name} — {changePwdModal.user.email}</p>
+              </div>
+              <button onClick={() => !changePwdModal.saving && setChangePwdModal(null)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-foreground">🔑 Mot de passe BO / Web</label>
+                <input
+                  type="text"
+                  placeholder="Nouveau mot de passe"
+                  value={changePwdModal.pwd}
+                  onChange={e => setChangePwdModal(prev => prev ? { ...prev, pwd: e.target.value } : null)}
+                  className="px-3 py-2 rounded-xl border border-border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoComplete="new-password"
+                />
+                <p className="text-[11px] text-muted-foreground">Utilisé pour se connecter sur vita-fresh.netlify.app et le back-office</p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-foreground">📱 Mot de passe Mobile (optionnel)</label>
+                <input
+                  type="text"
+                  placeholder="Mot de passe mobile (laisser vide = inchangé)"
+                  value={changePwdModal.mobilePwd}
+                  onChange={e => setChangePwdModal(prev => prev ? { ...prev, mobilePwd: e.target.value } : null)}
+                  className="px-3 py-2 rounded-xl border border-border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoComplete="new-password"
+                />
+                <p className="text-[11px] text-muted-foreground">Mot de passe secondaire pour l&apos;application mobile terrain</p>
+              </div>
+              {changePwdModal.done && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm font-semibold">
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Mot de passe mis à jour et synchronisé ✓
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => !changePwdModal.saving && setChangePwdModal(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+                  Annuler
+                </button>
+                <button
+                  disabled={(!changePwdModal.pwd.trim() && !changePwdModal.mobilePwd.trim()) || changePwdModal.saving}
+                  onClick={async () => {
+                    setChangePwdModal(prev => prev ? { ...prev, saving: true } : null)
+                    await handleChangePassword(changePwdModal.user.id, changePwdModal.pwd.trim(), changePwdModal.mobilePwd.trim())
+                    setChangePwdModal(prev => prev ? { ...prev, saving: false, done: true, pwd: "", mobilePwd: "" } : null)
+                    setTimeout(() => setChangePwdModal(null), 2000)
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-all hover:opacity-90"
+                  style={{ background: "oklch(0.38 0.2 260)" }}>
+                  {changePwdModal.saving ? (
+                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Enregistrement...</>
+                  ) : (
+                    <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Enregistrer</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Generated password toast */}
       {genPwdState && (
         <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${genPwdState.sent ? "bg-green-50 border-green-200 text-green-800" : "bg-blue-50 border-blue-200 text-blue-800"}`}>
@@ -1826,11 +1996,17 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
                         )}
                         {isFullAdmin && (
                           <>
-                            <button onClick={() => handleGeneratePassword(u)} title="Generer un mot de passe"
+                            <button onClick={() => handleGeneratePassword(u)} title="Generer un mot de passe aleatoire"
                               disabled={genPwdState?.userId === u.id && genPwdState.sending}
                               className="p-1.5 rounded-lg hover:bg-violet-50 text-muted-foreground hover:text-violet-600 transition-colors disabled:opacity-50">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                              </svg>
+                            </button>
+                            <button onClick={() => setChangePwdModal({ user: u, pwd: "", mobilePwd: "", saving: false, done: false })} title="Changer le mot de passe manuellement"
+                              className="p-1.5 rounded-lg hover:bg-amber-50 text-muted-foreground hover:text-amber-600 transition-colors">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
                             <button onClick={() => toggleActive(u)} title={u.actif ? "Desactiver" : "Activer"}

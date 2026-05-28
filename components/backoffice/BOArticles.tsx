@@ -46,6 +46,8 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
   // Confirm resets
   const [confirmResetStock, setConfirmResetStock] = useState(false)
   const [confirmResetDefect, setConfirmResetDefect] = useState(false)
+  const [syncingAll, setSyncingAll] = useState(false)
+  const [syncAllDone, setSyncAllDone] = useState(false)
 
   const EMPTY_FORM: Omit<Article, "id"> = {
     nom: "", nomAr: "", famille: "Légumes fruits", unite: "kg",
@@ -104,6 +106,46 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
     }
   }
 
+  // ── Supabase sync helpers ─────────────────────────────────────────────────
+  const syncArticleToSupabase = async (article: Article) => {
+    try {
+      const { id, ...payload } = article
+      await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: "fl_articles",
+          upserts: [{ id, payload, updated_at: new Date().toISOString() }],
+        }),
+      })
+    } catch (e) {
+      console.error("[BOArticles] syncArticleToSupabase error:", e)
+    }
+  }
+
+  const syncAllArticlesToSupabase = async () => {
+    setSyncingAll(true)
+    setSyncAllDone(false)
+    try {
+      const all = store.getArticles()
+      const upserts = all.map(a => {
+        const { id, ...payload } = a
+        return { id, payload, updated_at: new Date().toISOString() }
+      })
+      await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_articles", upserts }),
+      })
+      setSyncAllDone(true)
+      setTimeout(() => setSyncAllDone(false), 4000)
+    } catch (e) {
+      console.error("[BOArticles] syncAllArticlesToSupabase error:", e)
+    } finally {
+      setSyncingAll(false)
+    }
+  }
+
   const filtered = articles.filter(a => {
     const q = search.toLowerCase()
     const matchSearch = !q || a.nom.toLowerCase().includes(q) || a.nomAr.includes(q) || a.famille.toLowerCase().includes(q)
@@ -125,13 +167,17 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
   const handleSave = () => {
     if (!form.nom) return
     const all = store.getArticles()
+    let saved: Article | null = null
     if (editArt) {
       const idx = all.findIndex(a => a.id === editArt.id)
-      if (idx >= 0) { all[idx] = { ...all[idx], ...form }; store.saveArticles(all) }
+      if (idx >= 0) { all[idx] = { ...all[idx], ...form }; store.saveArticles(all); saved = all[idx] }
     } else {
-      all.push({ ...form, id: store.genId() })
+      const newArt: Article = { ...form, id: store.genId() }
+      all.push(newArt)
       store.saveArticles(all)
+      saved = newArt
     }
+    if (saved) syncArticleToSupabase(saved)
     setArticles(store.getArticles())
     setShowForm(false)
     setEditArt(null)
@@ -148,12 +194,16 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
   const handleToggleActif = (id: string) => {
     const all = store.getArticles().map(a => a.id === id ? { ...a, actif: !(a.actif ?? true) } : a)
     store.saveArticles(all)
+    const updated = all.find(a => a.id === id)
+    if (updated) syncArticleToSupabase(updated)
     setArticles(store.getArticles())
   }
 
   const handleToggleCatalogue = (id: string) => {
     const all = store.getArticles().map(a => a.id === id ? { ...a, catalogueVisible: !(a.catalogueVisible ?? true) } : a)
     store.saveArticles(all)
+    const updated = all.find(a => a.id === id)
+    if (updated) syncArticleToSupabase(updated)
     setArticles(store.getArticles())
   }
 
@@ -505,6 +555,18 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
             <button onClick={() => setConfirmResetDefect(false)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-border hover:bg-muted">Annuler</button>
           </div>
         )}
+        <button
+          onClick={syncAllArticlesToSupabase}
+          disabled={syncingAll}
+          title="Synchronise tous les articles localStorage → Supabase (corrige le catalogue website)"
+          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-60 ${syncAllDone ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"}`}>
+          {syncingAll
+            ? <><span className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />Sync...</>
+            : syncAllDone
+              ? <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Sync OK !</>
+              : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Sync Catalogue →</>
+          }
+        </button>
         <button onClick={() => { setShowForm(true); setEditArt(null); setForm(EMPTY_FORM) }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
           style={{ background: "oklch(0.38 0.2 260)" }}>
