@@ -1678,11 +1678,44 @@ GET  /api/ext/commandes/:id → suivi commande</div>
     <div style="font-size:14px;color:var(--gy)" data-i18n="ord_sub">Standard ou express, avec ou sans préparation. Enregistré dans FreshLink ERP.</div>
     <div class="ogrid">
       <div class="oform">
-        <div id="user-connected-banner" style="display:none;background:linear-gradient(135deg,#d8f3dc,#b7e4c7);border:1.5px solid #2d9a4e;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:#1e5631">
-          <span style="font-size:20px">👋</span>
-          <div><span id="user-banner-name">Bienvenue</span> — vos informations sont pré-remplies
-          <span style="font-size:12px;font-weight:400;color:#2d7a45;display:block">Vous pouvez modifier l'adresse de livraison si besoin.</span></div>
+        <!-- ── Carte identité (utilisateur connecté) ────────────────── -->
+        <div id="user-identity-card" style="display:none;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #16a34a;border-radius:16px;padding:16px 18px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div id="uid-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e5631,#2d9a4e);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:800;flex-shrink:0">?</div>
+              <div>
+                <div id="uid-name" style="font-size:16px;font-weight:800;color:#1e5631">—</div>
+                <div id="uid-segment" style="font-size:12px;color:#2d7a45;font-weight:600;margin-top:1px">—</div>
+              </div>
+            </div>
+            <button onclick="openConfigCompte()" style="background:#fff;border:1.5px solid #16a34a;color:#16a34a;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.2s" onmouseover="this.style.background='#16a34a';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#16a34a'">
+              ⚙️ Config compte
+            </button>
+          </div>
+          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+            <div style="background:#fff;border-radius:10px;padding:8px 12px;border:1px solid #d1fae5">
+              <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">📱 Téléphone</div>
+              <div id="uid-tel" style="font-weight:700;color:#1e5631">—</div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:8px 12px;border:1px solid #d1fae5">
+              <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">📍 Adresse</div>
+              <div id="uid-adr" style="font-weight:600;color:#374151;font-size:12px">—</div>
+            </div>
+          </div>
+          <!-- Champs cachés pour la soumission -->
+          <input id="f-nom" type="hidden">
+          <input id="f-tel" type="hidden">
+          <input id="f-email" type="hidden">
+          <input id="f-adr" type="hidden">
+          <input id="f-co" type="hidden">
+          <div class="fg" style="margin-top:10px">
+            <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">📍 Adresse de livraison (modifiable)</label>
+            <input id="f-adr-visible" type="text" placeholder="N° rue, quartier, bâtiment..." style="border-color:#16a34a;background:#fff" oninput="document.getElementById('f-adr').value=this.value">
+          </div>
         </div>
+
+        <!-- ── Formulaire invité (non connecté) ─────────────────────── -->
+        <div id="guest-form-block">
         <div class="ftit" data-i18n="ord_info_title">📋 Vos informations</div>
         <div class="ctabs">
           <button class="ctab on" onclick="setCt(this,'part')" data-i18n="ord_tab_part">🏠 Particulier</button>
@@ -1696,6 +1729,7 @@ GET  /api/ext/commandes/:id → suivi commande</div>
         <div class="fg" id="co-row" style="display:none"><label>Raison sociale / Enseigne</label><input id="f-co" type="text" placeholder="Restaurant Al Fès..."></div>
         <div class="fg"><label data-i18n="lbl_email_ord">Email (optionnel)</label><input id="f-email" type="email" placeholder="email@exemple.com"></div>
         <div class="fg"><label data-i18n="lbl_addr">Adresse complète — Casablanca</label><input id="f-adr" type="text" placeholder="N° rue, quartier, bâtiment..."></div>
+        </div><!-- end guest-form-block -->
         <div class="fg"><label data-i18n="lbl_zone">Quartier / Zone</label>
           <select id="f-zone">
             <option value="" data-i18n="lbl_zone_ph">— Sélectionnez votre quartier —</option>
@@ -1776,26 +1810,107 @@ GET  /api/ext/commandes/:id → suivi commande</div>
   </div>
 </section>
 
-<!-- MON ESPACE / PORTAL -->
-<section id="mon-espace">
-  <div class="container" style="padding:60px 20px">
-    <div class="portal-header">
-      <div class="portal-avatar">👤</div>
-      <div><div class="portal-name" id="portalName">—</div><div class="portal-meta" id="portalMeta">—</div></div>
-      <button class="portal-logout" onclick="logout()" data-i18n="portal_logout">Déconnexion</button>
+<!-- MON ESPACE / PORTAL DASHBOARD -->
+<section id="mon-espace" style="background:linear-gradient(180deg,#f0fdf4 0%,#fafaf5 100%);padding:0 0 40px">
+  <div class="container" style="max-width:960px;padding:40px 16px 0">
+
+    <!-- ── Header profil ── -->
+    <div style="background:#fff;border-radius:20px;border:1.5px solid #d1fae5;padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;box-shadow:0 4px 24px rgba(30,86,49,.07)">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div id="portalAvatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#1e5631,#2d9a4e);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;flex-shrink:0">?</div>
+        <div>
+          <div id="portalName" style="font-size:22px;font-weight:800;color:#1e5631">—</div>
+          <div id="portalMeta" style="font-size:13px;color:#2d7a45;font-weight:600;margin-top:2px">—</div>
+          <div id="portalContact" style="font-size:12px;color:#6b7280;margin-top:4px">—</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="openConfigCompte()" style="background:linear-gradient(135deg,#1e5631,#2d9a4e);color:#fff;border:none;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">⚙️ Config compte</button>
+        <button onclick="document.getElementById('commander').scrollIntoView({behavior:'smooth'})" style="background:#fff;border:2px solid #1e5631;color:#1e5631;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">🛒 Commander</button>
+        <button onclick="logout()" style="background:#fff;border:1.5px solid #e5e7eb;color:#6b7280;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer">↩️ Déconnexion</button>
+      </div>
     </div>
-    <div class="portal-grid">
-      <div class="portal-stat-card"><div class="portal-stat-label" data-i18n="portal_pts">Points fidélité</div><div class="portal-stat-value green" id="portalPts">—</div></div>
-      <div class="portal-stat-card"><div class="portal-stat-label" data-i18n="portal_remise">Remise</div><div class="portal-stat-value" id="portalRemise">—</div></div>
-      <div class="portal-stat-card"><div class="portal-stat-label" data-i18n="portal_credit">Crédit disponible</div><div class="portal-stat-value" id="portalCredit">—</div></div>
+
+    <!-- ── Stats rapides ── -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
+      <div style="background:#fff;border-radius:16px;border:1.5px solid #d1fae5;padding:18px 20px;text-align:center;box-shadow:0 2px 12px rgba(30,86,49,.06)">
+        <div style="font-size:28px;margin-bottom:6px">🌟</div>
+        <div style="font-size:24px;font-weight:800;color:#1e5631" id="portalPts">—</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Points fidélité</div>
+      </div>
+      <div style="background:#fff;border-radius:16px;border:1.5px solid #fef3c7;padding:18px 20px;text-align:center;box-shadow:0 2px 12px rgba(30,86,49,.06)">
+        <div style="font-size:28px;margin-bottom:6px">🏷️</div>
+        <div style="font-size:24px;font-weight:800;color:#b45309" id="portalRemise">—</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Remise client</div>
+      </div>
+      <div style="background:#fff;border-radius:16px;border:1.5px solid #e0e7ff;padding:18px 20px;text-align:center;box-shadow:0 2px 12px rgba(30,86,49,.06)">
+        <div style="font-size:28px;margin-bottom:6px">💳</div>
+        <div style="font-size:24px;font-weight:800;color:#4338ca" id="portalCredit">—</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Crédit disponible</div>
+      </div>
+      <div style="background:#fff;border-radius:16px;border:1.5px solid #fce7f3;padding:18px 20px;text-align:center;box-shadow:0 2px 12px rgba(30,86,49,.06)">
+        <div style="font-size:28px;margin-bottom:6px">📦</div>
+        <div style="font-size:24px;font-weight:800;color:#be185d" id="portalNbCommandes">0</div>
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Commandes total</div>
+      </div>
     </div>
-    <div class="portal-section-title" data-i18n="portal_orders">Mes commandes récentes</div>
-    <div class="order-list" id="orderList"><p style="color:var(--gy);font-size:14px" data-i18n="portal_no_orders">Aucune commande pour le moment.</p></div>
-    <div style="margin-top:22px;text-align:center">
-      <a href="#" class="btn-hero-whatsapp" onclick="orderWhatsApp(event)" style="display:inline-flex"><span data-i18n="portal_wa">📦 Passer une commande</span></a>
+
+    <!-- ── Commandes récentes ── -->
+    <div style="background:#fff;border-radius:20px;border:1.5px solid #e5e7eb;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:800;color:#1e5631">📦 Mes commandes récentes</div>
+        <button onclick="document.getElementById('commander').scrollIntoView({behavior:'smooth'})" style="background:linear-gradient(135deg,#1e5631,#2d9a4e);color:#fff;border:none;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">+ Nouvelle commande</button>
+      </div>
+      <div id="orderList">
+        <div style="text-align:center;padding:32px 0;color:#9ca3af">
+          <div style="font-size:40px;margin-bottom:10px">📭</div>
+          <div style="font-size:14px;font-weight:600">Aucune commande pour le moment</div>
+          <div style="font-size:12px;margin-top:6px">Passez votre première commande depuis le catalogue</div>
+        </div>
+      </div>
     </div>
+
+    <!-- ── Actions rapides ── -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px">
+      <a href="#commander" onclick="document.getElementById('commander').scrollIntoView({behavior:'smooth'});return false;" style="background:#fff;border:1.5px solid #d1fae5;border-radius:16px;padding:18px 20px;text-decoration:none;display:flex;align-items:center;gap:12px;color:#1e5631;font-weight:700;font-size:14px;box-shadow:0 2px 12px rgba(30,86,49,.06);transition:.2s" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
+        <span style="font-size:28px">🛒</span><div><div>Passer une commande</div><div style="font-size:11px;font-weight:500;color:#6b7280;margin-top:2px">Catalogue complet</div></div>
+      </a>
+      <a href="https://wa.me/212647333456" target="_blank" style="background:#fff;border:1.5px solid #d1fae5;border-radius:16px;padding:18px 20px;text-decoration:none;display:flex;align-items:center;gap:12px;color:#1e5631;font-weight:700;font-size:14px;box-shadow:0 2px 12px rgba(30,86,49,.06);transition:.2s" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
+        <span style="font-size:28px">📲</span><div><div>Contacter l'équipe</div><div style="font-size:11px;font-weight:500;color:#6b7280;margin-top:2px">WhatsApp direct</div></div>
+      </a>
+      <button onclick="openConfigCompte()" style="background:#fff;border:1.5px solid #d1fae5;border-radius:16px;padding:18px 20px;text-align:left;display:flex;align-items:center;gap:12px;color:#1e5631;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 2px 12px rgba(30,86,49,.06);transition:.2s;width:100%" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
+        <span style="font-size:28px">⚙️</span><div><div>Mon compte</div><div style="font-size:11px;font-weight:500;color:#6b7280;margin-top:2px">Modifier mes infos</div></div>
+      </button>
+    </div>
+
   </div>
 </section>
+
+<!-- ── Modal Config Compte ── -->
+<div id="config-compte-overlay" onclick="closeConfigCompte()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;backdrop-filter:blur(4px)"></div>
+<div id="config-compte-drawer" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;padding:28px 24px 40px;z-index:2001;max-height:90vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.2)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div style="font-size:18px;font-weight:800;color:#1e5631">⚙️ Mon compte</div>
+    <button onclick="closeConfigCompte()" style="background:#f3f4f6;border:none;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+  </div>
+  <div style="display:grid;gap:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Prénom &amp; Nom</label>
+        <input id="cfg-nom" type="text" style="width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none" placeholder="Mohammed Alami"></div>
+      <div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Téléphone</label>
+        <input id="cfg-tel" type="tel" style="width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none" placeholder="+212 6XX XXX XXX"></div>
+    </div>
+    <div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Email</label>
+      <input id="cfg-email" type="email" style="width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none" placeholder="email@exemple.com"></div>
+    <div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Adresse habituelle</label>
+      <input id="cfg-adr" type="text" style="width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none" placeholder="N° rue, quartier, Casablanca"></div>
+    <div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Enseigne / Société (optionnel)</label>
+      <input id="cfg-societe" type="text" style="width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;outline:none" placeholder="Restaurant, épicerie..."></div>
+  </div>
+  <div id="cfg-msg" style="margin-top:12px;font-size:13px;color:#16a34a;font-weight:600;display:none"></div>
+  <button onclick="saveConfigCompte()" style="margin-top:18px;width:100%;background:linear-gradient(135deg,#1e5631,#2d9a4e);color:#fff;border:none;padding:14px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer">💾 Enregistrer les modifications</button>
+  <button onclick="closeConfigCompte()" style="margin-top:10px;width:100%;background:#f3f4f6;color:#374151;border:none;padding:12px;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer">Annuler</button>
+</div>
 
 <!-- ESPACE PRO -->
 <section id="espace-pro" class="reveal">
@@ -3413,27 +3528,68 @@ async function doSignup(e){
 function showPortal(data){
   document.getElementById("mon-espace").classList.add("visible");
   var user=data.user||{}, client=data.client||{};
-  document.getElementById("portalName").textContent=t("portal_welcome")+" "+(user.name||"");
-  document.getElementById("portalMeta").textContent=[user.role,client.segment].filter(Boolean).join(" · ");
-  document.getElementById("portalPts").textContent=(client.loyaltyPoints??user.loyaltyPoints??0)+" pts";
-  document.getElementById("portalRemise").textContent=(client.remisePct??user.remisePct??0)+"%";
-  document.getElementById("portalCredit").textContent=(client.creditSolde??0)+" DH";
-  // ── Pré-remplir le formulaire de commande ──
-  var fNom=document.getElementById("f-nom"), fTel=document.getElementById("f-tel");
-  var fEmail=document.getElementById("f-email"), fAdr=document.getElementById("f-adr");
   var userName=user.name||client.nom||"";
   var userTel=user.telephone||user.phone||client.telephone||"";
   var userEmail=user.email||client.email||"";
   var userAdr=client.adresse||user.adresse||"";
-  if(fNom&&userName){fNom.value=userName;fNom.style.background="#f0fdf4";fNom.style.borderColor="#2d9a4e";}
-  if(fTel&&userTel){fTel.value=userTel;fTel.style.background="#f0fdf4";fTel.style.borderColor="#2d9a4e";}
-  if(fEmail&&userEmail) fEmail.value=userEmail;
-  if(fAdr&&userAdr){fAdr.value=userAdr;fAdr.style.background="#f0fdf4";fAdr.style.borderColor="#2d9a4e";}
-  // Afficher le bandeau "connecté"
-  var banner=document.getElementById("user-connected-banner");
-  var bannerName=document.getElementById("user-banner-name");
-  if(banner){banner.style.display="flex";}
-  if(bannerName&&userName) bannerName.textContent="Bonjour "+userName.split(" ")[0]+" 👋";
+  var userSegment=client.segment||user.role||"Client";
+  var userSociete=client.societe||user.societe||"";
+  var orders=data.commandes||[];
+
+  // ── Dashboard header ──
+  var initiale=(userName||"?")[0].toUpperCase();
+  var avatarEl=document.getElementById("portalAvatar"); if(avatarEl) avatarEl.textContent=initiale;
+  var nameEl=document.getElementById("portalName"); if(nameEl) nameEl.textContent=userName||"—";
+  var metaEl=document.getElementById("portalMeta"); if(metaEl) metaEl.textContent=[userSegment,userSociete].filter(Boolean).join(" · ")||"Client Vita Fresh";
+  var contactEl=document.getElementById("portalContact"); if(contactEl) contactEl.textContent=[userTel,userEmail].filter(Boolean).join("  ·  ")||"";
+  var ptsEl=document.getElementById("portalPts"); if(ptsEl) ptsEl.textContent=(client.loyaltyPoints??user.loyaltyPoints??0)+" pts";
+  var remEl=document.getElementById("portalRemise"); if(remEl) remEl.textContent=(client.remisePct??user.remisePct??0)+"%";
+  var creEl=document.getElementById("portalCredit"); if(creEl) creEl.textContent=(client.creditSolde??0)+" DH";
+  var nbEl=document.getElementById("portalNbCommandes"); if(nbEl) nbEl.textContent=orders.length;
+
+  // ── Tableau commandes ──
+  var listEl=document.getElementById("orderList");
+  if(listEl){
+    if(!orders.length){
+      listEl.innerHTML='<div style="text-align:center;padding:32px 0;color:#9ca3af"><div style="font-size:40px;margin-bottom:10px">📭</div><div style="font-size:14px;font-weight:600">Aucune commande pour le moment</div><div style="font-size:12px;margin-top:6px">Passez votre première commande depuis le catalogue</div></div>';
+    } else {
+      var statusColors={nouveau:"#2563eb",recu:"#7c3aed",en_preparation:"#d97706",pret:"#16a34a",en_livraison:"#0891b2",livree:"#16a34a",annulee:"#dc2626",nouveau:"#2563eb"};
+      var statusLabels={nouveau:"Nouveau",recu:"Reçu",en_preparation:"En préparation",pret:"Prêt",en_livraison:"En livraison",livree:"Livré ✅",annulee:"Annulé"};
+      listEl.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+        +'<thead><tr style="border-bottom:2px solid #e5e7eb"><th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Réf.</th>'
+        +'<th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Date</th>'
+        +'<th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Statut</th>'
+        +'<th style="text-align:right;padding:10px 12px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">Montant</th></tr></thead>'
+        +'<tbody>'+orders.map(function(o,i){
+          var ref=o.numero||(o.id||"").slice(0,10)||("#"+(i+1));
+          var dt=o.created_at||o.date?new Date(o.created_at||o.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"}):"—";
+          var st=o.statut||"nouveau";
+          var col=statusColors[st]||"#6b7280";
+          var lbl=statusLabels[st]||st;
+          var mnt=(o.montant_total||o.montant||o.total||0);
+          return'<tr style="border-bottom:1px solid #f3f4f6;'+(i%2===0?"background:#fafafa;":"")+'"><td style="padding:12px 12px;font-weight:700;color:#1e5631">'+ref+'</td>'
+            +'<td style="padding:12px 12px;color:#374151">'+dt+'</td>'
+            +'<td style="padding:12px 12px"><span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:'+col+'">'+lbl+'</span></td>'
+            +'<td style="padding:12px 12px;text-align:right;font-weight:800;color:#1e5631">'+mnt.toLocaleString("fr-FR")+' MAD</td></tr>';
+        }).join("")+'</tbody></table></div>';
+    }
+  }
+
+  // ── Carte identité dans le formulaire commande ──
+  var uid=document.getElementById("user-identity-card");
+  var gst=document.getElementById("guest-form-block");
+  if(uid){uid.style.display="block";}
+  if(gst){gst.style.display="none";}
+  var uidAvatar=document.getElementById("uid-avatar"); if(uidAvatar) uidAvatar.textContent=initiale;
+  var uidName=document.getElementById("uid-name"); if(uidName) uidName.textContent=userName||"—";
+  var uidSeg=document.getElementById("uid-segment"); if(uidSeg) uidSeg.textContent=[userSegment,userSociete].filter(Boolean).join(" · ")||"Client";
+  var uidTel=document.getElementById("uid-tel"); if(uidTel) uidTel.textContent=userTel||"—";
+  var uidAdr=document.getElementById("uid-adr"); if(uidAdr) uidAdr.textContent=userAdr||"—";
+
+  // Champs cachés pour la soumission de commande
+  var setHidden=function(id,val){var el=document.getElementById(id);if(el)el.value=val||"";};
+  setHidden("f-nom",userName); setHidden("f-tel",userTel); setHidden("f-email",userEmail); setHidden("f-adr",userAdr);
+  var adrVis=document.getElementById("f-adr-visible"); if(adrVis&&userAdr) adrVis.value=userAdr;
   var orders=data.commandes||[], listEl=document.getElementById("orderList");
   if(!orders.length) listEl.innerHTML='<p style="color:var(--gy);font-size:14px">'+t("portal_no_orders")+'</p>';
   else listEl.innerHTML=orders.map(function(o){
@@ -3443,7 +3599,49 @@ function showPortal(data){
     return'<div class="order-item"><div><div class="order-ref">#'+(o.numero||(o.id||"").slice(0,8)||"—")+'</div><div class="order-date">'+dt+'</div></div><span class="order-status '+sc+'">'+o.statut+'</span><div class="order-amt">'+((o.montant||0).toLocaleString())+' DH</div></div>';
   }).join("");
 }
-function logout(){ clearSession(); document.getElementById("mon-espace").classList.remove("visible"); showToast("Déconnecté"); }
+function logout(){
+  clearSession();
+  document.getElementById("mon-espace").classList.remove("visible");
+  // Réafficher le formulaire invité
+  var uid=document.getElementById("user-identity-card"); if(uid) uid.style.display="none";
+  var gst=document.getElementById("guest-form-block"); if(gst) gst.style.display="block";
+  showToast("Déconnecté ✓");
+}
+function openConfigCompte(){
+  var sess=getSession(); if(!sess) return;
+  var user=sess.user||{}, client=sess.client||{};
+  document.getElementById("cfg-nom").value=user.name||client.nom||"";
+  document.getElementById("cfg-tel").value=user.telephone||user.phone||client.telephone||"";
+  document.getElementById("cfg-email").value=user.email||client.email||"";
+  document.getElementById("cfg-adr").value=client.adresse||user.adresse||"";
+  document.getElementById("cfg-societe").value=client.societe||user.societe||"";
+  var msg=document.getElementById("cfg-msg"); if(msg) msg.style.display="none";
+  document.getElementById("config-compte-overlay").style.display="block";
+  document.getElementById("config-compte-drawer").style.display="block";
+}
+function closeConfigCompte(){
+  document.getElementById("config-compte-overlay").style.display="none";
+  document.getElementById("config-compte-drawer").style.display="none";
+}
+function saveConfigCompte(){
+  var nom=document.getElementById("cfg-nom").value.trim();
+  var tel=document.getElementById("cfg-tel").value.trim();
+  var email=document.getElementById("cfg-email").value.trim();
+  var adr=document.getElementById("cfg-adr").value.trim();
+  var societe=document.getElementById("cfg-societe").value.trim();
+  if(!nom||!tel){showToast("⚠️ Nom et téléphone requis");return;}
+  var sess=getSession()||{};
+  var updated=Object.assign({},sess,{
+    user:Object.assign({},sess.user||{},{name:nom,telephone:tel,email:email,adresse:adr,societe:societe}),
+    client:Object.assign({},sess.client||{},{nom:nom,telephone:tel,email:email,adresse:adr,societe:societe})
+  });
+  saveSession(updated);
+  showPortal(updated);
+  var msg=document.getElementById("cfg-msg");
+  if(msg){msg.textContent="✅ Informations mises à jour !";msg.style.display="block";}
+  setTimeout(function(){closeConfigCompte();},1200);
+  showToast("✅ Compte mis à jour !");
+}
 function saveSession(d){ localStorage.setItem("fl_session",JSON.stringify(Object.assign({},d,{_savedAt:Date.now()}))); }
 function getSession(){
   try{var raw=localStorage.getItem("fl_session");if(!raw)return null;
