@@ -936,6 +936,22 @@ export default function BOBonLivraison({ user }: { user: User }) {
     store.saveBonsLivraison(updated as unknown as import("@/lib/store").BonLivraison[])
     setBLs(updated)
     setEditing(null)
+
+    // ── Propagation automatique statut → commande liée ──────────────────────
+    if (bl.commandeId) {
+      const statutMap: Partial<Record<BLStatut, string>> = {
+        en_livraison: "charge",   // BL parti → commande "chargé"
+        livre:        "livre",    // BL livré → commande "livré"
+      }
+      const newCmdStatut = statutMap[bl.statut]
+      if (newCmdStatut) {
+        const cmds = store.getCommandes()
+        const updatedCmds = cmds.map(c =>
+          c.id === bl.commandeId ? { ...c, statut: newCmdStatut as typeof c.statut } : c
+        )
+        store.saveCommandes(updatedCmds)
+      }
+    }
   }
 
   const deleteBL = (id: string) => {

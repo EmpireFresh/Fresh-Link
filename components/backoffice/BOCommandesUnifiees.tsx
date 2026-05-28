@@ -22,6 +22,7 @@ interface CmdUnifiee {
   source:      "web" | "erp"
   prevendeur:  string   // nom du prévendeur (ERP) ou "" pour web
   zone?:       string
+  categorie?:  string   // CHR, particulier, marchand, secteur…
   notes?:      string
   table:       "fl_commandes_web" | "fl_commandes"
   rawPayload?: Record<string, unknown>  // payload complet ERP pour mise à jour
@@ -46,17 +47,19 @@ const STATUTS_WEB: Record<string, { label: string; color: string; icon: string }
 }
 
 const STATUTS_ERP: Record<string, { label: string; color: string; icon: string }> = {
-  en_attente:             { label: "En attente",     color: "bg-slate-100 text-slate-600 border-slate-200",   icon: "🕐" },
+  en_attente:             { label: "En attente",     color: "bg-slate-100 text-slate-600 border-slate-200",    icon: "🕐" },
   en_attente_approbation: { label: "En approbation", color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: "👁️" },
-  valide:                 { label: "Validé",         color: "bg-green-100 text-green-700 border-green-200",   icon: "✅" },
-  refuse:                 { label: "Refusé",         color: "bg-red-100 text-red-700 border-red-200",         icon: "🚫" },
-  en_transit:             { label: "En transit",     color: "bg-cyan-100 text-cyan-700 border-cyan-200",      icon: "🚚" },
-  livre:                  { label: "Livré",          color: "bg-green-100 text-green-700 border-green-200",   icon: "✅" },
-  retour:                 { label: "Retour",         color: "bg-orange-100 text-orange-700 border-orange-200",icon: "↩️" },
+  valide:                 { label: "Validé",         color: "bg-green-100 text-green-700 border-green-200",    icon: "✅" },
+  en_preparation:         { label: "En préparation", color: "bg-violet-100 text-violet-700 border-violet-200", icon: "📦" },
+  charge:                 { label: "Chargé",         color: "bg-cyan-100 text-cyan-700 border-cyan-200",       icon: "🚛" },
+  refuse:                 { label: "Refusé",         color: "bg-red-100 text-red-700 border-red-200",          icon: "🚫" },
+  en_transit:             { label: "En transit",     color: "bg-sky-100 text-sky-700 border-sky-200",          icon: "🚚" },
+  livre:                  { label: "Livré",          color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: "✅" },
+  retour:                 { label: "Retour",         color: "bg-orange-100 text-orange-700 border-orange-200", icon: "↩️" },
 }
 
 const NEXT_WEB = ["nouveau", "en_cours", "prepare", "livre", "annule"]
-const NEXT_ERP = ["en_attente", "en_attente_approbation", "valide", "refuse", "en_transit", "livre", "retour"]
+const NEXT_ERP = ["en_attente", "en_attente_approbation", "valide", "en_preparation", "charge", "en_transit", "livre", "refuse", "retour"]
 
 function getStatutCfg(statut: string, source: "web" | "erp") {
   const dict = source === "web" ? STATUTS_WEB : STATUTS_ERP
@@ -98,6 +101,13 @@ function normalizeERP(row: { id: string; payload: Record<string, unknown>; updat
     const pu = Number(l.prixVente ?? l.prixUnitaire ?? 0)
     return sum + q * pu
   }, 0)
+  // Catégorie client : type (chr/particulier/marchand) ou secteur
+  const rawType = String(p.clientType ?? p.secteur ?? "")
+  const cat = rawType.toLowerCase()
+  const categorie = cat.includes("chr") ? "CHR"
+    : cat.includes("marchand") ? "Marchand"
+    : cat.includes("particulier") ? "Particulier"
+    : rawType || undefined
   return {
     id:         row.id,
     numero:     row.id,
@@ -116,6 +126,7 @@ function normalizeERP(row: { id: string; payload: Record<string, unknown>; updat
     source:     "erp",
     prevendeur: String(p.commercialNom ?? ""),
     zone:       p.zone ? String(p.zone) : undefined,
+    categorie,
     notes:      p.notes ? String(p.notes) : (p.commentaire ? String(p.commentaire) : undefined),
     table:      "fl_commandes",
     rawPayload: p as Record<string, unknown>,
@@ -141,14 +152,16 @@ function fmt(iso: string) {
 // ── Composant principal ───────────────────────────────────────────────────────
 
 export default function BOCommandesUnifiees({ user }: Props) {
-  const [cmds, setCmds]                 = useState<CmdUnifiee[]>([])
-  const [loading, setLoading]           = useState(true)
-  const [search, setSearch]             = useState("")
-  const [filterStatut, setFilterStatut] = useState("tous")
-  const [filterSource, setFilterSource] = useState("tous")
-  const [selected, setSelected]         = useState<CmdUnifiee | null>(null)
-  const [updating, setUpdating]         = useState(false)
-  const [msg, setMsg]                   = useState<{ ok: boolean; text: string } | null>(null)
+  const [cmds, setCmds]                   = useState<CmdUnifiee[]>([])
+  const [loading, setLoading]             = useState(true)
+  const [search, setSearch]               = useState("")
+  const [filterStatut, setFilterStatut]   = useState("tous")
+  const [filterSource, setFilterSource]   = useState("tous")
+  const [filterZone, setFilterZone]       = useState("tous")
+  const [filterCategorie, setFilterCategorie] = useState("tous")
+  const [selected, setSelected]           = useState<CmdUnifiee | null>(null)
+  const [updating, setUpdating]           = useState(false)
+  const [msg, setMsg]                     = useState<{ ok: boolean; text: string } | null>(null)
 
   // ── Chargement ──────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -309,18 +322,24 @@ export default function BOCommandesUnifiees({ user }: Props) {
     )
   }
 
+  // ── Listes dynamiques pour filtres ───────────────────────────────────────────
+  const zones = [...new Set(cmds.map(c => c.zone).filter(Boolean))] as string[]
+  const categories = [...new Set(cmds.map(c => c.categorie).filter(Boolean))] as string[]
+
   // ── Filtrage ─────────────────────────────────────────────────────────────────
   const filtered = cmds.filter(c => {
-    if (filterSource === "web"  && c.source !== "web")  return false
-    if (filterSource === "erp"  && c.source !== "erp")  return false
+    if (filterSource !== "tous" && c.source !== filterSource) return false
     if (filterStatut !== "tous" && c.statut !== filterStatut) return false
+    if (filterZone !== "tous" && c.zone !== filterZone) return false
+    if (filterCategorie !== "tous" && c.categorie !== filterCategorie) return false
     if (search.trim()) {
       const q = search.toLowerCase()
       return (
         c.nom_client.toLowerCase().includes(q) ||
         c.telephone.includes(q) ||
         c.numero.toLowerCase().includes(q) ||
-        c.prevendeur.toLowerCase().includes(q)
+        c.prevendeur.toLowerCase().includes(q) ||
+        (c.zone ?? "").toLowerCase().includes(q)
       )
     }
     return true
@@ -402,16 +421,18 @@ export default function BOCommandesUnifiees({ user }: Props) {
 
       {/* ── Filtres ── */}
       <div className="flex flex-wrap gap-2 items-center">
+        {/* Source */}
         <select
           value={filterSource}
           onChange={e => setFilterSource(e.target.value)}
           className="px-3 py-2 rounded-xl border border-border text-sm font-medium bg-white text-slate-700 cursor-pointer"
         >
           <option value="tous">📋 Toutes sources</option>
-          <option value="web">🌐 Web uniquement</option>
-          <option value="erp">📱 Terrain uniquement</option>
+          <option value="web">🌐 Web</option>
+          <option value="erp">📱 Terrain</option>
         </select>
 
+        {/* Statut */}
         <select
           value={filterStatut}
           onChange={e => setFilterStatut(e.target.value)}
@@ -430,20 +451,48 @@ export default function BOCommandesUnifiees({ user }: Props) {
           </optgroup>
         </select>
 
+        {/* Zone */}
+        {zones.length > 0 && (
+          <select
+            value={filterZone}
+            onChange={e => setFilterZone(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-border text-sm font-medium bg-white text-slate-700 cursor-pointer"
+          >
+            <option value="tous">🗺️ Toutes zones</option>
+            {zones.map(z => <option key={z} value={z}>{z}</option>)}
+          </select>
+        )}
+
+        {/* Catégorie : CHR / Particulier / Marchand */}
+        <select
+          value={filterCategorie}
+          onChange={e => setFilterCategorie(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-border text-sm font-medium bg-white text-slate-700 cursor-pointer"
+        >
+          <option value="tous">🏷️ Toutes catégories</option>
+          <option value="CHR">🍽️ CHR</option>
+          <option value="Particulier">🏠 Particulier</option>
+          <option value="Marchand">🏪 Marchand</option>
+          {categories.filter(c => !["CHR","Particulier","Marchand"].includes(c)).map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+
+        {/* Recherche libre */}
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher client, téléphone, réf..."
-          className="flex-1 min-w-52 px-3 py-2 rounded-xl border border-border text-sm bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-500"
+          placeholder="Client, tél, réf, zone..."
+          className="flex-1 min-w-44 px-3 py-2 rounded-xl border border-border text-sm bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
 
-        {(search || filterStatut !== "tous" || filterSource !== "tous") && (
+        {(search || filterStatut !== "tous" || filterSource !== "tous" || filterZone !== "tous" || filterCategorie !== "tous") && (
           <button
-            onClick={() => { setSearch(""); setFilterStatut("tous"); setFilterSource("tous") }}
+            onClick={() => { setSearch(""); setFilterStatut("tous"); setFilterSource("tous"); setFilterZone("tous"); setFilterCategorie("tous") }}
             className="px-3 py-2 rounded-xl border border-border text-sm text-slate-500 hover:bg-slate-50"
           >
-            ✕ Réinitialiser
+            ✕ Reset
           </button>
         )}
 
@@ -506,6 +555,23 @@ export default function BOCommandesUnifiees({ user }: Props) {
                           📲 {cmd.telephone}
                         </a>
                       )}
+                      <div className="flex gap-1 mt-0.5 flex-wrap">
+                        {cmd.zone && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">
+                            🗺️ {cmd.zone}
+                          </span>
+                        )}
+                        {cmd.categorie && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                            cmd.categorie === "CHR" ? "bg-purple-100 text-purple-700"
+                            : cmd.categorie === "Marchand" ? "bg-amber-100 text-amber-700"
+                            : cmd.categorie === "Particulier" ? "bg-blue-100 text-blue-700"
+                            : "bg-slate-100 text-slate-600"
+                          }`}>
+                            {cmd.categorie}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     {/* Articles */}
                     <td className="px-4 py-3 text-slate-600 text-xs max-w-44 truncate" title={articlesLabel}>
@@ -547,6 +613,22 @@ export default function BOCommandesUnifiees({ user }: Props) {
                             return <option key={s} value={s}>{cfg.icon} {cfg.label}</option>
                           })}
                         </select>
+                        {/* WhatsApp update button */}
+                        {tel && (
+                          <button
+                            onClick={() => {
+                              const sc = getStatutCfg(cmd.statut, cmd.source)
+                              const waMsg = encodeURIComponent(
+                                `Bonjour ${cmd.nom_client} 👋\n\nVotre commande N° ${cmd.numero.slice(0,12)} est maintenant : ${sc.icon} ${sc.label}\n\n— Vita Fresh 🍃`
+                              )
+                              window.open(`https://wa.me/${tel}?text=${waMsg}`, "_blank")
+                            }}
+                            title="Envoyer statut par WhatsApp"
+                            className="px-1.5 py-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 text-xs border border-green-200 transition-colors"
+                          >
+                            📲
+                          </button>
+                        )}
                         {cmd.source === "web" && cmd.statut !== "confirmee" && cmd.statut !== "livre" && (
                           <button
                             onClick={() => injecterDansERP(cmd)}

@@ -325,6 +325,8 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
     "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
     "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
+    "fl_account_requests","fl_commandes_web","fl_prospects","fl_contrats","fl_caisse_vides",
+    "fl_incentives","fl_perf_commercial",
   ]))
   const [sbTestResult, setSbTestResult] = useState<{ ok: boolean; text: string } | null>(null)
   const [sbTesting, setSbTesting] = useState(false)
@@ -491,6 +493,8 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     "fl_bons_achat","fl_bons_livraison","fl_bons_preparation","fl_receptions",
     "fl_trips","fl_retours","fl_visites","fl_purchase_orders","fl_transferts_stock",
     "fl_messages","fl_depots","fl_livreurs","fl_demandes_achat","fl_notices","fl_non_achats",
+    "fl_account_requests","fl_commandes_web","fl_prospects","fl_contrats",
+    "fl_caisse_vides","fl_incentives","fl_perf_commercial",
   ]
 
   // Mapping table → clé localStorage (même nom en général)
@@ -503,6 +507,10 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     fl_transferts_stock:"fl_transferts_stock", fl_demandes_achat:"fl_demandes_achat",
     fl_messages:"fl_messages", fl_notices:"fl_notices", fl_non_achats:"fl_non_achats",
     fl_depots:"fl_depots", fl_livreurs:"fl_livreurs", fl_users:"fl_users",
+    fl_account_requests:"fl_account_requests", fl_commandes_web:"fl_commandes_web",
+    fl_prospects:"fl_prospects", fl_contrats:"fl_contrats",
+    fl_caisse_vides:"fl_caisse_vides", fl_incentives:"fl_incentives",
+    fl_perf_commercial:"fl_perf_commercial",
   }
 
   const handleClearAll = async () => {
@@ -2151,20 +2159,22 @@ To: {{to_email}}
 
             {/* Checklist par catégorie de données */}
             <div className="border border-red-100 rounded-xl p-4 flex flex-col gap-3 bg-red-50/30">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-red-700">Catégories à effacer ({clearTables.size}/{[
+              {/* Définition de toutes les catégories */}
+              {(() => {
+                const ALL_CATS = [
                   "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
                   "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
                   "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
                   "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
-                ].length})</span>
+                  "fl_account_requests","fl_commandes_web","fl_prospects","fl_contrats",
+                  "fl_caisse_vides","fl_incentives","fl_perf_commercial",
+                ]
+                return (
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-red-700">Catégories à effacer ({clearTables.size}/{ALL_CATS.length})</span>
                 <div className="flex gap-2">
-                  <button onClick={() => setClearTables(new Set([
-                    "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
-                    "fl_bons_preparation","fl_bons_achat","fl_purchase_orders","fl_receptions",
-                    "fl_trips","fl_retours","fl_visites","fl_transferts_stock","fl_demandes_achat",
-                    "fl_messages","fl_notices","fl_non_achats","fl_depots","fl_livreurs","fl_users",
-                  ]))} className="text-[11px] font-semibold text-red-600 hover:underline px-2 py-0.5 rounded hover:bg-red-100 transition-colors">
+                  <button onClick={() => setClearTables(new Set(ALL_CATS))}
+                    className="text-[11px] font-semibold text-red-600 hover:underline px-2 py-0.5 rounded hover:bg-red-100 transition-colors">
                     Tout sélectionner
                   </button>
                   <button onClick={() => setClearTables(new Set())}
@@ -2173,12 +2183,15 @@ To: {{to_email}}
                   </button>
                 </div>
               </div>
+                )
+              })()}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                 {([
                   { key: "fl_clients",          label: "Clients",              emoji: "👥" },
                   { key: "fl_fournisseurs",     label: "Fournisseurs",         emoji: "🏭" },
                   { key: "fl_articles",         label: "Articles / Catalogue", emoji: "📦" },
-                  { key: "fl_commandes",        label: "Commandes",            emoji: "🛒" },
+                  { key: "fl_commandes",        label: "Commandes Terrain",    emoji: "🛒" },
+                  { key: "fl_commandes_web",    label: "Commandes Web",        emoji: "🌐" },
                   { key: "fl_bons_livraison",   label: "Bons de livraison",    emoji: "🚚" },
                   { key: "fl_bons_preparation", label: "Bons de préparation",  emoji: "📋" },
                   { key: "fl_bons_achat",       label: "Bons d'achat",         emoji: "🧾" },
@@ -2186,7 +2199,7 @@ To: {{to_email}}
                   { key: "fl_receptions",       label: "Réceptions",           emoji: "📥" },
                   { key: "fl_trips",            label: "Tournées",             emoji: "🗺️" },
                   { key: "fl_retours",          label: "Retours",              emoji: "↩️" },
-                  { key: "fl_visites",          label: "Visites",              emoji: "📍" },
+                  { key: "fl_visites",          label: "Visites / Prospection",emoji: "📍" },
                   { key: "fl_transferts_stock", label: "Transferts stock",     emoji: "🔄" },
                   { key: "fl_demandes_achat",   label: "Demandes achat",       emoji: "📝" },
                   { key: "fl_messages",         label: "Messages",             emoji: "💬" },
@@ -2195,6 +2208,12 @@ To: {{to_email}}
                   { key: "fl_depots",           label: "Dépôts",               emoji: "🏪" },
                   { key: "fl_livreurs",         label: "Livreurs",             emoji: "🏍️" },
                   { key: "fl_users",            label: "Utilisateurs",         emoji: "👤" },
+                  { key: "fl_account_requests", label: "Demandes de compte",   emoji: "📋" },
+                  { key: "fl_prospects",        label: "Prospects",            emoji: "👀" },
+                  { key: "fl_contrats",         label: "Contrats",             emoji: "📑" },
+                  { key: "fl_caisse_vides",     label: "Caisses vides",        emoji: "📦" },
+                  { key: "fl_incentives",       label: "Incentives",           emoji: "🎯" },
+                  { key: "fl_perf_commercial",  label: "Perf. commerciale",    emoji: "📊" },
                 ] as const).map(t => {
                   const checked = clearTables.has(t.key)
                   return (

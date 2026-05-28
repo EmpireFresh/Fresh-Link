@@ -61,7 +61,14 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
   const photoInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { setArticles(store.getArticles()) }, [])
+  useEffect(() => {
+    // Chargement local immédiat
+    setArticles(store.getArticles())
+    // Sync Supabase → localStorage (récupère les 136 articles)
+    import("@/lib/supabase/db").then(({ fetchArticles }) => {
+      fetchArticles().then(arts => { if (arts.length > 0) setArticles(arts) }).catch(() => {})
+    })
+  }, [])
 
   // Upload photo — tries Supabase Storage first, falls back to base64 local
   const handlePhotoUpload = async (file: File) => {

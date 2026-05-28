@@ -480,7 +480,7 @@ export interface Commande {
   gpsLng: number
   lignes: LigneCommande[]
   heurelivraison: string
-  statut: "en_attente" | "en_attente_approbation" | "valide" | "refuse" | "en_transit" | "livre" | "retour"
+  statut: "en_attente" | "en_attente_approbation" | "valide" | "en_preparation" | "charge" | "refuse" | "en_transit" | "livre" | "retour"
   emailDestinataire: string
   // workflow linking
   teamLeadId?: string      // team_lead who must approve

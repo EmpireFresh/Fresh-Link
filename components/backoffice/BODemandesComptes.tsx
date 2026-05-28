@@ -202,9 +202,27 @@ export default function BODemandesComptes({ user }: Props) {
     setRequests(updated)
     // Sync statut to Supabase
     sb.from("fl_account_requests").update({ statut: "approuve" }).eq("id", selected.id).then(() => {})
+
+    // ── Notification WhatsApp au demandeur ──────────────────────────────────
+    const phone = selected.telephone?.replace(/\D/g, "") ?? ""
+    if (phone) {
+      const siteUrl = "https://vita-fresh.netlify.app"
+      const waMsg = encodeURIComponent(
+        `Bonjour ${approveForm.nom} 👋\n\n` +
+        `✅ Votre compte Vita Fresh a été créé avec succès !\n\n` +
+        `🔑 Identifiants de connexion :\n` +
+        `• Email : ${approveForm.email}\n` +
+        `• Mot de passe : ${approveForm.password}\n\n` +
+        `🌐 Connectez-vous sur :\n${siteUrl}\n\n` +
+        `⚠️ Changez votre mot de passe après la première connexion.\n\n` +
+        `— Vita Fresh 🍃`
+      )
+      setTimeout(() => window.open(`https://wa.me/${phone}?text=${waMsg}`, "_blank"), 400)
+    }
+
     setShowApprove(false)
     setSelected(null)
-    setMsg({ ok: true, text: `✅ Compte créé pour ${approveForm.nom}. Mot de passe : ${approveForm.password}` })
+    setMsg({ ok: true, text: `✅ Compte créé pour ${approveForm.nom}. Mot de passe : ${approveForm.password}${phone ? " — WhatsApp ouvert !" : ""}` })
     setTimeout(() => setMsg(null), 10000)
   }
 
