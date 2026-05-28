@@ -3035,7 +3035,7 @@ function mapERPArticle(row){
   var origin=row.description||row.marketplaceDescription||row.famille||"Maroc";
   // dispo: always show available (stock tracking optional)
   var dispo=row.statut!=="rupture"&&row.statut!=="out_of_stock"&&row.statut!=="indisponible";
-  var stock=row.stock_disponible||row.stockDisponible||99;
+  var stock=row.stock_disponible!=null?Number(row.stock_disponible):(row.stockDisponible!=null?Number(row.stockDisponible):99);
   var packInfo=row.conditionnement||row.pack_info||row.packInfo||null;
   return{id:row.id,em:getEmoji(row.nom,cat),n:row.nom||"",no:nomAr,o:origin,p:prix,prixBase:prixBase,u:row.unite||"kg",packInfo:packInfo,cat:cat,tags:tags,t:firstTag,dispo:dispo,stock:stock,img:row.photo||"",promo:!!promoObj,promoLabel:promoLabel,fromERP:true};
 }

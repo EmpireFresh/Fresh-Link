@@ -928,25 +928,6 @@ function SidebarContent({
         </div>
       )}
 
-      {/* Dashboard button */}
-      <div className="px-2 pt-2 pb-1">
-        <button
-          onClick={() => navigate("dashboard")}
-          title="Tableau de bord"
-          className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all"
-          style={activeTab === "dashboard"
-            ? { background: "#22c55e", color: "#052e16" }
-            : { color: "#bbf7d0" }}
-          onMouseEnter={e => { if (activeTab !== "dashboard") (e.currentTarget as HTMLButtonElement).style.background = "#1a4f2a" }}
-          onMouseLeave={e => { if (activeTab !== "dashboard") (e.currentTarget as HTMLButtonElement).style.background = "transparent" }}
-        >
-          <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: activeTab === "dashboard" ? "#052e16" : "#4ade80" }}>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-          </svg>
-          {!sidebarCollapsed && <span className="flex-1 text-left">Dashboard</span>}
-        </button>
-      </div>
-
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 thin-scroll" style={{ scrollbarColor: "#1a4f2a transparent" }}>
         {filteredGroups.map(group => (

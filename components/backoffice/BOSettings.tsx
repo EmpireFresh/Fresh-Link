@@ -528,7 +528,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
       if (clearMode === "local" || clearMode === "both") {
         clearTables.forEach(tableKey => {
           const lsKey = TABLE_LS_KEY[tableKey] ?? tableKey
-          localStorage.removeItem(lsKey)
+          localStorage.setItem(lsKey, JSON.stringify([]))
         })
       }
 
@@ -580,7 +580,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     setWipingAll(true); setShowWipeConfirm(false)
     try {
       // 1. Vider localStorage
-      ALL_TABLES_KEYS.forEach(k => localStorage.removeItem(k))
+      ALL_TABLES_KEYS.forEach(k => localStorage.setItem(k, JSON.stringify([])))
       // 2. Vider Supabase (préserver Jawad dans fl_users)
       for (const table of ERP_TABLES_SYNC) {
         try {
@@ -610,7 +610,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     setResetingDemo(true); setShowResetConfirm(false)
     try {
       // 1. Vider localStorage
-      ALL_TABLES_KEYS.forEach(k => localStorage.removeItem(k))
+      ALL_TABLES_KEYS.forEach(k => localStorage.setItem(k, JSON.stringify([])))
       // 2. Charger les données démo
       await seedDemoData()
       setDgMsg({ ok: true, text: "✅ Données démo rechargées avec succès. Rechargement..." })

@@ -131,9 +131,8 @@ function normalize(a: Record<string, unknown>): Record<string, unknown> {
     nomAr:           a.nomAr ?? a.nom_ar ?? "",
     prix:            a.prix_public ?? a.marketplace_prix_public ?? a.prix ?? 0,
     prixVente:       a.prix_public ?? a.prix ?? 0,
-    stockDisponible: 99,
+    stockDisponible: Number(a.stockDisponible ?? a.stock_disponible ?? a.qte ?? 0),
     marketplaceActif: a.marketplace_actif ?? true,
-    // Conditionnement / UM transmis tels quels depuis l'ERP
     unite:           a.unite ?? "kg",
     conditionnement: a.conditionnement ?? a.pack_info ?? null,
   }
@@ -161,8 +160,11 @@ function normalizePayload(a: Record<string, unknown>): Record<string, unknown> {
     : null
   const prix = promoObj?.prixPromo ? parseFloat(String(promoObj.prixPromo)) : prixBase
 
-  // ── Statut / dispo ────────────────────────────────────────────────────────
-  const statut = String(a.marketplaceStatut ?? a.statut ?? "")
+  // ── Statut / dispo — calculé depuis stock réel si non forcé manuellement ──
+  const stockQte = Number(a.stockDisponible ?? a.qte ?? 0)
+  const seuilShort = Number(a.marketplaceSeuilShortStock ?? 0)
+  const statutForce = String(a.marketplaceStatut ?? a.statut ?? "")
+  const statut = statutForce || (stockQte === 0 ? "out_of_stock" : seuilShort > 0 && stockQte <= seuilShort ? "short_stock" : "disponible")
 
   return {
     ...a,
@@ -179,8 +181,8 @@ function normalizePayload(a: Record<string, unknown>): Record<string, unknown> {
     promo_prix:       promoObj?.prixPromo ?? null,
     etiquette:        promoObj?.etiquette ?? (promoObj?.taux ? `-${promoObj.taux}%` : null) ?? null,
     statut:           statut || "disponible",
-    stock_disponible: Number(a.stockDisponible ?? 99),
-    stockDisponible:  Number(a.stockDisponible ?? 99),
+    stock_disponible: Number(a.stockDisponible ?? a.qte ?? 0),
+    stockDisponible:  Number(a.stockDisponible ?? a.qte ?? 0),
     conditionnement:  a.conditionnement ?? a.packInfo ?? a.pack_info ?? null,
     marketplace_actif: a.marketplaceActif !== false,
     ordre:            Number(a.marketplaceOrdre ?? a.ordre ?? 999),
