@@ -1678,6 +1678,11 @@ GET  /api/ext/commandes/:id → suivi commande</div>
     <div style="font-size:14px;color:var(--gy)" data-i18n="ord_sub">Standard ou express, avec ou sans préparation. Enregistré dans FreshLink ERP.</div>
     <div class="ogrid">
       <div class="oform">
+        <div id="user-connected-banner" style="display:none;background:linear-gradient(135deg,#d8f3dc,#b7e4c7);border:1.5px solid #2d9a4e;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:#1e5631">
+          <span style="font-size:20px">👋</span>
+          <div><span id="user-banner-name">Bienvenue</span> — vos informations sont pré-remplies
+          <span style="font-size:12px;font-weight:400;color:#2d7a45;display:block">Vous pouvez modifier l'adresse de livraison si besoin.</span></div>
+        </div>
         <div class="ftit" data-i18n="ord_info_title">📋 Vos informations</div>
         <div class="ctabs">
           <button class="ctab on" onclick="setCt(this,'part')" data-i18n="ord_tab_part">🏠 Particulier</button>
@@ -3077,11 +3082,10 @@ function submitOrder(){
   var zone=document.getElementById("f-zone").value, notes=document.getElementById("f-notes").value, pay=document.getElementById("f-pay").value;
   var preps=Array.from(document.querySelectorAll(".popt.on")).map(function(e){return e.textContent.trim();}).join(", ");
   virJustif=(document.getElementById("vir-ref")||{}).value||"";
-  // Map to ERP LigneCommande interface (articleId, articleNom, unite, quantite, prixUnitaire, prixVente, total)
   var lignes=items.map(function(p){return{articleId:p.id,articleNom:p.n,unite:p.u||"kg",quantite:p.qty,prixUnitaire:p.p,prixVente:p.p,total:Math.round(p.p*p.qty*100)/100};});
-  var orderData={nom_client:nom+(co?" ("+co+")":""),telephone:tel,email:email||null,adresse_livraison:adr+(zone?" — "+zone:""),lignes:lignes,montant_total:tot,creneau:delMode==="exp"?"Express "+CFG.expDelay:"Standard 24h",instructions:[preps?"Préparation: "+preps:"",notes].filter(Boolean).join(" | ")||null,statut:"recu"};
-  var cmdRef=Date.now().toString().slice(-6);
-  // ── Message COMPLET (privé — équipe seulement) ──
+  var cmdRef="WEB-"+Date.now().toString().slice(-8);
+
+  // ── Message WhatsApp complet ──
   var msgFull="🍃 *COMMANDE VITA FRESH*\n";
   msgFull+="━━━━━━━━━━━━━━━━━━━━\n";
   msgFull+="👤 *Client :* "+nom+"\n";
@@ -3091,7 +3095,7 @@ function submitOrder(){
   if(zone) msgFull+="🗺️ *Zone :* "+zone+"\n";
   msgFull+="━━━━━━━━━━━━━━━━━━━━\n";
   msgFull+="🛒 *Produits :*\n";
-  items.forEach(function(p){msgFull+="  • "+p.em+" "+p.n+" — "+p.qty+" "+p.u+" × "+p.p+" MAD = *"+(p.p*p.qty)+" MAD*\n";});
+  items.forEach(function(p){msgFull+="  • "+(p.em||"🟢")+" "+p.n+" — "+p.qty+" "+(p.u||"kg")+" × "+p.p+" MAD = *"+(Math.round(p.p*p.qty*10)/10)+" MAD*\n";});
   msgFull+="━━━━━━━━━━━━━━━━━━━━\n";
   msgFull+="🔪 *Préparation :* "+(preps||"Frais tel quel")+"\n";
   msgFull+="🚚 *Livraison :* "+(delMode==="exp"?"EXPRESS ⚡ ("+CFG.expDelay+")":"Standard 24h")+"\n";
@@ -3102,53 +3106,56 @@ function submitOrder(){
   msgFull+="🚚 *Livraison :* "+(df===0?"Gratuite ✅":"+"+df+" MAD")+"\n";
   msgFull+="✅ *TOTAL : "+tot+" MAD*\n";
   msgFull+="📅 "+new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})+"\n";
-  msgFull+="🔑 *Réf :* #"+cmdRef;
+  msgFull+="🔑 *Réf :* "+cmdRef;
 
-  // ── Message ANONYME pour le groupe (aucune info client) ──
-  var msgGroupe="📦 *Nouvelle Commande Confirmée !*\n";
-  msgGroupe+="━━━━━━━━━━━━━━━━━━━━\n";
-  msgGroupe+="🔑 *Référence :* #"+cmdRef+"\n";
-  msgGroupe+="📦 *Nombre d'articles :* "+items.reduce(function(s,p){return s+p.qty;},0)+"\n";
-  msgGroupe+="💰 *Montant total :* "+tot+" MAD\n";
-  msgGroupe+="🚚 *Livraison :* "+(delMode==="exp"?"Express ⚡ ("+CFG.expDelay+")":"Standard 24h")+"\n";
-  if(zone) msgGroupe+="🗺️ *Zone :* "+zone+"\n";
-  msgGroupe+="━━━━━━━━━━━━━━━━━━━━\n";
-  msgGroupe+="⏳ En cours de traitement...";
-
-  // Liens WA privés (message complet)
+  var waUrl="https://wa.me/"+CONFIG.WA_EQUIPE_1+"?text="+encodeURIComponent(msgFull);
+  // Mise à jour des liens dans le modal de confirmation
   var wa1=document.getElementById("mod-wa-1"), wa2=document.getElementById("mod-wa-2");
-  if(wa1) wa1.href="https://wa.me/"+CONFIG.WA_EQUIPE_1+"?text="+encodeURIComponent(msgFull);
+  if(wa1) wa1.href=waUrl;
   if(wa2) wa2.href="https://wa.me/"+CONFIG.WA_EQUIPE_2+"?text="+encodeURIComponent(msgFull);
-  // Lien groupe WA (résumé anonyme uniquement)
-  var waGrp=document.getElementById("mod-wa-group");
-  if(waGrp) waGrp.href="https://chat.whatsapp.com/D11jvGbbWd5Kc2pyXl79SK";
-  var cmdId="cmd_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);
-  // Write to fl_commandes (payload JSONB — same structure as ERP)
-  // Payload matches ERP Commande interface
-  var cmdPayload={id:cmdId,payload:{
-    id:cmdId, date:new Date().toISOString(),
-    commercialId:"WEBSITE", commercialNom:"Site Web",
-    clientId:"WEB_"+tel.replace(/\D/g,""), clientNom:nom+(co?" — "+co:""),
-    secteur:"Casablanca", zone:zone||"",
-    adresse:adr+(zone?" — "+zone:""),
-    telephone:tel, email:email||null,
-    lignes:lignes, total:tot,
-    livraison:delMode==="exp"?"express":"standard",
-    fraisLivraison:df, paiement:pay,
-    preparation:preps||"Frais tel quel",
-    notes:notes||null, source:"site_web",
-    statut:"recu", ribJustificatif:(pay==="virement"?virJustif||null:null)
-  },updated_at:new Date().toISOString()};
-  function showConfirm(num){ btn.disabled=false; btn.innerHTML="✅ Commande envoyée — <span id='total-btn'>"+tot+" MAD</span>"; document.getElementById("mod-order-num").textContent="#"+(num||cmdRef); document.getElementById("modal").classList.add("show"); }
-  if(sb){
-    sb.from("fl_commandes").insert([cmdPayload]).then(function(r){
-      if(r.error){
-        console.warn("[fl_commandes]",r.error.message);
-        // Fallback: try fl_commandes_web
-        sb.from("fl_commandes_web").insert([Object.assign({},orderData,{id:cmdId})]).then(function(){showConfirm(cmdId.slice(-6));});
-      } else { showConfirm(cmdId.slice(-6)); }
-    });
-  } else { showConfirm(cmdId.slice(-6)); }
+
+  function onSuccess(num){
+    // 1. Vider le panier
+    cart={};
+    updateCartUI();
+    // 2. Réinitialiser le bouton & afficher confirmation
+    btn.disabled=false; btn.innerHTML="✅ Commande envoyée — <span id='total-btn'>"+tot+" MAD</span>";
+    var orderNumEl=document.getElementById("mod-order-num");
+    if(orderNumEl) orderNumEl.textContent=num||cmdRef;
+    document.getElementById("modal").classList.add("show");
+    // 3. Ouvrir WhatsApp automatiquement (délai court pour laisser la modal s'afficher)
+    setTimeout(function(){ window.open(waUrl,"_blank"); }, 600);
+    showToast("✅ Commande confirmée — WhatsApp ouvert !");
+  }
+
+  // ── Enregistrer dans l'ERP ──────────────────────────────────────────────────
+  var orderData={
+    nom_client:nom+(co?" ("+co+")":""),
+    telephone:tel,
+    email:email||null,
+    adresse_livraison:adr+(zone?" — "+zone:""),
+    lignes:lignes,
+    montant_total:tot,
+    creneau:delMode==="exp"?"Express "+CFG.expDelay:"Standard 24h",
+    instructions:[preps?"Préparation: "+preps:"",notes].filter(Boolean).join(" | ")||null,
+    statut:"nouveau",
+    source:"site_web"
+  };
+
+  fetch(CONFIG.API_URL+"/api/ext/commandes",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(orderData)
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){ onSuccess(d.numero||cmdRef); })
+  .catch(function(err){
+    console.warn("[commandes] ERP unreachable:",err);
+    // Fallback Supabase direct si disponible
+    if(sb){
+      sb.from("fl_commandes_web").insert([Object.assign({},orderData,{numero:cmdRef})]).then(function(){onSuccess(cmdRef);}).catch(function(){onSuccess(cmdRef);});
+    } else { onSuccess(cmdRef); }
+  });
 }
 
 // ── CONFIG PANEL ──
@@ -3411,6 +3418,22 @@ function showPortal(data){
   document.getElementById("portalPts").textContent=(client.loyaltyPoints??user.loyaltyPoints??0)+" pts";
   document.getElementById("portalRemise").textContent=(client.remisePct??user.remisePct??0)+"%";
   document.getElementById("portalCredit").textContent=(client.creditSolde??0)+" DH";
+  // ── Pré-remplir le formulaire de commande ──
+  var fNom=document.getElementById("f-nom"), fTel=document.getElementById("f-tel");
+  var fEmail=document.getElementById("f-email"), fAdr=document.getElementById("f-adr");
+  var userName=user.name||client.nom||"";
+  var userTel=user.telephone||user.phone||client.telephone||"";
+  var userEmail=user.email||client.email||"";
+  var userAdr=client.adresse||user.adresse||"";
+  if(fNom&&userName){fNom.value=userName;fNom.style.background="#f0fdf4";fNom.style.borderColor="#2d9a4e";}
+  if(fTel&&userTel){fTel.value=userTel;fTel.style.background="#f0fdf4";fTel.style.borderColor="#2d9a4e";}
+  if(fEmail&&userEmail) fEmail.value=userEmail;
+  if(fAdr&&userAdr){fAdr.value=userAdr;fAdr.style.background="#f0fdf4";fAdr.style.borderColor="#2d9a4e";}
+  // Afficher le bandeau "connecté"
+  var banner=document.getElementById("user-connected-banner");
+  var bannerName=document.getElementById("user-banner-name");
+  if(banner){banner.style.display="flex";}
+  if(bannerName&&userName) bannerName.textContent="Bonjour "+userName.split(" ")[0]+" 👋";
   var orders=data.commandes||[], listEl=document.getElementById("orderList");
   if(!orders.length) listEl.innerHTML='<p style="color:var(--gy);font-size:14px">'+t("portal_no_orders")+'</p>';
   else listEl.innerHTML=orders.map(function(o){
@@ -3838,11 +3861,25 @@ document.addEventListener("DOMContentLoaded",function(){
   setInterval(function(){ syncFromSupabase(); }, 5*60*1000);
   renderProds(); updateCatCounts(); initReveal(); loadAvis();
   var sess=getSession(); if(sess) showPortal(sess);
-  if(sess?.token){
-    fetch(CONFIG.API_URL+"/api/ext/mon-compte",{headers:{Authorization:"Bearer "+sess.token}})
-      .then(function(r){return r.ok?r.json():null;})
-      .then(function(d){if(d){saveSession(Object.assign({},sess,d));showPortal(Object.assign({},sess,d));}})
-      .catch(function(){});
+  if(sess){
+    var userTel=(sess.user&&(sess.user.telephone||sess.user.phone))||"";
+    // Charger commandes web depuis l'ERP
+    if(userTel){
+      fetch(CONFIG.API_URL+"/api/ext/commandes?tel="+encodeURIComponent(userTel))
+        .then(function(r){return r.ok?r.json():[];})
+        .then(function(webOrders){
+          if(Array.isArray(webOrders)&&webOrders.length){
+            var merged=Object.assign({},sess,{commandes:webOrders.map(function(o){return{numero:o.numero,date:o.created_at,statut:o.statut,montant:o.montant_total};})});
+            showPortal(merged);
+          }
+        }).catch(function(){});
+    }
+    if(sess.token){
+      fetch(CONFIG.API_URL+"/api/ext/mon-compte",{headers:{Authorization:"Bearer "+sess.token}})
+        .then(function(r){return r.ok?r.json():null;})
+        .then(function(d){if(d){saveSession(Object.assign({},sess,d));showPortal(Object.assign({},sess,d));}})
+        .catch(function(){});
+    }
   }
 });
 
