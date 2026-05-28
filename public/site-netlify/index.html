@@ -3209,11 +3209,11 @@ function upCart(id,d){
 function updateCartUI(){
   var items=Object.values(cart);
   var total=items.reduce(function(s,p){return s+p.qty;},0);
-  document.getElementById("cart-n").textContent=total;
+  var cartNEl=document.getElementById("cart-n"); if(cartNEl) cartNEl.textContent=total;
   var badge=document.getElementById("cart-badge"); if(badge){badge.textContent=total;badge.style.display=total?"flex":"none";}
   var sub=items.reduce(function(s,p){return s+p.p*p.qty;},0);
   var df=delMode==="exp"?CFG.exp:(sub>=CFG.free?0:CFG.std), tot=sub+df;
-  document.getElementById("total-btn").textContent=tot+" MAD";
+  var totBtn=document.getElementById("total-btn"); if(totBtn) totBtn.textContent=tot+" MAD";
   var ci=document.getElementById("cart-items"), ct=document.getElementById("cart-totals");
   // Mobile cart FAB
   var mobFab=document.getElementById("mob-cart-fab"), mobCnt=document.getElementById("mob-cart-count");
@@ -3252,7 +3252,7 @@ function submitOrder(){
   var nom=document.getElementById("f-nom").value.trim(), tel=document.getElementById("f-tel").value.trim(), adr=document.getElementById("f-adr").value.trim();
   if(!nom||!tel||!adr){showToast("⚠️ Remplissez nom, téléphone et adresse");return;}
   if(!Object.keys(cart).length){showToast("🛒 Panier vide — ajoutez des produits");return;}
-  var btn=document.getElementById("submit-btn"); btn.disabled=true; btn.textContent="⏳ Envoi en cours...";
+  var btn=document.getElementById("submit-btn"); btn.disabled=true; btn.innerHTML="⏳ Envoi en cours... <span id='total-btn' style='display:none'>0</span>";
   var items=Object.values(cart), sub=items.reduce(function(s,p){return s+p.p*p.qty;},0);
   var df=delMode==="exp"?CFG.exp:(sub>=CFG.free?0:CFG.std), tot=sub+df;
   var co=(document.getElementById("f-co")||{}).value||"", email=document.getElementById("f-email").value||"";
@@ -3292,22 +3292,36 @@ function submitOrder(){
   if(wa2) wa2.href="https://wa.me/"+CONFIG.WA_EQUIPE_2+"?text="+encodeURIComponent(msgFull);
 
   function onSuccess(num){
-    // 1. Vider le panier
+    // 1. Restaurer le bouton EN PREMIER (avant updateCartUI) pour que total-btn soit dans le DOM
+    btn.disabled=false; btn.innerHTML="🔍 Vérifier ma commande — <span id='total-btn'>0 MAD</span>";
+    // 2. Vider le panier et rafraîchir l'UI
     cart={};
     updateCartUI();
-    // 2. Remettre le bouton à zéro
-    btn.disabled=false; btn.innerHTML="🔍 Vérifier ma commande — <span id='total-btn'>0 MAD</span>";
-    // 3. Réinitialiser le formulaire (toujours — connecté ou non)
-    ["f-nom","f-tel","f-email","f-adr","f-co"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
-    var fadrVis=document.getElementById("f-adr-visible"); if(fadrVis) fadrVis.value="";
-    var fzone2=document.getElementById("f-zone"); if(fzone2) fzone2.selectedIndex=0;
-    ["f-notes","vir-ref"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
+    // 3. Réinitialiser les champs variables (notes, zone, paiement)
+    ["f-notes","vir-ref","f-co"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
     var fzone=document.getElementById("f-zone"); if(fzone) fzone.selectedIndex=0;
     var fpay=document.getElementById("f-pay"); if(fpay) fpay.selectedIndex=0;
+    // 4. Gestion champs identité : invité → vider tout ; connecté → re-remplir depuis session
+    var sess=getSession();
+    if(sess){
+      // Utilisateur connecté : re-remplir les champs cachés depuis la session
+      var _u=sess.user||{}, _c=sess.client||{};
+      var _sv=function(id,val){var el=document.getElementById(id);if(el)el.value=val||"";};
+      _sv("f-nom",_u.name||_c.nom||"");
+      _sv("f-tel",_u.telephone||_u.phone||_c.telephone||"");
+      _sv("f-email",_u.email||_c.email||"");
+      _sv("f-adr",_c.adresse||_u.adresse||"");
+      var adrVis=document.getElementById("f-adr-visible"); if(adrVis) adrVis.value=_c.adresse||_u.adresse||"";
+    } else {
+      // Invité : tout vider
+      ["f-nom","f-tel","f-email","f-adr"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
+      var fadrVis=document.getElementById("f-adr-visible"); if(fadrVis) fadrVis.value="";
+    }
+    // 5. Afficher le numéro de commande et ouvrir le modal de succès
     var orderNumEl=document.getElementById("mod-order-num");
     if(orderNumEl) orderNumEl.textContent=num||cmdRef;
     document.getElementById("modal").classList.add("show");
-    // 3. Ouvrir WhatsApp automatiquement (délai court pour laisser la modal s'afficher)
+    // 6. Ouvrir WhatsApp automatiquement
     setTimeout(function(){ window.open(waUrl,"_blank"); }, 600);
     showToast("✅ Commande confirmée — WhatsApp ouvert !");
   }
