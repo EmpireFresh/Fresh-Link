@@ -9,6 +9,8 @@ import { createHmac } from "crypto"
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  ?? "https://jwdrwapuetqoqnankgma.supabase.co"
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
+// Pour les requêtes serveur on préfère le service role (bypass RLS) — fallback sur anon
+const SB_SERVER_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? SB_ANON
 const AUTH_SECRET = process.env.AUTH_SECRET ?? "fl_auth_secret_2026"
 
 function cors(origin: string | null): HeadersInit {
@@ -54,7 +56,7 @@ function normalizePhone(raw: string): { local: string; intl: string } {
 
 async function sbQuery(filter: string): Promise<any[]> {
   const res = await fetch(`${SB_URL}/rest/v1/fl_users?${filter}`, {
-    headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` },
+    headers: { apikey: SB_SERVER_KEY, Authorization: `Bearer ${SB_SERVER_KEY}` },
   })
   if (!res.ok) return []
   return res.json()
@@ -62,7 +64,7 @@ async function sbQuery(filter: string): Promise<any[]> {
 
 async function sbGetClient(clientId: string): Promise<any | null> {
   const res = await fetch(`${SB_URL}/rest/v1/fl_clients?id=eq.${encodeURIComponent(clientId)}&limit=1`, {
-    headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` },
+    headers: { apikey: SB_SERVER_KEY, Authorization: `Bearer ${SB_SERVER_KEY}` },
   })
   if (!res.ok) return null
   const rows = await res.json()
