@@ -3,7 +3,7 @@ import { createHmac } from "crypto"
 
 // ══════════════════════════════════════════════════════════════
 // POST /api/ext/auth — Authentification par numéro de téléphone
-// Utilisé par vita-fresh.netlify.app
+// Utilisé par vitafresh.vercel.app
 // Accepte: { phone, password }  OU  { email, password } (fallback)
 //
 // IMPORTANT: fl_users et fl_clients sont stockés en {id, payload} dans Supabase.
