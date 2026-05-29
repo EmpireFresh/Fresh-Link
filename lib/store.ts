@@ -1524,6 +1524,7 @@ export const JAWAD_USER: User = {
   id: JAWAD_ID,
   name: "Jawad",
   email: "jawad@vita-fresh.ma",
+  telephone: "0647333456",
   password: "Medghaly@22",
   role: "super_super_admin",
   actif: true,

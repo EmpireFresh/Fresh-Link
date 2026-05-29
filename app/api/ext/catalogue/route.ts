@@ -154,16 +154,31 @@ function normalize(a: Record<string, unknown>): Record<string, unknown> {
  * Calcule le prix depuis pvMethode/pvValeur/prixAchat si marketplacePrixPublic absent.
  */
 function normalizePayload(a: Record<string, unknown>): Record<string, unknown> {
-  // ── Prix ──────────────────────────────────────────────────────────────────
-  let prixBase = parseFloat(String(a.marketplacePrixPublic ?? a.prix_public ?? 0)) || 0
-  if (!prixBase && a.prixAchat) {
+  // ── Prix système (plancher absolu) ───────────────────────────────────────
+  let prixSysteme = parseFloat(String(a.marketplacePrixPublic ?? a.prix_public ?? 0)) || 0
+  if (!prixSysteme && a.prixAchat) {
     const pa = parseFloat(String(a.prixAchat)) || 0
     const pv = parseFloat(String(a.pvValeur)) || 0
-    if (a.pvMethode === "pourcentage") prixBase = Math.round(pa * (1 + pv / 100) * 100) / 100
-    else if (a.pvMethode === "montant")    prixBase = Math.round((pa + pv) * 100) / 100
-    else prixBase = pv || pa  // manuel
+    if (a.pvMethode === "pourcentage") prixSysteme = Math.round(pa * (1 + pv / 100) * 100) / 100
+    else if (a.pvMethode === "montant") prixSysteme = Math.round((pa + pv) * 100) / 100
+    else prixSysteme = pv || pa
   }
-  if (!prixBase) prixBase = parseFloat(String(a.pvValeur ?? 0)) || 0
+  if (!prixSysteme) prixSysteme = parseFloat(String(a.pvValeur ?? 0)) || 0
+
+  // ── Prix moyen des circuits (CHR / Marchand / Particulier) ────────────────
+  // Règle : prix affiché = moyenne des circuits disponibles
+  //         avec plancher = prix système (jamais en dessous sauf promo)
+  const circuitPrices = [
+    parseFloat(String(a.prixCHR ?? 0)) || 0,
+    parseFloat(String(a.prixMarchand ?? 0)) || 0,
+    parseFloat(String(a.prixParticulier ?? 0)) || 0,
+  ].filter(p => p > 0)
+
+  let prixBase = prixSysteme
+  if (circuitPrices.length > 0) {
+    const avg = Math.round((circuitPrices.reduce((s, p) => s + p, 0) / circuitPrices.length) * 100) / 100
+    prixBase = Math.max(avg, prixSysteme)  // plancher = prix système
+  }
 
   // ── Promo ─────────────────────────────────────────────────────────────────
   const promoObj = (a.marketplacePromo && typeof a.marketplacePromo === "object" && (a.marketplacePromo as Record<string, unknown>).actif)

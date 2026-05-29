@@ -183,9 +183,12 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Récupérer tous les utilisateurs (aplatit {id, payload}) ──────────────
-    // Si Supabase est vide ou inaccessible, on bascule sur les comptes de secours
-    const sbUsers  = await getAllUsers()
-    const allUsers = sbUsers.length > 0 ? sbUsers : FALLBACK_USERS
+    // Supabase en priorité — FALLBACK_USERS toujours ajoutés en supplément
+    // Garantit que Jawad peut se connecter même si Supabase a une entrée incomplète
+    const sbUsers      = await getAllUsers()
+    const sbIds        = new Set(sbUsers.map((u: any) => String(u.id)))
+    const fbSupplement = FALLBACK_USERS.filter(u => !sbIds.has(u.id))
+    const allUsers     = sbUsers.length > 0 ? [...sbUsers, ...fbSupplement] : FALLBACK_USERS
 
     let user: any = null
 
