@@ -1535,7 +1535,7 @@ GET  /api/ext/commandes/:id → suivi commande</div>
       <div class="hero-stats" style="display:flex;gap:28px;margin-top:44px;padding-top:28px;border-top:1px solid rgba(255,255,255,.1);animation:fadeSlideUp .75s .55s cubic-bezier(.22,1,.36,1) both">
         <div><div class="counter-val" style="font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="stat-prods">50+</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Produits frais</div></div>
         <div><div class="counter-val" style="font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">2h</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Livraison express</div></div>
-        <div><div class="counter-val" style="font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">500+</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Clients actifs</div></div>
+        <div><div class="counter-val" style="font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="stat-clients">500+</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Clients actifs</div><div id="stat-clients-cat" style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;line-height:1.4"></div></div>
       </div>
     </div>
     <div class="hero-cards" id="hero-cards"></div>
@@ -3088,8 +3088,31 @@ function applyProds(data,source){
   showToast("✅ "+PRODS.length+" articles chargés ("+source+")");
   updateERPConnBox(true,"Connecté — "+PRODS.length+" articles · "+source);
 }
+// ── Statistiques live (clients actifs + catégories) depuis l'ERP ──
+function loadStats(){
+  fetch(CONFIG.API_URL+"/api/ext/stats",{cache:"no-cache"})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(!d) return;
+      var elN=document.getElementById("stat-clients");
+      var elC=document.getElementById("stat-clients-cat");
+      if(elN&&d.clientsActifs>0){ elN.textContent=d.clientsActifs+(d.clientsActifs>=10?"+":""); }
+      if(elC&&d.categories){
+        var parts=[];
+        if(d.categories.chr>0)         parts.push("🏨 "+d.categories.chr+" CHR");
+        if(d.categories.marchand>0)    parts.push("🏪 "+d.categories.marchand+" Marchands");
+        if(d.categories.particulier>0) parts.push("🏠 "+d.categories.particulier+" Particuliers");
+        elC.innerHTML=parts.join(" · ");
+      }
+      // Compteur produits aussi
+      var elP=document.getElementById("stat-prods");
+      if(elP&&d.articlesActifs>0){ elP.textContent=d.articlesActifs+(d.articlesActifs>=10?"+":""); }
+    })
+    .catch(function(){});
+}
 // ── المزامنة مع ERP — كتحاول أولاً API، وإذا فشلت كتروح لـ Supabase مباشرة ──
 function syncFromSupabase(){
+  loadStats();
   setERPBar("loading","Connexion FreshLink ERP...",""); setSyncBadge("loading","Sync...");
   // Mode 1: ERP REST API — with 4s timeout, silent fallback
   var ctrl=typeof AbortController!=="undefined"?new AbortController():null;
@@ -3264,7 +3287,11 @@ function renderProds(f){
     var tagsHtml=(p.tags||[]).map(function(tg){return TL[tg]?'<span class="po">'+TL[tg]+'</span>':'';}).join("");
     var unitBadge='<span style="display:inline-block;background:#f0fdf4;color:#1e5631;border:1px solid #d1fae5;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:4px">⚖️ '+p.u+'</span>';
     var packHtml=p.packInfo?'<div style="margin-bottom:4px"><span style="font-size:10px;color:#1e5631;font-weight:700;background:#dcfce7;border-radius:6px;padding:2px 7px;display:inline-block">'+p.packInfo+'</span></div>':'';
-    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+(outStock?'<div class="out-badge">Rupture de stock</div>':'')+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+(p.stock!==undefined?'<div style="font-size:10px;color:var(--gy);margin-bottom:5px">Stock : '+p.stock+' '+p.u+'</div>':'')+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)"'+(outStock?' disabled':'')+'>−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' disabled title="Rupture"':'')+'>+</button></div></div></div></div>';
+    // Hors-stock / hors-saison : commande possible, badge orange "Sur commande", confirmation équipe
+    var outBadgeHtml=outStock?'<div class="out-badge" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">⏳ Sur commande</div>':'';
+    var outNoteHtml=outStock?'<div style="font-size:10px;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 7px;margin-bottom:6px;line-height:1.4">⏳ <strong>Hors saison / rupture</strong> — commande possible, livraison confirmée par notre équipe.</div>':'';
+    var stockHtml=outStock?'':(p.stock!==undefined?'<div style="font-size:10px;color:var(--gy);margin-bottom:5px">Stock : '+p.stock+' '+p.u+'</div>':'');
+    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+outBadgeHtml+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+outNoteHtml+stockHtml+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)">−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' title="Sur commande — confirmation équipe"':'')+'>+</button></div></div></div></div>';
   }).join("");
 }
 
@@ -3351,7 +3378,8 @@ function submitOrder(){
   var zone=document.getElementById("f-zone").value, notes=document.getElementById("f-notes").value, pay=document.getElementById("f-pay").value;
   var preps=Array.from(document.querySelectorAll(".popt.on")).map(function(e){return e.textContent.trim();}).join(", ");
   virJustif=(document.getElementById("vir-ref")||{}).value||"";
-  var lignes=items.map(function(p){return{articleId:p.id,articleNom:p.n,unite:p.u||"kg",quantite:p.qty,prixUnitaire:p.p,prixVente:p.p,total:Math.round(p.p*p.qty*100)/100};});
+  var lignes=items.map(function(p){return{articleId:p.id,articleNom:p.n,unite:p.u||"kg",quantite:p.qty,prixUnitaire:p.p,prixVente:p.p,total:Math.round(p.p*p.qty*100)/100,surCommande:!p.dispo};});
+  var hasSurCommande=items.some(function(p){return !p.dispo;});
   var cmdRef="WEB-"+Date.now().toString().slice(-8);
 
   // ── Message WhatsApp complet ──
@@ -3427,8 +3455,9 @@ function submitOrder(){
     lignes:lignes,
     montant_total:tot,
     creneau:delMode==="exp"?"Express "+CFG.expDelay:"Standard 24h",
-    instructions:[preps?"Préparation: "+preps:"",notes].filter(Boolean).join(" | ")||null,
-    statut:"nouveau",
+    instructions:[preps?"Préparation: "+preps:"",hasSurCommande?"⏳ CONTIENT DES ARTICLES SUR COMMANDE (hors saison/rupture) — confirmer disponibilité avant livraison":"",notes].filter(Boolean).join(" | ")||null,
+    statut:hasSurCommande?"a_confirmer":"nouveau",
+    contientSurCommande:hasSurCommande,
     source:"site_web"
   };
 
