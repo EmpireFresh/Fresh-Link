@@ -5,11 +5,12 @@ import { store, type User, getUserInterface } from "@/lib/store"
 import dynamic from "next/dynamic"
 
 // All heavy components loaded dynamically — never crash the initial bundle
-const LoginPage        = dynamic(() => import("@/components/auth/LoginPage"),             { ssr: false, loading: () => <Spinner /> })
-const MobileLayout     = dynamic(() => import("@/components/mobile/MobileLayout"),        { ssr: false, loading: () => <Spinner /> })
-const BackOfficeLayout = dynamic(() => import("@/components/backoffice/BackOfficeLayout"),{ ssr: false, loading: () => <Spinner /> })
-// Portail externe désactivé — accès uniquement via site Netlify
-const SecurityGuard    = dynamic(() => import("@/components/SecurityGuard"),               { ssr: false })
+const LoginPage           = dynamic(() => import("@/components/auth/LoginPage"),                  { ssr: false, loading: () => <Spinner /> })
+const MobileLayout        = dynamic(() => import("@/components/mobile/MobileLayout"),             { ssr: false, loading: () => <Spinner /> })
+const BackOfficeLayout    = dynamic(() => import("@/components/backoffice/BackOfficeLayout"),     { ssr: false, loading: () => <Spinner /> })
+const PortailClient       = dynamic(() => import("@/components/portail/PortailClient"),           { ssr: false, loading: () => <Spinner /> })
+const PortailFournisseur  = dynamic(() => import("@/components/portail/PortailFournisseur"),      { ssr: false, loading: () => <Spinner /> })
+const SecurityGuard       = dynamic(() => import("@/components/SecurityGuard"),                    { ssr: false })
 
 function Spinner() {
   return (
@@ -119,25 +120,35 @@ export default function App() {
     return <LoginPage onLogin={handleLogin} />
   }
 
-  // Clients et fournisseurs : accès portail uniquement via le site web externe
-  if (user.role === "fournisseur" || user.role === "client") {
+  // ── Portail Fournisseur ───────────────────────────────────────────────────
+  if (user.role === "fournisseur") {
+    return <PortailFournisseur user={user} onLogout={handleLogout} />
+  }
+
+  // ── Portail Client CHR / Marchand ─────────────────────────────────────────
+  // Les particuliers restent sur vitafresh.vercel.app
+  if (user.role === "client") {
+    const sousType = (user as any).sousType ?? (user as any).categorie ?? ""
+    if (["chr", "marchand", "professionnel"].includes(String(sousType).toLowerCase())) {
+      return <PortailClient user={user} onLogout={handleLogout} />
+    }
+    // Particulier connecté sur l'ERP → message de redirection vers le site web
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
         <div className="max-w-sm w-full bg-white rounded-2xl border border-slate-200 shadow-lg p-8 flex flex-col items-center gap-5 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center">
-            <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-            </svg>
-          </div>
+          <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center text-3xl">🌐</div>
           <div>
-            <p className="text-base font-bold text-slate-800">Espace client / fournisseur</p>
+            <p className="text-base font-bold text-slate-800">Bonjour {user.name} !</p>
             <p className="text-sm text-slate-500 mt-2">
-              Votre espace de commande est accessible depuis notre site web.
-              Veuillez contacter votre commercial pour obtenir le lien d&apos;accès.
+              Votre espace commande est sur notre site web.
             </p>
           </div>
-          <button
-            onClick={handleLogout}
+          <a href="https://vitafresh.vercel.app"
+            className="w-full py-2.5 rounded-xl text-sm font-bold text-white text-center"
+            style={{ background: "linear-gradient(135deg,#1a4f2a,#2d7a46)" }}>
+            Ouvrir vitafresh.vercel.app →
+          </a>
+          <button onClick={handleLogout}
             className="w-full py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
             Se déconnecter
           </button>
