@@ -139,6 +139,11 @@ function canAccess(u: User): boolean {
   return ["super_super_admin","super_admin","admin","resp_commercial","resp_logistique","livreur","prevendeur"].includes(u.role)
 }
 
+/** Peut supprimer ou modifier une commande */
+function canDeleteModify(u: User): boolean {
+  return ["super_super_admin","super_admin","admin"].includes(u.role)
+}
+
 function fmt(iso: string) {
   if (!iso) return "—"
   try {
@@ -240,6 +245,27 @@ export default function BOCommandesUnifiees({ user }: Props) {
     }
     setUpdating(false)
     setTimeout(() => setMsg(null), 3500)
+  }
+
+  // ── Supprimer une commande ───────────────────────────────────────────────────
+  const deleteCommande = async (cmd: CmdUnifiee) => {
+    if (!confirm(`⚠️ Supprimer définitivement la commande ${cmd.numero} de ${cmd.nom_client} ?\n\nCette action est irréversible.`)) return
+    try {
+      const sb = createClient()
+      if (cmd.source === "web") {
+        await sb.from("fl_commandes_web").delete().eq("id", cmd.id)
+      } else {
+        // Commande ERP (localStorage + Supabase)
+        store.saveCommandes(store.getCommandes().filter(c => c.id !== cmd.id))
+        try { await sb.from("fl_commandes").delete().eq("id", cmd.id) } catch {}
+      }
+      setCmds(prev => prev.filter(c => !(c.id === cmd.id && c.table === cmd.table)))
+      setSelected(null)
+      setMsg({ ok: true, text: `✅ Commande ${cmd.numero} supprimée.` })
+    } catch {
+      setMsg({ ok: false, text: "❌ Erreur lors de la suppression." })
+    }
+    setTimeout(() => setMsg(null), 4000)
   }
 
   // ── Injecter commande web dans pipeline logistique ERP ──────────────────────
@@ -787,6 +813,18 @@ export default function BOCommandesUnifiees({ user }: Props) {
                     className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors"
                   >
                     🚀 Injecter dans la logistique ERP
+                  </button>
+                </div>
+              )}
+
+              {/* Supprimer (admins seulement) */}
+              {canDeleteModify(user) && (
+                <div className="border-t border-red-100 pt-4">
+                  <button
+                    onClick={() => deleteCommande(selected)}
+                    className="w-full py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-sm font-bold border border-red-200 transition-colors flex items-center justify-center gap-2"
+                  >
+                    🗑️ Supprimer cette commande
                   </button>
                 </div>
               )}

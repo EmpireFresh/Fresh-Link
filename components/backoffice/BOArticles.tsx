@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { store, type Article, type HistoriquePrixAchat, FAMILLES_ARTICLES } from "@/lib/store"
+import { store, type Article, type HistoriquePrixAchat, FAMILLES_ARTICLES, FAMILLE_GROUPES } from "@/lib/store"
 import { createClient, uploadToStorage, getStorageUrl } from "@/lib/supabase/client"
 
 const DH = (n: number) => `${n.toLocaleString("fr-MA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DH`
@@ -176,7 +176,13 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
   const filtered = articles.filter(a => {
     const q = search.toLowerCase()
     const matchSearch = !q || a.nom.toLowerCase().includes(q) || a.nomAr.includes(q) || a.famille.toLowerCase().includes(q)
-    const matchFamille = !famille || a.famille === famille
+    const matchFamille = !famille
+      ? true
+      : famille === "catalogue"
+        ? (a as any).catalogueVisible !== false && (a as any).marketplaceActif !== false
+        : famillesFiltre.length > 0
+          ? famillesFiltre.includes(a.famille)
+          : a.famille === famille
     return matchSearch && matchFamille
   })
 
@@ -233,6 +239,18 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
     if (updated) syncArticleToSupabase(updated)
     setArticles(store.getArticles())
   }
+
+  // Groupes principaux (Légumes, Fruits, Herbes, Autres, Transformés)
+  const byGroupe = Object.entries(FAMILLE_GROUPES).map(([groupe, familles]) => ({
+    groupe,
+    familles,
+    count: articles.filter(a => familles.includes(a.famille)).length,
+  }))
+
+  // Pour le filtre actif : si famille choisie → chercher via groupe
+  const famillesFiltre = famille
+    ? (FAMILLE_GROUPES[famille] ?? [famille])
+    : []
 
   const byFamille = FAMILLES_ARTICLES.map(f => ({
     famille: f,
@@ -484,20 +502,37 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
         </div>
       </div>
 
-      {/* Famille chips */}
+      {/* Groupe chips — 5 groupes principaux */}
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setFamille("")}
           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${!famille ? "text-white border-transparent" : "text-muted-foreground border-border hover:border-primary"}`}
           style={!famille ? { background: "oklch(0.38 0.2 260)" } : {}}>
           Tous ({articles.length})
         </button>
-        {byFamille.map(f => (
-          <button key={f.famille} onClick={() => setFamille(f.famille === famille ? "" : f.famille)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${famille === f.famille ? "text-white border-transparent" : `${FAMILLE_COLORS[f.famille] || "bg-slate-50 text-slate-700 border-slate-200"}`}`}
-            style={famille === f.famille ? { background: "oklch(0.38 0.2 260)" } : {}}>
-            {f.famille} ({f.count})
-          </button>
-        ))}
+        {byGroupe.filter(g => g.count > 0).map(g => {
+          const GROUPE_COLORS: Record<string, string> = {
+            "Légumes":    "bg-green-50 text-green-700 border-green-200",
+            "Fruits":     "bg-orange-50 text-orange-700 border-orange-200",
+            "Herbes":     "bg-teal-50 text-teal-700 border-teal-200",
+            "Autres":     "bg-slate-50 text-slate-700 border-slate-200",
+            "Transformés":"bg-purple-50 text-purple-700 border-purple-200",
+          }
+          const isActive = famille === g.groupe
+          return (
+            <button key={g.groupe}
+              onClick={() => setFamille(isActive ? "" : g.groupe)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${isActive ? "text-white border-transparent" : (GROUPE_COLORS[g.groupe] || "bg-slate-50 text-slate-700 border-slate-200")}`}
+              style={isActive ? { background: "oklch(0.38 0.2 260)" } : {}}>
+              {g.groupe} ({g.count})
+            </button>
+          )
+        })}
+        {/* Chip catalogue (filtre par marketplaceActif) */}
+        <button onClick={() => setFamille("catalogue")}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${famille === "catalogue" ? "text-white border-transparent" : "bg-blue-50 text-blue-700 border-blue-200"}`}
+          style={famille === "catalogue" ? { background: "oklch(0.38 0.2 260)" } : {}}>
+          Catalogue 🌐 ({articles.filter(a => (a as any).catalogueVisible !== false && (a as any).marketplaceActif !== false).length})
+        </button>
       </div>
 
       {/* Selection action bar */}

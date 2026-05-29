@@ -1510,11 +1510,36 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   charge_recouvrement: "bg-rose-800",
 }
 
+/** Familles détaillées (pour fiches articles et stock) */
 export const FAMILLES_ARTICLES = [
+  // Légumes
   "Légumes feuilles", "Légumes racines", "Légumes fruits",
-  "Agrumes", "Fruits tropicaux", "Fruits rouges",
-  "Herbes aromatiques", "Champignons", "Fruits secs", "Autre",
+  // Fruits
+  "Fruits tropicaux", "Fruits rouges", "Agrumes", "Fruits secs",
+  // Herbes
+  "Herbes aromatiques", "Champignons",
+  // Autres
+  "Autre",
+  // Produits transformés (après préparation)
+  "Épluché", "Lavé", "Coupé", "Prêt pour cuisson", "Emballé",
 ]
+
+/** 5 groupes d'affichage → familles détaillées */
+export const FAMILLE_GROUPES: Record<string, string[]> = {
+  "Légumes":      ["Légumes feuilles", "Légumes racines", "Légumes fruits"],
+  "Fruits":       ["Fruits tropicaux", "Fruits rouges", "Agrumes", "Fruits secs"],
+  "Herbes":       ["Herbes aromatiques", "Champignons"],
+  "Autres":       ["Autre"],
+  "Transformés":  ["Épluché", "Lavé", "Coupé", "Prêt pour cuisson", "Emballé"],
+}
+
+/** Retourne le groupe parent d'une famille détaillée */
+export function getFamilleGroupe(famille: string): string {
+  for (const [groupe, familles] of Object.entries(FAMILLE_GROUPES)) {
+    if (familles.includes(famille)) return groupe
+  }
+  return "Autres"
+}
 
 export function isMobileRole(role: UserRole): boolean {
   return ["prevendeur", "resp_logistique", "magasinier", "dispatcheur", "livreur", "acheteur", "ctrl_achat", "ctrl_prep", "client", "fournisseur", "chef_depot", "suivi_commande"].includes(role)

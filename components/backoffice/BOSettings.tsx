@@ -600,6 +600,17 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
           body: JSON.stringify({ table: "fl_users", deletes: ["u_jawad_root"] }),
         })
       } catch {}
+      // 2c. Pousser un marqueur dans fl_articles pour indiquer que le catalogue
+      //     a été vidé explicitement (évite le fallback vers ERP_DEFAULT_ARTICLES)
+      try {
+        await fetch("/api/sync-write", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            table: "fl_articles",
+            upserts: [{ id: "__catalogue_cleared", payload: { marketplaceActif: false, clearedAt: new Date().toISOString() }, updated_at: new Date().toISOString() }],
+          }),
+        })
+      } catch {}
       // 3. Ré-injecter Jawad dans Supabase (garantie)
       await fetch("/api/sync-write", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -624,8 +635,8 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
       const token = (session as any)?.token ?? ""
       const res = await fetch("/api/ext/revoke-sessions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ exceptUserId }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exceptUserId, adminId: session?.id ?? exceptUserId }),
       })
       const data = await res.json()
       if (res.ok && data.ok) {

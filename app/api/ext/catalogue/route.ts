@@ -51,22 +51,21 @@ export async function GET(req: NextRequest) {
       )
       if (res.ok) {
         const rows: { id: string; payload: Record<string, unknown>; updated_at: string }[] = await res.json()
+        // Si Supabase a des lignes (même si toutes filtrées) → on utilise Supabase
+        // Seule exception : 0 lignes = jamais configuré → fallback ERP defaults
         if (Array.isArray(rows) && rows.length > 0) {
           const articles = rows
-            // Flatten payload + preserve id from row
+            .filter(r => !String(r.id).startsWith("__")) // ignorer les entrées de config
             .map(r => {
               const p = (r.payload && typeof r.payload === "object" ? r.payload : {}) as Record<string, unknown>
               return { ...p, id: r.id }
             })
-            // Filter: exclude only those explicitly disabled (camelCase OR snake_case)
             .filter(a => a.marketplaceActif !== false && a.marketplace_actif !== false)
-          if (articles.length > 0) {
-            const result = applyFilters(articles, q, tag).sort(byOrdre).map(normalizePayload)
-            return NextResponse.json(result, { status: 200, headers: cors(origin) })
-          }
+          const result = applyFilters(articles, q, tag).sort(byOrdre).map(normalizePayload)
+          return NextResponse.json(result, { status: 200, headers: cors(origin) })
         }
       }
-    } catch { /* continuer vers seed */ }
+    } catch { /* continuer vers defaults */ }
   }
 
   // ── Fallback : articles ERP par défaut (131 produits avec prix calculés) ──

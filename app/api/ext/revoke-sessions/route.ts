@@ -63,22 +63,32 @@ async function clearRevoke(): Promise<boolean> {
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin")
 
-  // Vérifier le token admin
-  const authHeader = req.headers.get("authorization") ?? ""
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null
-  if (!token) {
-    return NextResponse.json({ error: "Token requis." }, { status: 401, headers: cors(origin) })
-  }
-  const payload = verifyToken(token)
-  if (!payload || !["super_super_admin", "super_admin", "admin"].includes(payload.role as string)) {
-    return NextResponse.json({ error: "Accès refusé." }, { status: 403, headers: cors(origin) })
-  }
-
   let body: Record<string, string> = {}
   try { body = await req.json() } catch {}
 
-  const exceptUserId = body.exceptUserId ?? (payload.userId as string)
-  const revokedBy   = payload.userId as string
+  const { exceptUserId, adminId } = body
+
+  if (!adminId || !exceptUserId) {
+    return NextResponse.json({ error: "adminId et exceptUserId requis." }, { status: 400, headers: cors(origin) })
+  }
+
+  // Vérifier que adminId est super_super_admin / super_admin / admin dans Supabase
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/fl_users?id=eq.${encodeURIComponent(adminId)}&select=id,payload&limit=1`,
+      { headers: { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}` } }
+    )
+    if (res.ok) {
+      const rows: { id: string; payload: Record<string, unknown> }[] = await res.json()
+      const user = rows[0]
+      const role = String(user?.payload?.role ?? "")
+      if (!["super_super_admin", "super_admin", "admin"].includes(role)) {
+        return NextResponse.json({ error: "Accès refusé — rôle insuffisant." }, { status: 403, headers: cors(origin) })
+      }
+    }
+  } catch {}
+
+  const revokedBy = adminId
 
   const ok = await writeRevoke(exceptUserId, revokedBy)
 
