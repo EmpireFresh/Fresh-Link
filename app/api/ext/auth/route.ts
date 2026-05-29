@@ -175,7 +175,9 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin")
   try {
     const body = await req.json()
-    const { phone, email, password, device_id, user_agent } = body
+    const { phone, email, password, device_id, user_agent, source } = body
+    // source: "website" | "app" | undefined
+    const isWebsite = source === "website" || (origin ?? "").includes("vitafresh")
 
     if ((!phone?.trim() && !email?.trim()) || !password?.trim()) {
       return NextResponse.json(
@@ -279,6 +281,22 @@ export async function POST(req: NextRequest) {
         { error: "Accès non autorisé pour ce type de compte." },
         { status: 403, headers: cors(origin) }
       )
+    }
+
+    // ── Séparation website / application professionnelle ──────────────────────
+    // Particuliers → website vitafresh.vercel.app
+    // CHR / Marchands → application FreshLink Pro (f-l.vercel.app)
+    if (isWebsite && user.role === "client") {
+      const st = String(user.sousType ?? user.sous_type ?? user.categorie ?? "")
+      if (["chr", "marchand"].includes(st.toLowerCase())) {
+        return NextResponse.json(
+          {
+            error: "Votre compte professionnel (CHR/Marchand) est accessible via l'application FreshLink Pro.",
+            redirect_app: true,
+          },
+          { status: 403, headers: cors(origin) }
+        )
+      }
     }
 
     // ── Récupérer le profil client si lié ─────────────────────────────────────

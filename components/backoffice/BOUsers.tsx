@@ -1173,11 +1173,21 @@ export default function BOUsers({ currentUser }: { currentUser: User }) {
     if (canAccess) {
       const isCurrentJawad = currentUser.role === "super_super_admin"
       const all = store.getUsers().filter(u => {
-        if (u.id === JAWAD_ID) return isCurrentJawad               // compte Jawad : visible par Jawad uniquement
+        if (u.id === JAWAD_ID) return isCurrentJawad
         if (u.role === "super_super_admin") return currentUser.id === u.id || isCurrentJawad
         return true
       })
       setUsers(all)
+
+      // ── Auto-nettoyage doublon Jawad dans Supabase ────────────────────────
+      // Si VFU00001 existe, supprimer silencieusement u_jawad_root de Supabase
+      if (isCurrentJawad) {
+        fetch("/api/sync-write", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table: "fl_users", deletes: ["u_jawad_root"] }),
+        }).catch(() => {})
+      }
     }
   }, [canAccess, currentUser.id, currentUser.role])
 

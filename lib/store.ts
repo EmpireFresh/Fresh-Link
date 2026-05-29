@@ -2056,15 +2056,22 @@ export const store = {
   // --- Users ---
   getUsers: (): User[] => {
     const raw: User[] = getLS("fl_users", DEFAULT_USERS)
-    // Dédupliquer : supprimer l'ancien ID u_jawad_root si VFU00001 existe déjà
-    const hasNewJawad = raw.some(u => u.id === JAWAD_ID)
-    const users = hasNewJawad
-      ? raw.filter(u => u.id !== "u_jawad_root")   // enlever le doublon ancien ID
-      : raw
-    const hasJawad = users.some(u => u.id === JAWAD_ID)
-    const base = hasJawad ? users : [JAWAD_USER, ...users]
+    // Supprimer TOUS les doublons Jawad :
+    // - l'ancien ID "u_jawad_root"
+    // - tout utilisateur avec l'email jawad@vita-fresh.ma qui n'est pas VFU00001
+    const clean = raw.filter(u =>
+      u.id !== "u_jawad_root" &&
+      !(String(u.email ?? "").toLowerCase() === "jawad@vita-fresh.ma" && u.id !== JAWAD_ID)
+    )
+    // Migrer localStorage si nécessaire (u_jawad_root présent → on sauvegarde proprement)
+    const hadLegacy = raw.some(u => u.id === "u_jawad_root")
+    if (hadLegacy) {
+      try { localStorage.setItem("fl_users", JSON.stringify(clean)) } catch {}
+    }
+    const hasJawad = clean.some(u => u.id === JAWAD_ID)
+    const base = hasJawad ? clean : [JAWAD_USER, ...clean]
     return base.map(u => {
-      if (u.id === JAWAD_ID) return { ...JAWAD_USER, ...u, name: "Jawad", role: "super_super_admin" as UserRole, password: "Medghaly@22", actif: true }
+      if (u.id === JAWAD_ID) return { ...JAWAD_USER, ...u, name: "Jawad", role: "super_super_admin" as UserRole, telephone: "0647333456", password: "Medghaly@22", actif: true }
       if (u.role === "super_super_admin" || u.role === "super_admin" || u.role === "admin")
         return { canViewDatabase: true, canViewExternal: true, canCreateCommandeBO: true, ...u }
       return u

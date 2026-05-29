@@ -3651,15 +3651,19 @@ async function doLogin(e){
     var res=await fetch(CONFIG.API_URL+"/api/ext/auth",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({phone,password:pass,device_id:deviceId,user_agent:navigator.userAgent})
+      body:JSON.stringify({phone,password:pass,device_id:deviceId,user_agent:navigator.userAgent,source:"website"})
     });
     var data=await res.json();
     if(!res.ok){
-      // Message spécifique pour les cas de device en attente / bloqué
       if(data.device_status==="en_attente"){
         errEl.innerHTML='⏳ <strong>Appareil en cours de vérification</strong><br><span style="font-size:12px">Votre appareil a été enregistré et attend l\'approbation de l\'administrateur. Réessayez dans quelques minutes.</span>';
       } else if(data.device_status==="bloque"){
         errEl.innerHTML='🚫 <strong>Accès refusé</strong><br><span style="font-size:12px">Cet appareil a été bloqué. Contactez votre commercial.</span>';
+      } else if(data.redirect_app){
+        // Compte CHR/Marchand → diriger vers l'application professionnelle
+        errEl.innerHTML='📱 <strong>Compte professionnel CHR/Marchand</strong><br>'
+          +'<span style="font-size:12px">Votre espace est accessible via l\'application FreshLink Pro.</span><br>'
+          +'<a href="https://f-l.vercel.app" target="_blank" style="display:inline-block;margin-top:8px;padding:7px 16px;background:#1a4f2a;color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">Ouvrir FreshLink Pro →</a>';
       } else {
         errEl.textContent=data.error||t("login_err_api");
       }
