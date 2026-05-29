@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { signSadminToken, verifySadminToken, SADMIN_COOKIE } from "@/lib/deviceGuard"
+import { signSadminToken, verifySadminToken, SADMIN_COOKIE, DEVICE_BYPASS } from "@/lib/deviceGuard"
 
 /**
  * POST /api/admin-session
@@ -19,7 +19,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "userId requis" }, { status: 400 })
     }
 
-    const token = signSadminToken(userId)
+    // Le middleware Edge compare: cookie === DEVICE_BYPASS + ".sadmin"
+    // On doit poser exactement ce format — pas le token HMAC Node.js
+    const token = DEVICE_BYPASS + ".sadmin"
     const res   = NextResponse.json({ ok: true })
 
     res.cookies.set(SADMIN_COOKIE, token, {
