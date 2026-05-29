@@ -563,7 +563,7 @@ html[dir="rtl"] .modal-close{right:auto;left:14px}
 .recipe-nav-btn:hover,.recipe-nav-btn.on{background:var(--o1);color:var(--gd)}
 
 /* RESPONSIVE */
-@media(max-width:1024px){.hero-cards{display:none!important}.pgrid{grid-template-columns:repeat(3,1fr)}.cats{grid-template-columns:repeat(2,1fr)}.erp-g{grid-template-columns:1fr;gap:32px}.footer-cols{grid-template-columns:1fr 1fr;gap:24px}.cfg-drawer{width:100%;right:-100%}.wa-section-grid{grid-template-columns:1fr}}
+@media(max-width:1024px){.hero-cards{display:none!important}.hero-inner{grid-template-columns:1fr!important}.pgrid{grid-template-columns:repeat(3,1fr)}.cats{grid-template-columns:repeat(3,1fr)}.erp-g{grid-template-columns:1fr;gap:32px}.footer-cols{grid-template-columns:1fr 1fr;gap:24px}.cfg-drawer{width:100%;right:-100%}.wa-section-grid{grid-template-columns:1fr}}
 @media(max-width:768px){.nav-links{display:none}.hamburger{display:flex}.hero-inner{grid-template-columns:1fr}.hero{padding:52px 16px}.hero h1{font-size:32px}.pro-grid{grid-template-columns:1fr}.ogrid{grid-template-columns:1fr}.tg{grid-template-columns:1fr}.footer-cols{grid-template-columns:1fr}.frow{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.zone-grid{grid-template-columns:1fr}.delivery-modes{grid-template-columns:1fr}.pgrid{grid-template-columns:repeat(2,1fr)}.popts{grid-template-columns:repeat(2,1fr)}.dopts{grid-template-columns:1fr}.container{padding:0 16px}}
 @media(max-width:480px){.pgrid{grid-template-columns:1fr}.hero-ctas{flex-direction:column}.btn-hero-primary,.btn-hero-whatsapp,.btn-hero-app{justify-content:center}.cat-wa-banner{flex-direction:column;text-align:center}.btn-wa-green{margin:0 auto}.erp-bar{padding:7px 14px}.strip{padding:12px}}
 /* MEDIA GALLERY */
@@ -3102,7 +3102,16 @@ function syncFromSupabase(){
       return r.json();
     })
     .then(function(data){
-      if(!Array.isArray(data)||!data.length) throw new Error("Catalogue vide");
+      if(!Array.isArray(data)) throw new Error("Réponse invalide");
+      if(!data.length){
+        // Catalogue vide mais API joignable → pas d'erreur, afficher état vide
+        PRODS=[];
+        updateSBConnBox("api",true,"0 articles — catalogue en préparation");
+        setERPBar("online","FreshLink ERP — Catalogue vide","En attente d'articles");
+        setSyncBadge("online","En ligne");
+        renderProds(); renderHeroCards(); updateCatCounts();
+        return;
+      }
       applyProds(data.map(mapERPArticle),"API ERP");
       updateSBConnBox("api",true,data.length+" articles via API ERP");
     })
