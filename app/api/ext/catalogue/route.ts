@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { CATALOGUE_SEED } from "@/lib/catalogueSeed"
+import { ERP_DEFAULT_ARTICLES } from "@/lib/defaultArticles"
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 function cors(origin: string | null): HeadersInit {
@@ -68,7 +69,19 @@ export async function GET(req: NextRequest) {
     } catch { /* continuer vers seed */ }
   }
 
-  // ── Fallback : catalogue seed intégré (fruits, légumes, herbes) ──────────
+  // ── Fallback : articles ERP par défaut (131 produits avec prix calculés) ──
+  // Priorité au ERP_DEFAULT_ARTICLES (données complètes) sur le CATALOGUE_SEED (34 articles)
+  const erpFallback = ERP_DEFAULT_ARTICLES as unknown as Record<string, unknown>[]
+  const filtered = applyFilters(erpFallback, q, tag)
+  if (filtered.length > 0) {
+    const result = filtered.map(a => normalizePayload(a))
+    return NextResponse.json(result, {
+      status: 200,
+      headers: { ...cors(origin), "X-Source": "erp-defaults" },
+    })
+  }
+
+  // ── Dernier recours : seed visuel (photos Unsplash) ───────────────────────
   let seed = CATALOGUE_SEED.filter(a => a.marketplace_actif)
   if (famille) seed = seed.filter(a => a.famille === famille)
   if (q) {
@@ -82,16 +95,14 @@ export async function GET(req: NextRequest) {
   if (tag) {
     seed = seed.filter(a => a.tags.some(t => t.toLowerCase() === tag.toLowerCase()))
   }
-
-  const result = seed.sort((a, b) => a.ordre - b.ordre).map(a => ({
+  const seedResult = seed.sort((a, b) => a.ordre - b.ordre).map(a => ({
     ...a,
-    nomAr:           a.nom_ar,
-    prix:            a.prix_public,
-    prixVente:       a.prix_public,
+    nomAr: a.nom_ar,
+    prix: a.prix_public,
+    prixVente: a.prix_public,
     stockDisponible: 99,
   }))
-
-  return NextResponse.json(result, {
+  return NextResponse.json(seedResult, {
     status: 200,
     headers: { ...cors(origin), "X-Source": "seed" },
   })
