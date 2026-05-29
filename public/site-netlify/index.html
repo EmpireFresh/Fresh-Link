@@ -4453,8 +4453,20 @@ document.addEventListener("DOMContentLoaded",function(){
     }
     if(sess.token){
       fetch(CONFIG.API_URL+"/api/ext/mon-compte",{headers:{Authorization:"Bearer "+sess.token}})
-        .then(function(r){return r.ok?r.json():null;})
-        .then(function(d){if(d){saveSession(Object.assign({},sess,d));showPortal(Object.assign({},sess,d));}})
+        .then(function(r){
+          if(r.status===401){
+            return r.json().then(function(d){
+              if(d&&d.revoked){
+                // Session révoquée par l'admin → déconnexion forcée
+                clearSession();
+                showToast("🔒 Session expirée. Veuillez vous reconnecter.");
+                document.getElementById("mon-espace") && document.getElementById("mon-espace").classList.remove("visible");
+              }
+            });
+          }
+          return r.ok?r.json():null;
+        })
+        .then(function(d){if(d&&!d.revoked){saveSession(Object.assign({},sess,d));showPortal(Object.assign({},sess,d));}})
         .catch(function(){});
     }
   }

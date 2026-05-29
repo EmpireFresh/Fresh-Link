@@ -319,11 +319,14 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
   const [testing, setTesting] = useState(false)
   const [dgMsg, setDgMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [showClearConfirm, setShowClearConfirm]   = useState(false)
-  const [showWipeConfirm, setShowWipeConfirm]     = useState(false)
-  const [showResetConfirm, setShowResetConfirm]   = useState(false)
-  const [wipingAll, setWipingAll]                 = useState(false)
-  const [resetingDemo, setResetingDemo]           = useState(false)
-  const [showAdvancedReset, setShowAdvancedReset] = useState(false)
+  const [showWipeConfirm, setShowWipeConfirm]         = useState(false)
+  const [showResetConfirm, setShowResetConfirm]       = useState(false)
+  const [wipingAll, setWipingAll]                     = useState(false)
+  const [resetingDemo, setResetingDemo]               = useState(false)
+  const [showAdvancedReset, setShowAdvancedReset]     = useState(false)
+  const [showRevokeConfirm, setShowRevokeConfirm]     = useState(false)
+  const [revokingAll, setRevokingAll]                 = useState(false)
+  const [revokeMsg, setRevokeMsg]                     = useState<{ ok: boolean; text: string } | null>(null)
   const [clearMode, setClearMode] = useState<"local" | "supabase" | "both">("both")
   const [clearTables, setClearTables] = useState<Set<string>>(() => new Set([
     "fl_clients","fl_fournisseurs","fl_articles","fl_commandes","fl_bons_livraison",
@@ -581,7 +584,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
     try {
       // 1. Vider localStorage
       ALL_TABLES_KEYS.forEach(k => localStorage.setItem(k, JSON.stringify([])))
-      // 2. Vider Supabase (préserver Jawad dans fl_users)
+      // 2. Vider Supabase (préserver VFU00001, supprimer aussi l'ancien u_jawad_root)
       for (const table of ERP_TABLES_SYNC) {
         try {
           await fetch("/api/sync-write", {
@@ -590,6 +593,13 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
           })
         } catch {}
       }
+      // 2b. Supprimer l'ancien doublon Jawad (u_jawad_root) si présent
+      try {
+        await fetch("/api/sync-write", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table: "fl_users", deletes: ["u_jawad_root"] }),
+        })
+      } catch {}
       // 3. Ré-injecter Jawad dans Supabase (garantie)
       await fetch("/api/sync-write", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -598,12 +608,36 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
           upserts: [{ id: "VFU00001", payload: { name:"Jawad", email:"jawad@vita-fresh.ma", telephone:"0647333456", password:"Medghaly@22", role:"super_super_admin", actif:true }, updated_at: new Date().toISOString() }],
         }),
       })
-      setDgMsg({ ok: true, text: "✅ Toutes les données effacées. Seul le compte Jawad est conservé. Rechargement..." })
+      setDgMsg({ ok: true, text: "✅ Toutes les données effacées. Seul le compte Jawad (VFU00001) est conservé. Rechargement..." })
       setTimeout(() => window.location.reload(), 2000)
     } catch {
       setDgMsg({ ok: false, text: "Erreur lors de l'effacement total." })
     }
     setWipingAll(false)
+  }
+
+  const handleRevokeAllSessions = async () => {
+    setRevokingAll(true); setShowRevokeConfirm(false)
+    try {
+      const session = store.getSession()
+      const exceptUserId = session?.id ?? "VFU00001"
+      const token = (session as any)?.token ?? ""
+      const res = await fetch("/api/ext/revoke-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ exceptUserId }),
+      })
+      const data = await res.json()
+      if (res.ok && data.ok) {
+        setRevokeMsg({ ok: true, text: "✅ Déconnexion forcée activée. Tous les comptes seront déconnectés à leur prochaine interaction (sauf votre session actuelle)." })
+      } else {
+        setRevokeMsg({ ok: false, text: "Erreur : " + (data.error ?? data.message ?? "Supabase inaccessible.") })
+      }
+    } catch {
+      setRevokeMsg({ ok: false, text: "Erreur réseau." })
+    }
+    setRevokingAll(false)
+    setTimeout(() => setRevokeMsg(null), 8000)
   }
 
   const handleResetToDemo = async () => {
@@ -2216,7 +2250,7 @@ To: {{to_email}}
                   <span className="text-2xl">🗑️</span>
                   <div>
                     <p className="text-sm font-black text-red-700">Tout effacer sauf Jawad</p>
-                    <p className="text-[11px] text-red-500 mt-0.5">Local + Supabase · Irréversible</p>
+                    <p className="text-[11px] text-red-500 mt-0.5">Local + Supabase · Irréversible · Supprime le doublon Jawad</p>
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -2278,6 +2312,46 @@ To: {{to_email}}
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* ── Action 3 : Déconnecter tous les comptes ── */}
+            <div className="border-2 border-slate-200 rounded-2xl p-5 bg-slate-50/40 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🔓</span>
+                <div>
+                  <p className="text-sm font-black text-slate-700">Déconnecter tous les comptes</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Force la déconnexion à la prochaine interaction · Sauf la session en cours</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Tous les comptes connectés (clients, livreurs, commerciaux…) seront déconnectés lors de leur prochaine action sur le site ou l&apos;application.
+                <strong className="text-slate-700"> Votre session actuelle n&apos;est pas affectée.</strong>
+              </p>
+              {revokeMsg && (
+                <div className={`px-3 py-2 rounded-xl text-xs font-semibold ${revokeMsg.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                  {revokeMsg.text}
+                </div>
+              )}
+              {!showRevokeConfirm ? (
+                <button onClick={() => setShowRevokeConfirm(true)} disabled={revokingAll}
+                  className="mt-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 border border-slate-300 hover:bg-slate-200 transition-colors disabled:opacity-50">
+                  {revokingAll ? "En cours..." : "🔓 Déconnecter tous les comptes"}
+                </button>
+              ) : (
+                <div className="mt-auto flex flex-col gap-2">
+                  <p className="text-xs font-bold text-slate-700">Confirmer ? Tous les utilisateurs seront forcés à se reconnecter.</p>
+                  <div className="flex gap-2">
+                    <button onClick={handleRevokeAllSessions}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-slate-700 hover:bg-slate-800 transition-colors">
+                      Oui, déconnecter tout le monde
+                    </button>
+                    <button onClick={() => setShowRevokeConfirm(false)}
+                      className="flex-1 py-2 rounded-xl text-xs font-semibold border border-border hover:bg-muted transition-colors">
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── Mode avancé (sélection manuelle) ── */}

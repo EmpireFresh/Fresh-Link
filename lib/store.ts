@@ -2030,8 +2030,12 @@ function guardWrite<T extends unknown[]>(
 export const store = {
   // --- Users ---
   getUsers: (): User[] => {
-    const users: User[] = getLS("fl_users", DEFAULT_USERS)
-    // Always ensure Jawad is present and cannot be permanently removed
+    const raw: User[] = getLS("fl_users", DEFAULT_USERS)
+    // Dédupliquer : supprimer l'ancien ID u_jawad_root si VFU00001 existe déjà
+    const hasNewJawad = raw.some(u => u.id === JAWAD_ID)
+    const users = hasNewJawad
+      ? raw.filter(u => u.id !== "u_jawad_root")   // enlever le doublon ancien ID
+      : raw
     const hasJawad = users.some(u => u.id === JAWAD_ID)
     const base = hasJawad ? users : [JAWAD_USER, ...users]
     return base.map(u => {

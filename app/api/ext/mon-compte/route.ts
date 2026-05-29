@@ -7,8 +7,9 @@ import { verifyToken } from "../auth/route"
 // Retourne: profil, points fidélité, remises, commandes récentes
 // ══════════════════════════════════════════════════════════════
 
-const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  ?? "https://jwdrwapuetqoqnankgma.supabase.co"
+const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL     ?? "https://jwdrwapuetqoqnankgma.supabase.co"
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
+const SB_SRV  = process.env.SUPABASE_SERVICE_ROLE_KEY    ?? SB_ANON
 
 function cors(origin: string | null): HeadersInit {
   return {
@@ -56,7 +57,29 @@ export async function GET(req: NextRequest) {
   const clientId = payload.clientId as string | null
 
   try {
-    // 2. Récupérer l'utilisateur
+    // 2. Vérifier révocation globale de session
+    const revokeRows = await (async () => {
+      try {
+        const r = await fetch(
+          `${SB_URL}/rest/v1/fl_users?id=eq.__session_revoke&select=id,payload&limit=1`,
+          { headers: { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}` } }
+        )
+        if (!r.ok) return []
+        return await r.json() as { id: string; payload: Record<string, unknown> }[]
+      } catch { return [] }
+    })()
+    if (revokeRows.length > 0) {
+      const rv = revokeRows[0].payload ?? {}
+      const exceptUserId = String(rv.exceptUserId ?? "")
+      if (userId !== exceptUserId) {
+        return NextResponse.json(
+          { error: "Session révoquée par l'administrateur. Veuillez vous reconnecter.", revoked: true },
+          { status: 401, headers: cors(origin) }
+        )
+      }
+    }
+
+    // 3. Récupérer l'utilisateur
     const users = await sbGet("fl_users", `id=eq.${encodeURIComponent(userId)}&select=id,name,email,role,phone,telephone,clientId,actif&limit=1`) as any[]
     if (!users || users.length === 0) {
       return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404, headers: cors(origin) })

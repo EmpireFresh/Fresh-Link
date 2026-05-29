@@ -96,11 +96,13 @@ async function getAllUsers(): Promise<any[]> {
       return []
     }
     const rows: { id: string; payload: Record<string, unknown> }[] = await res.json()
-    // Aplatir : { id, ...payload }
-    return rows.map(r => ({
-      id: r.id,
-      ...(r.payload && typeof r.payload === "object" ? r.payload : {}),
-    }))
+    // Aplatir : { id, ...payload } — filtrer les entrées de config (id commence par __)
+    return rows
+      .filter(r => !String(r.id).startsWith("__"))
+      .map(r => ({
+        id: r.id,
+        ...(r.payload && typeof r.payload === "object" ? r.payload : {}),
+      }))
   } catch (e) {
     console.error("[auth] getAllUsers error:", e)
     return []
