@@ -65,11 +65,23 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
 
   useEffect(() => {
     // Chargement local immédiat
-    setArticles(store.getArticles())
-    // Sync Supabase → localStorage (récupère les 136 articles)
-    import("@/lib/supabase/db").then(({ fetchArticles }) => {
-      fetchArticles().then(arts => { if (arts.length > 0) setArticles(arts) }).catch(() => {})
-    })
+    const local = store.getArticles()
+    setArticles(local)
+    // Auto-sync ERP → Supabase à l'ouverture (garde le website à jour)
+    if (local.length > 0) {
+      const upserts = local.map(a => {
+        const { id, ...payload } = a
+        const marketplaceActif = (payload as Record<string, unknown>).catalogueVisible !== false
+          ? ((payload as Record<string, unknown>).marketplaceActif !== false)
+          : false
+        return { id, payload: { ...payload, marketplaceActif }, updated_at: new Date().toISOString() }
+      })
+      fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_articles", upserts }),
+      }).catch(() => {})
+    }
   }, [])
 
   // Upload photo — tries Supabase Storage first, falls back to base64 local
@@ -130,15 +142,30 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
       const all = store.getArticles()
       const upserts = all.map(a => {
         const { id, ...payload } = a
-        return { id, payload, updated_at: new Date().toISOString() }
+        // ── Mapping ERP → Website ──────────────────────────────────────────
+        // catalogueVisible (ERP) → marketplaceActif (Website API)
+        // Si catalogueVisible est false → masqué sur le site
+        const marketplaceActif = (payload as Record<string, unknown>).catalogueVisible !== false
+          ? ((payload as Record<string, unknown>).marketplaceActif !== false)
+          : false
+        return {
+          id,
+          payload: { ...payload, marketplaceActif },
+          updated_at: new Date().toISOString(),
+        }
       })
-      await fetch("/api/sync-write", {
+      const res = await fetch("/api/sync-write", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ table: "fl_articles", upserts }),
       })
-      setSyncAllDone(true)
-      setTimeout(() => setSyncAllDone(false), 4000)
+      const data = await res.json()
+      if (data.ok) {
+        setSyncAllDone(true)
+        setTimeout(() => setSyncAllDone(false), 5000)
+      } else {
+        console.error("[BOArticles] syncAllArticlesToSupabase errors:", data.errors)
+      }
     } catch (e) {
       console.error("[BOArticles] syncAllArticlesToSupabase error:", e)
     } finally {
@@ -558,13 +585,13 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
         <button
           onClick={syncAllArticlesToSupabase}
           disabled={syncingAll}
-          title="Synchronise tous les articles localStorage → Supabase (corrige le catalogue website)"
-          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-60 ${syncAllDone ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"}`}>
+          title={`Publie les ${articles.length} articles ERP sur le site web vitafresh.vercel.app`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border-2 transition-all disabled:opacity-60 shadow-sm ${syncAllDone ? "border-emerald-500 bg-emerald-500 text-white" : "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"}`}>
           {syncingAll
-            ? <><span className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />Sync...</>
+            ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />Publication...</>
             : syncAllDone
-              ? <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Sync OK !</>
-              : <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Sync Catalogue →</>
+              ? <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>✅ Publié sur le site !</>
+              : <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" /></svg>🌐 Publier sur le site</>
           }
         </button>
         <button onClick={() => { setShowForm(true); setEditArt(null); setForm(EMPTY_FORM) }}
