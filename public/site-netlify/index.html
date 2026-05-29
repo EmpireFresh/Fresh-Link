@@ -2781,12 +2781,22 @@ function loadAdminUsers(){
   if(!sb) sb = initSupabase();
   if(!sb){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">Supabase non connecté.</div>'; return; }
   listEl.innerHTML = '<div style="color:var(--gy);font-size:13px;padding:8px">⏳ Chargement...</div>';
-  sb.from("fl_users").select("id,name,email,telephone,phone,role,actif,password").order("name")
-    .then(function(r){
-      if(r.error){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">Erreur : '+r.error.message+'</div>'; return; }
-      adminUsersCache = r.data || [];
+  // ✅ Via API service_role : table fl_users est {id, payload JSONB}
+  fetch(CONFIG.API_URL+"/api/sync-read?table=fl_users",{cache:"no-cache"})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.ok){ listEl.innerHTML='<div style="color:#dc2626;font-size:13px">Erreur : '+res.error+'</div>'; return; }
+      // Aplatir payload + filtrer entrées de config (id commence par __)
+      adminUsersCache = (res.data||[])
+        .filter(function(r){ return !String(r.id).startsWith("__"); })
+        .map(function(r){
+          var p=r.payload||{};
+          return { id:r.id, name:p.name||"", email:p.email||"", telephone:p.telephone||p.phone||"", phone:p.phone||p.telephone||"", role:p.role||"client", actif:p.actif!==false, password:p.password||"" };
+        })
+        .sort(function(a,b){ return (a.name||"").localeCompare(b.name||""); });
       renderAdminUsers(adminUsersCache);
-    }).catch(function(err){ listEl.innerHTML = '<div style="color:#dc2626;font-size:13px">'+err+'</div>'; });
+    })
+    .catch(function(err){ listEl.innerHTML='<div style="color:#dc2626;font-size:13px">'+err+'</div>'; });
 }
 
 function filterAdminUsers(){
@@ -2826,47 +2836,51 @@ function adminEditPassword(userId){
   setTimeout(function(){ document.getElementById("ua-edit-pass").focus(); }, 100);
 }
 
+// ✅ Helper : merge un patch dans payload existant via API service_role
+function adminPatchUser(userId, patch){
+  // 1. Recharger l'utilisateur depuis le cache (ou Supabase)
+  var cached = (adminUsersCache||[]).find(function(u){return u.id===userId;});
+  // 2. Recharger payload depuis Supabase pour ne rien perdre
+  return fetch(CONFIG.API_URL+"/api/sync-read?table=fl_users",{cache:"no-cache"})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.ok) throw new Error(res.error||"sync-read failed");
+      var row = (res.data||[]).find(function(r){return r.id===userId;});
+      var payload = Object.assign({}, (row&&row.payload)||{}, patch);
+      return fetch(CONFIG.API_URL+"/api/sync-write",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ table:"fl_users", upserts:[{ id:userId, payload:payload, updated_at:new Date().toISOString() }] })
+      });
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.ok) throw new Error((res.errors||[]).join(", ")||"sync-write failed");
+      return true;
+    });
+}
+
 function adminSavePassword(){
   var userId = document.getElementById("ua-edit-id").value;
   var newPass = (document.getElementById("ua-edit-pass").value||"").trim();
   var msgEl   = document.getElementById("ua-pwd-msg");
   if(!newPass){ msgEl.textContent = "❌ Mot de passe vide."; msgEl.style.color = "#dc2626"; return; }
-  if(!sb) sb = initSupabase();
-  if(!sb){ msgEl.textContent = "❌ Supabase non connecté."; msgEl.style.color = "#dc2626"; return; }
   msgEl.textContent = "⏳ Enregistrement..."; msgEl.style.color = "#6b7280";
-  // Update payload JSONB password field
-  sb.rpc("update_user_password", { p_user_id: userId, p_password: newPass })
-    .then(function(r){
-      if(r.error){
-        // Fallback: direct JSONB update
-        return sb.from("fl_users").select("payload").eq("id", userId).single().then(function(sel){
-          if(sel.error || !sel.data) throw new Error(sel.error?.message||"User not found");
-          var payload = Object.assign({}, sel.data.payload, { password: newPass });
-          return sb.from("fl_users").update({ payload: payload, updated_at: new Date().toISOString() }).eq("id", userId);
-        });
-      }
-      return r;
-    })
-    .then(function(res){
-      if(res && res.error) throw new Error(res.error.message);
+  adminPatchUser(userId, { password: newPass })
+    .then(function(){
       msgEl.textContent = "✅ Mot de passe mis à jour !"; msgEl.style.color = "#166534";
-      setTimeout(function(){ document.getElementById("ua-pwd-modal").style.display = "none"; loadAdminUsers(); }, 1500);
+      setTimeout(function(){ document.getElementById("ua-pwd-modal").style.display = "none"; loadAdminUsers(); }, 1200);
     })
     .catch(function(err){ msgEl.textContent = "❌ Erreur : " + err.message; msgEl.style.color = "#dc2626"; });
 }
 
 function adminToggleActive(userId, newActive){
-  if(!sb) sb = initSupabase();
-  if(!sb) return;
-  sb.from("fl_users").select("payload").eq("id", userId).single()
-    .then(function(r){
-      if(r.error || !r.data) return;
-      var payload = Object.assign({}, r.data.payload, { actif: newActive });
-      return sb.from("fl_users").update({ payload: payload, updated_at: new Date().toISOString() }).eq("id", userId);
-    })
-    .then(function(){ loadAdminUsers(); showToast(newActive ? "✅ Compte activé" : "🚫 Compte désactivé"); })
+  adminPatchUser(userId, { actif: newActive===true||newActive==="true" })
+    .then(function(){ loadAdminUsers(); showToast(newActive===true||newActive==="true" ? "✅ Compte activé" : "🚫 Compte désactivé"); })
     .catch(function(err){ showToast("❌ Erreur : "+err.message); });
 }
+
+// Note : adminEditUser et adminDeleteUser sont définies plus bas (modal-based)
 
 function adminCreateUser(){
   var nom   = (document.getElementById("ua-new-nom").value||"").trim();
@@ -2876,18 +2890,27 @@ function adminCreateUser(){
   var email = (document.getElementById("ua-new-email").value||"").trim();
   var msgEl = document.getElementById("ua-create-msg");
   if(!nom||!phone||!pass){ msgEl.textContent = "❌ Nom, téléphone et mot de passe requis."; msgEl.style.color = "#dc2626"; return; }
-  if(!sb) sb = initSupabase();
-  if(!sb){ msgEl.textContent = "❌ Supabase non connecté."; msgEl.style.color = "#dc2626"; return; }
   msgEl.textContent = "⏳ Création en cours..."; msgEl.style.color = "#6b7280";
-  var userId = "usr_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
+  // ✅ Format Vita Fresh : VFU00001-style ID
+  var userId = "VFU" + Date.now().toString(36).toUpperCase().slice(-5) + Math.floor(Math.random()*999).toString().padStart(3,"0");
   var payload = {
-    id: userId, name: nom, telephone: phone, phone: phone, role: role,
+    name: nom, telephone: phone, phone: phone, role: role,
     password: pass, email: email||null, actif: true,
+    sousType: role==="client"?"particulier":role,
     createdAt: new Date().toISOString(), createdBy: "admin-site"
   };
-  sb.from("fl_users").insert([{ id: userId, payload: payload, updated_at: new Date().toISOString() }])
-    .then(function(r){
-      if(r.error) throw new Error(r.error.message);
+  // ✅ Via API service_role : bypass RLS
+  fetch(CONFIG.API_URL+"/api/sync-write",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      table:"fl_users",
+      upserts:[{ id: userId, payload: payload, updated_at: new Date().toISOString() }]
+    })
+  })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.ok) throw new Error((res.errors||[]).join(", ")||"Erreur inconnue");
       msgEl.textContent = "✅ Compte créé : " + nom + " (" + phone + ")"; msgEl.style.color = "#166534";
       ["ua-new-nom","ua-new-phone","ua-new-pass","ua-new-email"].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=""; });
       loadAdminUsers();
@@ -3965,26 +3988,31 @@ function adminSaveFullUser(){
   var role=(document.getElementById("ua-full-role").value||"client").trim();
   var msgEl=document.getElementById("ua-full-msg");
   if(!name||!phone){msgEl.textContent="⚠️ Nom et téléphone requis.";return;}
-  if(!sb){msgEl.textContent="⚠️ Supabase non connecté.";return;}
   msgEl.textContent="⏳ Enregistrement...";
-  sb.from("fl_users").update({name:name,telephone:phone,email:email,role:role}).eq("id",id)
-    .then(function(r){
-      if(r.error){msgEl.textContent="❌ "+r.error.message;return;}
-      msgEl.textContent="✅ Compte mis à jour !";
-      loadAdminUsers();
-      setTimeout(function(){adminCloseFullEdit();},1200);
-    }).catch(function(e){msgEl.textContent="❌ "+e;});
+  // ✅ Via API service_role + format payload JSONB
+  adminPatchUser(id, {
+    name: name, telephone: phone, phone: phone,
+    email: email||null, role: role,
+    sousType: role==="client"?"particulier":role
+  })
+    .then(function(){ msgEl.textContent="✅ Compte mis à jour !"; loadAdminUsers(); setTimeout(function(){adminCloseFullEdit();},1200); })
+    .catch(function(err){ msgEl.textContent="❌ "+err.message; });
 }
 function adminDeleteUser(userId){
-  var u=adminUsersCache.find(function(x){return x.id===userId;})||{};
+  var u=(adminUsersCache||[]).find(function(x){return x.id===userId;})||{};
   if(!confirm("⚠️ Supprimer le compte de "+( u.name||userId)+" ? Cette action est irréversible.")) return;
-  if(!sb){showToast("❌ Supabase non connecté");return;}
-  sb.from("fl_users").delete().eq("id",userId)
-    .then(function(r){
-      if(r.error){showToast("❌ "+r.error.message);return;}
-      showToast("✅ Compte supprimé.");
-      loadAdminUsers();
-    }).catch(function(e){showToast("❌ "+e);});
+  // ✅ Via API service_role
+  fetch(CONFIG.API_URL+"/api/sync-write",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ table:"fl_users", deletes:[userId] })
+  })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.ok) throw new Error((res.errors||[]).join(", "));
+      showToast("✅ Compte supprimé."); loadAdminUsers();
+    })
+    .catch(function(err){ showToast("❌ "+err.message); });
 }
 
 function saveSession(d){ localStorage.setItem("fl_session",JSON.stringify(Object.assign({},d,{_savedAt:Date.now()}))); }

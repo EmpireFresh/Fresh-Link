@@ -139,34 +139,64 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
     setSyncingAll(true)
     setSyncAllDone(false)
     try {
-      const all = store.getArticles()
-      const upserts = all.map(a => {
-        const { id, ...payload } = a
-        // ── Mapping ERP → Website ──────────────────────────────────────────
-        // catalogueVisible (ERP) → marketplaceActif (Website API)
-        // Si catalogueVisible est false → masqué sur le site
-        const marketplaceActif = (payload as Record<string, unknown>).catalogueVisible !== false
-          ? ((payload as Record<string, unknown>).marketplaceActif !== false)
-          : false
+      // ── Normaliser ID + Photo + marketplaceActif pour chaque article ────────
+      let counter = 1
+      const all = store.getArticles().map(a => {
+        const { id, ...rest } = a
+        const payload = rest as Record<string, unknown>
+        // 1. ID propre format VFP00001
+        let cleanId = String(id)
+        if (!/^VFP\d{5,}$/.test(cleanId)) {
+          cleanId = "VFP" + String(counter).padStart(5, "0")
+        }
+        counter++
+        // 2. Photo : placeholder si manquante (utilise le nom + famille)
+        const nom = String(payload.nom ?? "Article")
+        const famille = String(payload.famille ?? "")
+        if (!payload.photo || String(payload.photo).trim() === "") {
+          const color = famille.toLowerCase().includes("fruit") ? "e74c3c" :
+                        famille.toLowerCase().includes("légume") ? "27ae60" :
+                        famille.toLowerCase().includes("herbe") ? "16a34a" : "94a3b8"
+          payload.photo = `https://placehold.co/400x300/${color}/fff?text=${encodeURIComponent(nom)}`
+        }
+        // 3. marketplaceActif = catalogueVisible !== false
+        const catalogueVisible = payload.catalogueVisible !== false
+        const marketplaceActif = catalogueVisible && payload.marketplaceActif !== false
         return {
-          id,
-          payload: { ...payload, marketplaceActif },
+          id: cleanId,
+          payload: { ...payload, marketplaceActif, catalogueVisible },
           updated_at: new Date().toISOString(),
         }
       })
-      const res = await fetch("/api/sync-write", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table: "fl_articles", upserts }),
-      })
-      const data = await res.json()
-      if (data.ok) {
+      if (all.length === 0) {
+        alert("⚠️ Aucun article à publier. Ajoutez d'abord des articles dans le catalogue.")
+        setSyncingAll(false)
+        return
+      }
+      // Push en batch de 50 pour éviter timeout
+      let pushed = 0
+      const errors: string[] = []
+      for (let i = 0; i < all.length; i += 50) {
+        const batch = all.slice(i, i + 50)
+        const res = await fetch("/api/sync-write", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table: "fl_articles", upserts: batch }),
+        })
+        const data = await res.json()
+        if (data.ok) pushed += batch.length
+        else errors.push(...(data.errors ?? [`batch ${i}`]))
+      }
+      if (errors.length === 0) {
         setSyncAllDone(true)
+        alert(`✅ ${pushed} articles publiés sur le site web !`)
         setTimeout(() => setSyncAllDone(false), 5000)
       } else {
-        console.error("[BOArticles] syncAllArticlesToSupabase errors:", data.errors)
+        alert(`⚠️ ${pushed} publiés, ${errors.length} erreurs :\n${errors.slice(0, 3).join("\n")}`)
+        console.error("[BOArticles] sync errors:", errors)
       }
     } catch (e) {
+      alert("❌ Erreur réseau : " + String(e))
       console.error("[BOArticles] syncAllArticlesToSupabase error:", e)
     } finally {
       setSyncingAll(false)

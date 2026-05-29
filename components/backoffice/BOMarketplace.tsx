@@ -361,10 +361,11 @@ function EditDrawer({ article, onClose, onSave }: EditDrawerProps) {
 // ─── ArticleCard (preview + catalogue grid) ───────────────────────────────────
 
 function ArticleCard({ article, preview = false, onClick }: { article: Article; preview?: boolean; onClick?: () => void }) {
-  const pv = computePV(article)
-  const prix = article.marketplacePrixPublic ?? pv
+  const pv = Number(computePV(article)) || 0
+  const prix = Number(article.marketplacePrixPublic ?? pv) || 0
   const statut = article.marketplaceStatut ?? "disponible"
-  const hasPromo = article.marketplacePromo?.actif && (article.marketplacePromo?.prixPromo ?? 0) > 0
+  const promoPrix = Number(article.marketplacePromo?.prixPromo ?? 0) || 0
+  const hasPromo = article.marketplacePromo?.actif && promoPrix > 0
   const statutCfg = STATUT_OPTIONS.find(o => o.v === statut) ?? STATUT_OPTIONS[0]
 
   const DEFAULT_IMG = "https://placehold.co/400x300/f1f5f9/94a3b8?text=" + encodeURIComponent(article.nom)
@@ -416,7 +417,7 @@ function ArticleCard({ article, preview = false, onClick }: { article: Article; 
             {hasPromo ? (
               <>
                 <span className="text-xs line-through text-slate-400">{prix.toFixed(2)} DH</span>
-                <p className="text-sm font-black text-purple-700">{article.marketplacePromo!.prixPromo.toFixed(2)} DH</p>
+                <p className="text-sm font-black text-purple-700">{promoPrix.toFixed(2)} DH</p>
               </>
             ) : (
               <p className="text-sm font-black text-slate-900">{prix.toFixed(2)} DH</p>
