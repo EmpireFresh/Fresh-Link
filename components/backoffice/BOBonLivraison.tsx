@@ -99,7 +99,7 @@ function getBLs(): BonLivraison[] {
 function saveBLs(bls: BonLivraison[]) {
   localStorage.setItem(LS_BL, JSON.stringify(bls))
 }
-function genId() { return `bl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` }
+function genId() { return `VFBL${Date.now().toString(36).toUpperCase().slice(-3)}${Math.floor(Math.random()*9999).toString().padStart(4,"0")}` }
 function genNumero() {
   const y = new Date().getFullYear()
   const existing = getBLs().filter(b => b.numero.includes(`BL-${y}`))

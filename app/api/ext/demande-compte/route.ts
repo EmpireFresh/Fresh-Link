@@ -130,8 +130,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Générer identifiants
-    const userId   = `c_${telNorm.replace(/\D/g, "")}_${Date.now().toString(36)}`
-    const clientId = `cl_${telNorm.replace(/\D/g, "")}`
+    const userId   = `VFU${Date.now().toString(36).toUpperCase().slice(-5)}`
+    const clientId = `VFC${Date.now().toString(36).toUpperCase().slice(-5)}`
     const password = genPassword(telNorm)
 
     // 3. Créer fl_users

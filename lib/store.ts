@@ -16,7 +16,7 @@ export type UserRole =
   | "investisseur" | "qualite" | "it_admin" | "auditeur"
   | "chef_depot" | "resp_achat" | "suivi_commande" | "charge_recouvrement"
 
-export const JAWAD_ID = "u_jawad_root"
+export const JAWAD_ID = "VFU00001"
 export function isSuperSuperAdmin(user: { role: string }): boolean {
   return user.role === "super_super_admin"
 }
@@ -1552,7 +1552,7 @@ const DEFAULT_USERS: User[] = [
   JAWAD_USER,
   // === BACKOFFICE ===
   {
-    id: "u1", name: "Super Admin", email: "admin@freshlink.ma", password: "admin2024",
+    id: "VFU00002", name: "Super Admin", email: "admin@freshlink.ma", password: "admin2024",
     role: "super_admin", actif: true,
     canViewAchat: true, canViewCommercial: true, canViewLogistique: true,
     canViewStock: true, canViewCash: true, canViewFinance: true, canViewRecap: true, canViewDatabase: true,
@@ -1560,7 +1560,7 @@ const DEFAULT_USERS: User[] = [
     notifAchat: true, notifCommercial: true, notifLivraison: true, notifRecap: true, notifBesoinAchat: true,
   },
   {
-    id: "u_admin", name: "Directeur", email: "directeur@freshlink.ma", password: "admin1234",
+    id: "VFU00003", name: "Directeur", email: "directeur@freshlink.ma", password: "admin1234",
     role: "admin", actif: true,
     canViewAchat: true, canViewCommercial: true, canViewLogistique: true,
     canViewStock: true, canViewCash: true, canViewFinance: true, canViewRecap: true, canViewDatabase: true,
@@ -1568,7 +1568,7 @@ const DEFAULT_USERS: User[] = [
     notifAchat: true, notifRecap: true,
   },
   {
-    id: "u_rc", name: "Resp. Commercial", email: "responsable@freshlink.ma", password: "1234",
+    id: "VFU00004", name: "Resp. Commercial", email: "responsable@freshlink.ma", password: "1234",
     role: "resp_commercial", actif: true,
     canViewCommercial: true, canViewCash: true, canViewRecap: true,
     canViewExternal: true, canCreateCommandeBO: true,
@@ -1576,7 +1576,7 @@ const DEFAULT_USERS: User[] = [
   },
   // === MOBILE — COMMERCIAL (1 seul prevendeur demo) ===
   {
-    id: "u2", name: "Demo Prevendeur", email: "prevendeur@freshlink.ma", password: "1234",
+    id: "VFU00005", name: "Demo Prevendeur", email: "prevendeur@freshlink.ma", password: "1234",
     role: "prevendeur", secteur: "Nord", actif: true,
     objectifClients: 20, objectifTonnage: 500,
     objectifJournalierCA: 2000, objectifHebdomadaireCA: 12000, objectifMensuelCA: 50000,
@@ -1585,76 +1585,76 @@ const DEFAULT_USERS: User[] = [
   },
   // === MOBILE — LOGISTIQUE ===
   {
-    id: "u3", name: "Demo Responsable Logistique", email: "logistique@freshlink.ma", password: "1234",
+    id: "VFU00006", name: "Demo Responsable Logistique", email: "logistique@freshlink.ma", password: "1234",
     role: "resp_logistique", actif: true,
     canViewLogistique: true, canViewStock: true,
     notifLivraison: true,
   },
   {
-    id: "u5", name: "Demo Dispatcheur", email: "dispatch@freshlink.ma", password: "1234",
+    id: "VFU00007", name: "Demo Dispatcheur", email: "dispatch@freshlink.ma", password: "1234",
     role: "dispatcheur", actif: true,
     canViewLogistique: true,
   },
   {
-    id: "u6", name: "Demo Magasinier", email: "magasin@freshlink.ma", password: "1234",
+    id: "VFU00008", name: "Demo Magasinier", email: "magasin@freshlink.ma", password: "1234",
     role: "magasinier", actif: true,
     canViewStock: true,
   },
   // === BACKOFFICE — CASH MAN ===
   {
-    id: "u_cash", name: "Demo Cash Man", email: "cashman@freshlink.ma", password: "cash2024",
+    id: "VFU00009", name: "Demo Cash Man", email: "cashman@freshlink.ma", password: "cash2024",
     role: "cash_man", actif: true,
     canViewCash: true, canViewCommercial: true,
   },
   // === BACKOFFICE — FINANCIER ===
   {
-    id: "u_fin", name: "Demo Financier", email: "financier@freshlink.ma", password: "fin2024",
+    id: "VFU00010", name: "Demo Financier", email: "financier@freshlink.ma", password: "fin2024",
     role: "financier", actif: true,
     canViewFinance: true, canViewCash: true, canViewRecap: true,
   },
   // === RH — OURAI ===
   {
-    id: "u_ourai", name: "Ourai", email: "ourai@freshlink.ma", password: "ourai2024",
+    id: "VFU00011", name: "Ourai", email: "ourai@freshlink.ma", password: "ourai2024",
     role: "rh_manager", actif: true, accessType: "backoffice",
     canViewRH: true, canViewInvestisseur: true,
   },
   // === DEMO — ACHETEUR ===
   {
-    id: "u_acheteur", name: "Demo Acheteur", email: "acheteur@freshlink.ma", password: "1234",
+    id: "VFU00012", name: "Demo Acheteur", email: "acheteur@freshlink.ma", password: "1234",
     role: "acheteur", actif: true,
     notifAchat: true,
   },
   // === DEMO — CONTROLEUR ACHAT ===
   {
-    id: "u_ctrl_achat", name: "Demo Controleur Achat", email: "ctrl.achat@freshlink.ma", password: "ctrl1234",
+    id: "VFU00013", name: "Demo Controleur Achat", email: "ctrl.achat@freshlink.ma", password: "ctrl1234",
     role: "ctrl_achat", actif: true,
   },
   // === DEMO — CONTROLEUR PREPARATION ===
   {
-    id: "u_ctrl_prep", name: "Demo Controleur Prep", email: "ctrl.prep@freshlink.ma", password: "ctrl1234",
+    id: "VFU00014", name: "Demo Controleur Prep", email: "ctrl.prep@freshlink.ma", password: "ctrl1234",
     role: "ctrl_prep", actif: true,
   },
   // === DEMO — LIVREUR ===
   {
-    id: "u_liv_demo", name: "Demo Livreur", email: "livreur@freshlink.ma", password: "1234",
+    id: "VFU00015", name: "Demo Livreur", email: "livreur@freshlink.ma", password: "1234",
     role: "livreur", actif: true,
   },
   // === DEMO — CLIENT ===
   {
-    id: "u_client", name: "Demo Client", email: "client.demo@freshlink.ma", password: "1234",
+    id: "VFU00016", name: "Demo Client", email: "client.demo@freshlink.ma", password: "1234",
     role: "client", actif: true, phone: "0600000001",
-    clientId: "c1",   // linked to Epicerie Al Baraka
+    clientId: "VFC00001",   // linked to Epicerie Al Baraka
   },
   // === DEMO — FOURNISSEUR ===
   {
-    id: "u_four", name: "Demo Fournisseur", email: "fournisseur.demo@freshlink.ma", password: "1234",
+    id: "VFU00017", name: "Demo Fournisseur", email: "fournisseur.demo@freshlink.ma", password: "1234",
     role: "fournisseur", actif: true,
-    fournisseurId: "f1",  // linked to Marche Central Casablanca
+    fournisseurId: "VFF00001",  // linked to Marche Central Casablanca
     telephone: "212600000001",
   },
   // === PREVENDEUR — JARIRI ===
   {
-    id: "u_jariri", name: "Jariri", email: "jariri@freshlink.ma", password: "jariri2024",
+    id: "VFU00018", name: "Jariri", email: "jariri@freshlink.ma", password: "jariri2024",
     role: "prevendeur", secteur: "Nord", actif: true,
     objectifClients: 25, objectifTonnage: 600,
     objectifJournalierCA: 2500, objectifHebdomadaireCA: 15000, objectifMensuelCA: 60000,
@@ -1663,19 +1663,19 @@ const DEFAULT_USERS: User[] = [
   },
   // === QUALITE — S. ABDELILAH (Responsable Qualité) ===
   {
-    id: "u_abdelilah", name: "S. Abdelilah", email: "abdelilah@freshlink.ma", password: "abdelilah2024",
+    id: "VFU00019", name: "S. Abdelilah", email: "abdelilah@freshlink.ma", password: "abdelilah2024",
     role: "qualite", actif: true, accessType: "backoffice" as const,
     canViewStock: true, canViewAchat: true, canViewCommercial: true,
   },
   // === QUALITE — ABDELALI (Contrôleur Qualité) ===
   {
-    id: "u_abdelali", name: "Abdelali", email: "abdelali@freshlink.ma", password: "abdelali2024",
+    id: "VFU00020", name: "Abdelali", email: "abdelali@freshlink.ma", password: "abdelali2024",
     role: "qualite", actif: true, accessType: "backoffice" as const,
     canViewStock: true, canViewAchat: true,
   },
   // === COMPTABLE — THOMAS (Contrôleur de Gestion) ===
   {
-    id: "u_thomas", name: "Thomas", email: "thomas@freshlink.ma", password: "thomas2024",
+    id: "VFU00021", name: "Thomas", email: "thomas@freshlink.ma", password: "thomas2024",
     role: "comptable", actif: true, accessType: "backoffice" as const,
     canViewFinance: true, canViewCash: true, canViewRecap: true, canViewAchat: true,
   },
@@ -1683,198 +1683,198 @@ const DEFAULT_USERS: User[] = [
 
 const DEFAULT_CLIENTS: Client[] = [
   // --- Nord / Zone A ---
-  { id: "c1",  nom: "Epicerie Al Baraka",        secteur: "Nord",   zone: "Zone A", type: "epicerie",   taille: "150-300kg", typeProduits: "moyenne",       rotation: "journalier", telephone: "0661234567", email: "baraka@epicerie.ma",      adresse: "12 Rue Ibn Battouta, Casablanca",          createdBy: "u2",  createdAt: "2025-01-01", gpsLat: 33.5731, gpsLng: -7.5898 },
-  { id: "c2",  nom: "Superette Najah",            secteur: "Nord",   zone: "Zone A", type: "superette",  taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0664567890", email: "najah@superette.ma",      adresse: "45 Bd Anfa, Casablanca",                   createdBy: "u2",  createdAt: "2025-01-04", gpsLat: 33.5800, gpsLng: -7.6100 },
-  { id: "c9",  nom: "Marche Quartier Maarif",     secteur: "Nord",   zone: "Zone A", type: "marche",     taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0669876543", email: "maarif@marche.ma",        adresse: "Rue Mustapha El Maani, Maarif",             createdBy: "u2",  createdAt: "2025-02-01", gpsLat: 33.5860, gpsLng: -7.6400 },
-  { id: "c10", nom: "Hotel Kenzi Tower",          secteur: "Nord",   zone: "Zone A", type: "hotel",      taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0522480000", email: "achat@kenzi.ma",          adresse: "Bd Zerktouni, Casablanca",                 createdBy: "u2",  createdAt: "2025-02-05", gpsLat: 33.5892, gpsLng: -7.6309 },
+  { id: "VFC00001",  nom: "Epicerie Al Baraka",        secteur: "Nord",   zone: "Zone A", type: "epicerie",   taille: "150-300kg", typeProduits: "moyenne",       rotation: "journalier", telephone: "0661234567", email: "baraka@epicerie.ma",      adresse: "12 Rue Ibn Battouta, Casablanca",          createdBy: "VFU00005",  createdAt: "2025-01-01", gpsLat: 33.5731, gpsLng: -7.5898 },
+  { id: "VFC00002",  nom: "Superette Najah",            secteur: "Nord",   zone: "Zone A", type: "superette",  taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0664567890", email: "najah@superette.ma",      adresse: "45 Bd Anfa, Casablanca",                   createdBy: "VFU00005",  createdAt: "2025-01-04", gpsLat: 33.5800, gpsLng: -7.6100 },
+  { id: "VFC00003",  nom: "Marche Quartier Maarif",     secteur: "Nord",   zone: "Zone A", type: "marche",     taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0669876543", email: "maarif@marche.ma",        adresse: "Rue Mustapha El Maani, Maarif",             createdBy: "VFU00005",  createdAt: "2025-02-01", gpsLat: 33.5860, gpsLng: -7.6400 },
+  { id: "VFC00004", nom: "Hotel Kenzi Tower",          secteur: "Nord",   zone: "Zone A", type: "hotel",      taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0522480000", email: "achat@kenzi.ma",          adresse: "Bd Zerktouni, Casablanca",                 createdBy: "VFU00005",  createdAt: "2025-02-05", gpsLat: 33.5892, gpsLng: -7.6309 },
   // --- Centre / Zone B ---
-  { id: "c3",  nom: "Restaurant Al Fassia",       secteur: "Centre", zone: "Zone B", type: "restaurant", taille: "350-500kg", typeProduits: "haute_gamme",   rotation: "4j/6",       telephone: "0662345678", email: "fassia@resto.ma",         adresse: "55 Bd Ghandi, Casablanca",                 createdBy: "u2",  createdAt: "2025-01-02", gpsLat: 33.5950, gpsLng: -7.6190 },
-  { id: "c5",  nom: "Grossiste Derb Omar",        secteur: "Centre", zone: "Zone B", type: "grossiste",  taille: "500kg+",    typeProduits: "moyenne",       rotation: "journalier", telephone: "0665678901", email: "derb@grossiste.ma",       adresse: "Derb Omar, Casablanca",                    createdBy: "u2",  createdAt: "2025-01-06", gpsLat: 33.5970, gpsLng: -7.6050 },
-  { id: "c11", nom: "Cafeteria Plaza",            secteur: "Centre", zone: "Zone B", type: "cafeteria",  taille: "150-300kg", typeProduits: "moyenne",       rotation: "4j/6",       telephone: "0661112233", email: "plaza@cafe.ma",           adresse: "Place Mohamed V, Casablanca",              createdBy: "u2b", createdAt: "2025-02-10", gpsLat: 33.5921, gpsLng: -7.6188 },
-  { id: "c12", nom: "Traiteur Zineb",             secteur: "Centre", zone: "Zone B", type: "traiteur",   taille: "350-500kg", typeProduits: "haute_gamme",   rotation: "3/6",        telephone: "0662223344", email: "zineb@traiteur.ma",       adresse: "Hay Hassani, Casablanca",                  createdBy: "u2b", createdAt: "2025-02-12", gpsLat: 33.5620, gpsLng: -7.6720 },
+  { id: "VFC00005",  nom: "Restaurant Al Fassia",       secteur: "Centre", zone: "Zone B", type: "restaurant", taille: "350-500kg", typeProduits: "haute_gamme",   rotation: "4j/6",       telephone: "0662345678", email: "fassia@resto.ma",         adresse: "55 Bd Ghandi, Casablanca",                 createdBy: "VFU00005",  createdAt: "2025-01-02", gpsLat: 33.5950, gpsLng: -7.6190 },
+  { id: "VFC00006",  nom: "Grossiste Derb Omar",        secteur: "Centre", zone: "Zone B", type: "grossiste",  taille: "500kg+",    typeProduits: "moyenne",       rotation: "journalier", telephone: "0665678901", email: "derb@grossiste.ma",       adresse: "Derb Omar, Casablanca",                    createdBy: "VFU00005",  createdAt: "2025-01-06", gpsLat: 33.5970, gpsLng: -7.6050 },
+  { id: "VFC00007", nom: "Cafeteria Plaza",            secteur: "Centre", zone: "Zone B", type: "cafeteria",  taille: "150-300kg", typeProduits: "moyenne",       rotation: "4j/6",       telephone: "0661112233", email: "plaza@cafe.ma",           adresse: "Place Mohamed V, Casablanca",              createdBy: "VFU00005", createdAt: "2025-02-10", gpsLat: 33.5921, gpsLng: -7.6188 },
+  { id: "VFC00008", nom: "Traiteur Zineb",             secteur: "Centre", zone: "Zone B", type: "traiteur",   taille: "350-500kg", typeProduits: "haute_gamme",   rotation: "3/6",        telephone: "0662223344", email: "zineb@traiteur.ma",       adresse: "Hay Hassani, Casablanca",                  createdBy: "VFU00005", createdAt: "2025-02-12", gpsLat: 33.5620, gpsLng: -7.6720 },
   // --- Sud / Zone C ---
-  { id: "c4",  nom: "Boucherie Tazi",             secteur: "Sud",    zone: "Zone C", type: "boucherie",  taille: "50-100kg",  typeProduits: "entree_gamme",  rotation: "3/6",        telephone: "0663456789", email: "tazi@boucherie.ma",       adresse: "Rue Fkih Ben Saleh, Ain Chock",            createdBy: "u2",  createdAt: "2025-01-03", gpsLat: 33.5500, gpsLng: -7.5500 },
-  { id: "c6",  nom: "Primeur Sidi Maarouf",       secteur: "Sud",    zone: "Zone C", type: "epicerie",   taille: "150-300kg", typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0666789012", email: "primeur@sidi.ma",         adresse: "Sidi Maarouf, Casablanca",                 createdBy: "u2b", createdAt: "2025-01-07", gpsLat: 33.5320, gpsLng: -7.6500 },
-  { id: "c13", nom: "Ecole Bab Marrakech",        secteur: "Sud",    zone: "Zone C", type: "cantina",    taille: "350-500kg", typeProduits: "entree_gamme",  rotation: "4j/6",       telephone: "0663334455", email: "cantine@ecole.ma",        adresse: "Bab Marrakech, Casablanca",                createdBy: "u2b", createdAt: "2025-02-15", gpsLat: 33.5450, gpsLng: -7.5650 },
-  { id: "c14", nom: "Supermarche Marjane Hay",    secteur: "Sud",    zone: "Zone C", type: "superette",  taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0664445566", email: "achat@marjane-hay.ma",    adresse: "Hay Mohammadi, Casablanca",                createdBy: "u2b", createdAt: "2025-02-18", gpsLat: 33.5400, gpsLng: -7.5750 },
+  { id: "VFC00009",  nom: "Boucherie Tazi",             secteur: "Sud",    zone: "Zone C", type: "boucherie",  taille: "50-100kg",  typeProduits: "entree_gamme",  rotation: "3/6",        telephone: "0663456789", email: "tazi@boucherie.ma",       adresse: "Rue Fkih Ben Saleh, Ain Chock",            createdBy: "VFU00005",  createdAt: "2025-01-03", gpsLat: 33.5500, gpsLng: -7.5500 },
+  { id: "VFC00010",  nom: "Primeur Sidi Maarouf",       secteur: "Sud",    zone: "Zone C", type: "epicerie",   taille: "150-300kg", typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0666789012", email: "primeur@sidi.ma",         adresse: "Sidi Maarouf, Casablanca",                 createdBy: "VFU00005", createdAt: "2025-01-07", gpsLat: 33.5320, gpsLng: -7.6500 },
+  { id: "VFC00011", nom: "Ecole Bab Marrakech",        secteur: "Sud",    zone: "Zone C", type: "cantina",    taille: "350-500kg", typeProduits: "entree_gamme",  rotation: "4j/6",       telephone: "0663334455", email: "cantine@ecole.ma",        adresse: "Bab Marrakech, Casablanca",                createdBy: "VFU00005", createdAt: "2025-02-15", gpsLat: 33.5450, gpsLng: -7.5650 },
+  { id: "VFC00012", nom: "Supermarche Marjane Hay",    secteur: "Sud",    zone: "Zone C", type: "superette",  taille: "500kg+",    typeProduits: "haute_gamme",   rotation: "journalier", telephone: "0664445566", email: "achat@marjane-hay.ma",    adresse: "Hay Mohammadi, Casablanca",                createdBy: "VFU00005", createdAt: "2025-02-18", gpsLat: 33.5400, gpsLng: -7.5750 },
   // --- Est / Zone D ---
-  { id: "c7",  nom: "Collectivite Oulad Hlima",   secteur: "Est",    zone: "Zone D", type: "collectivite",taille:"500kg+",    typeProduits: "entree_gamme",  rotation: "journalier", telephone: "0667890123", email: "oulad@collectivite.ma",   adresse: "Oulad Hlima, Province Settat",             createdBy: "u2b", createdAt: "2025-01-08", gpsLat: 33.3900, gpsLng: -7.4800 },
-  { id: "c8",  nom: "Hotel Atlas Berrechid",      secteur: "Est",    zone: "Zone D", type: "hotel",      taille: "350-500kg", typeProduits: "haute_gamme",   rotation: "4j/6",       telephone: "0668901234", email: "atlas@hotel-berrechid.ma", adresse: "Route Nationale 1, Berrechid",             createdBy: "u2b", createdAt: "2025-01-09", gpsLat: 33.2660, gpsLng: -7.5890 },
-  { id: "c15", nom: "Lycee Ben Youssef",          secteur: "Est",    zone: "Zone D", type: "cantina",    taille: "150-300kg", typeProduits: "entree_gamme",  rotation: "4j/6",       telephone: "0665556677", email: "cantine@lycee-by.ma",     adresse: "Hay El Farah, Berrechid",                  createdBy: "u2b", createdAt: "2025-02-20", gpsLat: 33.2710, gpsLng: -7.5820 },
+  { id: "VFC00013",  nom: "Collectivite Oulad Hlima",   secteur: "Est",    zone: "Zone D", type: "collectivite",taille:"500kg+",    typeProduits: "entree_gamme",  rotation: "journalier", telephone: "0667890123", email: "oulad@collectivite.ma",   adresse: "Oulad Hlima, Province Settat",             createdBy: "VFU00005", createdAt: "2025-01-08", gpsLat: 33.3900, gpsLng: -7.4800 },
+  { id: "VFC00014",  nom: "Hotel Atlas Berrechid",      secteur: "Est",    zone: "Zone D", type: "hotel",      taille: "350-500kg", typeProduits: "haute_gamme",   rotation: "4j/6",       telephone: "0668901234", email: "atlas@hotel-berrechid.ma", adresse: "Route Nationale 1, Berrechid",             createdBy: "VFU00005", createdAt: "2025-01-09", gpsLat: 33.2660, gpsLng: -7.5890 },
+  { id: "VFC00015", nom: "Lycee Ben Youssef",          secteur: "Est",    zone: "Zone D", type: "cantina",    taille: "150-300kg", typeProduits: "entree_gamme",  rotation: "4j/6",       telephone: "0665556677", email: "cantine@lycee-by.ma",     adresse: "Hay El Farah, Berrechid",                  createdBy: "VFU00005", createdAt: "2025-02-20", gpsLat: 33.2710, gpsLng: -7.5820 },
 ]
 
 const DEFAULT_ARTICLES: Article[] = [
   // ── Légumes fruits ──────────────────────────────────────────────────────
-  { id: "a1",  nom: "Tomates",        nomAr: "طماطم",     famille: "Légumes fruits",   unite: "kg", stockDisponible: 500, stockDefect: 20, prixAchat: 2.5, pvMethode: "pourcentage", pvValeur: 60, photo: "https://placehold.co/120x120/e74c3c/fff?text=Tomates" },
-  { id: "a5",  nom: "Poivrons",       nomAr: "فلفل",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 150, stockDefect: 5,  prixAchat: 4.5, pvMethode: "manuel",       pvValeur: 7.0, photo: "https://placehold.co/120x120/e67e22/fff?text=Poivrons" },
-  { id: "a6",  nom: "Courgettes",     nomAr: "قرع",       famille: "Légumes fruits",   unite: "kg", stockDisponible: 200, stockDefect: 12, prixAchat: 3.0, pvMethode: "pourcentage", pvValeur: 67, photo: "https://placehold.co/120x120/27ae60/fff?text=Courgettes" },
-  { id: "a9",  nom: "Aubergines",     nomAr: "باذنجان",   famille: "Légumes fruits",   unite: "kg", stockDisponible: 180, stockDefect: 7,  prixAchat: 3.2, pvMethode: "pourcentage", pvValeur: 65, photo: "https://placehold.co/120x120/8e44ad/fff?text=Aubergines" },
-  { id: "a10", nom: "Concombres",     nomAr: "خيار",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 220, stockDefect: 8,  prixAchat: 2.0, pvMethode: "montant",      pvValeur: 1.5, photo: "https://placehold.co/120x120/1abc9c/fff?text=Concombres" },
-  { id: "a11", nom: "Tomates cerises",nomAr: "طماطم كرزي",famille: "Légumes fruits",   unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 8.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/c0392b/fff?text=T.Cerises" },
+  { id: "VFP00001",  nom: "Tomates",        nomAr: "طماطم",     famille: "Légumes fruits",   unite: "kg", stockDisponible: 500, stockDefect: 20, prixAchat: 2.5, pvMethode: "pourcentage", pvValeur: 60, photo: "https://placehold.co/120x120/e74c3c/fff?text=Tomates" },
+  { id: "VFP00008",  nom: "Poivrons",       nomAr: "فلفل",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 150, stockDefect: 5,  prixAchat: 4.5, pvMethode: "manuel",       pvValeur: 7.0, photo: "https://placehold.co/120x120/e67e22/fff?text=Poivrons" },
+  { id: "VFP00009",  nom: "Courgettes",     nomAr: "قرع",       famille: "Légumes fruits",   unite: "kg", stockDisponible: 200, stockDefect: 12, prixAchat: 3.0, pvMethode: "pourcentage", pvValeur: 67, photo: "https://placehold.co/120x120/27ae60/fff?text=Courgettes" },
+  { id: "VFP00012",  nom: "Aubergines",     nomAr: "باذنجان",   famille: "Légumes fruits",   unite: "kg", stockDisponible: 180, stockDefect: 7,  prixAchat: 3.2, pvMethode: "pourcentage", pvValeur: 65, photo: "https://placehold.co/120x120/8e44ad/fff?text=Aubergines" },
+  { id: "VFP00013", nom: "Concombres",     nomAr: "خيار",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 220, stockDefect: 8,  prixAchat: 2.0, pvMethode: "montant",      pvValeur: 1.5, photo: "https://placehold.co/120x120/1abc9c/fff?text=Concombres" },
+  { id: "VFP00014", nom: "Tomates cerises",nomAr: "طماطم كرزي",famille: "Légumes fruits",   unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 8.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/c0392b/fff?text=T.Cerises" },
   // ── Légumes racines ─────────────────────────────────────────────────────
-  { id: "a2",   nom: "Pommes de terre (blanche)",  nomAr: "بطاطا بيضاء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 800, stockDefect: 15, prixAchat: 1.8, pvMethode: "montant",  pvValeur: 1.2, photo: "https://placehold.co/120x120/d4a017/fff?text=P.Terre+Blanche" },
-  { id: "a2r",  nom: "Pommes de terre (rouge)",   nomAr: "بطاطا حمراء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 400, stockDefect: 8,  prixAchat: 2.2, pvMethode: "montant",  pvValeur: 1.5, photo: "https://placehold.co/120x120/c0392b/fff?text=P.Terre+Rouge" },
-  { id: "a2f",  nom: "Pommes de terre (frite)",   nomAr: "بطاطا للقلي",   famille: "Légumes racines",  unite: "kg", stockDisponible: 600, stockDefect: 10, prixAchat: 2.0, pvMethode: "montant",  pvValeur: 1.3, photo: "https://placehold.co/120x120/f39c12/fff?text=P.Terre+Frite" },
-  { id: "a2d",  nom: "Pommes de terre (douce)",   nomAr: "بطاطا حلوة",    famille: "Légumes racines",  unite: "kg", stockDisponible: 250, stockDefect: 5,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/e07b39/fff?text=P.Terre+Douce" },
-  { id: "a3",  nom: "Oignons",        nomAr: "بصل",       famille: "Légumes racines",  unite: "kg", stockDisponible: 300, stockDefect: 10, prixAchat: 2.0, pvMethode: "pourcentage", pvValeur: 75, photo: "https://placehold.co/120x120/e8a87c/fff?text=Oignons" },
-  { id: "a4",  nom: "Carottes",       nomAr: "جزر",       famille: "Légumes racines",  unite: "kg", stockDisponible: 250, stockDefect: 8,  prixAchat: 2.2, pvMethode: "montant",      pvValeur: 1.6, photo: "https://placehold.co/120x120/e67e22/fff?text=Carottes" },
-  { id: "a12", nom: "Betteraves",     nomAr: "شمندر",     famille: "Légumes racines",  unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 2.5, pvMethode: "pourcentage", pvValeur: 60, photo: "https://placehold.co/120x120/922b21/fff?text=Betteraves" },
-  { id: "a13", nom: "Navets",         nomAr: "لفت",       famille: "Légumes racines",  unite: "kg", stockDisponible: 90,  stockDefect: 3,  prixAchat: 1.5, pvMethode: "pourcentage", pvValeur: 67, photo: "https://placehold.co/120x120/f0e68c/333?text=Navets" },
-  { id: "a14", nom: "Ail",            nomAr: "ثوم",       famille: "Légumes racines",  unite: "kg", stockDisponible: 60,  stockDefect: 2,  prixAchat: 18.0,pvMethode: "pourcentage", pvValeur: 56, photo: "https://placehold.co/120x120/f5f5dc/333?text=Ail" },
+  { id: "VFP00002",   nom: "Pommes de terre (blanche)",  nomAr: "بطاطا بيضاء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 800, stockDefect: 15, prixAchat: 1.8, pvMethode: "montant",  pvValeur: 1.2, photo: "https://placehold.co/120x120/d4a017/fff?text=P.Terre+Blanche" },
+  { id: "VFP00003",  nom: "Pommes de terre (rouge)",   nomAr: "بطاطا حمراء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 400, stockDefect: 8,  prixAchat: 2.2, pvMethode: "montant",  pvValeur: 1.5, photo: "https://placehold.co/120x120/c0392b/fff?text=P.Terre+Rouge" },
+  { id: "VFP00004",  nom: "Pommes de terre (frite)",   nomAr: "بطاطا للقلي",   famille: "Légumes racines",  unite: "kg", stockDisponible: 600, stockDefect: 10, prixAchat: 2.0, pvMethode: "montant",  pvValeur: 1.3, photo: "https://placehold.co/120x120/f39c12/fff?text=P.Terre+Frite" },
+  { id: "VFP00005",  nom: "Pommes de terre (douce)",   nomAr: "بطاطا حلوة",    famille: "Légumes racines",  unite: "kg", stockDisponible: 250, stockDefect: 5,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/e07b39/fff?text=P.Terre+Douce" },
+  { id: "VFP00006",  nom: "Oignons",        nomAr: "بصل",       famille: "Légumes racines",  unite: "kg", stockDisponible: 300, stockDefect: 10, prixAchat: 2.0, pvMethode: "pourcentage", pvValeur: 75, photo: "https://placehold.co/120x120/e8a87c/fff?text=Oignons" },
+  { id: "VFP00007",  nom: "Carottes",       nomAr: "جزر",       famille: "Légumes racines",  unite: "kg", stockDisponible: 250, stockDefect: 8,  prixAchat: 2.2, pvMethode: "montant",      pvValeur: 1.6, photo: "https://placehold.co/120x120/e67e22/fff?text=Carottes" },
+  { id: "VFP00015", nom: "Betteraves",     nomAr: "شمندر",     famille: "Légumes racines",  unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 2.5, pvMethode: "pourcentage", pvValeur: 60, photo: "https://placehold.co/120x120/922b21/fff?text=Betteraves" },
+  { id: "VFP00016", nom: "Navets",         nomAr: "لفت",       famille: "Légumes racines",  unite: "kg", stockDisponible: 90,  stockDefect: 3,  prixAchat: 1.5, pvMethode: "pourcentage", pvValeur: 67, photo: "https://placehold.co/120x120/f0e68c/333?text=Navets" },
+  { id: "VFP00017", nom: "Ail",            nomAr: "ثوم",       famille: "Légumes racines",  unite: "kg", stockDisponible: 60,  stockDefect: 2,  prixAchat: 18.0,pvMethode: "pourcentage", pvValeur: 56, photo: "https://placehold.co/120x120/f5f5dc/333?text=Ail" },
   // ── Légumes feuilles ────────────────────────────────────────────────────
-  { id: "a15", nom: "Laitue",         nomAr: "خس",        famille: "Légumes feuilles", unite: "pièce", stockDisponible: 150, stockDefect: 5, prixAchat: 1.5, pvMethode: "montant", pvValeur: 1.0, photo: "https://placehold.co/120x120/2ecc71/fff?text=Laitue" },
-  { id: "a16", nom: "Épinards",       nomAr: "سبانخ",     famille: "Légumes feuilles", unite: "kg", stockDisponible: 100, stockDefect: 8,  prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/196f3d/fff?text=Épinards" },
-  { id: "a17", nom: "Poireaux",       nomAr: "كراث",      famille: "Légumes feuilles", unite: "kg", stockDisponible: 80,  stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/27ae60/fff?text=Poireaux" },
-  { id: "a18", nom: "Choux",          nomAr: "كرنب",      famille: "Légumes feuilles", unite: "kg", stockDisponible: 200, stockDefect: 10, prixAchat: 1.8, pvMethode: "montant",      pvValeur: 1.2, photo: "https://placehold.co/120x120/a9dfbf/333?text=Choux" },
-  { id: "a19", nom: "Choufleur",      nomAr: "قرنبيط",    famille: "Légumes feuilles", unite: "pièce", stockDisponible: 100, stockDefect: 5, prixAchat: 5.0, pvMethode: "montant", pvValeur: 3.5, photo: "https://placehold.co/120x120/f9f9f9/333?text=Choufleur" },
-  { id: "a20", nom: "Brocolis",       nomAr: "بروكلي",    famille: "Légumes feuilles", unite: "kg", stockDisponible: 70,  stockDefect: 3,  prixAchat: 7.0, pvMethode: "pourcentage", pvValeur: 43, photo: "https://placehold.co/120x120/1e8449/fff?text=Brocolis" },
-  { id: "a21", nom: "Artichauds",     nomAr: "أرضي شوكي", famille: "Légumes feuilles", unite: "pièce", stockDisponible: 80, stockDefect: 4, prixAchat: 3.0, pvMethode: "montant", pvValeur: 2.0, photo: "https://placehold.co/120x120/148f77/fff?text=Artichaut" },
+  { id: "VFP00018", nom: "Laitue",         nomAr: "خس",        famille: "Légumes feuilles", unite: "pièce", stockDisponible: 150, stockDefect: 5, prixAchat: 1.5, pvMethode: "montant", pvValeur: 1.0, photo: "https://placehold.co/120x120/2ecc71/fff?text=Laitue" },
+  { id: "VFP00019", nom: "Épinards",       nomAr: "سبانخ",     famille: "Légumes feuilles", unite: "kg", stockDisponible: 100, stockDefect: 8,  prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/196f3d/fff?text=Épinards" },
+  { id: "VFP00020", nom: "Poireaux",       nomAr: "كراث",      famille: "Légumes feuilles", unite: "kg", stockDisponible: 80,  stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/27ae60/fff?text=Poireaux" },
+  { id: "VFP00021", nom: "Choux",          nomAr: "كرنب",      famille: "Légumes feuilles", unite: "kg", stockDisponible: 200, stockDefect: 10, prixAchat: 1.8, pvMethode: "montant",      pvValeur: 1.2, photo: "https://placehold.co/120x120/a9dfbf/333?text=Choux" },
+  { id: "VFP00022", nom: "Choufleur",      nomAr: "قرنبيط",    famille: "Légumes feuilles", unite: "pièce", stockDisponible: 100, stockDefect: 5, prixAchat: 5.0, pvMethode: "montant", pvValeur: 3.5, photo: "https://placehold.co/120x120/f9f9f9/333?text=Choufleur" },
+  { id: "VFP00023", nom: "Brocolis",       nomAr: "بروكلي",    famille: "Légumes feuilles", unite: "kg", stockDisponible: 70,  stockDefect: 3,  prixAchat: 7.0, pvMethode: "pourcentage", pvValeur: 43, photo: "https://placehold.co/120x120/1e8449/fff?text=Brocolis" },
+  { id: "VFP00024", nom: "Artichauds",     nomAr: "أرضي شوكي", famille: "Légumes feuilles", unite: "pièce", stockDisponible: 80, stockDefect: 4, prixAchat: 3.0, pvMethode: "montant", pvValeur: 2.0, photo: "https://placehold.co/120x120/148f77/fff?text=Artichaut" },
   // ── Herbes aromatiques ──────────────────────────────────────────────────
-  { id: "a22", nom: "Persil",         nomAr: "معدنوس",    famille: "Herbes aromatiques",unite: "botte", stockDisponible: 200, stockDefect: 10, prixAchat: 1.0, pvMethode: "montant", pvValeur: 0.5, photo: "https://placehold.co/120x120/27ae60/fff?text=Persil" },
-  { id: "a23", nom: "Coriandre",      nomAr: "قزبر",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 180, stockDefect: 8,  prixAchat: 1.0, pvMethode: "montant", pvValeur: 0.5, photo: "https://placehold.co/120x120/1abc9c/fff?text=Coriandre" },
-  { id: "a24", nom: "Menthe",         nomAr: "نعناع",     famille: "Herbes aromatiques",unite: "botte", stockDisponible: 150, stockDefect: 5,  prixAchat: 1.2, pvMethode: "montant", pvValeur: 0.8, photo: "https://placehold.co/120x120/2ecc71/fff?text=Menthe" },
-  { id: "a25", nom: "Céleri",         nomAr: "كرفس",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 80, stockDefect: 4,  prixAchat: 2.5, pvMethode: "montant", pvValeur: 1.5, photo: "https://placehold.co/120x120/a9cce3/333?text=Céleri" },
+  { id: "VFP00025", nom: "Persil",         nomAr: "معدنوس",    famille: "Herbes aromatiques",unite: "botte", stockDisponible: 200, stockDefect: 10, prixAchat: 1.0, pvMethode: "montant", pvValeur: 0.5, photo: "https://placehold.co/120x120/27ae60/fff?text=Persil" },
+  { id: "VFP00026", nom: "Coriandre",      nomAr: "قزبر",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 180, stockDefect: 8,  prixAchat: 1.0, pvMethode: "montant", pvValeur: 0.5, photo: "https://placehold.co/120x120/1abc9c/fff?text=Coriandre" },
+  { id: "VFP00027", nom: "Menthe",         nomAr: "نعناع",     famille: "Herbes aromatiques",unite: "botte", stockDisponible: 150, stockDefect: 5,  prixAchat: 1.2, pvMethode: "montant", pvValeur: 0.8, photo: "https://placehold.co/120x120/2ecc71/fff?text=Menthe" },
+  { id: "VFP00028", nom: "Céleri",         nomAr: "كرفس",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 80, stockDefect: 4,  prixAchat: 2.5, pvMethode: "montant", pvValeur: 1.5, photo: "https://placehold.co/120x120/a9cce3/333?text=Céleri" },
   // ── Agrumes ─────────────────────────────────────────────────────────────
-  { id: "a7",  nom: "Oranges",        nomAr: "برتقال",    famille: "Agrumes",          unite: "kg", stockDisponible: 350, stockDefect: 6,  prixAchat: 2.8, pvMethode: "montant",      pvValeur: 1.7, photo: "https://placehold.co/120x120/f39c12/fff?text=Oranges" },
-  { id: "a26", nom: "Citrons",        nomAr: "ليمون",     famille: "Agrumes",          unite: "kg", stockDisponible: 200, stockDefect: 5,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/f9e000/333?text=Citrons" },
-  { id: "a27", nom: "Clémentines",    nomAr: "كليمانتين", famille: "Agrumes",          unite: "kg", stockDisponible: 300, stockDefect: 8,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/e67e22/fff?text=Clémentines" },
-  { id: "a28", nom: "Pamplemousses",  nomAr: "برتقال هندي",famille: "Agrumes",         unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 4.5, pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/f0c07a/333?text=Pamplm." },
+  { id: "VFP00010",  nom: "Oranges",        nomAr: "برتقال",    famille: "Agrumes",          unite: "kg", stockDisponible: 350, stockDefect: 6,  prixAchat: 2.8, pvMethode: "montant",      pvValeur: 1.7, photo: "https://placehold.co/120x120/f39c12/fff?text=Oranges" },
+  { id: "VFP00029", nom: "Citrons",        nomAr: "ليمون",     famille: "Agrumes",          unite: "kg", stockDisponible: 200, stockDefect: 5,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/f9e000/333?text=Citrons" },
+  { id: "VFP00030", nom: "Clémentines",    nomAr: "كليمانتين", famille: "Agrumes",          unite: "kg", stockDisponible: 300, stockDefect: 8,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/e67e22/fff?text=Clémentines" },
+  { id: "VFP00031", nom: "Pamplemousses",  nomAr: "برتقال هندي",famille: "Agrumes",         unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 4.5, pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/f0c07a/333?text=Pamplm." },
   // ── Fruits tropicaux ────────────────────────────────────────────────────
-  { id: "a8",  nom: "Bananes",        nomAr: "موز",       famille: "Fruits tropicaux", unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/f1c40f/333?text=Bananes" },
-  { id: "a29", nom: "Mangues",        nomAr: "مانجو",     famille: "Fruits tropicaux", unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 12.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/f39c12/fff?text=Mangues" },
-  { id: "a30", nom: "Avocats",        nomAr: "أفوكادو",   famille: "Fruits tropicaux", unite: "kg", stockDisponible: 60,  stockDefect: 3,  prixAchat: 15.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/196f3d/fff?text=Avocats" },
-  { id: "a31", nom: "Ananas",         nomAr: "أناناس",    famille: "Fruits tropicaux", unite: "pièce", stockDisponible: 40, stockDefect: 2, prixAchat: 12.0,pvMethode: "montant",  pvValeur: 8.0, photo: "https://placehold.co/120x120/f4d03f/333?text=Ananas" },
-  { id: "a32", nom: "Kiwis",          nomAr: "كيوي",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 50,  stockDefect: 2,  prixAchat: 20.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/28b463/fff?text=Kiwis" },
+  { id: "VFP00011",  nom: "Bananes",        nomAr: "موز",       famille: "Fruits tropicaux", unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57, photo: "https://placehold.co/120x120/f1c40f/333?text=Bananes" },
+  { id: "VFP00032", nom: "Mangues",        nomAr: "مانجو",     famille: "Fruits tropicaux", unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 12.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/f39c12/fff?text=Mangues" },
+  { id: "VFP00033", nom: "Avocats",        nomAr: "أفوكادو",   famille: "Fruits tropicaux", unite: "kg", stockDisponible: 60,  stockDefect: 3,  prixAchat: 15.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/196f3d/fff?text=Avocats" },
+  { id: "VFP00034", nom: "Ananas",         nomAr: "أناناس",    famille: "Fruits tropicaux", unite: "pièce", stockDisponible: 40, stockDefect: 2, prixAchat: 12.0,pvMethode: "montant",  pvValeur: 8.0, photo: "https://placehold.co/120x120/f4d03f/333?text=Ananas" },
+  { id: "VFP00035", nom: "Kiwis",          nomAr: "كيوي",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 50,  stockDefect: 2,  prixAchat: 20.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/28b463/fff?text=Kiwis" },
   // ── Fruits rouges ───────────────────────────────────────────────────────
-  { id: "a33", nom: "Fraises",        nomAr: "فراولة",    famille: "Fruits rouges",    unite: "kg", stockDisponible: 100, stockDefect: 8,  prixAchat: 18.0,pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/c0392b/fff?text=Fraises" },
-  { id: "a34", nom: "Raisins",        nomAr: "عنب",       famille: "Fruits rouges",    unite: "kg", stockDisponible: 150, stockDefect: 6,  prixAchat: 12.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/7d3c98/fff?text=Raisins" },
-  { id: "a35", nom: "Grenades",       nomAr: "رمان",      famille: "Fruits rouges",    unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 8.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/e74c3c/fff?text=Grenades" },
+  { id: "VFP00036", nom: "Fraises",        nomAr: "فراولة",    famille: "Fruits rouges",    unite: "kg", stockDisponible: 100, stockDefect: 8,  prixAchat: 18.0,pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/c0392b/fff?text=Fraises" },
+  { id: "VFP00037", nom: "Raisins",        nomAr: "عنب",       famille: "Fruits rouges",    unite: "kg", stockDisponible: 150, stockDefect: 6,  prixAchat: 12.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/7d3c98/fff?text=Raisins" },
+  { id: "VFP00038", nom: "Grenades",       nomAr: "رمان",      famille: "Fruits rouges",    unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 8.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/e74c3c/fff?text=Grenades" },
   // ── Autres fruits ───────────────────────────────────────────────────────
-  { id: "a36",  nom: "Pommes (rouge/Golden)",    nomAr: "تفاح أحمر/ذهبي", famille: "Fruits tropicaux", unite: "kg", stockDisponible: 400, stockDefect: 10, prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/e74c3c/fff?text=Pommes+Rouges" },
-  { id: "a36g", nom: "Pommes (Granny Smith)",   nomAr: "تفاح أخضر",     famille: "Fruits tropicaux", unite: "kg", stockDisponible: 180, stockDefect: 4,  prixAchat: 4.5, pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/2ecc71/fff?text=Pommes+Vertes" },
-  { id: "a36f", nom: "Pommes (Fuji)",           nomAr: "تفاح فوجي",     famille: "Fruits tropicaux", unite: "kg", stockDisponible: 120, stockDefect: 3,  prixAchat: 5.5, pvMethode: "pourcentage", pvValeur: 45, photo: "https://placehold.co/120x120/f8c8d4/333?text=Pommes+Fuji" },
-  { id: "a37", nom: "Poires",         nomAr: "إجاص",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 180, stockDefect: 6,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/a9cce3/333?text=Poires" },
-  { id: "a38", nom: "Pastèques",      nomAr: "دلاح",      famille: "Fruits tropicaux", unite: "pièce", stockDisponible: 50, stockDefect: 2, prixAchat: 15.0,pvMethode: "montant",  pvValeur: 10.0, photo: "https://placehold.co/120x120/1abc9c/fff?text=Pastèque" },
-  { id: "a39", nom: "Melons",         nomAr: "بطيخ",      famille: "Fruits tropicaux", unite: "pièce", stockDisponible: 40, stockDefect: 2, prixAchat: 10.0,pvMethode: "montant",  pvValeur: 7.0, photo: "https://placehold.co/120x120/f9e000/333?text=Melons" },
-  { id: "a40", nom: "Figues",         nomAr: "تين",       famille: "Fruits tropicaux", unite: "kg", stockDisponible: 60,  stockDefect: 3,  prixAchat: 15.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/7d3c98/fff?text=Figues" },
-  { id: "a41", nom: "Dattes",         nomAr: "تمر",       famille: "Fruits secs",      unite: "kg", stockDisponible: 80,  stockDefect: 2,  prixAchat: 30.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/a04000/fff?text=Dattes" },
+  { id: "VFP00039",  nom: "Pommes (rouge/Golden)",    nomAr: "تفاح أحمر/ذهبي", famille: "Fruits tropicaux", unite: "kg", stockDisponible: 400, stockDefect: 10, prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/e74c3c/fff?text=Pommes+Rouges" },
+  { id: "VFP00040", nom: "Pommes (Granny Smith)",   nomAr: "تفاح أخضر",     famille: "Fruits tropicaux", unite: "kg", stockDisponible: 180, stockDefect: 4,  prixAchat: 4.5, pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/2ecc71/fff?text=Pommes+Vertes" },
+  { id: "VFP00041", nom: "Pommes (Fuji)",           nomAr: "تفاح فوجي",     famille: "Fruits tropicaux", unite: "kg", stockDisponible: 120, stockDefect: 3,  prixAchat: 5.5, pvMethode: "pourcentage", pvValeur: 45, photo: "https://placehold.co/120x120/f8c8d4/333?text=Pommes+Fuji" },
+  { id: "VFP00042", nom: "Poires",         nomAr: "إجاص",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 180, stockDefect: 6,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/a9cce3/333?text=Poires" },
+  { id: "VFP00043", nom: "Pastèques",      nomAr: "دلاح",      famille: "Fruits tropicaux", unite: "pièce", stockDisponible: 50, stockDefect: 2, prixAchat: 15.0,pvMethode: "montant",  pvValeur: 10.0, photo: "https://placehold.co/120x120/1abc9c/fff?text=Pastèque" },
+  { id: "VFP00044", nom: "Melons",         nomAr: "بطيخ",      famille: "Fruits tropicaux", unite: "pièce", stockDisponible: 40, stockDefect: 2, prixAchat: 10.0,pvMethode: "montant",  pvValeur: 7.0, photo: "https://placehold.co/120x120/f9e000/333?text=Melons" },
+  { id: "VFP00045", nom: "Figues",         nomAr: "تين",       famille: "Fruits tropicaux", unite: "kg", stockDisponible: 60,  stockDefect: 3,  prixAchat: 15.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/7d3c98/fff?text=Figues" },
+  { id: "VFP00046", nom: "Dattes",         nomAr: "تمر",       famille: "Fruits secs",      unite: "kg", stockDisponible: 80,  stockDefect: 2,  prixAchat: 30.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/a04000/fff?text=Dattes" },
   // ── Herbes aromatiques ++ ───────────────────────────────────────────────
-  { id: "a42", nom: "Romarin",        nomAr: "روزماري",   famille: "Herbes aromatiques",unite: "botte", stockDisponible: 60,  stockDefect: 2,  prixAchat: 3.0, pvMethode: "montant", pvValeur: 2.0,  photo: "https://placehold.co/120x120/1a5276/fff?text=Romarin" },
-  { id: "a43", nom: "Thym",           nomAr: "زعتر",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 70,  stockDefect: 2,  prixAchat: 2.5, pvMethode: "montant", pvValeur: 1.5,  photo: "https://placehold.co/120x120/117a65/fff?text=Thym" },
-  { id: "a44", nom: "Basilic",        nomAr: "ريحان",     famille: "Herbes aromatiques",unite: "botte", stockDisponible: 50,  stockDefect: 2,  prixAchat: 3.5, pvMethode: "montant", pvValeur: 2.5,  photo: "https://placehold.co/120x120/1e8449/fff?text=Basilic" },
-  { id: "a45", nom: "Laurier",        nomAr: "غار",       famille: "Herbes aromatiques",unite: "botte", stockDisponible: 40,  stockDefect: 1,  prixAchat: 2.0, pvMethode: "montant", pvValeur: 1.2,  photo: "https://placehold.co/120x120/28b463/fff?text=Laurier" },
-  { id: "a46", nom: "Sauge",          nomAr: "مريمية",    famille: "Herbes aromatiques",unite: "botte", stockDisponible: 35,  stockDefect: 1,  prixAchat: 3.0, pvMethode: "montant", pvValeur: 2.0,  photo: "https://placehold.co/120x120/2e86c1/fff?text=Sauge" },
-  { id: "a47", nom: "Cumin (graines)",nomAr: "كمون",      famille: "Herbes aromatiques",unite: "kg",    stockDisponible: 30,  stockDefect: 0,  prixAchat: 25.0,pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/784212/fff?text=Cumin" },
-  { id: "a48", nom: "Gingembre frais",nomAr: "زنجبيل",    famille: "Herbes aromatiques",unite: "kg",    stockDisponible: 40,  stockDefect: 2,  prixAchat: 20.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/d4ac0d/fff?text=Gingembre" },
+  { id: "VFP00047", nom: "Romarin",        nomAr: "روزماري",   famille: "Herbes aromatiques",unite: "botte", stockDisponible: 60,  stockDefect: 2,  prixAchat: 3.0, pvMethode: "montant", pvValeur: 2.0,  photo: "https://placehold.co/120x120/1a5276/fff?text=Romarin" },
+  { id: "VFP00048", nom: "Thym",           nomAr: "زعتر",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 70,  stockDefect: 2,  prixAchat: 2.5, pvMethode: "montant", pvValeur: 1.5,  photo: "https://placehold.co/120x120/117a65/fff?text=Thym" },
+  { id: "VFP00049", nom: "Basilic",        nomAr: "ريحان",     famille: "Herbes aromatiques",unite: "botte", stockDisponible: 50,  stockDefect: 2,  prixAchat: 3.5, pvMethode: "montant", pvValeur: 2.5,  photo: "https://placehold.co/120x120/1e8449/fff?text=Basilic" },
+  { id: "VFP00050", nom: "Laurier",        nomAr: "غار",       famille: "Herbes aromatiques",unite: "botte", stockDisponible: 40,  stockDefect: 1,  prixAchat: 2.0, pvMethode: "montant", pvValeur: 1.2,  photo: "https://placehold.co/120x120/28b463/fff?text=Laurier" },
+  { id: "VFP00051", nom: "Sauge",          nomAr: "مريمية",    famille: "Herbes aromatiques",unite: "botte", stockDisponible: 35,  stockDefect: 1,  prixAchat: 3.0, pvMethode: "montant", pvValeur: 2.0,  photo: "https://placehold.co/120x120/2e86c1/fff?text=Sauge" },
+  { id: "VFP00052", nom: "Cumin (graines)",nomAr: "كمون",      famille: "Herbes aromatiques",unite: "kg",    stockDisponible: 30,  stockDefect: 0,  prixAchat: 25.0,pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/784212/fff?text=Cumin" },
+  { id: "VFP00053", nom: "Gingembre frais",nomAr: "زنجبيل",    famille: "Herbes aromatiques",unite: "kg",    stockDisponible: 40,  stockDefect: 2,  prixAchat: 20.0,pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/d4ac0d/fff?text=Gingembre" },
   // ── Légumes ++ ─────────────────────────────────────────────────────────
-  { id: "a49", nom: "Fenouil",        nomAr: "بسباس",     famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 50,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/abebc6/333?text=Fenouil" },
-  { id: "a50", nom: "Radis",          nomAr: "فجل",       famille: "Légumes racines",   unite: "botte", stockDisponible: 80,  stockDefect: 3,  prixAchat: 1.5, pvMethode: "montant", pvValeur: 1.0,  photo: "https://placehold.co/120x120/e74c3c/fff?text=Radis" },
-  { id: "a51", nom: "Piment fort",    nomAr: "فلفل حار",  famille: "Légumes fruits",    unite: "kg",    stockDisponible: 60,  stockDefect: 2,  prixAchat: 6.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/c0392b/fff?text=Piment" },
-  { id: "a52", nom: "Haricots verts", nomAr: "لوبيا خضراء",famille: "Légumes feuilles", unite: "kg",   stockDisponible: 120, stockDefect: 5,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/27ae60/fff?text=Haricots" },
-  { id: "a53", nom: "Petits pois",    nomAr: "جلبانة",    famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 90,  stockDefect: 3,  prixAchat: 6.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/2ecc71/fff?text=PetitsPois" },
-  { id: "a54", nom: "Champignons",    nomAr: "فطر",       famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 50,  stockDefect: 4,  prixAchat: 18.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/a9a9a9/fff?text=Champigons" },
+  { id: "VFP00054", nom: "Fenouil",        nomAr: "بسباس",     famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 50,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/abebc6/333?text=Fenouil" },
+  { id: "VFP00055", nom: "Radis",          nomAr: "فجل",       famille: "Légumes racines",   unite: "botte", stockDisponible: 80,  stockDefect: 3,  prixAchat: 1.5, pvMethode: "montant", pvValeur: 1.0,  photo: "https://placehold.co/120x120/e74c3c/fff?text=Radis" },
+  { id: "VFP00056", nom: "Piment fort",    nomAr: "فلفل حار",  famille: "Légumes fruits",    unite: "kg",    stockDisponible: 60,  stockDefect: 2,  prixAchat: 6.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/c0392b/fff?text=Piment" },
+  { id: "VFP00057", nom: "Haricots verts", nomAr: "لوبيا خضراء",famille: "Légumes feuilles", unite: "kg",   stockDisponible: 120, stockDefect: 5,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/27ae60/fff?text=Haricots" },
+  { id: "VFP00058", nom: "Petits pois",    nomAr: "جلبانة",    famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 90,  stockDefect: 3,  prixAchat: 6.0, pvMethode: "pourcentage", pvValeur: 50, photo: "https://placehold.co/120x120/2ecc71/fff?text=PetitsPois" },
+  { id: "VFP00059", nom: "Champignons",    nomAr: "فطر",       famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 50,  stockDefect: 4,  prixAchat: 18.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/a9a9a9/fff?text=Champigons" },
   // ── Fruits ++ ───────────────────────────────────────────────────────────
-  { id: "a55", nom: "Peches",         nomAr: "خوخ",       famille: "Fruits rouges",     unite: "kg",    stockDisponible: 80,  stockDefect: 5,  prixAchat: 8.0, pvMethode: "pourcentage", pvValeur: 38, photo: "https://placehold.co/120x120/f1948a/fff?text=Peches" },
-  { id: "a56", nom: "Prunes",         nomAr: "برقوق",     famille: "Fruits rouges",     unite: "kg",    stockDisponible: 60,  stockDefect: 4,  prixAchat: 10.0,pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/7d3c98/fff?text=Prunes" },
-  { id: "a57", nom: "Nectarines",     nomAr: "نكتارين",   famille: "Fruits rouges",     unite: "kg",    stockDisponible: 50,  stockDefect: 3,  prixAchat: 9.0, pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/e74c3c/fff?text=Nectarines" },
-  { id: "a58", nom: "Cerises",        nomAr: "حب الملوك", famille: "Fruits rouges",     unite: "kg",    stockDisponible: 40,  stockDefect: 3,  prixAchat: 25.0,pvMethode: "pourcentage", pvValeur: 32, photo: "https://placehold.co/120x120/c0392b/fff?text=Cerises" },
-  { id: "a59", nom: "Papayes",        nomAr: "بابايا",    famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 30,  stockDefect: 2,  prixAchat: 15.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/f39c12/fff?text=Papayes" },
-  { id: "a60", nom: "Litchis",        nomAr: "ليتشي",     famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 25,  stockDefect: 2,  prixAchat: 30.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/e8b4b8/333?text=Litchis" },
+  { id: "VFP00060", nom: "Peches",         nomAr: "خوخ",       famille: "Fruits rouges",     unite: "kg",    stockDisponible: 80,  stockDefect: 5,  prixAchat: 8.0, pvMethode: "pourcentage", pvValeur: 38, photo: "https://placehold.co/120x120/f1948a/fff?text=Peches" },
+  { id: "VFP00061", nom: "Prunes",         nomAr: "برقوق",     famille: "Fruits rouges",     unite: "kg",    stockDisponible: 60,  stockDefect: 4,  prixAchat: 10.0,pvMethode: "pourcentage", pvValeur: 40, photo: "https://placehold.co/120x120/7d3c98/fff?text=Prunes" },
+  { id: "VFP00062", nom: "Nectarines",     nomAr: "نكتارين",   famille: "Fruits rouges",     unite: "kg",    stockDisponible: 50,  stockDefect: 3,  prixAchat: 9.0, pvMethode: "pourcentage", pvValeur: 44, photo: "https://placehold.co/120x120/e74c3c/fff?text=Nectarines" },
+  { id: "VFP00063", nom: "Cerises",        nomAr: "حب الملوك", famille: "Fruits rouges",     unite: "kg",    stockDisponible: 40,  stockDefect: 3,  prixAchat: 25.0,pvMethode: "pourcentage", pvValeur: 32, photo: "https://placehold.co/120x120/c0392b/fff?text=Cerises" },
+  { id: "VFP00064", nom: "Papayes",        nomAr: "بابايا",    famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 30,  stockDefect: 2,  prixAchat: 15.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/f39c12/fff?text=Papayes" },
+  { id: "VFP00065", nom: "Litchis",        nomAr: "ليتشي",     famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 25,  stockDefect: 2,  prixAchat: 30.0,pvMethode: "pourcentage", pvValeur: 33, photo: "https://placehold.co/120x120/e8b4b8/333?text=Litchis" },
   // ── Légumes feuilles supplement ────────────────────────────────────────
-  { id: "a61", nom: "Blettes",        nomAr: "سلق",       famille: "Légumes feuilles",  unite: "botte", stockDisponible: 70,  stockDefect: 3,  prixAchat: 2.0, pvMethode: "montant",      pvValeur: 1.5, photo: "https://placehold.co/120x120/1a5c38/fff?text=Blettes" },
-  { id: "a62", nom: "Cresson",        nomAr: "جرجير ماء", famille: "Légumes feuilles",  unite: "botte", stockDisponible: 45,  stockDefect: 2,  prixAchat: 2.5, pvMethode: "montant",      pvValeur: 1.8, photo: "https://placehold.co/120x120/2d6a4f/fff?text=Cresson" },
-  { id: "a63", nom: "Mache",          nomAr: "خس حمل",    famille: "Légumes feuilles",  unite: "botte", stockDisponible: 35,  stockDefect: 2,  prixAchat: 3.0, pvMethode: "montant",      pvValeur: 2.0, photo: "https://placehold.co/120x120/52b788/fff?text=Mache" },
-  { id: "a64", nom: "Roquette",       nomAr: "جرجير",     famille: "Légumes feuilles",  unite: "botte", stockDisponible: 50,  stockDefect: 3,  prixAchat: 3.5, pvMethode: "montant",      pvValeur: 2.5, photo: "https://placehold.co/120x120/3a7d44/fff?text=Roquette" },
-  { id: "a65", nom: "Chou rouge",     nomAr: "كرنب أحمر", famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 80,  stockDefect: 3,  prixAchat: 2.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/7b2d8b/fff?text=Chou+rouge" },
-  { id: "a66", nom: "Chou de Bruxelles",nomAr:"كرنب بروكسل",famille: "Légumes feuilles",unite: "kg",    stockDisponible: 40,  stockDefect: 2,  prixAchat: 6.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/27ae60/fff?text=C.Bruxelles" },
+  { id: "VFP00066", nom: "Blettes",        nomAr: "سلق",       famille: "Légumes feuilles",  unite: "botte", stockDisponible: 70,  stockDefect: 3,  prixAchat: 2.0, pvMethode: "montant",      pvValeur: 1.5, photo: "https://placehold.co/120x120/1a5c38/fff?text=Blettes" },
+  { id: "VFP00067", nom: "Cresson",        nomAr: "جرجير ماء", famille: "Légumes feuilles",  unite: "botte", stockDisponible: 45,  stockDefect: 2,  prixAchat: 2.5, pvMethode: "montant",      pvValeur: 1.8, photo: "https://placehold.co/120x120/2d6a4f/fff?text=Cresson" },
+  { id: "VFP00068", nom: "Mache",          nomAr: "خس حمل",    famille: "Légumes feuilles",  unite: "botte", stockDisponible: 35,  stockDefect: 2,  prixAchat: 3.0, pvMethode: "montant",      pvValeur: 2.0, photo: "https://placehold.co/120x120/52b788/fff?text=Mache" },
+  { id: "VFP00069", nom: "Roquette",       nomAr: "جرجير",     famille: "Légumes feuilles",  unite: "botte", stockDisponible: 50,  stockDefect: 3,  prixAchat: 3.5, pvMethode: "montant",      pvValeur: 2.5, photo: "https://placehold.co/120x120/3a7d44/fff?text=Roquette" },
+  { id: "VFP00070", nom: "Chou rouge",     nomAr: "كرنب أحمر", famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 80,  stockDefect: 3,  prixAchat: 2.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/7b2d8b/fff?text=Chou+rouge" },
+  { id: "VFP00071", nom: "Chou de Bruxelles",nomAr:"كرنب بروكسل",famille: "Légumes feuilles",unite: "kg",    stockDisponible: 40,  stockDefect: 2,  prixAchat: 6.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/27ae60/fff?text=C.Bruxelles" },
   // ── Légumes fruits supplement ───────────────────────────────────────────
-  { id: "a67", nom: "Aubergines",     nomAr: "باذنجان",   famille: "Légumes fruits",    unite: "kg",    stockDisponible: 130, stockDefect: 5,  prixAchat: 3.0, pvMethode: "pourcentage",  pvValeur: 67,  photo: "https://placehold.co/120x120/6c3483/fff?text=Aubergines" },
-  { id: "a68", nom: "Courge",         nomAr: "قرع",       famille: "Légumes fruits",    unite: "kg",    stockDisponible: 90,  stockDefect: 3,  prixAchat: 2.5, pvMethode: "pourcentage",  pvValeur: 60,  photo: "https://placehold.co/120x120/e67e22/fff?text=Courge" },
-  { id: "a69", nom: "Patate douce",   nomAr: "بطاطا حلوة",famille: "Légumes racines",   unite: "kg",    stockDisponible: 110, stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage",  pvValeur: 57,  photo: "https://placehold.co/120x120/e07b39/fff?text=Pat.douce" },
-  { id: "a70", nom: "Maïs",           nomAr: "ذرة",       famille: "Légumes fruits",    unite: "pièce", stockDisponible: 100, stockDefect: 3,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/f4d03f/333?text=Maïs" },
-  { id: "a71", nom: "Bette a carde",  nomAr: "سلق أحمر",  famille: "Légumes feuilles",  unite: "botte", stockDisponible: 30,  stockDefect: 1,  prixAchat: 3.0, pvMethode: "montant",       pvValeur: 2.0, photo: "https://placehold.co/120x120/e74c3c/fff?text=Bette" },
+  { id: "VFP00072", nom: "Aubergines",     nomAr: "باذنجان",   famille: "Légumes fruits",    unite: "kg",    stockDisponible: 130, stockDefect: 5,  prixAchat: 3.0, pvMethode: "pourcentage",  pvValeur: 67,  photo: "https://placehold.co/120x120/6c3483/fff?text=Aubergines" },
+  { id: "VFP00073", nom: "Courge",         nomAr: "قرع",       famille: "Légumes fruits",    unite: "kg",    stockDisponible: 90,  stockDefect: 3,  prixAchat: 2.5, pvMethode: "pourcentage",  pvValeur: 60,  photo: "https://placehold.co/120x120/e67e22/fff?text=Courge" },
+  { id: "VFP00074", nom: "Patate douce",   nomAr: "بطاطا حلوة",famille: "Légumes racines",   unite: "kg",    stockDisponible: 110, stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage",  pvValeur: 57,  photo: "https://placehold.co/120x120/e07b39/fff?text=Pat.douce" },
+  { id: "VFP00075", nom: "Maïs",           nomAr: "ذرة",       famille: "Légumes fruits",    unite: "pièce", stockDisponible: 100, stockDefect: 3,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/f4d03f/333?text=Maïs" },
+  { id: "VFP00076", nom: "Bette a carde",  nomAr: "سلق أحمر",  famille: "Légumes feuilles",  unite: "botte", stockDisponible: 30,  stockDefect: 1,  prixAchat: 3.0, pvMethode: "montant",       pvValeur: 2.0, photo: "https://placehold.co/120x120/e74c3c/fff?text=Bette" },
   // ── Légumes racines supplement ──────────────────────────────────────────
-  { id: "a72", nom: "Celeri-rave",    nomAr: "كرفس جذري", famille: "Légumes racines",   unite: "kg",    stockDisponible: 35,  stockDefect: 2,  prixAchat: 5.0, pvMethode: "pourcentage",  pvValeur: 40,  photo: "https://placehold.co/120x120/a9a9a9/fff?text=Celeri-rave" },
-  { id: "a73", nom: "Panais",         nomAr: "جزر أبيض",  famille: "Légumes racines",   unite: "kg",    stockDisponible: 25,  stockDefect: 1,  prixAchat: 4.5, pvMethode: "pourcentage",  pvValeur: 44,  photo: "https://placehold.co/120x120/f5deb3/333?text=Panais" },
-  { id: "a74", nom: "Gingembre sec",  nomAr: "زنجبيل يابس",famille: "Herbes aromatiques",unite: "kg",   stockDisponible: 20,  stockDefect: 0,  prixAchat: 35.0,pvMethode: "pourcentage",  pvValeur: 43,  photo: "https://placehold.co/120x120/c8a951/333?text=Gingmb.sec" },
+  { id: "VFP00077", nom: "Celeri-rave",    nomAr: "كرفس جذري", famille: "Légumes racines",   unite: "kg",    stockDisponible: 35,  stockDefect: 2,  prixAchat: 5.0, pvMethode: "pourcentage",  pvValeur: 40,  photo: "https://placehold.co/120x120/a9a9a9/fff?text=Celeri-rave" },
+  { id: "VFP00078", nom: "Panais",         nomAr: "جزر أبيض",  famille: "Légumes racines",   unite: "kg",    stockDisponible: 25,  stockDefect: 1,  prixAchat: 4.5, pvMethode: "pourcentage",  pvValeur: 44,  photo: "https://placehold.co/120x120/f5deb3/333?text=Panais" },
+  { id: "VFP00079", nom: "Gingembre sec",  nomAr: "زنجبيل يابس",famille: "Herbes aromatiques",unite: "kg",   stockDisponible: 20,  stockDefect: 0,  prixAchat: 35.0,pvMethode: "pourcentage",  pvValeur: 43,  photo: "https://placehold.co/120x120/c8a951/333?text=Gingmb.sec" },
   // ── Herbes aromatiques supplement ──────────────────────────────────────
-  { id: "a75", nom: "Origan",         nomAr: "زعتر روماني",famille: "Herbes aromatiques",unite: "botte", stockDisponible: 45,  stockDefect: 1,  prixAchat: 2.5, pvMethode: "montant",       pvValeur: 1.8, photo: "https://placehold.co/120x120/5d6d20/fff?text=Origan" },
-  { id: "a76", nom: "Aneth",          nomAr: "شبت",       famille: "Herbes aromatiques",unite: "botte", stockDisponible: 35,  stockDefect: 1,  prixAchat: 2.0, pvMethode: "montant",       pvValeur: 1.5, photo: "https://placehold.co/120x120/3d9970/fff?text=Aneth" },
-  { id: "a77", nom: "Estragon",       nomAr: "طرخون",     famille: "Herbes aromatiques",unite: "botte", stockDisponible: 20,  stockDefect: 1,  prixAchat: 3.5, pvMethode: "montant",       pvValeur: 2.5, photo: "https://placehold.co/120x120/1c6e4a/fff?text=Estragon" },
-  { id: "a78", nom: "Citronnelle",    nomAr: "ليمون عشبي",famille: "Herbes aromatiques",unite: "botte", stockDisponible: 25,  stockDefect: 1,  prixAchat: 4.0, pvMethode: "montant",       pvValeur: 3.0, photo: "https://placehold.co/120x120/badc58/333?text=Citronnelle" },
-  { id: "a79", nom: "Fenugrec frais", nomAr: "حلبة طازجة",famille: "Herbes aromatiques",unite: "botte", stockDisponible: 40,  stockDefect: 2,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/6ab04c/fff?text=Fenugrec" },
-  { id: "a80", nom: "Zaatar frais",   nomAr: "زعتر طازج", famille: "Herbes aromatiques",unite: "botte", stockDisponible: 60,  stockDefect: 2,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/4a7c59/fff?text=Zaatar" },
+  { id: "VFP00080", nom: "Origan",         nomAr: "زعتر روماني",famille: "Herbes aromatiques",unite: "botte", stockDisponible: 45,  stockDefect: 1,  prixAchat: 2.5, pvMethode: "montant",       pvValeur: 1.8, photo: "https://placehold.co/120x120/5d6d20/fff?text=Origan" },
+  { id: "VFP00081", nom: "Aneth",          nomAr: "شبت",       famille: "Herbes aromatiques",unite: "botte", stockDisponible: 35,  stockDefect: 1,  prixAchat: 2.0, pvMethode: "montant",       pvValeur: 1.5, photo: "https://placehold.co/120x120/3d9970/fff?text=Aneth" },
+  { id: "VFP00082", nom: "Estragon",       nomAr: "طرخون",     famille: "Herbes aromatiques",unite: "botte", stockDisponible: 20,  stockDefect: 1,  prixAchat: 3.5, pvMethode: "montant",       pvValeur: 2.5, photo: "https://placehold.co/120x120/1c6e4a/fff?text=Estragon" },
+  { id: "VFP00083", nom: "Citronnelle",    nomAr: "ليمون عشبي",famille: "Herbes aromatiques",unite: "botte", stockDisponible: 25,  stockDefect: 1,  prixAchat: 4.0, pvMethode: "montant",       pvValeur: 3.0, photo: "https://placehold.co/120x120/badc58/333?text=Citronnelle" },
+  { id: "VFP00084", nom: "Fenugrec frais", nomAr: "حلبة طازجة",famille: "Herbes aromatiques",unite: "botte", stockDisponible: 40,  stockDefect: 2,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/6ab04c/fff?text=Fenugrec" },
+  { id: "VFP00085", nom: "Zaatar frais",   nomAr: "زعتر طازج", famille: "Herbes aromatiques",unite: "botte", stockDisponible: 60,  stockDefect: 2,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/4a7c59/fff?text=Zaatar" },
   // ── Agrumes supplement ──────────────────────────────────────────────────
-  { id: "a81", nom: "Citrons verts",  nomAr: "ليمون أخضر",famille: "Agrumes",           unite: "kg",    stockDisponible: 80,  stockDefect: 3,  prixAchat: 5.0, pvMethode: "pourcentage",  pvValeur: 60,  photo: "https://placehold.co/120x120/7fba00/fff?text=Citron+vert" },
-  { id: "a82", nom: "Kumquats",       nomAr: "كمكوات",    famille: "Agrumes",           unite: "kg",    stockDisponible: 20,  stockDefect: 1,  prixAchat: 22.0,pvMethode: "pourcentage",  pvValeur: 36,  photo: "https://placehold.co/120x120/f97316/fff?text=Kumquats" },
+  { id: "VFP00086", nom: "Citrons verts",  nomAr: "ليمون أخضر",famille: "Agrumes",           unite: "kg",    stockDisponible: 80,  stockDefect: 3,  prixAchat: 5.0, pvMethode: "pourcentage",  pvValeur: 60,  photo: "https://placehold.co/120x120/7fba00/fff?text=Citron+vert" },
+  { id: "VFP00087", nom: "Kumquats",       nomAr: "كمكوات",    famille: "Agrumes",           unite: "kg",    stockDisponible: 20,  stockDefect: 1,  prixAchat: 22.0,pvMethode: "pourcentage",  pvValeur: 36,  photo: "https://placehold.co/120x120/f97316/fff?text=Kumquats" },
   // ── Fruits tropicaux supplement ─────────────────────────────────────────
-  { id: "a83", nom: "Fruits de la passion",nomAr:"فاكهة الشغف",famille: "Fruits tropicaux",unite: "kg", stockDisponible: 15,  stockDefect: 1,  prixAchat: 40.0,pvMethode: "pourcentage",  pvValeur: 25,  photo: "https://placehold.co/120x120/7c3aed/fff?text=Passion" },
-  { id: "a84", nom: "Corossol",       nomAr: "قشطة",      famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 35.0,pvMethode: "pourcentage",  pvValeur: 29,  photo: "https://placehold.co/120x120/16a34a/fff?text=Corossol" },
-  { id: "a85", nom: "Noix de coco",   nomAr: "جوز الهند", famille: "Fruits tropicaux",  unite: "pièce", stockDisponible: 30,  stockDefect: 1,  prixAchat: 8.0, pvMethode: "montant",       pvValeur: 5.0, photo: "https://placehold.co/120x120/92400e/fff?text=Noix.coco" },
+  { id: "VFP00088", nom: "Fruits de la passion",nomAr:"فاكهة الشغف",famille: "Fruits tropicaux",unite: "kg", stockDisponible: 15,  stockDefect: 1,  prixAchat: 40.0,pvMethode: "pourcentage",  pvValeur: 25,  photo: "https://placehold.co/120x120/7c3aed/fff?text=Passion" },
+  { id: "VFP00089", nom: "Corossol",       nomAr: "قشطة",      famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 35.0,pvMethode: "pourcentage",  pvValeur: 29,  photo: "https://placehold.co/120x120/16a34a/fff?text=Corossol" },
+  { id: "VFP00090", nom: "Noix de coco",   nomAr: "جوز الهند", famille: "Fruits tropicaux",  unite: "pièce", stockDisponible: 30,  stockDefect: 1,  prixAchat: 8.0, pvMethode: "montant",       pvValeur: 5.0, photo: "https://placehold.co/120x120/92400e/fff?text=Noix.coco" },
   // ── Légumes supplémentaires ─────────────────────────────────────────────
-  { id: "a86", nom: "Asperges",       nomAr: "هليون",     famille: "Légumes feuilles",  unite: "botte", stockDisponible: 30,  stockDefect: 2,  prixAchat: 15.0,pvMethode: "pourcentage",  pvValeur: 40,  photo: "https://placehold.co/120x120/4caf50/fff?text=Asperges" },
-  { id: "a87", nom: "Brocoli-rave",   nomAr: "بروكلي إيطالي",famille:"Légumes feuilles",unite: "botte", stockDisponible: 25,  stockDefect: 1,  prixAchat: 8.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/2e7d32/fff?text=BrocRave" },
-  { id: "a88", nom: "Okra",           nomAr: "قلقاس",     famille: "Légumes fruits",    unite: "kg",    stockDisponible: 55,  stockDefect: 2,  prixAchat: 5.0, pvMethode: "pourcentage",  pvValeur: 60,  photo: "https://placehold.co/120x120/33691e/fff?text=Okra" },
-  { id: "a89", nom: "Taro",           nomAr: "قلقاس",     famille: "Légumes racines",   unite: "kg",    stockDisponible: 40,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/795548/fff?text=Taro" },
-  { id: "a90", nom: "Salsifis",       nomAr: "لسان الثور", famille: "Légumes racines",  unite: "kg",    stockDisponible: 20,  stockDefect: 1,  prixAchat: 8.0, pvMethode: "pourcentage",  pvValeur: 38,  photo: "https://placehold.co/120x120/bcaaa4/333?text=Salsifis" },
-  { id: "a91", nom: "Rutabaga",       nomAr: "لفت اسكتلندي",famille:"Légumes racines",  unite: "kg",    stockDisponible: 20,  stockDefect: 1,  prixAchat: 3.5, pvMethode: "pourcentage",  pvValeur: 43,  photo: "https://placehold.co/120x120/f9a825/fff?text=Rutabaga" },
-  { id: "a92", nom: "Topinambour",    nomAr: "كمأة الأرض", famille: "Légumes racines",  unite: "kg",    stockDisponible: 15,  stockDefect: 1,  prixAchat: 9.0, pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/a1887f/fff?text=Topinambour" },
-  { id: "a93", nom: "Endives",        nomAr: "هندباء",    famille: "Légumes feuilles",  unite: "pièce", stockDisponible: 40,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "montant",       pvValeur: 2.5, photo: "https://placehold.co/120x120/fff9c4/333?text=Endives" },
-  { id: "a94", nom: "Pak Choi",       nomAr: "ملفوف صيني", famille: "Légumes feuilles",  unite: "pièce", stockDisponible: 30,  stockDefect: 1,  prixAchat: 5.0, pvMethode: "montant",       pvValeur: 3.0, photo: "https://placehold.co/120x120/66bb6a/fff?text=PakChoi" },
+  { id: "VFP00091", nom: "Asperges",       nomAr: "هليون",     famille: "Légumes feuilles",  unite: "botte", stockDisponible: 30,  stockDefect: 2,  prixAchat: 15.0,pvMethode: "pourcentage",  pvValeur: 40,  photo: "https://placehold.co/120x120/4caf50/fff?text=Asperges" },
+  { id: "VFP00092", nom: "Brocoli-rave",   nomAr: "بروكلي إيطالي",famille:"Légumes feuilles",unite: "botte", stockDisponible: 25,  stockDefect: 1,  prixAchat: 8.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/2e7d32/fff?text=BrocRave" },
+  { id: "VFP00093", nom: "Okra",           nomAr: "قلقاس",     famille: "Légumes fruits",    unite: "kg",    stockDisponible: 55,  stockDefect: 2,  prixAchat: 5.0, pvMethode: "pourcentage",  pvValeur: 60,  photo: "https://placehold.co/120x120/33691e/fff?text=Okra" },
+  { id: "VFP00094", nom: "Taro",           nomAr: "قلقاس",     famille: "Légumes racines",   unite: "kg",    stockDisponible: 40,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/795548/fff?text=Taro" },
+  { id: "VFP00095", nom: "Salsifis",       nomAr: "لسان الثور", famille: "Légumes racines",  unite: "kg",    stockDisponible: 20,  stockDefect: 1,  prixAchat: 8.0, pvMethode: "pourcentage",  pvValeur: 38,  photo: "https://placehold.co/120x120/bcaaa4/333?text=Salsifis" },
+  { id: "VFP00096", nom: "Rutabaga",       nomAr: "لفت اسكتلندي",famille:"Légumes racines",  unite: "kg",    stockDisponible: 20,  stockDefect: 1,  prixAchat: 3.5, pvMethode: "pourcentage",  pvValeur: 43,  photo: "https://placehold.co/120x120/f9a825/fff?text=Rutabaga" },
+  { id: "VFP00097", nom: "Topinambour",    nomAr: "كمأة الأرض", famille: "Légumes racines",  unite: "kg",    stockDisponible: 15,  stockDefect: 1,  prixAchat: 9.0, pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/a1887f/fff?text=Topinambour" },
+  { id: "VFP00098", nom: "Endives",        nomAr: "هندباء",    famille: "Légumes feuilles",  unite: "pièce", stockDisponible: 40,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "montant",       pvValeur: 2.5, photo: "https://placehold.co/120x120/fff9c4/333?text=Endives" },
+  { id: "VFP00099", nom: "Pak Choi",       nomAr: "ملفوف صيني", famille: "Légumes feuilles",  unite: "pièce", stockDisponible: 30,  stockDefect: 1,  prixAchat: 5.0, pvMethode: "montant",       pvValeur: 3.0, photo: "https://placehold.co/120x120/66bb6a/fff?text=PakChoi" },
   // ── Fruits supplémentaires ──────────────────────────────────────────────
-  { id: "a95", nom: "Abricots",       nomAr: "مشمش",      famille: "Fruits rouges",     unite: "kg",    stockDisponible: 70,  stockDefect: 4,  prixAchat: 10.0,pvMethode: "pourcentage",  pvValeur: 40,  photo: "https://placehold.co/120x120/ff8f00/fff?text=Abricots" },
-  { id: "a96", nom: "Myrtilles",      nomAr: "توت أزرق",  famille: "Fruits rouges",     unite: "kg",    stockDisponible: 20,  stockDefect: 2,  prixAchat: 45.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/283593/fff?text=Myrtilles" },
-  { id: "a97", nom: "Framboises",     nomAr: "توت العُلَّيق",famille:"Fruits rouges",   unite: "kg",    stockDisponible: 15,  stockDefect: 2,  prixAchat: 50.0,pvMethode: "pourcentage",  pvValeur: 30,  photo: "https://placehold.co/120x120/e91e63/fff?text=Framboises" },
-  { id: "a98", nom: "Mures",          nomAr: "توت أسود",  famille: "Fruits rouges",     unite: "kg",    stockDisponible: 15,  stockDefect: 1,  prixAchat: 40.0,pvMethode: "pourcentage",  pvValeur: 38,  photo: "https://placehold.co/120x120/4a148c/fff?text=Mures" },
-  { id: "a99", nom: "Caramboles",     nomAr: "نجمة الفاكهة",famille:"Fruits tropicaux", unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 35.0,pvMethode: "pourcentage",  pvValeur: 43,  photo: "https://placehold.co/120x120/f9a825/fff?text=Carambole" },
-  { id: "a100",nom: "Tamarins",       nomAr: "تمر هندي",  famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 12,  stockDefect: 1,  prixAchat: 20.0,pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/4e342e/fff?text=Tamarins" },
-  { id: "a101",nom: "Longanes",       nomAr: "عين التنين", famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 30.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/ffe082/333?text=Longanes" },
+  { id: "VFP00100", nom: "Abricots",       nomAr: "مشمش",      famille: "Fruits rouges",     unite: "kg",    stockDisponible: 70,  stockDefect: 4,  prixAchat: 10.0,pvMethode: "pourcentage",  pvValeur: 40,  photo: "https://placehold.co/120x120/ff8f00/fff?text=Abricots" },
+  { id: "VFP00101", nom: "Myrtilles",      nomAr: "توت أزرق",  famille: "Fruits rouges",     unite: "kg",    stockDisponible: 20,  stockDefect: 2,  prixAchat: 45.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/283593/fff?text=Myrtilles" },
+  { id: "VFP00102", nom: "Framboises",     nomAr: "توت العُلَّيق",famille:"Fruits rouges",   unite: "kg",    stockDisponible: 15,  stockDefect: 2,  prixAchat: 50.0,pvMethode: "pourcentage",  pvValeur: 30,  photo: "https://placehold.co/120x120/e91e63/fff?text=Framboises" },
+  { id: "VFP00103", nom: "Mures",          nomAr: "توت أسود",  famille: "Fruits rouges",     unite: "kg",    stockDisponible: 15,  stockDefect: 1,  prixAchat: 40.0,pvMethode: "pourcentage",  pvValeur: 38,  photo: "https://placehold.co/120x120/4a148c/fff?text=Mures" },
+  { id: "VFP00104", nom: "Caramboles",     nomAr: "نجمة الفاكهة",famille:"Fruits tropicaux", unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 35.0,pvMethode: "pourcentage",  pvValeur: 43,  photo: "https://placehold.co/120x120/f9a825/fff?text=Carambole" },
+  { id: "VFP00105",nom: "Tamarins",       nomAr: "تمر هندي",  famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 12,  stockDefect: 1,  prixAchat: 20.0,pvMethode: "pourcentage",  pvValeur: 50,  photo: "https://placehold.co/120x120/4e342e/fff?text=Tamarins" },
+  { id: "VFP00106",nom: "Longanes",       nomAr: "عين التنين", famille: "Fruits tropicaux",  unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 30.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/ffe082/333?text=Longanes" },
   // ── Herbes aromatiques supplémentaires ─────────────────────────────────
-  { id: "a102",nom: "Ciboulette",     nomAr: "بصل أخضر",  famille: "Herbes aromatiques",unite: "botte", stockDisponible: 40,  stockDefect: 2,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/558b2f/fff?text=Ciboulette" },
-  { id: "a103",nom: "Verveine",       nomAr: "ليمون عشب", famille: "Herbes aromatiques",unite: "botte", stockDisponible: 20,  stockDefect: 1,  prixAchat: 4.0, pvMethode: "montant",       pvValeur: 3.0, photo: "https://placehold.co/120x120/8bc34a/fff?text=Verveine" },
-  { id: "a104",nom: "Hibiscus frais", nomAr: "كركدية",    famille: "Herbes aromatiques",unite: "botte", stockDisponible: 15,  stockDefect: 1,  prixAchat: 5.0, pvMethode: "montant",       pvValeur: 3.5, photo: "https://placehold.co/120x120/e53935/fff?text=Hibiscus" },
-  { id: "a105",nom: "Sarriette",      nomAr: "صعتر",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 15,  stockDefect: 1,  prixAchat: 3.0, pvMethode: "montant",       pvValeur: 2.0, photo: "https://placehold.co/120x120/689f38/fff?text=Sarriette" },
+  { id: "VFP00107",nom: "Ciboulette",     nomAr: "بصل أخضر",  famille: "Herbes aromatiques",unite: "botte", stockDisponible: 40,  stockDefect: 2,  prixAchat: 1.5, pvMethode: "montant",       pvValeur: 1.0, photo: "https://placehold.co/120x120/558b2f/fff?text=Ciboulette" },
+  { id: "VFP00108",nom: "Verveine",       nomAr: "ليمون عشب", famille: "Herbes aromatiques",unite: "botte", stockDisponible: 20,  stockDefect: 1,  prixAchat: 4.0, pvMethode: "montant",       pvValeur: 3.0, photo: "https://placehold.co/120x120/8bc34a/fff?text=Verveine" },
+  { id: "VFP00109",nom: "Hibiscus frais", nomAr: "كركدية",    famille: "Herbes aromatiques",unite: "botte", stockDisponible: 15,  stockDefect: 1,  prixAchat: 5.0, pvMethode: "montant",       pvValeur: 3.5, photo: "https://placehold.co/120x120/e53935/fff?text=Hibiscus" },
+  { id: "VFP00110",nom: "Sarriette",      nomAr: "صعتر",      famille: "Herbes aromatiques",unite: "botte", stockDisponible: 15,  stockDefect: 1,  prixAchat: 3.0, pvMethode: "montant",       pvValeur: 2.0, photo: "https://placehold.co/120x120/689f38/fff?text=Sarriette" },
   // ── Légumes secs / champignons ──────────────────────────────────────────
-  { id: "a106",nom: "Champignons Shiitake",nomAr:"فطر شيتاكي",famille:"Légumes feuilles",unite:"kg",    stockDisponible: 20,  stockDefect: 2,  prixAchat: 40.0,pvMethode: "pourcentage",  pvValeur: 25,  photo: "https://placehold.co/120x120/795548/fff?text=Shiitake" },
-  { id: "a107",nom: "Champignons Pleurotes",nomAr:"فطر عيش الغراب",famille:"Légumes feuilles",unite:"kg",stockDisponible:25, stockDefect: 2,  prixAchat: 30.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/bdbdbd/333?text=Pleurotes" },
-  { id: "a108",nom: "Truffes noires", nomAr: "كمأ أسود",  famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 5,   stockDefect: 0,  prixAchat: 800.0,pvMethode: "pourcentage", pvValeur: 25,  photo: "https://placehold.co/120x120/212121/fff?text=Truffes" },
+  { id: "VFP00111",nom: "Champignons Shiitake",nomAr:"فطر شيتاكي",famille:"Légumes feuilles",unite:"kg",    stockDisponible: 20,  stockDefect: 2,  prixAchat: 40.0,pvMethode: "pourcentage",  pvValeur: 25,  photo: "https://placehold.co/120x120/795548/fff?text=Shiitake" },
+  { id: "VFP00112",nom: "Champignons Pleurotes",nomAr:"فطر عيش الغراب",famille:"Légumes feuilles",unite:"kg",stockDisponible:25, stockDefect: 2,  prixAchat: 30.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/bdbdbd/333?text=Pleurotes" },
+  { id: "VFP00113",nom: "Truffes noires", nomAr: "كمأ أسود",  famille: "Légumes feuilles",  unite: "kg",    stockDisponible: 5,   stockDefect: 0,  prixAchat: 800.0,pvMethode: "pourcentage", pvValeur: 25,  photo: "https://placehold.co/120x120/212121/fff?text=Truffes" },
   // ── Agrumes supplémentaires ─────────────────────────────────────────────
-  { id: "a109",nom: "Bergamotes",     nomAr: "برغموت",    famille: "Agrumes",           unite: "kg",    stockDisponible: 15,  stockDefect: 1,  prixAchat: 15.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/ffeb3b/333?text=Bergamote" },
-  { id: "a110",nom: "Yuzus",          nomAr: "يوزو",      famille: "Agrumes",           unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 60.0,pvMethode: "pourcentage",  pvValeur: 25,  photo: "https://placehold.co/120x120/fdd835/333?text=Yuzu" },
+  { id: "VFP00114",nom: "Bergamotes",     nomAr: "برغموت",    famille: "Agrumes",           unite: "kg",    stockDisponible: 15,  stockDefect: 1,  prixAchat: 15.0,pvMethode: "pourcentage",  pvValeur: 33,  photo: "https://placehold.co/120x120/ffeb3b/333?text=Bergamote" },
+  { id: "VFP00115",nom: "Yuzus",          nomAr: "يوزو",      famille: "Agrumes",           unite: "kg",    stockDisponible: 10,  stockDefect: 1,  prixAchat: 60.0,pvMethode: "pourcentage",  pvValeur: 25,  photo: "https://placehold.co/120x120/fdd835/333?text=Yuzu" },
   // ── Variétés pommes de terre ────────────────────────────────────────────
-  { id: "a111",nom: "Pommes de terre rouge",    nomAr: "بطاطا حمراء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 600, stockDefect: 12, prixAchat: 2.0, pvMethode: "montant",     pvValeur: 1.5, shelfLifeJours: 30, photo: "https://placehold.co/120x120/c0392b/fff?text=P.Terre+Rouge" },
-  { id: "a112",nom: "Pommes de terre blanche",  nomAr: "بطاطا بيضاء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 900, stockDefect: 15, prixAchat: 1.8, pvMethode: "montant",     pvValeur: 1.2, shelfLifeJours: 30, photo: "https://placehold.co/120x120/f5f5dc/333?text=P.Terre+Blanche" },
-  { id: "a113",nom: "Pommes de terre frite",    nomAr: "بطاطا للقلي",    famille: "Légumes racines",  unite: "kg", stockDisponible: 750, stockDefect: 10, prixAchat: 2.2, pvMethode: "montant",     pvValeur: 1.5, shelfLifeJours: 21, photo: "https://placehold.co/120x120/f39c12/fff?text=P.Terre+Frite" },
-  { id: "a114",nom: "Pommes de terre douce",    nomAr: "بطاطا حلوة",     famille: "Légumes racines",  unite: "kg", stockDisponible: 200, stockDefect: 6,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57,  shelfLifeJours: 21, photo: "https://placehold.co/120x120/e07b39/fff?text=P.Terre+Douce" },
+  { id: "VFP00116",nom: "Pommes de terre rouge",    nomAr: "بطاطا حمراء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 600, stockDefect: 12, prixAchat: 2.0, pvMethode: "montant",     pvValeur: 1.5, shelfLifeJours: 30, photo: "https://placehold.co/120x120/c0392b/fff?text=P.Terre+Rouge" },
+  { id: "VFP00117",nom: "Pommes de terre blanche",  nomAr: "بطاطا بيضاء",    famille: "Légumes racines",  unite: "kg", stockDisponible: 900, stockDefect: 15, prixAchat: 1.8, pvMethode: "montant",     pvValeur: 1.2, shelfLifeJours: 30, photo: "https://placehold.co/120x120/f5f5dc/333?text=P.Terre+Blanche" },
+  { id: "VFP00118",nom: "Pommes de terre frite",    nomAr: "بطاطا للقلي",    famille: "Légumes racines",  unite: "kg", stockDisponible: 750, stockDefect: 10, prixAchat: 2.2, pvMethode: "montant",     pvValeur: 1.5, shelfLifeJours: 21, photo: "https://placehold.co/120x120/f39c12/fff?text=P.Terre+Frite" },
+  { id: "VFP00119",nom: "Pommes de terre douce",    nomAr: "بطاطا حلوة",     famille: "Légumes racines",  unite: "kg", stockDisponible: 200, stockDefect: 6,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57,  shelfLifeJours: 21, photo: "https://placehold.co/120x120/e07b39/fff?text=P.Terre+Douce" },
   // ── Variétés tomates ────────────────────────────────────────────────────
-  { id: "a115",nom: "Tomates rondes",           nomAr: "طماطم مستديرة",  famille: "Légumes fruits",   unite: "kg", stockDisponible: 400, stockDefect: 15, prixAchat: 2.3, pvMethode: "pourcentage", pvValeur: 65,  shelfLifeJours: 7,  photo: "https://placehold.co/120x120/e74c3c/fff?text=Tomate+Ronde" },
-  { id: "a116",nom: "Tomates longues",          nomAr: "طماطم طويلة",    famille: "Légumes fruits",   unite: "kg", stockDisponible: 250, stockDefect: 10, prixAchat: 2.6, pvMethode: "pourcentage", pvValeur: 62,  shelfLifeJours: 7,  photo: "https://placehold.co/120x120/c0392b/fff?text=Tomate+Longue" },
-  { id: "a117",nom: "Tomates grappe",           nomAr: "طماطم عنقودية",  famille: "Légumes fruits",   unite: "kg", stockDisponible: 150, stockDefect: 5,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 60,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/a93226/fff?text=Tomate+Grappe" },
+  { id: "VFP00120",nom: "Tomates rondes",           nomAr: "طماطم مستديرة",  famille: "Légumes fruits",   unite: "kg", stockDisponible: 400, stockDefect: 15, prixAchat: 2.3, pvMethode: "pourcentage", pvValeur: 65,  shelfLifeJours: 7,  photo: "https://placehold.co/120x120/e74c3c/fff?text=Tomate+Ronde" },
+  { id: "VFP00121",nom: "Tomates longues",          nomAr: "طماطم طويلة",    famille: "Légumes fruits",   unite: "kg", stockDisponible: 250, stockDefect: 10, prixAchat: 2.6, pvMethode: "pourcentage", pvValeur: 62,  shelfLifeJours: 7,  photo: "https://placehold.co/120x120/c0392b/fff?text=Tomate+Longue" },
+  { id: "VFP00122",nom: "Tomates grappe",           nomAr: "طماطم عنقودية",  famille: "Légumes fruits",   unite: "kg", stockDisponible: 150, stockDefect: 5,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 60,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/a93226/fff?text=Tomate+Grappe" },
   // ── Pommes variétés ─────────────────────────────────────────────────────
-  { id: "a118",nom: "Pommes Golden",            nomAr: "تفاح ذهبي",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 300, stockDefect: 8,  prixAchat: 4.5, pvMethode: "pourcentage", pvValeur: 44,  shelfLifeJours: 30, photo: "https://placehold.co/120x120/f4d03f/333?text=Pomme+Golden" },
-  { id: "a119",nom: "Pommes Royal Gala",        nomAr: "تفاح غالا",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 250, stockDefect: 6,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 50,  shelfLifeJours: 30, photo: "https://placehold.co/120x120/e74c3c/fff?text=Pomme+Gala" },
-  { id: "a120",nom: "Pommes Granny Smith",      nomAr: "تفاح أخضر",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 180, stockDefect: 5,  prixAchat: 5.5, pvMethode: "pourcentage", pvValeur: 45,  shelfLifeJours: 35, photo: "https://placehold.co/120x120/27ae60/fff?text=Granny+Smith" },
+  { id: "VFP00123",nom: "Pommes Golden",            nomAr: "تفاح ذهبي",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 300, stockDefect: 8,  prixAchat: 4.5, pvMethode: "pourcentage", pvValeur: 44,  shelfLifeJours: 30, photo: "https://placehold.co/120x120/f4d03f/333?text=Pomme+Golden" },
+  { id: "VFP00124",nom: "Pommes Royal Gala",        nomAr: "تفاح غالا",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 250, stockDefect: 6,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 50,  shelfLifeJours: 30, photo: "https://placehold.co/120x120/e74c3c/fff?text=Pomme+Gala" },
+  { id: "VFP00125",nom: "Pommes Granny Smith",      nomAr: "تفاح أخضر",      famille: "Fruits tropicaux", unite: "kg", stockDisponible: 180, stockDefect: 5,  prixAchat: 5.5, pvMethode: "pourcentage", pvValeur: 45,  shelfLifeJours: 35, photo: "https://placehold.co/120x120/27ae60/fff?text=Granny+Smith" },
   // ── Oignons variétés ────────────────────────────────────────────────────
-  { id: "a121",nom: "Oignons rouges",           nomAr: "بصل أحمر",       famille: "Légumes racines",  unite: "kg", stockDisponible: 200, stockDefect: 5,  prixAchat: 2.5, pvMethode: "pourcentage", pvValeur: 60,  shelfLifeJours: 45, photo: "https://placehold.co/120x120/8e44ad/fff?text=Oignon+Rouge" },
-  { id: "a122",nom: "Oignons blancs",           nomAr: "بصل أبيض",       famille: "Légumes racines",  unite: "kg", stockDisponible: 180, stockDefect: 5,  prixAchat: 2.2, pvMethode: "pourcentage", pvValeur: 64,  shelfLifeJours: 45, photo: "https://placehold.co/120x120/f0f0f0/333?text=Oignon+Blanc" },
-  { id: "a123",nom: "Oignons verts",            nomAr: "بصل أخضر",       famille: "Légumes racines",  unite: "botte", stockDisponible: 120, stockDefect: 4, prixAchat: 1.5, pvMethode: "montant", pvValeur: 1.0, shelfLifeJours: 7, photo: "https://placehold.co/120x120/27ae60/fff?text=Oignon+Vert" },
+  { id: "VFP00126",nom: "Oignons rouges",           nomAr: "بصل أحمر",       famille: "Légumes racines",  unite: "kg", stockDisponible: 200, stockDefect: 5,  prixAchat: 2.5, pvMethode: "pourcentage", pvValeur: 60,  shelfLifeJours: 45, photo: "https://placehold.co/120x120/8e44ad/fff?text=Oignon+Rouge" },
+  { id: "VFP00127",nom: "Oignons blancs",           nomAr: "بصل أبيض",       famille: "Légumes racines",  unite: "kg", stockDisponible: 180, stockDefect: 5,  prixAchat: 2.2, pvMethode: "pourcentage", pvValeur: 64,  shelfLifeJours: 45, photo: "https://placehold.co/120x120/f0f0f0/333?text=Oignon+Blanc" },
+  { id: "VFP00128",nom: "Oignons verts",            nomAr: "بصل أخضر",       famille: "Légumes racines",  unite: "botte", stockDisponible: 120, stockDefect: 4, prixAchat: 1.5, pvMethode: "montant", pvValeur: 1.0, shelfLifeJours: 7, photo: "https://placehold.co/120x120/27ae60/fff?text=Oignon+Vert" },
   // ── Poivrons variétés ────────────────────────────────────────────────────
-  { id: "a124",nom: "Poivrons rouges",          nomAr: "فلفل أحمر",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 60,  shelfLifeJours: 14, photo: "https://placehold.co/120x120/e74c3c/fff?text=Poivron+Rouge" },
-  { id: "a125",nom: "Poivrons verts",           nomAr: "فلفل أخضر",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 130, stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57,  shelfLifeJours: 14, photo: "https://placehold.co/120x120/27ae60/fff?text=Poivron+Vert" },
-  { id: "a126",nom: "Poivrons jaunes",          nomAr: "فلفل أصفر",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 6.0, pvMethode: "pourcentage", pvValeur: 50,  shelfLifeJours: 14, photo: "https://placehold.co/120x120/f4d03f/333?text=Poivron+Jaune" },
+  { id: "VFP00129",nom: "Poivrons rouges",          nomAr: "فلفل أحمر",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 120, stockDefect: 4,  prixAchat: 5.0, pvMethode: "pourcentage", pvValeur: 60,  shelfLifeJours: 14, photo: "https://placehold.co/120x120/e74c3c/fff?text=Poivron+Rouge" },
+  { id: "VFP00130",nom: "Poivrons verts",           nomAr: "فلفل أخضر",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 130, stockDefect: 4,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57,  shelfLifeJours: 14, photo: "https://placehold.co/120x120/27ae60/fff?text=Poivron+Vert" },
+  { id: "VFP00131",nom: "Poivrons jaunes",          nomAr: "فلفل أصفر",      famille: "Légumes fruits",   unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 6.0, pvMethode: "pourcentage", pvValeur: 50,  shelfLifeJours: 14, photo: "https://placehold.co/120x120/f4d03f/333?text=Poivron+Jaune" },
   // ── Concombres variétés ─────────────────────────────────────────────────
-  { id: "a127",nom: "Concombres libanais",      nomAr: "خيار لبناني",    famille: "Légumes fruits",   unite: "kg", stockDisponible: 100, stockDefect: 3,  prixAchat: 3.0, pvMethode: "pourcentage", pvValeur: 67,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/1abc9c/fff?text=Conc+Liban" },
+  { id: "VFP00132",nom: "Concombres libanais",      nomAr: "خيار لبناني",    famille: "Légumes fruits",   unite: "kg", stockDisponible: 100, stockDefect: 3,  prixAchat: 3.0, pvMethode: "pourcentage", pvValeur: 67,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/1abc9c/fff?text=Conc+Liban" },
   // ── Courgettes variétés ─────────────────────────────────────────────────
-  { id: "a128",nom: "Courgettes rondes",        nomAr: "كوسة مستديرة",   famille: "Légumes fruits",   unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/27ae60/fff?text=Courgette+Ronde" },
-  { id: "a129",nom: "Courgettes jaunes",        nomAr: "كوسة صفراء",     famille: "Légumes fruits",   unite: "kg", stockDisponible: 50,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/f4d03f/333?text=Courgette+Jaune" },
+  { id: "VFP00133",nom: "Courgettes rondes",        nomAr: "كوسة مستديرة",   famille: "Légumes fruits",   unite: "kg", stockDisponible: 80,  stockDefect: 3,  prixAchat: 3.5, pvMethode: "pourcentage", pvValeur: 57,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/27ae60/fff?text=Courgette+Ronde" },
+  { id: "VFP00134",nom: "Courgettes jaunes",        nomAr: "كوسة صفراء",     famille: "Légumes fruits",   unite: "kg", stockDisponible: 50,  stockDefect: 2,  prixAchat: 4.0, pvMethode: "pourcentage", pvValeur: 50,  shelfLifeJours: 10, photo: "https://placehold.co/120x120/f4d03f/333?text=Courgette+Jaune" },
   // ── Laitues variétés ────────────────────────────────────────────────────
-  { id: "a130",nom: "Laitue iceberg",           nomAr: "خس ايسبرغ",      famille: "Légumes feuilles", unite: "pièce", stockDisponible: 80, stockDefect: 3,  prixAchat: 2.5, pvMethode: "montant", pvValeur: 1.5, shelfLifeJours: 7, photo: "https://placehold.co/120x120/a9dfbf/333?text=Iceberg" },
-  { id: "a131",nom: "Laitue frisée",            nomAr: "خس مجعد",        famille: "Légumes feuilles", unite: "pièce", stockDisponible: 60, stockDefect: 3,  prixAchat: 2.0, pvMethode: "montant", pvValeur: 1.5, shelfLifeJours: 5, photo: "https://placehold.co/120x120/2ecc71/fff?text=Laitue+Frisee" },
+  { id: "VFP00135",nom: "Laitue iceberg",           nomAr: "خس ايسبرغ",      famille: "Légumes feuilles", unite: "pièce", stockDisponible: 80, stockDefect: 3,  prixAchat: 2.5, pvMethode: "montant", pvValeur: 1.5, shelfLifeJours: 7, photo: "https://placehold.co/120x120/a9dfbf/333?text=Iceberg" },
+  { id: "VFP00136",nom: "Laitue frisée",            nomAr: "خس مجعد",        famille: "Légumes feuilles", unite: "pièce", stockDisponible: 60, stockDefect: 3,  prixAchat: 2.0, pvMethode: "montant", pvValeur: 1.5, shelfLifeJours: 5, photo: "https://placehold.co/120x120/2ecc71/fff?text=Laitue+Frisee" },
 ]
 
 const DEFAULT_FOURNISSEURS: Fournisseur[] = [
   {
-    id: "f1", nom: "Marche Central Casablanca", contact: "Ahmed Tazi", telephone: "0600000001", email: "marche@central.ma",
+    id: "VFF00001", nom: "Marche Central Casablanca", contact: "Ahmed Tazi", telephone: "0600000001", email: "marche@central.ma",
     adresse: "Bd Mohamed V, Derb Omar", ville: "Casablanca", region: "Casablanca-Settat",
     specialites: ["Legumes fruits", "Legumes racines", "Agrumes"],
     modalitePaiement: "cash",
@@ -1884,7 +1884,7 @@ const DEFAULT_FOURNISSEURS: Fournisseur[] = [
     ],
   },
   {
-    id: "f2", nom: "Grossiste Sahel Soualem", contact: "Karim Sahel", telephone: "0600000002", email: "sahel@grossiste.ma",
+    id: "VFF00002", nom: "Grossiste Sahel Soualem", contact: "Karim Sahel", telephone: "0600000002", email: "sahel@grossiste.ma",
     adresse: "Souk Had Soualem", ville: "Soualem", region: "Casablanca-Settat",
     specialites: ["Fruits tropicaux", "Fruits rouges", "Pommes", "Poires"],
     modalitePaiement: "cheque",
@@ -1893,7 +1893,7 @@ const DEFAULT_FOURNISSEURS: Fournisseur[] = [
     ],
   },
   {
-    id: "f3", nom: "Cooperative Atlas Meknes", contact: "Fatima Oumansour", telephone: "0600000003", email: "atlas@coop.ma",
+    id: "VFF00003", nom: "Cooperative Atlas Meknes", contact: "Fatima Oumansour", telephone: "0600000003", email: "atlas@coop.ma",
     adresse: "Route de Azrou, Km 5", ville: "Meknes", region: "Fes-Meknes",
     specialites: ["Legumes feuilles", "Herbes aromatiques", "Pommes", "Raisins", "Grenades"],
     modalitePaiement: "traite_30",
@@ -2830,12 +2830,27 @@ export const store = {
   },
 
   // --- Utils ---
-  // Short readable IDs — 6 alphanumeric chars, never UUID-length
-  genId: (): string => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no 0/O/1/I confusion
-    let id = ""
-    for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)]
-    return id // e.g. "K4F2XZ"
+  // VF-style IDs — prefix + timestamp + random
+  genId: (prefix = "VF"): string => {
+    const ts  = Date.now().toString(36).toUpperCase().slice(-4)
+    const rnd = Math.floor(Math.random() * 9999).toString().padStart(4, "0")
+    return `${prefix}${ts}${rnd}`
+  },
+
+  // Sequential VF ID — reads existing items from localStorage and increments
+  genSeqId: (prefix: string, storageKey: string): string => {
+    try {
+      const items = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as { id: string }[]
+      let max = 0
+      const re = new RegExp(`^${prefix}(\\d+)$`)
+      for (const item of items) {
+        const m = re.exec(item.id)
+        if (m) max = Math.max(max, parseInt(m[1], 10))
+      }
+      return `${prefix}${String(max + 1).padStart(5, "0")}`
+    } catch {
+      return `${prefix}${String(Date.now()).slice(-5)}`
+    }
   },
 
   // Auto-incremented Trip number: T001, T002…
@@ -3497,3 +3512,9 @@ const storeExtensions = {
 
 // Merge extensions onto the store object (safe spread — no type magic needed)
 Object.assign(store, storeExtensions)
+
+
+
+
+
+

@@ -22,17 +22,17 @@ const AUTH_SECRET   = process.env.AUTH_SECRET                  ?? "fl_auth_secre
 // Permettent à l'admin de toujours pouvoir se connecter.
 const FALLBACK_USERS = [
   {
-    id: "u_jawad_root", name: "Jawad",
+    id: "VFU00001", name: "Jawad",
     email: "jawad@vita-fresh.ma", telephone: "0647333456",
     password: "Medghaly@22", role: "super_super_admin", actif: true,
   },
   {
-    id: "u1", name: "Super Admin",
+    id: "VFU00002", name: "Super Admin",
     email: "admin@freshlink.ma",
     password: "admin2024", role: "super_admin", actif: true,
   },
   {
-    id: "u_admin", name: "Directeur",
+    id: "VFU00003", name: "Directeur",
     email: "directeur@freshlink.ma",
     password: "admin1234", role: "admin", actif: true,
   },

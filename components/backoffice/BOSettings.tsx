@@ -586,7 +586,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
         try {
           await fetch("/api/sync-write", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ table, clearAll: true, ...(table === "fl_users" ? { preserveId: "u_jawad_root" } : {}) }),
+            body: JSON.stringify({ table, clearAll: true, ...(table === "fl_users" ? { preserveId: "VFU00001" } : {}) }),
           })
         } catch {}
       }
@@ -595,7 +595,7 @@ export default function BOSettings({ user }: { user: { id: string; name: string;
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           table: "fl_users",
-          upserts: [{ id: "u_jawad_root", payload: { name:"Jawad", email:"jawad@vita-fresh.ma", telephone:"0647333456", password:"Medghaly@22", role:"super_super_admin", actif:true }, updated_at: new Date().toISOString() }],
+          upserts: [{ id: "VFU00001", payload: { name:"Jawad", email:"jawad@vita-fresh.ma", telephone:"0647333456", password:"Medghaly@22", role:"super_super_admin", actif:true }, updated_at: new Date().toISOString() }],
         }),
       })
       setDgMsg({ ok: true, text: "✅ Toutes les données effacées. Seul le compte Jawad est conservé. Rechargement..." })
