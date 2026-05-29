@@ -27,13 +27,15 @@ export async function GET(req: NextRequest) {
     "Content-Type": "application/json",
   } : null
 
-  // ── Tentative 1 : vue v_marketplace_catalogue (Supabase) ──────────────────
+  // ── Supabase disponible → on l'utilise TOUJOURS, même si vide ────────────────
+  // Règle : si Supabase répond (200), on retourne son résultat (peut être [])
+  //         On ne tombe sur les defaults que si Supabase est inaccessible (pas de clé / erreur réseau)
   if (sbHeaders) {
+    // Tentative 1 : vue enrichie v_marketplace_catalogue
     try {
       let url = `${supabaseUrl}/rest/v1/v_marketplace_catalogue?select=*&marketplace_actif=eq.true`
       if (famille) url += `&famille=eq.${encodeURIComponent(famille)}`
-
-      const res = await fetch(url, { headers: sbHeaders, next: { revalidate: 60 } })
+      const res = await fetch(url, { headers: sbHeaders, next: { revalidate: 30 } })
       if (res.ok) {
         const data: Record<string, unknown>[] = await res.json()
         if (Array.isArray(data) && data.length > 0) {
@@ -41,35 +43,34 @@ export async function GET(req: NextRequest) {
           return NextResponse.json(articles, { status: 200, headers: cors(origin) })
         }
       }
-    } catch { /* essayer fallback */ }
+    } catch { /* essayer tier 2 */ }
 
-    // ── Tentative 2 : table fl_articles (payload JSON) ────────────────────────
+    // Tentative 2 : table fl_articles (payload JSONB)
     try {
       const res = await fetch(
         `${supabaseUrl}/rest/v1/fl_articles?select=id,payload,updated_at&limit=500`,
-        { headers: sbHeaders, next: { revalidate: 60 } }
+        { headers: sbHeaders, next: { revalidate: 30 } }
       )
       if (res.ok) {
         const rows: { id: string; payload: Record<string, unknown>; updated_at: string }[] = await res.json()
-        // Si Supabase a des lignes (même si toutes filtrées) → on utilise Supabase
-        // Seule exception : 0 lignes = jamais configuré → fallback ERP defaults
-        if (Array.isArray(rows) && rows.length > 0) {
-          const articles = rows
-            .filter(r => !String(r.id).startsWith("__")) // ignorer les entrées de config
-            .map(r => {
-              const p = (r.payload && typeof r.payload === "object" ? r.payload : {}) as Record<string, unknown>
-              return { ...p, id: r.id }
-            })
-            .filter(a => a.marketplaceActif !== false && a.marketplace_actif !== false)
-          const result = applyFilters(articles, q, tag).sort(byOrdre).map(normalizePayload)
-          return NextResponse.json(result, { status: 200, headers: cors(origin) })
-        }
+        // ⚡ RÈGLE CLÉ : Supabase a répondu → on retourne son résultat
+        // Même si rows.length === 0 (catalogue vidé volontairement) → retourner []
+        // On ne tombe JAMAIS sur ERP_DEFAULT_ARTICLES si Supabase répond
+        const articles = (Array.isArray(rows) ? rows : [])
+          .filter(r => !String(r.id).startsWith("__"))
+          .map(r => {
+            const p = (r.payload && typeof r.payload === "object" ? r.payload : {}) as Record<string, unknown>
+            return { ...p, id: r.id }
+          })
+          .filter(a => a.marketplaceActif !== false && a.marketplace_actif !== false)
+        const result = applyFilters(articles, q, tag).sort(byOrdre).map(normalizePayload)
+        return NextResponse.json(result, { status: 200, headers: { ...cors(origin), "X-Source": "supabase" } })
       }
-    } catch { /* continuer vers defaults */ }
+    } catch { /* Supabase inaccessible → fallback */ }
   }
 
-  // ── Fallback : articles ERP par défaut (131 produits avec prix calculés) ──
-  // Priorité au ERP_DEFAULT_ARTICLES (données complètes) sur le CATALOGUE_SEED (34 articles)
+  // ── Fallback UNIQUEMENT si Supabase est inaccessible (pas de clé / erreur réseau) ──
+  // ERP defaults : utilisés pour les démos et les nouvelles installations sans Supabase
   const erpFallback = ERP_DEFAULT_ARTICLES as unknown as Record<string, unknown>[]
   const filtered = applyFilters(erpFallback, q, tag)
   if (filtered.length > 0) {

@@ -1713,12 +1713,13 @@ GET  /api/ext/commandes/:id → suivi commande</div>
       </div>
       <a href="#" class="btn-wa-green" onclick="orderWhatsApp(event)"><span data-i18n="cat_wa">📦 Commander par WhatsApp</span></a>
     </div>
-    <div class="cats" style="grid-template-columns:repeat(5,1fr)" id="cats-grid">
+    <div class="cats" style="grid-template-columns:repeat(3,1fr);gap:8px" id="cats-grid">
       <div class="ccat on" onclick="fcat('tous',this)" data-cat="tous"><span class="ccat-em">🛒</span><div class="ccat-n" data-i18n="cat_all">Tout voir</div><div class="ccat-c" id="cat-count-tous">...</div></div>
-      <div class="ccat" onclick="fcat('fruits',this)" data-cat="fruits"><span class="ccat-em">🍎</span><div class="ccat-n" data-i18n="nav_catalogue">Fruits frais</div><div class="ccat-c" id="cat-count-fruits">...</div><span class="ccat-new" id="ccat-new-fruits" style="display:none">Saison</span></div>
-      <div class="ccat" onclick="fcat('legumes',this)" data-cat="legumes"><span class="ccat-em">🥦</span><div class="ccat-n">Légumes</div><div class="ccat-c" id="cat-count-legumes">...</div><span class="ccat-new" id="ccat-new-legumes" style="display:none">Nouveau</span></div>
-      <div class="ccat" onclick="fcat('herbes',this)" data-cat="herbes"><span class="ccat-em">🌿</span><div class="ccat-n">Herbes fraîches</div><div class="ccat-c" id="cat-count-herbes">...</div><span class="ccat-new" id="ccat-new-herbes" style="display:none">Nouveau</span></div>
-      <div class="ccat" onclick="fcat('prepare',this)" data-cat="prepare"><span class="ccat-em">🔪</span><div class="ccat-n" data-i18n="cat_peeled">Prêt à cuisiner</div><div class="ccat-c" id="cat-count-prepare">...</div><span class="ccat-new" id="ccat-new-prepare" style="display:none">Nouveau</span></div>
+      <div class="ccat" onclick="fcat('legumes',this)" data-cat="legumes"><span class="ccat-em">🥦</span><div class="ccat-n">Légumes</div><div class="ccat-c" id="cat-count-legumes">...</div></div>
+      <div class="ccat" onclick="fcat('fruits',this)" data-cat="fruits"><span class="ccat-em">🍎</span><div class="ccat-n">Fruits</div><div class="ccat-c" id="cat-count-fruits">...</div></div>
+      <div class="ccat" onclick="fcat('herbes',this)" data-cat="herbes"><span class="ccat-em">🌿</span><div class="ccat-n">Herbes</div><div class="ccat-c" id="cat-count-herbes">...</div></div>
+      <div class="ccat" onclick="fcat('transformes',this)" data-cat="transformes"><span class="ccat-em">🔪</span><div class="ccat-n">Transformés</div><div class="ccat-c" id="cat-count-transformes">...</div><span class="ccat-new" id="ccat-new-transformes" style="display:none">Nouveau</span></div>
+      <div class="ccat" onclick="fcat('autres',this)" data-cat="autres"><span class="ccat-em">📦</span><div class="ccat-n">Autres</div><div class="ccat-c" id="cat-count-autres">...</div></div>
     </div>
   </div>
 </section>
@@ -2973,8 +2974,19 @@ function getEmoji(nom,f){
 function mapFamille(f){
   if(!f) return "legumes";
   var fl=(f+"").toLowerCase();
-  if(fl.includes("fruit")) return "fruits";
-  if(fl.includes("prép")||fl.includes("prepar")||fl.includes("pluche")||fl.includes("lave")) return "prepare";
+  // Fruits (tropicaux, rouges, agrumes, secs)
+  if(fl.includes("fruit")||fl.includes("agrume")||fl.includes("raisin")||fl.includes("grenade")) return "fruits";
+  // Herbes et champignons
+  if(fl.includes("herbe")||fl.includes("aromat")||fl.includes("champign")||fl.includes("menth")||fl.includes("persil")||fl.includes("coriandre")||fl.includes("basilic")) return "herbes";
+  // Produits transformés
+  if(fl==="épluché"||fl==="epluché"||fl==="epluchÉ"||fl.includes("epluch")||
+     fl==="lavé"||fl==="lave"||
+     fl==="coupé"||fl==="coupe"||
+     fl.includes("prêt")||fl.includes("pret pour")||fl.includes("cuisson")||
+     fl==="emballé"||fl==="emballe"||fl.includes("emball")) return "transformes";
+  // Autres
+  if(fl==="autre"||fl==="autres") return "autres";
+  // Défaut : légumes
   return "legumes";
 }
 var TL={frais:"🌿 Frais",epluche:"🔪 Épluché",lave:"💧 Lavé",combo:"✨ Épluché+Lavé",promo:"🔥 Promo"};
@@ -3247,9 +3259,12 @@ function renderProds(f){
 }
 
 function updateCatCounts(){
-  var counts={tous:0,fruits:0,legumes:0,herbes:0,prepare:0};
+  var counts={tous:0,fruits:0,legumes:0,herbes:0,transformes:0,autres:0};
   PRODS.forEach(function(p){ if(p.dispo){counts.tous++;if(counts[p.cat]!==undefined)counts[p.cat]++;} });
-  ["tous","fruits","legumes","herbes","prepare"].forEach(function(k){ var el=document.getElementById("cat-count-"+k); if(el) el.textContent=counts[k]+" produit"+(counts[k]>1?"s":""); });
+  ["tous","fruits","legumes","herbes","transformes","autres"].forEach(function(k){
+    var el=document.getElementById("cat-count-"+k);
+    if(el) el.textContent=counts[k]+" produit"+(counts[k]>1?"s":"");
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════
