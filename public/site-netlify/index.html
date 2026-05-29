@@ -2658,6 +2658,7 @@ GET  /api/ext/commandes/:id → suivi commande</div>
             <option value="client">🏠 Particulier</option>
             <option value="chr">🏨 Restaurant / Hôtel / Café (CHR)</option>
             <option value="marchand">🏪 Marchand / Grossiste</option>
+            <option value="fournisseur">🚚 Fournisseur / Producteur</option>
           </select>
         </div>
         <div class="form-group">
@@ -3698,7 +3699,7 @@ async function doLogin(e){
   btnEl.disabled=false; btnEl.textContent=t("btn_login_ok");
 }
 // Show/hide société field based on type
-document.addEventListener("change",function(e){ if(e.target&&e.target.id==="signupType"){ var v=e.target.value; var sw=document.getElementById("signupSocieteWrap"); if(sw) sw.style.display=(v==="chr"||v==="marchand")?"block":"none"; } });
+document.addEventListener("change",function(e){ if(e.target&&e.target.id==="signupType"){ var v=e.target.value; var sw=document.getElementById("signupSocieteWrap"); if(sw) sw.style.display=(v==="chr"||v==="marchand"||v==="fournisseur")?"block":"none"; } });
 function showProAppLink(){ var d=document.getElementById("pro-app-link-reveal"); if(d){d.style.display="block";} var b=document.getElementById("pro-app-link-btn"); if(b){b.style.display="none";} }
 async function doSignup(e){
   e.preventDefault();
