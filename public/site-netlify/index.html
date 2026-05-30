@@ -776,19 +776,27 @@ window.addEventListener('scroll',function(){
 ══════════════════════════════════════════════ -->
 <script>
 const CONFIG = {
-  COMPANY_NAME:    "Vita Fresh",
-  COMPANY_TAGLINE: "Fruit & Vegetable Distribution — Casablanca, Maroc",
-  COMPANY_EMAIL:   "contact@vitafresh.ma",
+  COMPANY_NAME:    "Vita Core",
+  COMPANY_TAGLINE: "Distribution de Fruits & Légumes — Casablanca, Maroc",
+  COMPANY_EMAIL:   "contact@vita-core.org",
+  COMPANY_EMAILS:  {
+    contact:  "contact@vita-core.org",
+    capital:  "capital@vita-core.org",
+    sales:    "sales@vita-core.org",
+    logistic: "logistic@vita-core.org",
+  },
   COMPANY_ADDRESS: "Zone Industrielle, Casablanca, Maroc",
-  PHONE:           "+212 6 00 00 00 00",
-  WHATSAPP:        "212600000000",
-  WHATSAPP_ORDER:  "https://chat.whatsapp.com/D11jvGbbWd5Kc2pyXl79SK",
-  WHATSAPP_SIGNUP: "https://chat.whatsapp.com/K9zqxKXd3qLEIMLt3Oh3lI",
+  PHONE:           "+212 681 73 69 10",
+  PHONE_SALES:     "+212 681 73 69 10",  // Responsable commercial
+  PHONE_DIRECTION: "+212 647 33 34 56",  // Direction
+  WHATSAPP:        "212681736910",
+  WHATSAPP_ORDER:  "https://wa.me/212681736910",
+  WHATSAPP_SIGNUP: "https://wa.me/212681736910",
   // Numéros privés équipe (commandes complètes — confidentielles)
-  WA_EQUIPE_1:     "212647333456",
-  WA_EQUIPE_2:     "212681736910",
+  WA_EQUIPE_1:     "212681736910",  // Responsable commercial
+  WA_EQUIPE_2:     "212647333456",  // Direction
   HOURS:           "Lun–Sam : 06h00 – 18h00",
-  APP_URL:         "https://vitafresh.vitacore.ma/",
+  APP_URL:         "https://app.vita-core.org/",
   API_URL:         "https://f-l.vercel.app",
   LOGO_URL:        "data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20130%20130'%3E%3Cpath%20d%3D'M65%2032C41%2032%2C22%2052%2C22%2078C22%20104%2C41%20120%2C65%20120C89%20120%2C108%20104%2C108%2078C108%2052%2C89%2032%2C65%2032Z'%20fill%3D'%25236CBC4E'%2F%3E%3Cpath%20d%3D'M41%2058L65%20100L89%2058'%20stroke%3D'white'%20stroke-width%3D'12'%20fill%3D'none'%20stroke-linejoin%3D'miter'%2F%3E%3Crect%20x%3D'62'%20y%3D'22'%20width%3D'6'%20height%3D'14'%20fill%3D'%25232D7A45'%2F%3E%3Cpath%20d%3D'M68%2026C80%2012%2C100%2010%2C110%2017C103%2034%2C84%2038%2C68%2026Z'%20fill%3D'%25232D7A45'%2F%3E%3C%2Fsvg%3E",
   // ── الإحصائيات — قابلة للتعديل من لوحة الإدارة ──
@@ -1222,7 +1230,7 @@ function setLang(lang){
     <div class="cfg-sec on" id="s-contact">
       <div class="cfg-grp">📱 Coordonnées principales</div>
       <div class="cfg-f"><label>Numéro WhatsApp</label><input id="c-wa" type="tel" placeholder="212661234567"><div class="cfg-hint">Sans le + — ex: 212661234567</div></div>
-      <div class="cfg-f"><label>Email</label><input id="c-email" type="email" placeholder="contact@vitafresh.ma"></div>
+      <div class="cfg-f"><label>Email</label><input id="c-email" type="email" placeholder="contact@vita-core.org"></div>
       <div class="cfg-f"><label>Adresse / Ville</label><input id="c-addr" type="text" placeholder="Casablanca, Maroc"></div>
       <div class="cfg-grp">🏦 Virement bancaire — RIB</div>
       <div class="cfg-f"><label>RIB complet</label><input id="c-rib" type="text" placeholder="007 780 0000000000000 53" style="font-family:monospace"><div class="cfg-hint">Affiché automatiquement quand le client choisit "Virement bancaire".</div></div>
@@ -2752,9 +2760,9 @@ GET  /api/ext/commandes/:id → suivi commande</div>
 (function(){
 // ── CFG ──
 var CFG = {
-  wa:"212600000000", email:"contact@vitafresh.ma", addr:"Casablanca, Maroc",
+  wa:"212681736910", email:"contact@vita-core.org", addr:"Casablanca, Maroc",
   fb:"", ig:"", exp:20, expDelay:"2h", free:150, std:15,
-  rib:"", ribBanque:"CIH / Attijariwafa / BMCE", ribBenef:"Vita Fresh SARL",
+  rib:"", ribBanque:"CIH / Attijariwafa / BMCE", ribBenef:"Vita Core SARL",
   sbUrl:"https://jwdrwapuetqoqnankgma.supabase.co",
   sbKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3ZHJ3YXB1ZXRxb3FuYW5rZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDE1NzUsImV4cCI6MjA5NDAxNzU3NX0.9l0e2eE9milvCWg29TIoGXgWY-ULOmTVrPmWRCsIvtw"
 };
@@ -3164,25 +3172,45 @@ function syncFromSupabase(){
     })
     .catch(function(){
       if(tOut) clearTimeout(tOut);
-      updateSBConnBox("api",false,"API ERP non joignable — Supabase actif");
+      updateSBConnBox("api",false,"API ERP non joignable — tentative Supabase direct");
       // Mode 2: Supabase direct fallback
       if(!sb) sb=initSupabase();
-      if(!sb){ setERPBar("offline","Catalogue local (aucune connexion)",""); setSyncBadge("offline","Local"); renderProds(); renderHeroCards(); updateCatCounts(); return; }
+      if(!sb){
+        // ❌ Aucune connexion possible → afficher état préparation (PAS de catalogue local)
+        PRODS=[];
+        setERPBar("offline","Catalogue Vita Core — en cours de préparation","Reconnectez-vous bientôt");
+        setSyncBadge("offline","Hors ligne");
+        renderProds(); renderHeroCards(); updateCatCounts();
+        return;
+      }
       sb.from("fl_articles")
         .select("id,payload,updated_at")
         .then(function(r){
           if(r.error) throw r.error;
-          // Montrer tous les articles sauf ceux explicitement désactivés (marketplaceActif!==false)
-          var data=(r.data||[]).filter(function(row){ return row.payload&&row.payload.marketplaceActif!==false; });
-          if(!data.length) throw new Error("Aucun article publié");
+          // Filtrer : exclure entrées __config et articles désactivés
+          var data=(r.data||[]).filter(function(row){
+            return !String(row.id).startsWith("__") && row.payload && row.payload.marketplaceActif!==false;
+          });
+          if(!data.length){
+            // ✅ Supabase joint, mais 0 articles → état préparation (PAS de fallback local)
+            PRODS=[];
+            updateSBConnBox("sb",true,"0 articles — catalogue en préparation");
+            setERPBar("online","Catalogue Vita Core — préparation en cours","Le catalogue sera disponible bientôt");
+            setSyncBadge("online","En ligne");
+            renderProds(); renderHeroCards(); updateCatCounts();
+            return;
+          }
           data.sort(function(a,b){ return (a.payload.marketplaceOrdre||999)-(b.payload.marketplaceOrdre||999); });
           applyProds(data.map(mapSBArticle),"Supabase direct");
           updateSBConnBox("sb",true,data.length+" articles via Supabase");
           subscribeRealtime();
         })
         .catch(function(sbErr){
+          // ❌ Supabase erreur → afficher état préparation (PAS de catalogue local)
+          PRODS=[];
           updateSBConnBox("sb",false,sbErr.message||String(sbErr));
-          setERPBar("offline","Catalogue local",""); setSyncBadge("offline","Local");
+          setERPBar("offline","Catalogue Vita Core — temporairement indisponible","Reconnectez-vous bientôt");
+          setSyncBadge("offline","Hors ligne");
           renderProds(); renderHeroCards(); updateCatCounts();
         });
     });
@@ -3299,7 +3327,22 @@ function renderProds(f){
   else if(sort==="nom-asc") list.sort(function(a,b){return (a.n||"").localeCompare(b.n||"","fr");});
   else if(sort==="dispo") list.sort(function(a,b){return (b.dispo?1:0)-(a.dispo?1:0);});
   if(!list.length){
-    document.getElementById("pgrid").innerHTML='<div class="no-prods"><span class="no-prods-icon">🔍</span><h3>'+t("empty_cat")+'</h3><p>'+t("empty_cat_sub")+'</p></div>'; return;
+    // Distinguer : catalogue totalement vide (préparation) vs filtre actif sans résultat
+    var pgrid=document.getElementById("pgrid");
+    if(!PRODS||PRODS.length===0){
+      pgrid.innerHTML='<div class="no-prods" style="grid-column:1/-1;text-align:center;padding:80px 20px;color:#4b5563">'
+        +'<div style="font-size:64px;margin-bottom:20px">📦</div>'
+        +'<h3 style="font-size:22px;font-weight:800;color:#166534;margin-bottom:12px">Catalogue en cours de préparation</h3>'
+        +'<p style="font-size:15px;color:#6b7280;max-width:480px;margin:0 auto 20px;line-height:1.6">Notre équipe ajoute actuellement les produits du jour. Le catalogue sera disponible très bientôt.</p>'
+        +'<p style="font-size:13px;color:#9ca3af;margin-top:8px">Pour commander dès maintenant, contactez-nous :</p>'
+        +'<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">'
+        +'<a href="https://wa.me/'+CFG.wa+'" target="_blank" style="background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;padding:10px 22px;border-radius:24px;font-weight:700;text-decoration:none;font-size:14px">💬 WhatsApp commercial</a>'
+        +'<a href="tel:+'+CFG.wa+'" style="background:linear-gradient(135deg,#1a4f2a,#2d7a46);color:#fff;padding:10px 22px;border-radius:24px;font-weight:700;text-decoration:none;font-size:14px">📞 Appeler</a>'
+        +'</div></div>';
+    } else {
+      pgrid.innerHTML='<div class="no-prods"><span class="no-prods-icon">🔍</span><h3>'+t("empty_cat")+'</h3><p>'+t("empty_cat_sub")+'</p></div>';
+    }
+    return;
   }
   document.getElementById("pgrid").innerHTML=list.map(function(p){
     var qty=cart[p.id]?cart[p.id].qty:0, outStock=!p.dispo;
@@ -4588,8 +4631,8 @@ function checkAdminPin(){
 
 // ── LEGAL MODAL ──
 var LEGAL_CONTENT = {
-  mentions: "<h2>Mentions légales</h2><p><strong>Éditeur du site</strong><br>Vita Fresh — Distribution Alimentaire<br>Zone Industrielle, Casablanca, Maroc<br>Téléphone : +212 6 00 00 00 00<br>Email : contact@vitafresh.ma</p><p><strong>Directeur de la publication</strong><br>Vita Fresh SARL</p><p><strong>Hébergement</strong><br>Netlify Inc. — 2325 3rd Street, San Francisco, CA 94107, USA</p><p><strong>Propriété intellectuelle</strong><br>L'ensemble du contenu de ce site (textes, images, logos) est la propriété exclusive d'Vita Fresh et est protégé par les lois marocaines sur la propriété intellectuelle.</p>",
-  confidentialite: "<h2>Politique de confidentialité</h2><p><strong>Collecte des données</strong><br>Vita Fresh collecte uniquement les données nécessaires au traitement de vos commandes : nom, téléphone, adresse de livraison et email (optionnel).</p><p><strong>Utilisation</strong><br>Vos données sont utilisées exclusivement pour : le traitement de vos commandes, la livraison, la communication commerciale avec votre accord.</p><p><strong>Conservation</strong><br>Vos données sont conservées pendant 3 ans à compter du dernier achat.</p><p><strong>Vos droits</strong><br>Conformément à la loi marocaine 09-08, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contact : contact@vitafresh.ma</p><p><strong>Cookies</strong><br>Ce site utilise uniquement des cookies fonctionnels (préférences de langue, panier). Aucun cookie publicitaire n'est utilisé.</p>",
+  mentions: "<h2>Mentions légales</h2><p><strong>Éditeur du site</strong><br>Vita Core — Distribution Alimentaire<br>Zone Industrielle, Casablanca, Maroc<br>Téléphone (commercial) : +212 681 73 69 10<br>Téléphone (direction) : +212 647 33 34 56<br>Email général : contact@vita-core.org<br>Capital : capital@vita-core.org<br>Commercial : sales@vita-core.org<br>Logistique : logistic@vita-core.org</p><p><strong>Directeur de la publication</strong><br>Vita Core SARL</p><p><strong>Hébergement</strong><br>Vercel Inc. — 340 S Lemon Ave #4133, Walnut, CA 91789, USA</p><p><strong>Propriété intellectuelle</strong><br>L'ensemble du contenu de ce site (textes, images, logos) est la propriété exclusive de Vita Core et est protégé par les lois marocaines sur la propriété intellectuelle.</p>",
+  confidentialite: "<h2>Politique de confidentialité</h2><p><strong>Collecte des données</strong><br>Vita Core collecte uniquement les données nécessaires au traitement de vos commandes : nom, téléphone, adresse de livraison et email (optionnel).</p><p><strong>Utilisation</strong><br>Vos données sont utilisées exclusivement pour : le traitement de vos commandes, la livraison, la communication commerciale avec votre accord.</p><p><strong>Conservation</strong><br>Vos données sont conservées pendant 3 ans à compter du dernier achat.</p><p><strong>Vos droits</strong><br>Conformément à la loi marocaine 09-08, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contact : contact@vita-core.org</p><p><strong>Cookies</strong><br>Ce site utilise uniquement des cookies fonctionnels (préférences de langue, panier). Aucun cookie publicitaire n'est utilisé.</p>",
   cgv: "<h2>Conditions Générales de Vente</h2><p><strong>Objet</strong><br>Les présentes CGV régissent les ventes de fruits, légumes et produits frais par Vita Fresh à ses clients.</p><p><strong>Commandes</strong><br>Toute commande passée via le site, WhatsApp ou l'application constitue un engagement d'achat. Les commandes sont confirmées par SMS ou WhatsApp.</p><p><strong>Prix</strong><br>Les prix sont indiqués en Dirham Marocain (MAD) TTC. Vita Fresh se réserve le droit de modifier ses prix à tout moment.</p><p><strong>Livraison</strong><br>Livraison standard sous 24h — Livraison express sous 2 à 4h selon la zone. Casablanca uniquement. Les frais de livraison sont indiqués lors de la commande.</p><p><strong>Paiement</strong><br>Paiement accepté : Cash à la livraison, virement bancaire.</p><p><strong>Retours</strong><br>Tout produit non conforme doit être signalé dans l'heure suivant la livraison. Vita Fresh procédera au remplacement ou au remboursement.</p><p><strong>Litige</strong><br>En cas de litige, les tribunaux de Casablanca sont seuls compétents.</p>"
 };
 function openLegal(key){ document.getElementById('legal-content').innerHTML=LEGAL_CONTENT[key]; document.getElementById('legal-modal').style.display='flex'; }
