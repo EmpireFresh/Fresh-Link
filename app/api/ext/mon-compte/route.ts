@@ -9,7 +9,7 @@ import { verifyToken } from "../auth/route"
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL     ?? "https://jwdrwapuetqoqnankgma.supabase.co"
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
-const SB_SRV  = process.env.SUPABASE_SERVICE_ROLE_KEY    ?? SB_ANON
+const SB_SRV  = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.service_role || process.env.SUPABASE_SERVICE_KEY)    ?? SB_ANON
 
 function cors(origin: string | null): HeadersInit {
   return {

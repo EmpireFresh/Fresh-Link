@@ -16,7 +16,7 @@ import { createHmac } from "crypto"
 
 const SB_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL     ?? "https://jwdrwapuetqoqnankgma.supabase.co"
 const SB_ANON   = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
-const SB_SRV    = process.env.SUPABASE_SERVICE_ROLE_KEY    ?? SB_ANON
+const SB_SRV    = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.service_role || process.env.SUPABASE_SERVICE_KEY)    ?? SB_ANON
 
 function cors(origin: string | null): HeadersInit {
   return {
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
   const sousType  = type  // chr / marchand / particulier / client / fournisseur
 
   // ── Mode auto (SERVICE_ROLE_KEY disponible) ───────────────────────────────
-  const hasServiceKey = !!(process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const hasServiceKey = !!((process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.service_role || process.env.SUPABASE_SERVICE_KEY))
 
   if (hasServiceKey) {
     // 1. Vérifier doublon

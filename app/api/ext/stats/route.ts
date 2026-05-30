@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server"
 // ══════════════════════════════════════════════════════════════
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL    ?? "https://jwdrwapuetqoqnankgma.supabase.co"
-const SB_SRV = process.env.SUPABASE_SERVICE_ROLE_KEY   ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
+const SB_SRV = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.service_role || process.env.SUPABASE_SERVICE_KEY)   ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
 
 function cors(origin: string | null): HeadersInit {
   return {

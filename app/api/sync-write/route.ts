@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://jwdrwapuetqoqnankgma.supabase.co"
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
+// Accept multiple env var names (legacy projects use lowercase "service_role")
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY
+                  || process.env.service_role
+                  || process.env.SUPABASE_SERVICE_KEY
+                  || ""
 
 // Use the supabase-js admin client (service_role) which correctly sets
 // the PostgreSQL role and bypasses RLS at the connection level.

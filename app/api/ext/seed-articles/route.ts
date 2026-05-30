@@ -13,7 +13,11 @@ import { ERP_DEFAULT_ARTICLES } from "@/lib/defaultArticles"
 // ═══════════════════════════════════════════════════════════════════
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL    ?? "https://jwdrwapuetqoqnankgma.supabase.co"
-const SB_SRV = process.env.SUPABASE_SERVICE_ROLE_KEY   ?? ""
+// Accept multiple env var names (legacy projects use lowercase "service_role")
+const SB_SRV = process.env.SUPABASE_SERVICE_ROLE_KEY
+            ?? process.env.service_role
+            ?? process.env.SUPABASE_SERVICE_KEY
+            ?? ""
 
 function cors(origin: string | null): HeadersInit {
   return {
