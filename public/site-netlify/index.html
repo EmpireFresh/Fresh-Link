@@ -3282,20 +3282,26 @@ function getProductPhoto(name){
   return PRODUCT_PHOTOS.default;
 }
 function renderHeroCards(){
-  var avail=PRODS.filter(function(p){return p.dispo;}).slice(0,4);
-  if(!avail.length) avail=[
-    {n:"Tomates Beldi",p:"12",u:"kg",em:"🍅",img:""},{n:"Poivrons doux",p:"9",u:"kg",em:"🫑",img:""},
-    {n:"Citrons frais",p:"8",u:"kg",em:"🍋",img:""},{n:"Carottes",p:"7",u:"kg",em:"🥕",img:""}
-  ];
-  document.getElementById("hero-cards").innerHTML=avail.map(function(p){
+  var heroEl=document.getElementById("hero-cards");
+  if(!heroEl) return;
+  // Pas de fallback hardcoded — uniquement les vrais articles ERP
+  var avail=(PRODS||[]).filter(function(p){return p.dispo;}).slice(0,4);
+  if(!avail.length){
+    // Aucun article ERP disponible → masquer la grille de cartes
+    heroEl.style.display="none";
+    var sp=document.getElementById("stat-prods"); if(sp) sp.textContent="0";
+    return;
+  }
+  heroEl.style.display="";
+  heroEl.innerHTML=avail.map(function(p){
     var photoUrl=p.img||getProductPhoto(p.n);
-    return '<div class="hcard" onclick="document.getElementById(\'commander\').scrollIntoView({behavior:\'smooth\'})">'
+    return '<div class="hcard" onclick="document.getElementById(\'catalogue\').scrollIntoView({behavior:\'smooth\'})">'
       +'<img class="hcard-img" src="'+photoUrl+'" alt="'+p.n+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
       +'<div class="hcard-img-ph" style="display:none">'+p.em+'</div>'
       +'<div class="hcard-b"><div class="hcard-n">'+p.em+' '+p.n+'</div><div class="hcard-p">'+p.p+' MAD/'+p.u+'</div></div>'
       +'</div>';
   }).join("");
-  var sp=document.getElementById("stat-prods"); if(sp) sp.textContent=PRODS.filter(function(p){return p.dispo;}).length+"+"
+  var sp=document.getElementById("stat-prods"); if(sp) sp.textContent=avail.length+(PRODS.length>=10?"+":"");
 }
 
 // ── SKELETON ──
@@ -3306,15 +3312,35 @@ function showSkeletons(n){
 }
 
 // ── RENDER PRODUCTS ──
+// Filtres spéciaux :
+//   "tous"  → tout le catalogue
+//   "frais" → tout le catalogue (par défaut, articles frais)
+//   "epluche" → TOUS les articles affichés avec mention "Disponible sur demande" (transformation à la demande)
+//   "lave" → TOUS les articles affichés avec mention "Disponible sur demande"
+//   "combo" → articles avec tag combo
+//   "promo" → uniquement articles en promo
+//   sinon → filtre par catégorie famille (fruits/legumes/herbes/...)
+var onDemandMode = ""; // mémorise si on est en mode épluché/lavé
 function renderProds(f){
   if(f!==undefined) currentFilter=f;
   var filter=currentFilter;
   var specTags=["frais","epluche","lave","combo","promo"];
   var list;
-  if(filter==="tous"||!filter) list=PRODS.slice();
-  else if(specTags.indexOf(filter)>=0){
-    if(filter==="promo") list=PRODS.filter(function(p){return p.promo;});
-    else list=PRODS.filter(function(p){return p.tags&&p.tags.indexOf(filter)>=0;});
+  onDemandMode = "";
+  if(filter==="tous"||!filter||filter==="frais"){
+    // Tous les articles (Frais = catalogue par défaut)
+    list=PRODS.slice();
+  }
+  else if(filter==="epluche"||filter==="lave"){
+    // Tous les articles mais marqués "sur demande" (préparation à la demande)
+    list=PRODS.slice();
+    onDemandMode = filter==="epluche" ? "epluche" : "lave";
+  }
+  else if(filter==="promo"){
+    list=PRODS.filter(function(p){return p.promo;});
+  }
+  else if(filter==="combo"){
+    list=PRODS.filter(function(p){return p.tags&&p.tags.indexOf("combo")>=0;});
   }
   else list=PRODS.filter(function(p){return p.cat===filter;});
   // Search filter
@@ -3357,7 +3383,17 @@ function renderProds(f){
     var outBadgeHtml=outStock?'<div class="out-badge" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">⏳ Sur commande</div>':'';
     var outNoteHtml=outStock?'<div style="font-size:10px;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 7px;margin-bottom:6px;line-height:1.4">⏳ <strong>Hors saison / rupture</strong> — commande possible, livraison confirmée par notre équipe.</div>':'';
     var stockHtml=outStock?'':(p.stock!==undefined?'<div style="font-size:10px;color:var(--gy);margin-bottom:5px">Stock : '+p.stock+' '+p.u+'</div>':'');
-    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+outBadgeHtml+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+outNoteHtml+stockHtml+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)">−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' title="Sur commande — confirmation équipe"':'')+'>+</button></div></div></div></div>';
+    // Mode "Épluché" ou "Lavé" : tous les articles affichés avec mention "Sur demande"
+    var demandBadgeHtml = "";
+    var demandNoteHtml = "";
+    if(onDemandMode){
+      var lbl = onDemandMode==="epluche" ? "🔪 Épluché" : "💧 Lavé";
+      var emoji = onDemandMode==="epluche" ? "🔪" : "💧";
+      var titre = onDemandMode==="epluche" ? "Épluché à la demande" : "Lavé à la demande";
+      demandBadgeHtml='<div class="out-badge" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;top:9px;right:9px;left:auto">'+lbl+' sur demande</div>';
+      demandNoteHtml='<div style="font-size:10px;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:5px 8px;margin-bottom:6px;line-height:1.4">'+emoji+' <strong>'+titre+'</strong> — Précisez votre choix dans les notes de commande. Préparation et livraison confirmées par notre équipe.</div>';
+    }
+    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+outBadgeHtml+demandBadgeHtml+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+demandNoteHtml+outNoteHtml+stockHtml+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)">−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' title="Sur commande — confirmation équipe"':'')+(onDemandMode?' title="'+( onDemandMode==="epluche"?"Épluché":"Lavé")+' sur demande"':'')+'>+</button></div></div></div></div>';
   }).join("");
 }
 
@@ -4480,42 +4516,61 @@ function renderPromos(erpArticles) {
   var pt = document.getElementById("pb-title"); if(pt) pt.innerHTML  = bd["title_"+lkey]||bd.title_fr;
   var pd = document.getElementById("pb-desc");  if(pd) pd.textContent= bd["desc_"+lkey]||bd.desc_fr;
 
-  // Build promo cards from ERP or defaults
-  var promos = PROMO_DEFAULTS;
+  // Build promo cards UNIQUEMENT depuis l'ERP — pas de fallback hardcoded
+  var promos = [];
   if (erpArticles && erpArticles.length > 0) {
-    // Take up to 6 articles that have a prix set, prefer those with discounts
-    var withPrice = erpArticles.filter(function(a){ return a.prix > 0 || a.prixVente > 0; });
-    if (withPrice.length >= 3) {
-      promos = withPrice.slice(0, 6).map(function(a) {
-        return {
-          emoji: a.emoji || "🥬",
-          name_fr: a.nom || "Produit",
-          name_ar: a.nom_ar || a.nomAr || a.nom || "منتج",
-          name_en: a.nom || "Product",
-          desc_fr: a.description || (a.famille ? "Famille : " + a.famille : "Produit frais Vita Fresh"),
-          prix: a.prixVente || a.prix || a.prix_public || 0,
-          old: a.prix_ancien || null,
-          unit: a.unite || "kg",
-          badge: a.tags && a.tags.length ? a.tags[0] : "Vita Fresh",
-          badgeClass: "",
-        };
-      });
-    }
+    // Prioriser articles en promo, puis articles avec prix
+    var withPromo = erpArticles.filter(function(a){
+      return (a.promo === true || (a.promo_prix && a.promo_prix > 0) || (a.marketplacePromo && a.marketplacePromo.actif));
+    });
+    var withPrice = erpArticles.filter(function(a){ return (a.prix > 0 || a.prixVente > 0 || a.prix_public > 0); });
+    var pool = withPromo.length >= 3 ? withPromo : withPrice;
+    promos = pool.slice(0, 6).map(function(a) {
+      var prixActuel = Number(a.prixVente || a.prix || a.prix_public || 0) || 0;
+      var prixAncien = Number(a.prix_ancien || a.prixBase || 0) || null;
+      if (a.marketplacePromo && a.marketplacePromo.prixPromo) {
+        prixAncien = prixActuel;
+        prixActuel = Number(a.marketplacePromo.prixPromo) || prixActuel;
+      }
+      return {
+        emoji: a.em || a.emoji || "🥬",
+        name_fr: a.n || a.nom || "Produit",
+        name_ar: a.nom_ar || a.nomAr || a.n || a.nom || "منتج",
+        name_en: a.n || a.nom || "Product",
+        desc_fr: a.o || a.description || (a.famille ? "Famille : " + a.famille : "Produit frais Vita Core"),
+        prix: prixActuel,
+        old: prixAncien && prixAncien > prixActuel ? prixAncien : null,
+        unit: a.u || a.unite || "kg",
+        badge: a.promo ? "💰 Promo" : (a.tags && a.tags.length ? a.tags[0] : "✅ Frais"),
+        badgeClass: a.promo ? "" : "green",
+        img: a.img || a.photo || "",
+      };
+    });
+  }
+  // Si aucune promo ERP → masquer la section
+  if (promos.length === 0) {
+    grid.innerHTML = '';
+    var section = grid.closest('section, .promo-sec, .section');
+    if (section) section.style.display = 'none';
+    return;
   }
 
   var orderLbl = lkey === "ar" ? "🛒 طلب" : lkey === "en" ? "🛒 Order" : "🛒 Commander";
   grid.innerHTML = promos.map(function(p) {
     var name = p["name_"+lkey] || p.name_fr;
     var pct  = p.old && p.prix ? Math.round((1 - p.prix/p.old)*100) : 0;
+    var prixN = Number(p.prix)||0;
+    var oldN  = Number(p.old)||0;
+    var imgHtml = p.img ? '<img src="'+p.img+'" alt="'+name+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:48px">'+p.emoji+'</div>' : p.emoji;
     return '<div class="promo-card" onclick="document.getElementById(\'catalogue\')?.scrollIntoView({behavior:\'smooth\'})">'
-      +'<div class="promo-card-img">'+p.emoji+'</div>'
+      +'<div class="promo-card-img">'+imgHtml+'</div>'
       +'<div class="promo-card-body">'
       +'<div class="promo-card-badge '+(p.badgeClass||'')+'">'+p.badge+'</div>'
       +'<div class="promo-card-title">'+name+'</div>'
       +'<div class="promo-card-desc">'+p.desc_fr+'</div>'
       +'<div class="promo-card-price">'
-      +(p.prix ? '<span class="new">'+p.prix.toFixed(2)+' MAD</span>' : '')
-      +(p.old  ? '<span class="old">'+p.old.toFixed(2)+' MAD</span>' : '')
+      +(prixN>0 ? '<span class="new">'+prixN.toFixed(2)+' MAD</span>' : '')
+      +(oldN>0  ? '<span class="old">'+oldN.toFixed(2)+' MAD</span>' : '')
       +(pct > 0 ? '<span class="pct">-'+pct+'%</span>' : '')
       +'</div>'
       +'<button class="promo-card-btn">'+orderLbl+' — '+p.unit+'</button>'
@@ -4523,9 +4578,9 @@ function renderPromos(erpArticles) {
   }).join("");
 }
 
-// Load from ERP, fallback to defaults
+// Load from ERP — NO hardcoded fallback (section hidden if empty)
 function initPromos() {
-  renderPromos(null); // show defaults immediately
+  // Pas de renderPromos(null) initial — on attend l'ERP
   if (typeof CONFIG !== "undefined" && CONFIG.API_URL) {
     fetch(CONFIG.API_URL + "/api/ext/catalogue")
       .then(function(r){ return r.ok ? r.json() : null; })
@@ -4875,5 +4930,139 @@ window.activeCategory=activeCategory;
 
 })();
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--   POPUP DE BIENVENUE — affiché au premier chargement              -->
+<!--   3 options : Mon Espace · Inscription · Continuer en invité      -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<style>
+#welcome-modal{display:none;position:fixed;inset:0;z-index:3000;background:rgba(2,8,4,.78);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;animation:welcomeFade .4s ease}
+@keyframes welcomeFade{from{opacity:0}to{opacity:1}}
+@keyframes welcomeRise{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+#welcome-modal.show{display:flex}
+.wm-card{background:#fff;border-radius:22px;padding:32px 28px;max-width:440px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:welcomeRise .5s cubic-bezier(.22,1,.36,1) both;position:relative}
+.wm-logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#1a4f2a,#2d7a46);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:34px;box-shadow:0 8px 22px rgba(26,79,42,.35)}
+.wm-title{font-size:24px;font-weight:900;color:#0b3d1a;text-align:center;margin-bottom:6px;letter-spacing:-.5px}
+.wm-sub{font-size:14px;color:#6b7280;text-align:center;margin-bottom:24px;line-height:1.55}
+.wm-btn{display:flex;align-items:center;gap:14px;width:100%;padding:14px 18px;border:2px solid #e5e7eb;border-radius:14px;background:#fff;cursor:pointer;margin-bottom:10px;transition:all .2s;text-align:left;font-family:inherit}
+.wm-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.08)}
+.wm-btn-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.wm-btn-text{flex:1}
+.wm-btn-title{font-size:14px;font-weight:800;color:#111827;margin-bottom:2px}
+.wm-btn-desc{font-size:12px;color:#6b7280;line-height:1.4}
+.wm-btn-arrow{color:#9ca3af;font-size:18px;flex-shrink:0}
+.wm-btn.primary{border-color:#1a4f2a;background:linear-gradient(135deg,#1a4f2a,#2d7a46);color:#fff}
+.wm-btn.primary:hover{box-shadow:0 10px 24px rgba(26,79,42,.35)}
+.wm-btn.primary .wm-btn-icon{background:rgba(255,255,255,.15)}
+.wm-btn.primary .wm-btn-title{color:#fff}
+.wm-btn.primary .wm-btn-desc{color:rgba(255,255,255,.85)}
+.wm-btn.primary .wm-btn-arrow{color:rgba(255,255,255,.75)}
+.wm-btn.signup .wm-btn-icon{background:#fef3c7;color:#d97706}
+.wm-btn.ghost{background:#f9fafb;border-color:#e5e7eb}
+.wm-btn.ghost .wm-btn-icon{background:#e0e7ff;color:#4338ca}
+.wm-close{position:absolute;top:14px;right:14px;background:none;border:none;color:#9ca3af;font-size:24px;cursor:pointer;line-height:1;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:.2s}
+.wm-close:hover{background:#f3f4f6;color:#374151}
+.wm-footer{margin-top:14px;padding-top:14px;border-top:1px solid #f3f4f6;text-align:center}
+.wm-footer-text{font-size:11px;color:#9ca3af}
+.wm-footer-text a{color:#1a4f2a;text-decoration:none;font-weight:600}
+@media(max-width:480px){.wm-card{padding:24px 20px}.wm-title{font-size:20px}.wm-btn{padding:12px 14px}.wm-btn-title{font-size:13px}.wm-btn-desc{font-size:11px}}
+</style>
+
+<div id="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="wm-title">
+  <div class="wm-card">
+    <button class="wm-close" onclick="closeWelcome('ghost')" aria-label="Fermer">×</button>
+    <div class="wm-logo">🌿</div>
+    <h2 class="wm-title" id="wm-title">Bienvenue chez Vita Core</h2>
+    <p class="wm-sub">Distribution de fruits & légumes frais — Casablanca. Comment souhaitez-vous continuer ?</p>
+
+    <button class="wm-btn primary" onclick="closeWelcome('login')">
+      <div class="wm-btn-icon">🔐</div>
+      <div class="wm-btn-text">
+        <div class="wm-btn-title">Entrer dans mon espace</div>
+        <div class="wm-btn-desc">Vous avez déjà un compte client</div>
+      </div>
+      <span class="wm-btn-arrow">→</span>
+    </button>
+
+    <button class="wm-btn signup" onclick="closeWelcome('signup')">
+      <div class="wm-btn-icon">📝</div>
+      <div class="wm-btn-text">
+        <div class="wm-btn-title">Créer un compte</div>
+        <div class="wm-btn-desc">Particulier · CHR · Marchand · Fournisseur</div>
+      </div>
+      <span class="wm-btn-arrow">→</span>
+    </button>
+
+    <button class="wm-btn ghost" onclick="closeWelcome('ghost')">
+      <div class="wm-btn-icon">👻</div>
+      <div class="wm-btn-text">
+        <div class="wm-btn-title">Continuer en invité</div>
+        <div class="wm-btn-desc">Parcourir le catalogue sans inscription</div>
+      </div>
+      <span class="wm-btn-arrow">→</span>
+    </button>
+
+    <div class="wm-footer">
+      <div class="wm-footer-text">Besoin d'aide ? <a href="tel:+212681736910">📞 +212 681 73 69 10</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // N'affiche le popup qu'une fois par session (ou si l'URL contient ?welcome=1)
+  function shouldShowWelcome(){
+    try{
+      var url = new URL(window.location.href);
+      if(url.searchParams.get("welcome")==="1") return true;
+      // Déjà vu pendant cette session
+      if(sessionStorage.getItem("vc_welcome_seen")==="1") return false;
+      // Déjà connecté → pas de popup
+      var sess = JSON.parse(localStorage.getItem("fl_session")||"null");
+      if(sess && sess.user) return false;
+      return true;
+    }catch(e){ return true; }
+  }
+  function showWelcome(){
+    var m = document.getElementById("welcome-modal");
+    if(m){ m.classList.add("show"); document.body.style.overflow="hidden"; }
+  }
+  window.closeWelcome = function(action){
+    var m = document.getElementById("welcome-modal");
+    if(m){ m.classList.remove("show"); document.body.style.overflow=""; }
+    try{ sessionStorage.setItem("vc_welcome_seen","1"); }catch(e){}
+    if(action==="login"){
+      // Ouvrir le formulaire de connexion
+      var lf = document.getElementById("login-form");
+      var lm = document.getElementById("login-modal");
+      if(typeof openLogin==="function"){ setTimeout(openLogin, 200); }
+      else if(lm){ setTimeout(function(){ lm.classList.add("show"); }, 200); }
+      else { setTimeout(function(){ document.getElementById("mon-espace") && document.getElementById("mon-espace").scrollIntoView({behavior:"smooth"}); }, 200); }
+    } else if(action==="signup"){
+      // Ouvrir le formulaire d'inscription
+      if(typeof openSignup==="function"){ setTimeout(openSignup, 200); }
+      else {
+        var sm = document.getElementById("signup-modal");
+        if(sm){ setTimeout(function(){ sm.classList.add("show"); }, 200); }
+      }
+    }
+    // 'ghost' → ne fait rien, l'utilisateur navigue librement
+  };
+  // Réafficher le popup si l'utilisateur clique sur un lien spécifique
+  window.reopenWelcome = function(){
+    try{ sessionStorage.removeItem("vc_welcome_seen"); }catch(e){}
+    showWelcome();
+  };
+  // Lancement après chargement complet
+  if(document.readyState==="complete" || document.readyState==="interactive"){
+    setTimeout(function(){ if(shouldShowWelcome()) showWelcome(); }, 800);
+  } else {
+    window.addEventListener("DOMContentLoaded", function(){
+      setTimeout(function(){ if(shouldShowWelcome()) showWelcome(); }, 800);
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
