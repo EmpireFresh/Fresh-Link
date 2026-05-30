@@ -68,6 +68,32 @@ body {
   overscroll-behavior: none;
 }
 
+/* ✅ Police arabe — fix l'espacement bizarre entre les lettres arabes */
+:lang(ar),
+[lang="ar"],
+[dir="rtl"] {
+  font-family: var(--font-arabic), "Noto Sans Arabic", "Amiri", "Cairo", "Tajawal", sans-serif;
+  letter-spacing: 0 !important;
+  word-spacing: normal;
+}
+
+/* Détecter automatiquement les noms arabes inline (Unicode range arabic) */
+.font-arabic,
+[data-lang="ar"] {
+  font-family: var(--font-arabic), "Noto Sans Arabic", "Amiri", "Cairo", sans-serif;
+  letter-spacing: 0 !important;
+}
+
+/* Force la police arabe pour les caractères arabes même en flux LTR */
+@font-face {
+  font-family: "ArabicFix";
+  src: local("Noto Sans Arabic"), local("Amiri"), local("Cairo");
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+}
+body, * {
+  font-family: var(--font-sans), "ArabicFix", "Noto Sans Arabic", system-ui, sans-serif;
+}
+
 /* ── Mobile touch optimizations ─────────────────────────────────────────────── */
 
 /* Remove blue tap highlight on all interactive elements */

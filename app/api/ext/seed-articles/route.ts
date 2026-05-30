@@ -55,19 +55,27 @@ export async function POST(req: NextRequest) {
   // Permet de nettoyer les anciens IDs (a1, a2...) qui créent des doublons
   let wiped = 0
   if (body.wipe) {
-    const { data: existing } = await sb
+    // ⚠️ NE PAS utiliser .not("id","like","__%") car _ est wildcard SQL et matche tout
+    // → on fetch tout puis on filtre côté JS
+    const { data: existing, error: fetchErr } = await sb
       .from("fl_articles")
       .select("id")
-      .not("id", "like", "__%")
-      .limit(2000)
-    if (existing && existing.length > 0) {
-      const ids = existing.map(r => r.id as string)
-      // Supprimer par chunks de 200 pour éviter URL trop longue
-      for (let i = 0; i < ids.length; i += 200) {
-        const chunk = ids.slice(i, i + 200)
-        const { error } = await sb.from("fl_articles").delete().in("id", chunk)
-        if (!error) wiped += chunk.length
-      }
+      .limit(5000)
+    if (fetchErr) {
+      return NextResponse.json(
+        { ok: false, error: "Fetch existing failed: " + fetchErr.message },
+        { status: 500, headers: cors(origin) }
+      )
+    }
+    const ids = (existing ?? [])
+      .filter(r => !String(r.id).startsWith("__"))
+      .map(r => r.id as string)
+    // Supprimer par chunks de 200 pour éviter URL trop longue
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200)
+      const { error } = await sb.from("fl_articles").delete().in("id", chunk)
+      if (!error) wiped += chunk.length
+      else console.error("[seed-articles] delete chunk error:", error)
     }
   }
 
@@ -76,9 +84,9 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await sb
       .from("fl_articles")
       .select("id")
-      .not("id", "like", "__%")
-      .limit(1)
-    if (existing && existing.length > 0) {
+      .limit(50)
+    const nonConfig = (existing ?? []).filter(r => !String(r.id).startsWith("__"))
+    if (nonConfig.length > 0) {
       return NextResponse.json({
         ok: true,
         seeded: 0,

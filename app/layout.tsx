@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Geist_Mono } from 'next/font/google'
+import { Inter, Geist_Mono, Noto_Sans_Arabic } from 'next/font/google'
 import './globals.css'
 import PWAInstall from '@/components/PWAInstall'
 import LiveSyncProvider from '@/components/providers/LiveSyncProvider'
@@ -14,6 +14,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
+})
+
+// ✅ Police arabe : fixe l'espacement entre lettres dans noms produits
+const notoArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  variable: "--font-arabic",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 })
 
 export const metadata: Metadata = {
@@ -69,7 +77,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${geistMono.variable}`}>
+    <html lang="fr" className={`${inter.variable} ${geistMono.variable} ${notoArabic.variable}`}>
       <head>
         {/* PWA / Mobile */}
         <meta name="mobile-web-app-capable" content="yes" />
