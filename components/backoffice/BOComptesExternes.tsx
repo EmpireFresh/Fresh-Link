@@ -290,28 +290,91 @@ export default function BOComptesExternes({ user }: Props) {
     flash(true, "Mot de passe réinitialisé.")
   }
 
-  // ── Save new client ──────────────────────────────────────────────────────────
-  const handleAdd = (data: Omit<Client, "id" | "createdBy" | "createdAt">) => {
+  // ⚡ Helper : push 1 entité (client/user) vers Supabase via service_role
+  async function pushToSupabase(table: "fl_clients" | "fl_users" | "fl_fournisseurs", id: string, payload: Record<string, unknown>): Promise<boolean> {
+    try {
+      const res = await fetch("/api/sync-write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table,
+          upserts: [{ id, payload, updated_at: new Date().toISOString() }],
+        }),
+      })
+      const data = await res.json()
+      return data.ok === true
+    } catch { return false }
+  }
+
+  // ── Save new client (+ auto-create login si demandé) ─────────────────────────
+  const handleAdd = async (data: Omit<Client, "id" | "createdBy" | "createdAt">) => {
     if (!data.nom.trim()) { flash(false, "Le nom est obligatoire."); return }
-    store.addClient({ ...data, id: store.genId(), createdBy: user.id, createdAt: new Date().toISOString() })
+    const clientId = "VFC" + Date.now().toString(36).toUpperCase().slice(-5) + Math.floor(Math.random()*999).toString().padStart(3,"0")
+    const fullClient = { ...data, id: clientId, createdBy: user.id, createdAt: new Date().toISOString() }
+    store.addClient(fullClient)
+
+    // ✅ Auto-push vers Supabase (la boutique le verra)
+    const clientOk = await pushToSupabase("fl_clients", clientId, {
+      nom: data.nom, telephone: data.telephone, email: data.email || null,
+      adresse: data.adresse, secteur: data.secteur, zone: data.zone,
+      type: data.type, categorie: data.categorie, segment: data.categorie === "chr" ? "CHR" : data.categorie === "marchand" ? "Marchand" : "standard",
+      taille: data.taille, rotation: data.rotation, ice: data.ice,
+      modalitePaiement: data.modalitePaiement, creditAutorise: data.creditAutorise,
+      plafondCredit: data.plafondCredit, creditSolde: data.creditSolde,
+      actif: true, remisePct: 0, remiseActive: false, loyaltyPoints: 0,
+      promotions: [], createdAt: new Date().toISOString(),
+    })
+
+    // ✅ Si téléphone fourni → auto-créer un compte de connexion (fl_users)
+    if (data.telephone?.trim()) {
+      const userId = "VFU" + Date.now().toString(36).toUpperCase().slice(-5) + Math.floor(Math.random()*999).toString().padStart(3,"0")
+      const password = genPassword(10)
+      await pushToSupabase("fl_users", userId, {
+        name: data.nom, telephone: data.telephone,
+        email: data.email || null, password,
+        role: "client", clientId, actif: true,
+        sousType: data.categorie,
+        createdAt: new Date().toISOString(),
+      })
+      setResetPwd({ userId, pwd: password })
+      flash(true, `✅ Client "${data.nom}" créé et publié sur Supabase. Mot de passe : ${password}`)
+    } else {
+      flash(clientOk, clientOk ? `✅ Client "${data.nom}" créé et synchronisé.` : `⚠️ Client créé localement mais erreur Supabase`)
+    }
     setShowAdd(false)
     reload()
-    flash(true, `Client "${data.nom}" ajouté.`)
   }
 
   // ── Save edited client ───────────────────────────────────────────────────────
-  const handleEdit = (data: Omit<Client, "id" | "createdBy" | "createdAt">) => {
+  const handleEdit = async (data: Omit<Client, "id" | "createdBy" | "createdAt">) => {
     if (!editId || !data.nom.trim()) { flash(false, "Le nom est obligatoire."); return }
     store.updateClient(editId, data)
     setEditId(null)
+    // ✅ Auto-push modification vers Supabase
+    const ok = await pushToSupabase("fl_clients", editId, {
+      nom: data.nom, telephone: data.telephone, email: data.email || null,
+      adresse: data.adresse, secteur: data.secteur, zone: data.zone,
+      type: data.type, categorie: data.categorie,
+      segment: data.categorie === "chr" ? "CHR" : data.categorie === "marchand" ? "Marchand" : "standard",
+      taille: data.taille, rotation: data.rotation, ice: data.ice,
+      modalitePaiement: data.modalitePaiement, creditAutorise: data.creditAutorise,
+      plafondCredit: data.plafondCredit, creditSolde: data.creditSolde,
+      updatedAt: new Date().toISOString(),
+    })
     reload()
-    flash(true, `Client "${data.nom}" mis à jour.`)
+    flash(ok, ok ? `✅ Client "${data.nom}" mis à jour & synchronisé Supabase.` : `⚠️ Mis à jour localement, erreur Supabase`)
   }
 
   // ── Delete client ────────────────────────────────────────────────────────────
   const handleConfirmDelete = () => {
     if (!confirmDel) return
     store.deleteClient(confirmDel.id)
+    // ✅ Suppression Supabase en cascade
+    fetch("/api/sync-write", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table: "fl_clients", deletes: [confirmDel.id] }),
+    }).catch(() => {})
     flash(true, `Client "${confirmDel.nom}" supprimé.`)
     setConfirmDel(null)
     reload()
