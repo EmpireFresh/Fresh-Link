@@ -6,10 +6,14 @@ import { store, type Article, type User } from "@/lib/store"
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function computePV(a: Article): number {
+  // ⚠️ Coercition Number obligatoire : les valeurs venant de Supabase/localStorage
+  // peuvent être des strings, ce qui casse .toFixed() ("E.toFixed is not a function")
+  const prixAchat = Number(a.prixAchat) || 0
+  const pvValeur  = Number(a.pvValeur)  || 0
   switch (a.pvMethode) {
-    case "pourcentage": return Math.round(a.prixAchat * (1 + a.pvValeur / 100) * 100) / 100
-    case "montant":     return Math.round((a.prixAchat + a.pvValeur) * 100) / 100
-    default:            return a.pvValeur
+    case "pourcentage": return Math.round(prixAchat * (1 + pvValeur / 100) * 100) / 100
+    case "montant":     return Math.round((prixAchat + pvValeur) * 100) / 100
+    default:            return pvValeur
   }
 }
 
@@ -478,17 +482,22 @@ function StatsBar({ articles }: { articles: Article[] }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[
-        { label: "Publiés",       value: pub.length,     sub: `/ ${articles.length} total`,     icon: "🌐", cls: "bg-blue-50 border-blue-200" },
-        { label: "Disponibles",   value: dispo.length,   sub: "en stock & actif",               icon: "✅", cls: "bg-green-50 border-green-200" },
-        { label: "Rupture",       value: rupture.length, sub: "hors stock publiés",             icon: "❌", cls: "bg-red-50 border-red-200" },
-        { label: "En promo",      value: promo.length,   sub: "avec prix promotionnel",         icon: "🏷️", cls: "bg-purple-50 border-purple-200" },
+        { label: "Publiés",     value: pub.length,     sub: `/ ${articles.length} au total`,   icon: "🌐", grad: "from-blue-500 to-blue-600",     ring: "ring-blue-200" },
+        { label: "Disponibles", value: dispo.length,   sub: "en stock & actif",                icon: "✅", grad: "from-emerald-500 to-green-600",  ring: "ring-emerald-200" },
+        { label: "Rupture",     value: rupture.length, sub: "hors stock publiés",              icon: "❌", grad: "from-rose-500 to-red-600",       ring: "ring-rose-200" },
+        { label: "En promo",    value: promo.length,   sub: "prix promotionnel",               icon: "🏷️", grad: "from-fuchsia-500 to-purple-600", ring: "ring-fuchsia-200" },
       ].map(s => (
-        <div key={s.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${s.cls}`}>
-          <span className="text-2xl">{s.icon}</span>
-          <div>
-            <p className="text-2xl font-black text-foreground leading-none">{s.value}</p>
-            <p className="text-[10px] font-bold text-muted-foreground mt-0.5">{s.label}</p>
-            <p className="text-[9px] text-muted-foreground">{s.sub}</p>
+        <div key={s.label} className={`group relative overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 ring-1 ${s.ring}`}>
+          <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${s.grad}`} />
+          <div className="flex items-center gap-3 px-4 py-3.5">
+            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${s.grad} flex items-center justify-center text-xl shadow-sm shrink-0`}>
+              <span className="drop-shadow-sm">{s.icon}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl font-black text-slate-900 leading-none tabular-nums">{s.value}</p>
+              <p className="text-[11px] font-bold text-slate-600 mt-1">{s.label}</p>
+              <p className="text-[9px] text-slate-400 truncate">{s.sub}</p>
+            </div>
           </div>
         </div>
       ))}
@@ -689,21 +698,38 @@ export default function BOMarketplace({ user }: Props) {
   return (
     <div className="flex flex-col gap-5">
 
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <span className="text-2xl">🛒</span>
-            Marketplace & Catalogue Web
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">Gérez la publication de vos articles sur votre site web et portail client.</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <button onClick={handleAutoSync}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-blue-300 bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition-colors">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-            Sync statuts stocks
-          </button>
+      {/* ── Header premium (bannière gradient) ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b3d1a] via-[#1a4f2a] to-[#2d7a46] p-6 sm:p-7 shadow-xl">
+        {/* Décor */}
+        <div className="absolute -right-12 -top-12 w-56 h-56 rounded-full bg-emerald-400/10 blur-2xl" />
+        <div className="absolute -left-8 -bottom-16 w-48 h-48 rounded-full bg-amber-300/10 blur-2xl" />
+        <div className="relative flex items-start justify-between flex-wrap gap-5">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/12 backdrop-blur-sm flex items-center justify-center text-3xl shadow-lg shrink-0">🛒</div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-2xl font-black text-white tracking-tight">Marketplace & Catalogue Web</h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-400/15 border border-emerald-300/30 text-emerald-100 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                  Live · vitafresh.vercel.app
+                </span>
+              </div>
+              <p className="text-sm text-emerald-50/80 mt-1.5 max-w-xl leading-relaxed">
+                Pilotez la publication de vos articles sur la boutique en ligne et les portails clients. Chaque modification est synchronisée en temps réel.
+              </p>
+              <div className="flex items-center gap-4 mt-3 text-emerald-50/90">
+                <span className="flex items-center gap-1.5 text-xs font-semibold"><span className="text-emerald-300">●</span> {published.length} publié{published.length > 1 ? "s" : ""}</span>
+                <span className="flex items-center gap-1.5 text-xs font-semibold"><span className="text-amber-300">●</span> {articles.length} au total</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={handleAutoSync}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/12 backdrop-blur-sm border border-white/20 text-white text-xs font-bold hover:bg-white/20 transition-all shadow-sm">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Sync stocks
+            </button>
+          </div>
         </div>
       </div>
 
@@ -726,18 +752,19 @@ export default function BOMarketplace({ user }: Props) {
       {/* ── Stats ── */}
       <StatsBar articles={articles} />
 
-      {/* ── Tabs ── */}
-      <div className="flex gap-1 p-1 rounded-xl bg-muted w-fit overflow-x-auto">
+      {/* ── Tabs premium ── */}
+      <div className="flex gap-1.5 p-1.5 rounded-2xl bg-slate-100 w-fit overflow-x-auto border border-slate-200/70">
         {([
-          { id: "catalogue" as Tab,    label: "Tous les articles",   count: articles.length },
-          { id: "publie" as Tab,       label: "Publiés sur le site", count: published.length },
-          { id: "api_preview" as Tab,  label: "Aperçu API JSON",     count: null },
+          { id: "catalogue" as Tab,    label: "Tous les articles",   icon: "📦", count: articles.length },
+          { id: "publie" as Tab,       label: "Publiés sur le site", icon: "🌐", count: published.length },
+          { id: "api_preview" as Tab,  label: "Aperçu API",          icon: "{ }", count: null },
         ]).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${tab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${tab === t.id ? "bg-white text-slate-900 shadow-md ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-800 hover:bg-white/50"}`}>
+            <span className="text-sm">{t.icon}</span>
             {t.label}
             {t.count !== null && (
-              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${tab === t.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{t.count}</span>
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full tabular-nums ${tab === t.id ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-500"}`}>{t.count}</span>
             )}
           </button>
         ))}
@@ -749,38 +776,38 @@ export default function BOMarketplace({ user }: Props) {
       {/* ── Catalogue / Published ── */}
       {(tab === "catalogue" || tab === "publie") && (
         <>
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…"
-                className="pl-8 pr-4 py-2 rounded-xl border border-border bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
+          {/* Filters premium */}
+          <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <div className="relative flex-1 min-w-[180px]">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un article…"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white transition-all" />
             </div>
             <select value={famille} onChange={e => setFamille(e.target.value)}
-              className="px-3 py-2 rounded-xl border border-border bg-card text-xs focus:outline-none">
-              <option value="">Toutes familles</option>
+              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer">
+              <option value="">🗂️ Toutes familles</option>
               {familles.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
             <select value={statutFilter} onChange={e => setStatutFilter(e.target.value as any)}
-              className="px-3 py-2 rounded-xl border border-border bg-card text-xs focus:outline-none">
+              className="px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer">
               <option value="tous">Tous statuts</option>
-              <option value="publie">Publiés</option>
-              <option value="non_publie">Non publiés</option>
+              <option value="publie">🌐 Publiés</option>
+              <option value="non_publie">🔒 Non publiés</option>
               {STATUT_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.icon} {o.label}</option>)}
             </select>
 
             {/* Bulk actions */}
             {filtered.length > 0 && (
-              <div className="flex gap-1.5 ml-auto">
+              <div className="flex gap-2 ml-auto">
                 <button onClick={handleBulkPublish}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                  Publier sélection ({filtered.length})
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-bold hover:shadow-lg hover:shadow-emerald-200 transition-all">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  Publier ({filtered.length})
                 </button>
                 <button onClick={handleBulkUnpublish}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-muted transition-colors">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg>
-                  Dépublier sélection
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg>
+                  Dépublier
                 </button>
               </div>
             )}
