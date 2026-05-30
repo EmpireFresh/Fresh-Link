@@ -13,8 +13,16 @@
 <style>
 :root{--g1:#1E5631;--g2:#2D7A45;--gp:#D8F3DC;--gd:#060C07;--o1:#B8960C;--o2:#D4A843;--op:#FFF8E1;--gy:#5A6B5C;--gl:#E2E8E3;--wh:#fff;--cr:#FAFAF5;--green:#16a34a;--green-dark:#15803d;--green-light:#dcfce7;--gold:#b8860b;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-500:#6b7280;--gray-700:#374151;--gray-900:#111827;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.08);--shadow-lg:0 8px 40px rgba(0,0,0,.14)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'Inter','DM Sans','Noto Sans Arabic',sans-serif;background:var(--cr);color:var(--gray-900);overflow-x:hidden;line-height:1.6}
+html{scroll-behavior:smooth;overflow-x:hidden;width:100%;max-width:100%}
+body{font-family:'Inter','DM Sans','Noto Sans Arabic',sans-serif;background:var(--cr);color:var(--gray-900);overflow-x:hidden;width:100%;max-width:100%;position:relative;line-height:1.6}
+/* ⚡ Garde-fou anti-débordement horizontal sur mobile (bande blanche à droite) */
+img,video,svg,iframe,table{max-width:100%}
+.container,section,header,footer,main{max-width:100%}
+@media(max-width:768px){
+  .hero-cards{display:none!important}
+  [style*="width:340px"],[style*="width: 340px"]{width:100%!important;max-width:100%!important}
+  .tc2{min-width:auto!important;flex:0 0 88%!important}
+}
 html[dir="rtl"] body{font-family:'Noto Sans Arabic','Inter',sans-serif}
 html[dir="rtl"]{text-align:right}
 html[dir="rtl"] .nav-links{flex-direction:row-reverse}
@@ -750,6 +758,9 @@ html[dir="rtl"] .modal-close{right:auto;left:14px}
 .ua-btn-del{background:#fee2e2;color:#dc2626}
 .ua-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 </style>
+
+<!-- ═══ EmailJS SDK (envoi d'emails côté client, sans backend) ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -791,6 +802,15 @@ const CONFIG = {
   PHONE_SALES:     "+212 681 73 69 10",  // Responsable commercial
   PHONE_DIRECTION: "+212 647 33 34 56",  // Direction
   WHATSAPP:        "212681736910",
+  // ═══ EmailJS — remplir avec vos identifiants emailjs.com (voir docs/EMAILJS_SETUP.md) ═══
+  EMAILJS: {
+    PUBLIC_KEY:    "VOTRE_PUBLIC_KEY",      // Account → General → Public Key
+    SERVICE_ID:    "VOTRE_SERVICE_ID",      // Email Services → Service ID (ex: service_xxx)
+    TPL_COMMANDE:  "VOTRE_TEMPLATE_COMMANDE",// Template confirmation commande (client)
+    TPL_ADMIN:     "VOTRE_TEMPLATE_ADMIN",   // Template notification équipe (admin)
+    TPL_COMPTE:    "VOTRE_TEMPLATE_COMPTE",  // Template bienvenue nouveau compte
+    ADMIN_EMAIL:   "sales@vita-core.org",   // destinataire des notifications équipe
+  },
   WHATSAPP_ORDER:  "https://wa.me/212681736910",
   WHATSAPP_SIGNUP: "https://wa.me/212681736910",
   // Numéros privés équipe (commandes complètes — confidentielles)
@@ -3511,6 +3531,65 @@ function onPayChange(val){
     var wbtn=document.getElementById("vir-wa-btn"); if(wbtn) wbtn.href="https://wa.me/"+CONFIG.WA_EQUIPE_1+"?text="+waMsg;
   }
 }
+// ══════════════════════════════════════════════════════════════════
+//  EMAILJS — envoi d'emails côté client (sans backend)
+// ══════════════════════════════════════════════════════════════════
+var EMAILJS_READY=false;
+function initEmailJS(){
+  try{
+    var cfg=CONFIG.EMAILJS||{};
+    if(typeof emailjs==="undefined"||!cfg.PUBLIC_KEY||cfg.PUBLIC_KEY==="VOTRE_PUBLIC_KEY"){ return; }
+    emailjs.init({ publicKey: cfg.PUBLIC_KEY });
+    EMAILJS_READY=true;
+  }catch(e){ console.warn("EmailJS init skipped:",e); }
+}
+/** Envoie un email via un template EmailJS. Retourne une Promise (silencieuse en cas d'échec). */
+function sendEmailJS(templateId, params){
+  return new Promise(function(resolve){
+    var cfg=CONFIG.EMAILJS||{};
+    if(!EMAILJS_READY||!templateId||templateId.indexOf("VOTRE_")===0||!cfg.SERVICE_ID||cfg.SERVICE_ID==="VOTRE_SERVICE_ID"){
+      resolve({skipped:true}); return;
+    }
+    emailjs.send(cfg.SERVICE_ID, templateId, params)
+      .then(function(r){ resolve({ok:true,r:r}); })
+      .catch(function(err){ console.warn("EmailJS send error:",err); resolve({ok:false,err:err}); });
+  });
+}
+/** Email de confirmation de commande (au client) + notification (à l'équipe) */
+function emailCommande(d){
+  var cfg=CONFIG.EMAILJS||{};
+  // 1. Au client (si email fourni)
+  if(d.email){
+    sendEmailJS(cfg.TPL_COMMANDE,{
+      to_email: d.email, to_name: d.nom,
+      order_ref: d.ref, order_total: d.total+" MAD",
+      order_items: d.itemsText, order_date: d.date,
+      delivery: d.delivery, payment: d.payment, address: d.adr,
+      company: CONFIG.COMPANY_NAME, phone: CONFIG.PHONE_SALES,
+    });
+  }
+  // 2. À l'équipe (toujours)
+  sendEmailJS(cfg.TPL_ADMIN,{
+    to_email: cfg.ADMIN_EMAIL||"sales@vita-core.org",
+    order_ref: d.ref, client_name: d.nom, client_phone: d.tel,
+    client_email: d.email||"—", order_total: d.total+" MAD",
+    order_items: d.itemsText, address: d.adr, delivery: d.delivery,
+    payment: d.payment, notes: d.notes||"—", sur_commande: d.surCommande?"⚠️ OUI":"Non",
+  });
+}
+/** Email de bienvenue après création de compte */
+function emailBienvenue(p){
+  var cfg=CONFIG.EMAILJS||{};
+  if(!p.email) return;
+  sendEmailJS(cfg.TPL_COMPTE,{
+    to_email: p.email, to_name: p.nom,
+    login_phone: p.telephone, login_password: p.password,
+    account_type: p.type, company: CONFIG.COMPANY_NAME,
+    site_url: "https://vitafresh.vercel.app",
+  });
+}
+window.initEmailJS=initEmailJS; window.emailCommande=emailCommande; window.emailBienvenue=emailBienvenue;
+
 function submitOrder(){
   var nom=document.getElementById("f-nom").value.trim(), tel=document.getElementById("f-tel").value.trim(), adr=document.getElementById("f-adr").value.trim();
   if(!nom||!tel||!adr){showToast("⚠️ Remplissez nom, téléphone et adresse");return;}
@@ -3585,6 +3664,17 @@ function submitOrder(){
     var orderNumEl=document.getElementById("mod-order-num");
     if(orderNumEl) orderNumEl.textContent=num||cmdRef;
     document.getElementById("modal").classList.add("show");
+    // 5b. ✉️ Envoi des emails (confirmation client + notification équipe) via EmailJS
+    try{
+      var itemsText=items.map(function(p){return "• "+p.n+" — "+p.qty+" "+(p.u||"kg")+" × "+p.p+" MAD = "+(Math.round(p.p*p.qty*10)/10)+" MAD";}).join("\n");
+      emailCommande({
+        ref: num||cmdRef, nom: nom, tel: tel, email: email, adr: adr,
+        total: tot, itemsText: itemsText,
+        date: new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"}),
+        delivery: (delMode==="exp"?"Express "+CFG.expDelay:"Standard 24h"),
+        payment: pay, notes: notes, surCommande: hasSurCommande,
+      });
+    }catch(e){ console.warn("email order skipped",e); }
     // 6. Ouvrir WhatsApp automatiquement
     setTimeout(function(){ window.open(waUrl,"_blank"); }, 600);
     showToast("✅ Commande confirmée — WhatsApp ouvert !");
@@ -3892,6 +3982,8 @@ async function doSignup(e){
     if(!res.ok){errEl.textContent=data.error||data.message||"Erreur lors de l'envoi.";errEl.classList.add("show");}
     else if(data.statut==="actif"&&data.password){
       // ── Compte créé automatiquement → afficher le mot de passe ──────────
+      // ✉️ Email de bienvenue avec identifiants (si email fourni)
+      try{ emailBienvenue({nom:name,email:email,telephone:phone,password:data.password,type:type}); }catch(e){}
       document.getElementById("signupForm").style.display="none";
       if(succEl){
         succEl.style.display="block";
@@ -4653,6 +4745,7 @@ function initReveal(){
 // ── INIT ──
 document.addEventListener("DOMContentLoaded",function(){
   sb=initSupabase();
+  initEmailJS();
   updateContactLinks(); renderStats(); renderZones();
   setLang(currentLang);
   showSkeletons(8);
