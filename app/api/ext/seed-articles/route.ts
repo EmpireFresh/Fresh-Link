@@ -118,10 +118,11 @@ export async function POST(req: NextRequest) {
       const famille = String(payload.famille ?? "")
       payload.photo = getArticlePhoto(nom, famille)
 
-      // Activer marketplace par défaut
-      payload.marketplaceActif = payload.marketplaceActif !== false
-      payload.catalogueVisible = payload.catalogueVisible !== false
-      payload.actif = payload.actif !== false
+      // 🛑 Par défaut : actif dans le système, MAIS non publié sur le site
+      // L'admin doit activer "Publier sur le site" manuellement par article
+      payload.actif = payload.actif !== false       // visible dans le BO ✅
+      payload.catalogueVisible = false               // pas dans le catalogue site
+      payload.marketplaceActif = false               // pas publié
 
       return {
         id: cleanId,

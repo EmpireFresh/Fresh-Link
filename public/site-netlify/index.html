@@ -3022,6 +3022,9 @@ function mapFamille(f, nom){
   }
   if(!f) return "legumes";
   var fl=(f+"").toLowerCase();
+  // ⚠️ ORDRE CRITIQUE : tester "légume" AVANT "fruit" car "légumes fruits"
+  // contient les deux mots — il doit être catégorisé dans "legumes" !
+  if(fl.includes("legume")||fl.includes("légume")) return "legumes";
   // Fruits (tropicaux, rouges, agrumes, secs)
   if(fl.includes("fruit")||fl.includes("agrume")||fl.includes("raisin")||fl.includes("grenade")) return "fruits";
   // Herbes et champignons
