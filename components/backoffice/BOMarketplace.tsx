@@ -530,36 +530,110 @@ export default function BOMarketplace({ user }: Props) {
   })
 
   const published = articles.filter(a => a.marketplaceActif)
+  const [syncingToSb, setSyncingToSb] = useState(false)
+  const [syncMsg, setSyncMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
-  const handleSave = (updated: Article) => {
+  // ⚡ AUTO-SYNC : pousse 1 ou N articles vers Supabase via service_role
+  // Résout le problème : localStorage ≠ Supabase ≠ Boutique
+  async function pushToSupabase(items: Article[]): Promise<{ ok: boolean; pushed: number; errors: string[] }> {
+    if (items.length === 0) return { ok: true, pushed: 0, errors: [] }
+    const upserts = items.map(a => {
+      const { id, ...payload } = a
+      // S'assurer que catalogueVisible est aligné avec marketplaceActif
+      const marketplaceActif = !!a.marketplaceActif
+      return {
+        id,
+        payload: { ...payload, marketplaceActif, catalogueVisible: marketplaceActif },
+        updated_at: new Date().toISOString(),
+      }
+    })
+    // Batch par 50
+    let pushed = 0
+    const errors: string[] = []
+    for (let i = 0; i < upserts.length; i += 50) {
+      const batch = upserts.slice(i, i + 50)
+      try {
+        const res = await fetch("/api/sync-write", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table: "fl_articles", upserts: batch }),
+        })
+        const data = await res.json()
+        if (data.ok) pushed += batch.length
+        else errors.push(...(data.errors ?? [`batch ${i}`]))
+      } catch (e) {
+        errors.push(String(e))
+      }
+    }
+    return { ok: errors.length === 0, pushed, errors }
+  }
+
+  const handleSave = async (updated: Article) => {
     const all = articles.map(a => a.id === updated.id ? updated : a)
     store.saveArticles(all)
     setArticles(all)
     setEditing(null)
+    // ✅ Push immédiat vers Supabase pour que le site web voit le changement
+    setSyncingToSb(true)
+    const { ok } = await pushToSupabase([updated])
+    setSyncingToSb(false)
+    if (ok) {
+      setSyncMsg({
+        ok: true,
+        text: updated.marketplaceActif
+          ? `✅ "${updated.nom}" publié sur le site web !`
+          : `✅ "${updated.nom}" retiré du site web`,
+      })
+    } else {
+      setSyncMsg({ ok: false, text: `⚠️ Sauvegardé localement, erreur Supabase` })
+    }
+    setTimeout(() => setSyncMsg(null), 4000)
   }
 
-  const handleBulkPublish = () => {
-    if (!window.confirm(`Publier ${filtered.length} articles filtrés sur la marketplace ?`)) return
+  const handleBulkPublish = async () => {
+    if (!window.confirm(`Publier ${filtered.length} articles filtrés sur le site web ?`)) return
+    const toPublish: Article[] = []
     const all = articles.map(a => {
-      if (filtered.find(f => f.id === a.id)) return { ...a, marketplaceActif: true, marketplaceStatut: (a.stockDisponible > 0 ? "disponible" : "out_of_stock") as MarketplaceStatut }
+      if (filtered.find(f => f.id === a.id)) {
+        const updated = { ...a, marketplaceActif: true, marketplaceStatut: (a.stockDisponible > 0 ? "disponible" : "out_of_stock") as MarketplaceStatut }
+        toPublish.push(updated)
+        return updated
+      }
       return a
     })
     store.saveArticles(all)
     setArticles(all)
+    setSyncingToSb(true)
+    const { ok, pushed } = await pushToSupabase(toPublish)
+    setSyncingToSb(false)
+    setSyncMsg(ok
+      ? { ok: true, text: `✅ ${pushed} articles publiés sur le site web !` }
+      : { ok: false, text: `⚠️ Erreur lors de la synchronisation Supabase` })
     setBulkSaved(true)
-    setTimeout(() => setBulkSaved(false), 3000)
+    setTimeout(() => { setBulkSaved(false); setSyncMsg(null) }, 4000)
   }
 
-  const handleBulkUnpublish = () => {
-    if (!window.confirm(`Dépublier ${filtered.length} articles filtrés ?`)) return
+  const handleBulkUnpublish = async () => {
+    if (!window.confirm(`Dépublier ${filtered.length} articles filtrés du site web ?`)) return
+    const toUnpublish: Article[] = []
     const all = articles.map(a => {
-      if (filtered.find(f => f.id === a.id)) return { ...a, marketplaceActif: false }
+      if (filtered.find(f => f.id === a.id)) {
+        const updated = { ...a, marketplaceActif: false }
+        toUnpublish.push(updated)
+        return updated
+      }
       return a
     })
     store.saveArticles(all)
     setArticles(all)
+    setSyncingToSb(true)
+    const { ok, pushed } = await pushToSupabase(toUnpublish)
+    setSyncingToSb(false)
+    setSyncMsg(ok
+      ? { ok: true, text: `✅ ${pushed} articles retirés du site web` }
+      : { ok: false, text: `⚠️ Erreur lors de la synchronisation Supabase` })
     setBulkSaved(true)
-    setTimeout(() => setBulkSaved(false), 3000)
+    setTimeout(() => { setBulkSaved(false); setSyncMsg(null) }, 4000)
   }
 
   // Auto-sync stock statuts
@@ -600,10 +674,19 @@ export default function BOMarketplace({ user }: Props) {
         </div>
       </div>
 
-      {bulkSaved && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm font-semibold">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-          Modifications sauvegardées.
+      {syncingToSb && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm font-semibold">
+          <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
+          Synchronisation avec le site web en cours…
+        </div>
+      )}
+
+      {syncMsg && (
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border ${syncMsg.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={syncMsg.ok ? "M5 13l4 4L19 7" : "M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"} />
+          </svg>
+          {syncMsg.text}
         </div>
       )}
 
