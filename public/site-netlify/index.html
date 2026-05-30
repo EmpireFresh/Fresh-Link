@@ -4988,9 +4988,9 @@ window.activeCategory=activeCategory;
 .wm-btn{display:flex;align-items:center;gap:14px;width:100%;padding:14px 18px;border:2px solid #e5e7eb;border-radius:14px;background:#fff;cursor:pointer;margin-bottom:10px;transition:all .2s;text-align:left;font-family:inherit}
 .wm-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.08)}
 .wm-btn-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.wm-btn-text{flex:1}
-.wm-btn-title{font-size:14px;font-weight:800;color:#111827;margin-bottom:2px}
-.wm-btn-desc{font-size:12px;color:#6b7280;line-height:1.4}
+.wm-btn-text{flex:1;min-width:0}
+.wm-btn-title{font-size:13.5px;font-weight:800;color:#111827;margin-bottom:2px;font-family:'Noto Sans Arabic','Inter',sans-serif;letter-spacing:0}
+.wm-btn-desc{font-size:11.5px;color:#6b7280;line-height:1.45;font-family:'Noto Sans Arabic','Inter',sans-serif;letter-spacing:0}
 .wm-btn-arrow{color:#9ca3af;font-size:18px;flex-shrink:0}
 .wm-btn.primary{border-color:#1a4f2a;background:linear-gradient(135deg,#1a4f2a,#2d7a46);color:#fff}
 .wm-btn.primary:hover{box-shadow:0 10px 24px rgba(26,79,42,.35)}
@@ -5013,15 +5013,17 @@ window.activeCategory=activeCategory;
   <div class="wm-card">
     <button class="wm-close" onclick="closeWelcome('ghost')" aria-label="Fermer">×</button>
     <div class="wm-logo">🌿</div>
-    <h2 class="wm-title" id="wm-title">Bienvenue chez Vita Fresh</h2>
-    <div style="text-align:center;margin-top:-2px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;letter-spacing:2px;color:#9ca3af;text-transform:uppercase">by Vita Core</span></div>
-    <p class="wm-sub">Distribution de fruits & légumes frais — Casablanca. Comment souhaitez-vous continuer ?</p>
+    <h2 class="wm-title" id="wm-title">مرحبا بيك فـ Vita Fresh</h2>
+    <div style="text-align:center;margin-top:1px;margin-bottom:4px"><span style="font-size:15px;font-weight:800;color:#1a4f2a">Bienvenue chez Vita Fresh</span></div>
+    <div style="text-align:center;margin-bottom:12px"><span style="font-size:11px;font-weight:700;letter-spacing:2px;color:#9ca3af;text-transform:uppercase">by Vita Core</span></div>
+    <p class="wm-sub" style="direction:rtl;font-family:'Noto Sans Arabic',sans-serif;font-size:13px;margin-bottom:2px">توزيع الخضرة و الفواكه الطرية — كازابلانكا. كيفاش بغيتي تكمل؟</p>
+    <p class="wm-sub" style="margin-top:0">Distribution de fruits & légumes frais — Casablanca. Comment souhaitez-vous continuer ?</p>
 
     <button class="wm-btn primary" onclick="closeWelcome('login')">
       <div class="wm-btn-icon">🔐</div>
       <div class="wm-btn-text">
-        <div class="wm-btn-title">Entrer dans mon espace</div>
-        <div class="wm-btn-desc">Vous avez déjà un compte client</div>
+        <div class="wm-btn-title">دخل لحسابك · Entrer dans mon espace</div>
+        <div class="wm-btn-desc">عندك ديجا حساب · Vous avez déjà un compte</div>
       </div>
       <span class="wm-btn-arrow">→</span>
     </button>
@@ -5029,8 +5031,8 @@ window.activeCategory=activeCategory;
     <button class="wm-btn signup" onclick="closeWelcome('signup')">
       <div class="wm-btn-icon">📝</div>
       <div class="wm-btn-text">
-        <div class="wm-btn-title">Créer un compte</div>
-        <div class="wm-btn-desc">Particulier · CHR · Marchand · Fournisseur</div>
+        <div class="wm-btn-title">صاوب حساب جديد · Créer un compte</div>
+        <div class="wm-btn-desc">فرد · مطعم · تاجر · مورّد</div>
       </div>
       <span class="wm-btn-arrow">→</span>
     </button>
@@ -5038,14 +5040,14 @@ window.activeCategory=activeCategory;
     <button class="wm-btn ghost" onclick="closeWelcome('ghost')">
       <div class="wm-btn-icon">👻</div>
       <div class="wm-btn-text">
-        <div class="wm-btn-title">Continuer en invité</div>
-        <div class="wm-btn-desc">Parcourir le catalogue sans inscription</div>
+        <div class="wm-btn-title">كمل بحال ضيف · Continuer en invité</div>
+        <div class="wm-btn-desc">شوف الكطالوݣ بلا تسجيل · Parcourir sans inscription</div>
       </div>
       <span class="wm-btn-arrow">→</span>
     </button>
 
     <div class="wm-footer">
-      <div class="wm-footer-text">Besoin d'aide ? <a href="tel:+212681736910">📞 +212 681 73 69 10</a></div>
+      <div class="wm-footer-text">واش محتاج مساعدة ؟ Besoin d'aide ? <a href="tel:+212681736910">📞 +212 681 73 69 10</a></div>
     </div>
   </div>
 </div>
