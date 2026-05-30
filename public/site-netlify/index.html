@@ -3003,7 +3003,23 @@ function getEmoji(nom,f){
   for(var k in EMOJI_MAP){ if(n.includes(k)) return EMOJI_MAP[k]; }
   return f==="fruits"?"🍎":f==="prepare"?"🔪":"🥦";
 }
-function mapFamille(f){
+// Override par nom : certains articles culinairement légumes mais classés ailleurs
+// (citrons, citrons verts utilisés comme assaisonnement; maïs servi comme légume)
+function nameToCategoryOverride(nom){
+  if(!nom) return null;
+  var n=(nom+"").toLowerCase();
+  // Citrons (verts, jaunes, etc.) → légumes
+  if(n.includes("citron")) return "legumes";
+  // Maïs → légumes
+  if(n.includes("mais")||n.includes("maïs")||n.includes("mais doux")) return "legumes";
+  return null;
+}
+function mapFamille(f, nom){
+  // 1. Si override par nom, on l'applique en priorité
+  if(nom){
+    var ov = nameToCategoryOverride(nom);
+    if(ov) return ov;
+  }
   if(!f) return "legumes";
   var fl=(f+"").toLowerCase();
   // Fruits (tropicaux, rouges, agrumes, secs)
@@ -3064,7 +3080,7 @@ var PRODS=DEFAULT_PRODS.slice();
 // Map ERP REST API / v_marketplace_catalogue view row to internal PROD object
 // Handles both snake_case (view) and camelCase (legacy) column names
 function mapERPArticle(row){
-  var cat=mapFamille(row.famille), tags=Array.isArray(row.tags)?row.tags:[], firstTag=tags[0]||"frais";
+  var cat=mapFamille(row.famille, row.nom), tags=Array.isArray(row.tags)?row.tags:[], firstTag=tags[0]||"frais";
   // Price: support both snake_case (view) and camelCase (legacy)
   var prixBase=parseFloat(row.prix_public||row.marketplace_prix_public||row.prix||row.prixVente||0);
   // Promo: support both {promo_prix, etiquette} (view) and {promo: Object} (legacy)
@@ -3099,7 +3115,7 @@ function mapSBArticle(row){
   var promoObj=p.marketplacePromo&&p.marketplacePromo.actif?p.marketplacePromo:null;
   var prix=promoObj&&promoObj.prixPromo?parseFloat(promoObj.prixPromo):prixBase;
   var promoLabel=promoObj?(promoObj.etiquette||(prixBase&&promoObj.prixPromo?"-"+Math.round((1-promoObj.prixPromo/prixBase)*100)+"%":"Promo")):"";
-  var cat=mapFamille(p.famille), tags=Array.isArray(p.marketplaceTags)?p.marketplaceTags:(Array.isArray(p.tags)?p.tags:[]), firstTag=tags[0]||"frais";
+  var cat=mapFamille(p.famille, p.nom), tags=Array.isArray(p.marketplaceTags)?p.marketplaceTags:(Array.isArray(p.tags)?p.tags:[]), firstTag=tags[0]||"frais";
   return{
     id:row.id, em:getEmoji(p.nom,cat), n:p.nom||"", no:p.nomAr||"",
     o:p.marketplaceDescription||p.marketplaceCommentaire||p.famille||"Maroc",

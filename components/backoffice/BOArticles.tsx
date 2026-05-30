@@ -48,6 +48,7 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
   const [confirmResetDefect, setConfirmResetDefect] = useState(false)
   const [syncingAll, setSyncingAll] = useState(false)
   const [syncAllDone, setSyncAllDone] = useState(false)
+  const [reloadingFromSb, setReloadingFromSb] = useState(false)
 
   const EMPTY_FORM: Omit<Article, "id"> = {
     nom: "", nomAr: "", famille: "Légumes fruits", unite: "kg",
@@ -200,6 +201,42 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
       console.error("[BOArticles] syncAllArticlesToSupabase error:", e)
     } finally {
       setSyncingAll(false)
+    }
+  }
+
+  // ⚡ Recharger depuis Supabase (source de vérité) — efface localStorage local
+  // et resynchronise avec ce qui est réellement publié sur le site web.
+  // Résout le souci du compteur 287 (localStorage) vs 135 (Supabase).
+  const reloadFromSupabase = async () => {
+    if (!confirm(
+      "Cette action va remplacer le catalogue local (localStorage) par celui de Supabase.\n\n" +
+      "Tous les changements non publiés seront perdus.\n\nContinuer ?"
+    )) return
+    setReloadingFromSb(true)
+    try {
+      const res = await fetch("/api/sync-read?table=fl_articles", { cache: "no-cache" })
+      const data = await res.json()
+      if (!data.ok) throw new Error(data.error || "sync-read failed")
+      // Flatten {id, payload} → Article objects
+      const fromSb = (data.data ?? [])
+        .filter((r: { id: string }) => !String(r.id).startsWith("__"))
+        .map((r: { id: string; payload: Record<string, unknown> }) => ({
+          id: r.id,
+          ...(r.payload && typeof r.payload === "object" ? r.payload : {}),
+        })) as Article[]
+      if (fromSb.length === 0) {
+        alert("⚠️ Supabase est vide. Aucun article à recharger.")
+        return
+      }
+      // Écraser le localStorage
+      try { localStorage.setItem("fl_articles", JSON.stringify(fromSb)) } catch {}
+      setArticles(fromSb)
+      alert(`✅ ${fromSb.length} articles rechargés depuis Supabase`)
+    } catch (e) {
+      alert("❌ Erreur : " + String(e))
+      console.error("[BOArticles] reloadFromSupabase error:", e)
+    } finally {
+      setReloadingFromSb(false)
     }
   }
 
@@ -647,6 +684,16 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
             <button onClick={() => setConfirmResetDefect(false)} className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-border hover:bg-muted">Annuler</button>
           </div>
         )}
+        <button
+          onClick={reloadFromSupabase}
+          disabled={reloadingFromSb}
+          title="Recharge les articles depuis Supabase (résout les compteurs incohérents 287 vs 135)"
+          className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold border-2 transition-all disabled:opacity-60 shadow-sm border-blue-600 bg-blue-600 text-white hover:bg-blue-700">
+          {reloadingFromSb
+            ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />Rechargement...</>
+            : <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>🔄 Recharger Supabase</>
+          }
+        </button>
         <button
           onClick={syncAllArticlesToSupabase}
           disabled={syncingAll}
