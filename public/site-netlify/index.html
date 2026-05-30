@@ -3308,8 +3308,8 @@ function renderHeroCards(){
   var avail=(PRODS||[]).filter(function(p){return p.dispo;}).slice(0,4);
   if(!avail.length){
     // Aucun article ERP disponible → masquer la grille de cartes
+    // (le compteur "Produits frais" est géré par loadStats = total ERP)
     heroEl.style.display="none";
-    var sp=document.getElementById("stat-prods"); if(sp) sp.textContent="0";
     return;
   }
   heroEl.style.display="";
@@ -3321,7 +3321,7 @@ function renderHeroCards(){
       +'<div class="hcard-b"><div class="hcard-n">'+p.em+' '+p.n+'</div><div class="hcard-p">'+p.p+' MAD/'+p.u+'</div></div>'
       +'</div>';
   }).join("");
-  var sp=document.getElementById("stat-prods"); if(sp) sp.textContent=avail.length+(PRODS.length>=10?"+":"");
+  // Le compteur "Produits frais" est géré par loadStats (total ERP), pas ici
 }
 
 // ── SKELETON ──

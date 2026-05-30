@@ -20,15 +20,19 @@ export async function GET(req: NextRequest) {
   const origin = req.headers.get("origin")
 
   const result = {
+    // clientsActifs = TOTAL clients ERP (toutes catégories), pour la stat hero
     clientsActifs: 0,
     categories: { chr: 0, marchand: 0, particulier: 0, autre: 0 },
+    // articlesActifs = TOTAL articles ERP (pour la stat "Produits frais")
     articlesActifs: 0,
+    // articlesPublies = uniquement ceux publiés sur la boutique
+    articlesPublies: 0,
   }
 
   try {
-    // ── Clients actifs depuis fl_clients ────────────────────────────────────
+    // ── TOUS les clients depuis fl_clients (total ERP) ──────────────────────
     const res = await fetch(
-      `${SB_URL}/rest/v1/fl_clients?select=id,payload&limit=2000`,
+      `${SB_URL}/rest/v1/fl_clients?select=id,payload&limit=5000`,
       { headers: { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}` }, next: { revalidate: 120 } }
     )
     if (res.ok) {
@@ -36,8 +40,7 @@ export async function GET(req: NextRequest) {
       for (const r of rows) {
         if (String(r.id).startsWith("__")) continue
         const p = r.payload ?? {}
-        if (p.actif === false) continue
-        result.clientsActifs++
+        result.clientsActifs++   // total (on ne filtre plus sur actif)
         const cat = String(p.categorie ?? p.segment ?? p.type ?? "").toLowerCase()
         if (cat.includes("chr")) result.categories.chr++
         else if (cat.includes("marchand") || cat.includes("grossiste")) result.categories.marchand++
@@ -48,18 +51,16 @@ export async function GET(req: NextRequest) {
   } catch { /* défaut 0 */ }
 
   try {
-    // ── Articles actifs depuis fl_articles ──────────────────────────────────
+    // ── TOUS les articles depuis fl_articles (total ERP) ────────────────────
     const res = await fetch(
-      `${SB_URL}/rest/v1/fl_articles?select=id,payload&limit=2000`,
+      `${SB_URL}/rest/v1/fl_articles?select=id,payload&limit=5000`,
       { headers: { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}` }, next: { revalidate: 120 } }
     )
     if (res.ok) {
       const rows: { id: string; payload: Record<string, unknown> }[] = await res.json()
-      result.articlesActifs = rows.filter(r =>
-        !String(r.id).startsWith("__") &&
-        (r.payload?.marketplaceActif !== false) &&
-        (r.payload?.actif !== false)
-      ).length
+      const real = rows.filter(r => !String(r.id).startsWith("__"))
+      result.articlesActifs  = real.length  // TOTAL articles ERP
+      result.articlesPublies = real.filter(r => r.payload?.marketplaceActif !== false && r.payload?.marketplaceActif === true).length
     }
   } catch { /* défaut 0 */ }
 

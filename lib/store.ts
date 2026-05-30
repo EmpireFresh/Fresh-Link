@@ -254,7 +254,8 @@ export interface Article {
     dateFin?: string
     etiquette?: string         // ex: "Offre spéciale", "-20%"
   }
-  marketplaceSeuilShortStock?: number  // si stock < seuil → statut = short_stock automatique
+  marketplaceSeuilShortStock?: number  // (legacy) si stock < seuil → statut = short_stock
+  marketplaceStock?: number           // ⚡ stock WEB alloué (indépendant du stock réel) : >0=dispo, 0=rupture
   marketplaceTags?: string[]          // tags SEO / filtres site
   marketplaceOrdre?: number           // ordre d'affichage sur le site
   marketplaceDescription?: string     // description publique longue

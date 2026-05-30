@@ -18,11 +18,11 @@ function computePV(a: Article): number {
 }
 
 function stockLabel(a: Article): { label: string; labelAr: string; cls: string; icon: string } {
-  const seuil = a.marketplaceSeuilShortStock ?? 20
+  // ⚡ Basé sur le stock WEB alloué (pas le stock réel)
+  const stockWeb = Number((a as any).marketplaceStock ?? a.stockDisponible ?? 0) || 0
   if (!a.actif) return { label: "Désactivé",     labelAr: "معطل",          cls: "bg-slate-100 text-slate-500 border-slate-200",   icon: "🚫" }
   if (a.marketplaceStatut === "hors_saison") return { label: "Hors saison", labelAr: "خارج الموسم", cls: "bg-amber-100 text-amber-700 border-amber-300",   icon: "🍂" }
-  if (a.stockDisponible <= 0) return { label: "Rupture stock", labelAr: "نفاد المخزون", cls: "bg-red-100 text-red-700 border-red-300", icon: "❌" }
-  if (a.stockDisponible < seuil) return { label: "Stock limité", labelAr: "مخزون محدود", cls: "bg-orange-100 text-orange-700 border-orange-300", icon: "⚠️" }
+  if (stockWeb <= 0) return { label: "Rupture (web)", labelAr: "نفاد المخزون", cls: "bg-red-100 text-red-700 border-red-300", icon: "❌" }
   return { label: "Disponible", labelAr: "متوفر", cls: "bg-green-100 text-green-700 border-green-300", icon: "✅" }
 }
 
@@ -71,7 +71,9 @@ function EditDrawer({ article, onClose, onSave }: EditDrawerProps) {
     marketplacePrixPublic:      String(article.marketplacePrixPublic ?? pvCalcule),
     marketplaceDescription:     article.marketplaceDescription ?? "",
     marketplaceDescriptionAr:   article.marketplaceDescriptionAr ?? "",
-    marketplaceSeuilShortStock: String(article.marketplaceSeuilShortStock ?? 20),
+    // ⚡ Stock WEB alloué — TOTALEMENT indépendant du stock réel ERP.
+    // C'est CE chiffre qui décide la dispo sur la boutique (>0 = dispo, =0 = rupture)
+    marketplaceStock:           String((article as any).marketplaceStock ?? article.stockDisponible ?? 0),
     marketplaceTags:            article.marketplaceTags ?? [] as string[],
     marketplaceOrdre:           String(article.marketplaceOrdre ?? 0),
     promoActif:                 article.marketplacePromo?.actif ?? false,
@@ -102,15 +104,15 @@ function EditDrawer({ article, onClose, onSave }: EditDrawerProps) {
     setTagInput("")
   }
 
-  // auto-update statut based on stock & activation
+  // ⚡ Dispo boutique = basée sur le STOCK WEB alloué (PAS le stock réel ERP)
+  //   marketplaceStock > 0  → disponible
+  //   marketplaceStock === 0 → rupture
   const autoStatut = (): MarketplaceStatut => {
-    if (!form.actif) return form.marketplaceStatut
-    const seuil = Number(form.marketplaceSeuilShortStock) || 20
-    if (article.stockDisponible <= 0) return "out_of_stock"
-    if (article.stockDisponible < seuil) return "short_stock"
-    return form.marketplaceStatut === "out_of_stock" || form.marketplaceStatut === "short_stock"
-      ? "disponible"
-      : form.marketplaceStatut
+    const stockWeb = Number(form.marketplaceStock) || 0
+    if (stockWeb <= 0) return "out_of_stock"
+    // si l'admin a forcé "hors_saison", on garde
+    if (form.marketplaceStatut === "hors_saison") return "hors_saison"
+    return "disponible"
   }
 
   const handleSave = () => {
@@ -124,7 +126,8 @@ function EditDrawer({ article, onClose, onSave }: EditDrawerProps) {
       marketplacePrixPublic:   Number(form.marketplacePrixPublic) || pvCalcule,
       marketplaceDescription:  form.marketplaceDescription,
       marketplaceDescriptionAr:form.marketplaceDescriptionAr,
-      marketplaceSeuilShortStock: Number(form.marketplaceSeuilShortStock) || 20,
+      // Stock web alloué (indépendant du stock réel) — décide la dispo boutique
+      marketplaceStock:        Number(form.marketplaceStock) || 0,
       marketplaceTags:         form.marketplaceTags,
       marketplaceOrdre:        Number(form.marketplaceOrdre) || 0,
       marketplacePromo: form.promoActif ? {
@@ -210,13 +213,28 @@ function EditDrawer({ article, onClose, onSave }: EditDrawerProps) {
                   placeholder={form.marketplaceStatut === "hors_saison" ? "Ex: Disponible à partir de mars 2026" : form.marketplaceStatut === "short_stock" ? "Ex: Dernières unités disponibles !" : ""}
                   className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl px-3 py-2">
-                <span className="text-base">{STATUT_OPTIONS.find(o => o.v === form.marketplaceStatut)?.icon}</span>
-                <span>Seuil stock limité : </span>
-                <input type="number" min="0" value={form.marketplaceSeuilShortStock}
-                  onChange={e => setForm(f => ({ ...f, marketplaceSeuilShortStock: e.target.value }))}
-                  className="w-16 px-2 py-1 rounded-lg border border-border bg-background text-xs text-center font-bold focus:outline-none" />
-                <span>{article.unite} → badge "Stock limité"</span>
+              {/* ── Stock WEB alloué (indépendant du stock réel ERP) ── */}
+              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📦</span>
+                  <label className="text-xs font-bold text-emerald-900">Stock web alloué à la boutique</label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input type="number" min="0" value={form.marketplaceStock}
+                    onChange={e => setForm(f => ({ ...f, marketplaceStock: e.target.value }))}
+                    className="w-28 px-3 py-2.5 rounded-xl border border-emerald-200 bg-white text-lg font-black text-emerald-700 text-center focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                  <span className="text-sm font-semibold text-emerald-800">{article.unite}</span>
+                  <div className="flex-1 text-right">
+                    {Number(form.marketplaceStock) > 0
+                      ? <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">✅ Affiché « Disponible »</span>
+                      : <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-100 text-rose-700 text-xs font-bold">❌ Affiché « Rupture »</span>}
+                  </div>
+                </div>
+                <p className="text-[11px] text-emerald-700/80 leading-relaxed">
+                  💡 Ce stock est <strong>indépendant du stock réel</strong>. Il pilote uniquement l'affichage sur la boutique :
+                  <strong> &gt; 0</strong> = Disponible · <strong>= 0</strong> = Rupture.
+                  <br/>Stock réel actuel en entrepôt : <strong>{article.stockDisponible} {article.unite}</strong> (non affiché aux clients).
+                </p>
               </div>
             </section>
           )}
@@ -461,9 +479,14 @@ function ArticleCard({ article, preview = false, onClick }: { article: Article; 
             )}
             <p className="text-[10px] text-slate-400">/ {article.unite}</p>
           </div>
-          <div className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${statut === "disponible" ? "bg-green-50 text-green-700 border-green-200" : "bg-slate-50 text-slate-500 border-slate-200"}`}>
-            {article.stockDisponible > 0 ? `${article.stockDisponible} ${article.unite}` : "Indisponible"}
-          </div>
+          {(() => {
+            const stockWeb = Number((article as any).marketplaceStock ?? article.stockDisponible ?? 0) || 0
+            return (
+              <div className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${stockWeb > 0 ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
+                {stockWeb > 0 ? `${stockWeb} ${article.unite}` : "Rupture"}
+              </div>
+            )
+          })()}
         </div>
       </div>
     </div>
@@ -475,7 +498,10 @@ function ArticleCard({ article, preview = false, onClick }: { article: Article; 
 function StatsBar({ articles }: { articles: Article[] }) {
   const pub = articles.filter(a => a.marketplaceActif)
   const dispo = pub.filter(a => a.marketplaceStatut === "disponible" || !a.marketplaceStatut)
-  const rupture = pub.filter(a => a.marketplaceStatut === "out_of_stock" || a.stockDisponible <= 0)
+  const rupture = pub.filter(a => {
+    const stockWeb = Number((a as any).marketplaceStock ?? a.stockDisponible ?? 0) || 0
+    return a.marketplaceStatut === "out_of_stock" || stockWeb <= 0
+  })
   const promo = pub.filter(a => a.marketplacePromo?.actif)
   const saison = pub.filter(a => a.marketplaceStatut === "hors_saison")
 
@@ -637,7 +663,9 @@ export default function BOMarketplace({ user }: Props) {
     const toPublish: Article[] = []
     const all = articles.map(a => {
       if (filtered.find(f => f.id === a.id)) {
-        const updated = { ...a, marketplaceActif: true, marketplaceStatut: (a.stockDisponible > 0 ? "disponible" : "out_of_stock") as MarketplaceStatut }
+        // Stock web alloué par défaut = stock réel actuel (l'admin peut ajuster ensuite)
+        const stockWeb = Number((a as any).marketplaceStock ?? a.stockDisponible ?? 0) || 0
+        const updated = { ...a, marketplaceActif: true, marketplaceStock: stockWeb, marketplaceStatut: (stockWeb > 0 ? "disponible" : "out_of_stock") as MarketplaceStatut }
         toPublish.push(updated)
         return updated
       }
@@ -678,21 +706,27 @@ export default function BOMarketplace({ user }: Props) {
     setTimeout(() => { setBulkSaved(false); setSyncMsg(null) }, 4000)
   }
 
-  // Auto-sync stock statuts
-  const handleAutoSync = () => {
+  // Recopie le stock réel ERP → stock web alloué (pour les articles publiés)
+  // Pratique pour aligner d'un coup, puis ajuster manuellement si besoin.
+  const handleAutoSync = async () => {
+    if (!window.confirm("Recopier le stock réel actuel vers le stock web alloué de tous les articles publiés ?")) return
+    const toSync: Article[] = []
     const all = articles.map(a => {
       if (!a.marketplaceActif) return a
-      const seuil = a.marketplaceSeuilShortStock ?? 20
-      let statut: MarketplaceStatut = a.marketplaceStatut ?? "disponible"
-      if (a.stockDisponible <= 0) statut = "out_of_stock"
-      else if (a.stockDisponible < seuil) statut = "short_stock"
-      else if (statut === "out_of_stock" || statut === "short_stock") statut = "disponible"
-      return { ...a, marketplaceStatut: statut }
+      const stockWeb = Number(a.stockDisponible) || 0
+      const updated = { ...a, marketplaceStock: stockWeb, marketplaceStatut: (stockWeb > 0 ? "disponible" : "out_of_stock") as MarketplaceStatut }
+      toSync.push(updated)
+      return updated
     })
     store.saveArticles(all)
     setArticles(all)
-    setBulkSaved(true)
-    setTimeout(() => setBulkSaved(false), 3000)
+    setSyncingToSb(true)
+    const { ok, pushed } = await pushToSupabase(toSync)
+    setSyncingToSb(false)
+    setSyncMsg(ok
+      ? { ok: true, text: `✅ Stock web aligné sur le stock réel (${pushed} articles)` }
+      : { ok: false, text: `⚠️ Erreur synchronisation Supabase` })
+    setTimeout(() => setSyncMsg(null), 4000)
   }
 
   return (
@@ -725,9 +759,10 @@ export default function BOMarketplace({ user }: Props) {
           </div>
           <div className="flex gap-2 flex-wrap">
             <button onClick={handleAutoSync}
+              title="Recopie le stock réel actuel vers le stock web alloué (articles publiés)"
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/12 backdrop-blur-sm border border-white/20 text-white text-xs font-bold hover:bg-white/20 transition-all shadow-sm">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-              Sync stocks
+              Stock réel → web
             </button>
           </div>
         </div>

@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
           .filter(r => !String(r.id).startsWith("__"))
           .map(r => {
             const p = (r.payload && typeof r.payload === "object" ? r.payload : {}) as Record<string, unknown>
-            return { ...p, id: r.id }
+            return { ...p, id: r.id } as Record<string, unknown>
           })
           .filter(a => a.marketplaceActif !== false && a.marketplace_actif !== false)
         const result = applyFilters(articles, q, tag).sort(byOrdre).map(normalizePayload)
@@ -186,11 +186,18 @@ function normalizePayload(a: Record<string, unknown>): Record<string, unknown> {
     : null
   const prix = promoObj?.prixPromo ? parseFloat(String(promoObj.prixPromo)) : prixBase
 
-  // ── Statut / dispo — calculé depuis stock réel si non forcé manuellement ──
-  const stockQte = Number(a.stockDisponible ?? a.qte ?? 0)
-  const seuilShort = Number(a.marketplaceSeuilShortStock ?? 0)
-  const statutForce = String(a.marketplaceStatut ?? a.statut ?? "")
-  const statut = statutForce || (stockQte === 0 ? "out_of_stock" : seuilShort > 0 && stockQte <= seuilShort ? "short_stock" : "disponible")
+  // ⚡ Statut / dispo — basé sur le STOCK WEB alloué (marketplaceStock), PAS le stock réel.
+  //   marketplaceStock > 0  → disponible
+  //   marketplaceStock === 0 → out_of_stock (rupture)
+  //   Si marketplaceStock absent (ancien article), on retombe sur le stock réel.
+  const stockWeb = a.marketplaceStock != null
+    ? Number(a.marketplaceStock) || 0
+    : Number(a.stockDisponible ?? a.qte ?? 0) || 0
+  const statutForce = String(a.marketplaceStatut ?? "")
+  // "hors_saison" forcé par l'admin a priorité ; sinon dispo = stockWeb > 0
+  const statut = statutForce === "hors_saison"
+    ? "hors_saison"
+    : (stockWeb <= 0 ? "out_of_stock" : "disponible")
 
   return {
     ...a,
@@ -207,8 +214,9 @@ function normalizePayload(a: Record<string, unknown>): Record<string, unknown> {
     promo_prix:       promoObj?.prixPromo ?? null,
     etiquette:        promoObj?.etiquette ?? (promoObj?.taux ? `-${promoObj.taux}%` : null) ?? null,
     statut:           statut || "disponible",
-    stock_disponible: Number(a.stockDisponible ?? a.qte ?? 0),
-    stockDisponible:  Number(a.stockDisponible ?? a.qte ?? 0),
+    // ⚡ La boutique ne voit QUE le stock web alloué (jamais le stock réel ERP)
+    stock_disponible: stockWeb,
+    stockDisponible:  stockWeb,
     conditionnement:  a.conditionnement ?? a.packInfo ?? a.pack_info ?? null,
     marketplace_actif: a.marketplaceActif !== false,
     ordre:            Number(a.marketplaceOrdre ?? a.ordre ?? 999),
