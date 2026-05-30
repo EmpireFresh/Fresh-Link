@@ -38,6 +38,16 @@ const TAGS_SUGGESTIONS = [
   "Promo", "BIO Certifié", "Sans pesticides", "Frais du matin",
 ]
 
+// Tags de transformation (préparation) — affichés sur le site comme badges colorés
+// Cochables par article, permettent au client de filtrer par préparation possible
+const PREPARATION_TAGS = [
+  { id: "epluche", label: "🔪 Épluché", desc: "Disponible épluché sur demande" },
+  { id: "lave",    label: "💧 Lavé",    desc: "Disponible lavé sur demande" },
+  { id: "coupe",   label: "🔪 Coupé",   desc: "Coupé en morceaux sur demande" },
+  { id: "pret_cuisson", label: "🍳 Prêt à cuisiner", desc: "Préparé pour cuisson directe" },
+  { id: "emballe", label: "📦 Emballé",  desc: "Emballage spécial conservation" },
+] as const
+
 type Tab = "catalogue" | "publie" | "stats" | "api_preview"
 
 // ─── EditDrawer ───────────────────────────────────────────────────────────────
@@ -289,8 +299,31 @@ function EditDrawer({ article, onClose, onSave }: EditDrawerProps) {
                   placeholder="وصف المنتج بالعربية…"
                   className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none" />
               </div>
+              {/* ── Préparations disponibles (Épluché, Lavé, Coupé...) ─────── */}
+              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-blue-50/60 border border-blue-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔪</span>
+                  <label className="text-xs font-bold text-blue-900">Préparations disponibles sur demande</label>
+                </div>
+                <p className="text-[11px] text-blue-700/80 leading-relaxed">
+                  Cochez les préparations possibles pour cet article. Le client pourra demander cette préparation au moment de la commande.
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {PREPARATION_TAGS.map(prep => {
+                    const checked = form.marketplaceTags.includes(prep.id)
+                    return (
+                      <button key={prep.id} onClick={() => toggleTag(prep.id)}
+                        title={prep.desc}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${checked ? "bg-blue-600 text-white border-blue-700 shadow-sm" : "bg-white border-blue-200 text-blue-700 hover:bg-blue-100"}`}>
+                        {prep.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-foreground">Tags / Filtres</label>
+                <label className="text-xs font-semibold text-foreground">Tags / Filtres marketing</label>
                 <div className="flex flex-wrap gap-1.5">
                   {TAGS_SUGGESTIONS.map(tag => (
                     <button key={tag} onClick={() => toggleTag(tag)}

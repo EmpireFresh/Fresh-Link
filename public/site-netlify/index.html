@@ -3347,13 +3347,27 @@ function renderProds(f){
   var list;
   onDemandMode = "";
   if(filter==="tous"||!filter||filter==="frais"){
-    // Tous les articles (Frais = catalogue par défaut)
+    // Tous les articles autorisés par l'ERP
     list=PRODS.slice();
   }
-  else if(filter==="epluche"||filter==="lave"){
-    // Tous les articles mais marqués "sur demande" (préparation à la demande)
-    list=PRODS.slice();
-    onDemandMode = filter==="epluche" ? "epluche" : "lave";
+  else if(filter==="epluche"){
+    // ✅ UNIQUEMENT les articles autorisés "épluché" via BO Marketplace
+    list=PRODS.filter(function(p){return p.tags&&(p.tags.indexOf("epluche")>=0||p.tags.indexOf("épluché")>=0);});
+    onDemandMode = "epluche";
+  }
+  else if(filter==="lave"){
+    // ✅ UNIQUEMENT les articles autorisés "lavé" via BO Marketplace
+    list=PRODS.filter(function(p){return p.tags&&(p.tags.indexOf("lave")>=0||p.tags.indexOf("lavé")>=0);});
+    onDemandMode = "lave";
+  }
+  else if(filter==="coupe"){
+    list=PRODS.filter(function(p){return p.tags&&(p.tags.indexOf("coupe")>=0||p.tags.indexOf("coupé")>=0);});
+  }
+  else if(filter==="pret_cuisson"){
+    list=PRODS.filter(function(p){return p.tags&&p.tags.indexOf("pret_cuisson")>=0;});
+  }
+  else if(filter==="emballe"){
+    list=PRODS.filter(function(p){return p.tags&&(p.tags.indexOf("emballe")>=0||p.tags.indexOf("emballé")>=0);});
   }
   else if(filter==="promo"){
     list=PRODS.filter(function(p){return p.promo;});
@@ -3415,7 +3429,12 @@ function renderProds(f){
     }
     // Nom arabe affiché en dessous du nom français (police Noto Sans Arabic, dir rtl)
     var arHtml = p.no ? '<div class="pc-n-ar" style="font-family:\'Noto Sans Arabic\',\'Amiri\',\'Cairo\',sans-serif;font-size:13px;color:#64748b;direction:rtl;text-align:right;font-weight:600;margin-top:-2px;margin-bottom:3px;letter-spacing:0">'+p.no+'</div>' : '';
-    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+outBadgeHtml+demandBadgeHtml+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div>'+arHtml+'<div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+demandNoteHtml+outNoteHtml+stockHtml+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)">−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' title="Sur commande — confirmation équipe"':'')+(onDemandMode?' title="'+( onDemandMode==="epluche"?"Épluché":"Lavé")+' sur demande"':'')+'>+</button></div></div></div></div>';
+
+    // Badges préparations disponibles (épluché/lavé/coupé/etc.) — affichés si tag présent
+    var PREP_LABELS={epluche:"🔪 Épluché",lave:"💧 Lavé",coupe:"🔪 Coupé",pret_cuisson:"🍳 Prêt cuisson",emballe:"📦 Emballé"};
+    var prepTags=(p.tags||[]).filter(function(t){return PREP_LABELS[t];});
+    var prepBadgesHtml=prepTags.length?'<div style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 6px">'+prepTags.map(function(t){return '<span style="display:inline-flex;align-items:center;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:8px;padding:2px 7px;font-size:9.5px;font-weight:700;letter-spacing:.1px">'+PREP_LABELS[t]+'</span>';}).join("")+'</div>':'';
+    return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+outBadgeHtml+demandBadgeHtml+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div>'+arHtml+'<div class="pc-ori">📍 '+p.o+'</div>'+prepBadgesHtml+'<div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+demandNoteHtml+outNoteHtml+stockHtml+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)">−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' title="Sur commande — confirmation équipe"':'')+(onDemandMode?' title="'+( onDemandMode==="epluche"?"Épluché":"Lavé")+' sur demande"':'')+'>+</button></div></div></div></div>';
   }).join("");
 }
 
