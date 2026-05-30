@@ -65,24 +65,17 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    // Chargement local immédiat
-    const local = store.getArticles()
-    setArticles(local)
-    // Auto-sync ERP → Supabase à l'ouverture (garde le website à jour)
-    if (local.length > 0) {
-      const upserts = local.map(a => {
-        const { id, ...payload } = a
-        const marketplaceActif = (payload as Record<string, unknown>).catalogueVisible !== false
-          ? ((payload as Record<string, unknown>).marketplaceActif !== false)
-          : false
-        return { id, payload: { ...payload, marketplaceActif }, updated_at: new Date().toISOString() }
-      })
-      fetch("/api/sync-write", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table: "fl_articles", upserts }),
-      }).catch(() => {})
-    }
+    // Chargement local immédiat — pas d'auto-sync !
+    // L'auto-sync de TOUT le localStorage à l'ouverture causait des régressions :
+    // - Anciens IDs (a1, a2...) repoussés vers Supabase
+    // - marketplaceActif:true forcé sur tous les articles
+    // - Boutique affichait 287+ articles au lieu de ceux activés manuellement
+    //
+    // Désormais : le sync se fait UNIQUEMENT lors de toggles explicites
+    // via BOMarketplace.handleSave / handleBulkPublish
+    // OU via le bouton "🌐 Publier sur le site" (push manuel)
+    // OU via le bouton "🔄 Recharger Supabase" (pull manuel)
+    setArticles(store.getArticles())
   }, [])
 
   // Upload photo — tries Supabase Storage first, falls back to base64 local
