@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { ERP_DEFAULT_ARTICLES } from "@/lib/defaultArticles"
+import { getArticlePhoto } from "@/lib/articlePhotos"
 
 // ═══════════════════════════════════════════════════════════════════
-// POST /api/admin/seed-articles
+// POST /api/ext/seed-articles
 // Pousse tous les articles ERP_DEFAULT_ARTICLES vers Supabase fl_articles.
 // Utilisable pour amorcer un catalogue vide sans ouvrir le back-office.
 //
-// Body (optionnel) : { force?: boolean }
+// Body (optionnel) : { force?: boolean, wipe?: boolean }
 //   - force: true → upsert systématique (écrase les payloads existants)
 //   - force: false (défaut) → upsert seulement si table vide
+//   - wipe: true → supprime TOUS les articles existants avant de seed
+//     (utile pour nettoyer les doublons d'IDs hérités)
 // ═══════════════════════════════════════════════════════════════════
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL    ?? "https://jwdrwapuetqoqnankgma.supabase.co"
@@ -43,13 +46,33 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  let body: { force?: boolean } = {}
+  let body: { force?: boolean; wipe?: boolean } = {}
   try { body = await req.json() } catch {}
 
   const sb = getAdmin()
 
-  // Vérifier si la table est déjà peuplée
-  if (!body.force) {
+  // Mode wipe : supprime TOUS les articles existants (sauf __config)
+  // Permet de nettoyer les anciens IDs (a1, a2...) qui créent des doublons
+  let wiped = 0
+  if (body.wipe) {
+    const { data: existing } = await sb
+      .from("fl_articles")
+      .select("id")
+      .not("id", "like", "__%")
+      .limit(2000)
+    if (existing && existing.length > 0) {
+      const ids = existing.map(r => r.id as string)
+      // Supprimer par chunks de 200 pour éviter URL trop longue
+      for (let i = 0; i < ids.length; i += 200) {
+        const chunk = ids.slice(i, i + 200)
+        const { error } = await sb.from("fl_articles").delete().in("id", chunk)
+        if (!error) wiped += chunk.length
+      }
+    }
+  }
+
+  // Vérifier si la table est déjà peuplée (skip si wipe ou force)
+  if (!body.force && !body.wipe) {
     const { data: existing } = await sb
       .from("fl_articles")
       .select("id")
@@ -59,46 +82,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         seeded: 0,
-        message: "Catalogue déjà peuplé. Utilisez { force: true } pour ré-écraser.",
+        message: "Catalogue déjà peuplé. Utilisez { force: true } ou { wipe: true } pour ré-écraser.",
       }, { headers: cors(origin) })
     }
   }
 
-  // Préparer les upserts
+  // Préparer les upserts — dédupliquer par nom (case-insensitive)
+  const seen = new Set<string>()
   let counter = 1
-  const upserts = (ERP_DEFAULT_ARTICLES as readonly Record<string, unknown>[]).map(a => {
-    const rawId = String(a.id ?? "")
-    // Normaliser ID format VFP00001
-    const cleanId = /^VFP\d{5,}$/.test(rawId)
-      ? rawId
-      : "VFP" + String(counter).padStart(5, "0")
-    counter++
+  const upserts = (ERP_DEFAULT_ARTICLES as readonly Record<string, unknown>[])
+    .filter(a => {
+      const nom = String(a.nom ?? "").toLowerCase().trim()
+      if (!nom || seen.has(nom)) return false
+      seen.add(nom)
+      return true
+    })
+    .map(a => {
+      // Toujours générer un VFP-ID séquentiel propre (1...N)
+      const cleanId = "VFP" + String(counter).padStart(5, "0")
+      counter++
 
-    const payload: Record<string, unknown> = { ...a }
-    delete payload.id
+      const payload: Record<string, unknown> = { ...a }
+      delete payload.id
 
-    // Photo placeholder si manquante
-    const nom = String(payload.nom ?? "Article")
-    const famille = String(payload.famille ?? "").toLowerCase()
-    if (!payload.photo) {
-      const color = famille.includes("fruit") ? "e74c3c"
-                  : famille.includes("légume") ? "27ae60"
-                  : famille.includes("herbe") ? "16a34a"
-                  : "94a3b8"
-      payload.photo = `https://placehold.co/400x300/${color}/fff?text=${encodeURIComponent(nom)}`
-    }
+      // ✅ Vraie photo Unsplash basée sur le nom de l'article
+      const nom = String(payload.nom ?? "Article")
+      const famille = String(payload.famille ?? "")
+      payload.photo = getArticlePhoto(nom, famille)
 
-    // Activer marketplace par défaut
-    payload.marketplaceActif = payload.marketplaceActif !== false
-    payload.catalogueVisible = payload.catalogueVisible !== false
-    payload.actif = payload.actif !== false
+      // Activer marketplace par défaut
+      payload.marketplaceActif = payload.marketplaceActif !== false
+      payload.catalogueVisible = payload.catalogueVisible !== false
+      payload.actif = payload.actif !== false
 
-    return {
-      id: cleanId,
-      payload,
-      updated_at: new Date().toISOString(),
-    }
-  })
+      return {
+        id: cleanId,
+        payload,
+        updated_at: new Date().toISOString(),
+      }
+    })
 
   // Push en batches de 50
   let pushed = 0
@@ -118,10 +140,11 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: errors.length === 0,
     seeded: pushed,
+    wiped,
     total: upserts.length,
     errors,
     message: errors.length === 0
-      ? `✅ ${pushed} articles publiés sur Supabase`
+      ? `✅ ${pushed} articles publiés sur Supabase${wiped > 0 ? ` (${wiped} anciens supprimés)` : ""}`
       : `⚠️ ${pushed} publiés, ${errors.length} erreurs`,
   }, { headers: cors(origin) })
 }

@@ -3383,15 +3383,16 @@ function renderProds(f){
     var outBadgeHtml=outStock?'<div class="out-badge" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">⏳ Sur commande</div>':'';
     var outNoteHtml=outStock?'<div style="font-size:10px;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:4px 7px;margin-bottom:6px;line-height:1.4">⏳ <strong>Hors saison / rupture</strong> — commande possible, livraison confirmée par notre équipe.</div>':'';
     var stockHtml=outStock?'':(p.stock!==undefined?'<div style="font-size:10px;color:var(--gy);margin-bottom:5px">Stock : '+p.stock+' '+p.u+'</div>':'');
-    // Mode "Épluché" ou "Lavé" : tous les articles affichés avec mention "Sur demande"
+    // Mode "Épluché" ou "Lavé" : badge minimaliste élégant + note discrète
     var demandBadgeHtml = "";
     var demandNoteHtml = "";
     if(onDemandMode){
-      var lbl = onDemandMode==="epluche" ? "🔪 Épluché" : "💧 Lavé";
       var emoji = onDemandMode==="epluche" ? "🔪" : "💧";
-      var titre = onDemandMode==="epluche" ? "Épluché à la demande" : "Lavé à la demande";
-      demandBadgeHtml='<div class="out-badge" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;top:9px;right:9px;left:auto">'+lbl+' sur demande</div>';
-      demandNoteHtml='<div style="font-size:10px;color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:5px 8px;margin-bottom:6px;line-height:1.4">'+emoji+' <strong>'+titre+'</strong> — Précisez votre choix dans les notes de commande. Préparation et livraison confirmées par notre équipe.</div>';
+      var titre = onDemandMode==="epluche" ? "Épluché" : "Lavé";
+      // Badge subtil en haut à droite : pastille blanche/transparente, bord fin
+      demandBadgeHtml='<span style="position:absolute;top:9px;right:9px;background:rgba(255,255,255,.95);color:#0f172a;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;backdrop-filter:blur(8px);box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid rgba(15,23,42,.06);z-index:2;display:inline-flex;align-items:center;gap:5px">'+emoji+' '+titre+' sur demande</span>';
+      // Note inline minimaliste : ligne fine, couleur slate
+      demandNoteHtml='<div style="font-size:10.5px;color:#64748b;background:transparent;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:6px 0;margin:5px 0 6px;line-height:1.5;letter-spacing:.1px">Préparation '+titre.toLowerCase()+' confirmée à la commande</div>';
     }
     return'<div class="pc"><div class="pc-img"><span>'+p.em+'</span>'+imgHtml+'<span class="pc-tag '+tagClass+'">'+tagLabel+'</span>'+outBadgeHtml+demandBadgeHtml+'</div><div class="pc-body"><div class="pc-n">'+p.n+'</div><div class="pc-ori">📍 '+p.o+'</div><div class="pc-opts">'+tagsHtml+promoHtml+'</div>'+unitBadge+packHtml+demandNoteHtml+outNoteHtml+stockHtml+'<div class="pc-foot"><div class="pc-p">'+prixHtml+'</div><div class="qc"><button class="qb" onclick="upCart(\''+p.id+'\',-1)">−</button><span class="qv" id="q'+p.id+'">'+qty+'</span><button class="qb" onclick="upCart(\''+p.id+'\',1)"'+(outStock?' title="Sur commande — confirmation équipe"':'')+(onDemandMode?' title="'+( onDemandMode==="epluche"?"Épluché":"Lavé")+' sur demande"':'')+'>+</button></div></div></div></div>';
   }).join("");
@@ -4972,7 +4973,8 @@ window.activeCategory=activeCategory;
   <div class="wm-card">
     <button class="wm-close" onclick="closeWelcome('ghost')" aria-label="Fermer">×</button>
     <div class="wm-logo">🌿</div>
-    <h2 class="wm-title" id="wm-title">Bienvenue chez Vita Core</h2>
+    <h2 class="wm-title" id="wm-title">Bienvenue chez Vita Fresh</h2>
+    <div style="text-align:center;margin-top:-2px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;letter-spacing:2px;color:#9ca3af;text-transform:uppercase">by Vita Core</span></div>
     <p class="wm-sub">Distribution de fruits & légumes frais — Casablanca. Comment souhaitez-vous continuer ?</p>
 
     <button class="wm-btn primary" onclick="closeWelcome('login')">
