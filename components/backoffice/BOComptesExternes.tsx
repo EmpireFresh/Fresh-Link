@@ -306,10 +306,48 @@ export default function BOComptesExternes({ user }: Props) {
     } catch { return false }
   }
 
+  // Calcule le prochain ID séquentiel VFC à partir de Supabase (lecture via service_role)
+  async function nextClientId(): Promise<string> {
+    try {
+      const res = await fetch("/api/sync-read?table=fl_clients", { cache: "no-store" })
+      const data = await res.json()
+      const rows = (data?.data ?? []) as { id: string }[]
+      let max = 0
+      for (const r of rows) {
+        const m = String(r.id).match(/^VFC(\d+)$/)
+        if (m) {
+          const n = parseInt(m[1], 10)
+          if (n > max) max = n
+        }
+      }
+      return "VFC" + String(max + 1).padStart(5, "0")
+    } catch {
+      return "VFC" + String(Date.now()).slice(-5).padStart(5, "0")
+    }
+  }
+  async function nextUserId(): Promise<string> {
+    try {
+      const res = await fetch("/api/sync-read?table=fl_users", { cache: "no-store" })
+      const data = await res.json()
+      const rows = (data?.data ?? []) as { id: string }[]
+      let max = 0
+      for (const r of rows) {
+        const m = String(r.id).match(/^VFU(\d+)$/)
+        if (m) {
+          const n = parseInt(m[1], 10)
+          if (n > max) max = n
+        }
+      }
+      return "VFU" + String(max + 1).padStart(5, "0")
+    } catch {
+      return "VFU" + String(Date.now()).slice(-5).padStart(5, "0")
+    }
+  }
+
   // ── Save new client (+ auto-create login si demandé) ─────────────────────────
   const handleAdd = async (data: Omit<Client, "id" | "createdBy" | "createdAt">) => {
     if (!data.nom.trim()) { flash(false, "Le nom est obligatoire."); return }
-    const clientId = "VFC" + Date.now().toString(36).toUpperCase().slice(-5) + Math.floor(Math.random()*999).toString().padStart(3,"0")
+    const clientId = await nextClientId()
     const fullClient = { ...data, id: clientId, createdBy: user.id, createdAt: new Date().toISOString() }
     store.addClient(fullClient)
 
@@ -327,7 +365,7 @@ export default function BOComptesExternes({ user }: Props) {
 
     // ✅ Si téléphone fourni → auto-créer un compte de connexion (fl_users)
     if (data.telephone?.trim()) {
-      const userId = "VFU" + Date.now().toString(36).toUpperCase().slice(-5) + Math.floor(Math.random()*999).toString().padStart(3,"0")
+      const userId = await nextUserId()
       const password = genPassword(10)
       await pushToSupabase("fl_users", userId, {
         name: data.nom, telephone: data.telephone,

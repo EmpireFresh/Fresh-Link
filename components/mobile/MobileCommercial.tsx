@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { store, type Article, type User, type Client, type Commande, DELAI_RECOUVREMENT_LABELS, type DelaiRecouvrement, MODALITE_LABELS, type ModalitePaiement } from "@/lib/store"
 import { sendEmail, buildCommandeEmail } from "@/lib/email"
 import ArticleCombobox from "@/components/ui/ArticleCombobox"
+import { resolveArticlePhoto } from "@/lib/articlePhotoHelper"
 
 interface Props { user: User }
 
@@ -1169,7 +1170,7 @@ export default function MobileCommercial({ user }: Props) {
                     }
                   }}
                   className="w-4 h-4 rounded accent-primary shrink-0" />
-                <img src={a.photo || "https://placehold.co/40x40/e2e8f0/64748b?text=Art"}
+                <img src={resolveArticlePhoto(a)}
                   alt={`${a.nom} produit frais article`}
                   className="w-10 h-10 rounded-xl object-cover border border-border shrink-0"
                   onError={e => { e.currentTarget.src = "https://placehold.co/40x40/e2e8f0/64748b?text=Art" }} />
@@ -1669,7 +1670,7 @@ export default function MobileCommercial({ user }: Props) {
                     return (
                       <div key={artId} className="flex items-center gap-3 px-4 py-3">
                         <img
-                          src={art.photo || "https://placehold.co/40x40/e2e8f0/64748b?text=Art"}
+                          src={resolveArticlePhoto(art)}
                           alt={`${art.nom} habitude`}
                           className="w-10 h-10 rounded-xl object-cover border border-border shrink-0"
                           onError={e => { e.currentTarget.src = "https://placehold.co/40x40/e2e8f0/64748b?text=Art" }}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { store, type Article, type HistoriquePrixAchat, FAMILLES_ARTICLES, FAMILLE_GROUPES } from "@/lib/store"
 import { createClient, uploadToStorage, getStorageUrl } from "@/lib/supabase/client"
+import { resolveArticlePhoto } from "@/lib/articlePhotoHelper"
 
 const DH = (n: number) => `${n.toLocaleString("fr-MA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DH`
 
@@ -920,7 +921,7 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
                 {/* Image */}
                 <div className="relative w-full aspect-square bg-muted/40 overflow-hidden">
                   <img
-                    src={a.photo || DEFAULT_PHOTO}
+                    src={resolveArticlePhoto(a)}
                     alt={`${a.nom} — fruit ou legume frais`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={e => { e.currentTarget.src = DEFAULT_PHOTO }}
@@ -1061,7 +1062,7 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
                         />
                       </td>
                       <td className="px-4 py-2">
-                        <img src={a.photo || DEFAULT_PHOTO} alt={`${a.nom} produit frais`}
+                        <img src={resolveArticlePhoto(a)} alt={`${a.nom} produit frais`}
                           className="w-10 h-10 rounded-xl object-cover border border-border"
                           onError={e => { e.currentTarget.src = DEFAULT_PHOTO }} />
                       </td>

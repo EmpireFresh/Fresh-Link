@@ -47,6 +47,31 @@ function normPhone(raw: string): string {
   return "0" + base
 }
 
+/** Calcule le prochain ID séquentiel pour une table (compte les rows existantes). */
+async function nextSequentialId(table: string, prefix: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/${table}?select=id&limit=10000`,
+      { headers: { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}` }, cache: "no-store" },
+    )
+    if (!res.ok) return `${prefix}${Date.now().toString(36).toUpperCase().slice(-5)}`
+    const rows: { id: string }[] = await res.json()
+    // Cherche le plus grand suffixe numérique existant avec ce préfixe
+    let max = 0
+    const regex = new RegExp(`^${prefix}(\\d+)$`)
+    for (const r of rows) {
+      const m = String(r.id).match(regex)
+      if (m) {
+        const n = parseInt(m[1], 10)
+        if (n > max) max = n
+      }
+    }
+    return `${prefix}${String(max + 1).padStart(5, "0")}`
+  } catch {
+    return `${prefix}${Date.now().toString(36).toUpperCase().slice(-5)}`
+  }
+}
+
 /** Upsert dans Supabase avec service role */
 async function sbUpsert(table: string, id: string, payload: Record<string, unknown>): Promise<boolean> {
   try {
@@ -129,9 +154,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 2. Générer identifiants
-    const userId   = `VFU${Date.now().toString(36).toUpperCase().slice(-5)}`
-    const clientId = `VFC${Date.now().toString(36).toUpperCase().slice(-5)}`
+    // 2. Générer identifiants séquentiels (compteur sur Supabase)
+    const userId   = await nextSequentialId("fl_users",                            "VFU")
+    const clientId = await nextSequentialId(isFournisseur ? "fl_fournisseurs" : "fl_clients", isFournisseur ? "VFS" : "VFC")
     const password = genPassword(telNorm)
 
     // 3. Créer fl_users

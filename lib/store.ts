@@ -151,6 +151,10 @@ export interface Client {
   adresse?: string
   ice?: string // Identifiant Commun de l'Entreprise (Maroc)
   notes?: string
+  // ── Photo du client (logo/devanture/photo de profil) ──
+  // Affichée dans le BO, l'app mobile commercial, et le portail web client
+  photo?: string  // URL (Unsplash, Supabase Storage, base64, etc.)
+  logo?: string   // alias pour les CHR/marchands avec logo
   createdBy: string
   createdAt: string
   // Workflow linking: client → prevendeur → team_lead
