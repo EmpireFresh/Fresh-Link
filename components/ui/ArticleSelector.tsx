@@ -213,7 +213,7 @@ export default function ArticleSelector({
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-slate-400" dir="rtl">{art.nomAr}</span>
+                          <span className="font-arabic text-[11px] text-slate-500" dir="rtl" lang="ar">{art.nomAr}</span>
                           <span className="text-[10px] text-slate-300">·</span>
                           <span className="text-[10px] text-slate-400">{art.unite}</span>
                           {showStock && (

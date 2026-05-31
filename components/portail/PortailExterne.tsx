@@ -857,7 +857,7 @@ function ClientDashboard({ user, onLogout }: { user: User; onLogout: () => void 
               {filteredArticles.map(a => (
                 <div key={a.id} className="bg-white rounded-2xl border border-slate-200 p-3 flex flex-col gap-2">
                   <p className="font-bold text-sm text-slate-800">{a.nom}</p>
-                  {a.nomAr && <p className="text-xs text-slate-400" dir="rtl">{a.nomAr}</p>}
+                  {a.nomAr && <p className="font-arabic text-sm text-slate-500" dir="rtl" lang="ar">{a.nomAr}</p>}
                   <p className="text-xs text-slate-500">{a.unite} — {a.famille}</p>
                   {((a as any).prixVente ?? a.prixAchat) != null && (
                     <p className="text-sm font-black text-blue-700">{((a as any).prixVente ?? a.prixAchat ?? 0).toFixed(2)} DH / {a.unite}</p>

@@ -631,7 +631,7 @@ export default function PortailClient({ user, onLogout }: Props) {
                     <div className="flex items-start justify-between gap-1">
                       <div>
                         <p className="font-bold text-foreground text-sm leading-tight">{art.nom}</p>
-                        {art.nomAr && <p className="text-[11px] text-muted-foreground">{art.nomAr}</p>}
+                        {art.nomAr && <p className="font-arabic text-[12px] text-muted-foreground" dir="rtl" lang="ar">{art.nomAr}</p>}
                       </div>
                       <span className="text-lg shrink-0">{FAMILLE_ICON[art.famille ?? ""] ?? ""}</span>
                     </div>

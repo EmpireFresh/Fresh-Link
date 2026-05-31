@@ -415,7 +415,7 @@ export default function BOStock({ user }: { user: { id: string; name: string } }
                       </td>
                       <td className="px-4 py-3">
                         <p className="font-semibold text-foreground">{a.nom}</p>
-                        <p className="text-xs text-muted-foreground" dir="rtl">{a.nomAr}</p>
+                        <p className="font-arabic text-sm text-muted-foreground" dir="rtl" lang="ar">{a.nomAr}</p>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{a.famille}</td>
                       <td className="px-4 py-3 text-right font-semibold text-emerald-600">{a.stockDisponible.toLocaleString("fr-MA")} {a.unite}</td>
@@ -456,7 +456,7 @@ export default function BOStock({ user }: { user: { id: string; name: string } }
                   <tr key={a.id} style={{ borderTop: "1px solid oklch(0.87 0.012 240)", background: i % 2 === 0 ? "white" : "oklch(0.975 0.003 240)" }}>
                     <td className="px-4 py-3">
                       <p className="font-semibold text-foreground">{a.nom}</p>
-                      <p className="text-xs text-muted-foreground" dir="rtl">{a.nomAr}</p>
+                      <p className="font-arabic text-sm text-muted-foreground" dir="rtl" lang="ar">{a.nomAr}</p>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{a.famille}</td>
                     <td className="px-4 py-3 text-right font-semibold">{DH(a.prixAchat)}</td>
@@ -507,7 +507,7 @@ export default function BOStock({ user }: { user: { id: string; name: string } }
                     <tr key={a.id} style={{ borderTop: "1px solid oklch(0.87 0.012 240)", background: i % 2 === 0 ? "white" : "oklch(0.975 0.003 240)" }}>
                       <td className="px-4 py-3">
                         <p className="font-semibold text-foreground">{a.nom}</p>
-                        <p className="text-xs text-muted-foreground" dir="rtl">{a.nomAr}</p>
+                        <p className="font-arabic text-sm text-muted-foreground" dir="rtl" lang="ar">{a.nomAr}</p>
                       </td>
                       <td className="px-4 py-3 text-right font-semibold">{DH(a.prixAchat)}</td>
                       <td className="px-4 py-3">
@@ -652,7 +652,7 @@ export default function BOStock({ user }: { user: { id: string; name: string } }
                       <tr key={a.id} style={{ borderTop: "1px solid oklch(0.87 0.012 240)", background: i % 2 === 0 ? "white" : "oklch(0.975 0.003 240)" }}>
                         <td className="px-4 py-3">
                           <p className="font-semibold text-foreground">{a.nom}</p>
-                          <p className="text-xs text-muted-foreground" dir="rtl">{a.nomAr}</p>
+                          <p className="font-arabic text-sm text-muted-foreground" dir="rtl" lang="ar">{a.nomAr}</p>
                           {a.stockReelDate && (
                             <p className="text-[10px] text-blue-500 mt-0.5">Reel saisit: {a.stockReel} {a.unite} ({a.stockReelDate})</p>
                           )}

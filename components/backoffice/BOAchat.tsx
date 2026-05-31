@@ -719,7 +719,7 @@ export default function BOAchat() {
                       </td>
                       <td className="px-3 py-2">
                         <p className="font-semibold text-foreground">{a.nom}</p>
-                        {a.nomAr && <p className="text-[11px] text-muted-foreground">{a.nomAr}</p>}
+                        {a.nomAr && <p className="font-arabic text-[12px] text-muted-foreground" dir="rtl" lang="ar">{a.nomAr}</p>}
                       </td>
                       <td className="px-3 py-2">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">{a.famille ?? "—"}</span>

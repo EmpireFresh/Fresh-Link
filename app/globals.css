@@ -68,30 +68,27 @@ body {
   overscroll-behavior: none;
 }
 
-/* ✅ Police arabe — fix l'espacement bizarre entre les lettres arabes */
+/* ✅ Police arabe (Noto Sans Arabic via next/font) — fix lettres séparées */
+
+/* Chaîne globale : --font-arabic en fallback couvre les caractères arabes
+   partout sans avoir à le préciser élément par élément. */
+body, * {
+  font-family: var(--font-sans), var(--font-arabic), "Noto Sans Arabic", "Amiri", "Cairo", system-ui, sans-serif;
+}
+
+/* Tout texte explicitement en arabe ou RTL : Noto Sans Arabic en priorité,
+   reset letter-spacing (Tailwind tracking-tight peut casser le chaînage),
+   et activation des ligatures arabes via font-feature-settings. */
 :lang(ar),
 [lang="ar"],
-[dir="rtl"] {
-  font-family: var(--font-arabic), "Noto Sans Arabic", "Amiri", "Cairo", "Tajawal", sans-serif;
+[dir="rtl"],
+.font-arabic {
+  font-family: var(--font-arabic), "Noto Sans Arabic", "Amiri", "Cairo", "Tajawal", system-ui, sans-serif !important;
   letter-spacing: 0 !important;
-  word-spacing: normal;
-}
-
-/* Détecter automatiquement les noms arabes inline (Unicode range arabic) */
-.font-arabic,
-[data-lang="ar"] {
-  font-family: var(--font-arabic), "Noto Sans Arabic", "Amiri", "Cairo", sans-serif;
-  letter-spacing: 0 !important;
-}
-
-/* Force la police arabe pour les caractères arabes même en flux LTR */
-@font-face {
-  font-family: "ArabicFix";
-  src: local("Noto Sans Arabic"), local("Amiri"), local("Cairo");
-  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
-}
-body, * {
-  font-family: var(--font-sans), "ArabicFix", "Noto Sans Arabic", system-ui, sans-serif;
+  word-spacing: normal !important;
+  font-feature-settings: "calt" 1, "liga" 1 !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Mobile touch optimizations ─────────────────────────────────────────────── */

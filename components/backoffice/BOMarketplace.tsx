@@ -457,7 +457,7 @@ function ArticleCard({ article, preview = false, onClick }: { article: Article; 
 
       <div className="p-3">
         <p className="font-bold text-slate-800 text-sm truncate">{article.nom}</p>
-        {article.nomAr && <p className="text-[11px] text-slate-400 mt-0.5" dir="rtl">{article.nomAr}</p>}
+        {article.nomAr && <p className="font-arabic text-[12px] text-slate-500 mt-0.5" dir="rtl" lang="ar">{article.nomAr}</p>}
         {article.marketplaceDescription && (
           <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{article.marketplaceDescription}</p>
         )}

@@ -720,8 +720,8 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold">Nom (Arabe)</label>
-              <input value={form.nomAr} onChange={e => setForm(f => ({ ...f, nomAr: e.target.value }))} placeholder="طماطم" dir="rtl"
-                className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+              <input value={form.nomAr} onChange={e => setForm(f => ({ ...f, nomAr: e.target.value }))} placeholder="طماطم" dir="rtl" lang="ar"
+                className="font-arabic px-3 py-2.5 rounded-xl border border-border bg-background text-base focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold">Famille</label>
@@ -964,7 +964,7 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
                 {/* Info */}
                 <div className="p-3 flex flex-col gap-1 flex-1">
                   <p className="font-semibold text-sm text-foreground truncate">{a.nom}</p>
-                  <p className="text-[11px] text-muted-foreground" dir="rtl">{a.nomAr}</p>
+                  <p className="font-arabic text-[12px] text-muted-foreground" dir="rtl" lang="ar">{a.nomAr}</p>
                   <div className="flex justify-between items-center mt-auto pt-2">
                     <div>
                       <p className="text-[10px] text-muted-foreground">Achat</p>
@@ -1068,7 +1068,7 @@ export default function BOArticles({ user }: { user: { id: string; name: string 
                       </td>
                       <td className="px-4 py-2">
                         <p className="font-semibold text-foreground">{a.nom}</p>
-                        <p className="text-xs text-muted-foreground" dir="rtl">{a.nomAr}</p>
+                        <p className="font-arabic text-sm text-muted-foreground" dir="rtl" lang="ar">{a.nomAr}</p>
                       </td>
                       <td className="px-4 py-2">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${FAMILLE_COLORS[a.famille] || "bg-slate-50 text-slate-700 border-slate-200"}`}>
