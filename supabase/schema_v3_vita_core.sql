@@ -38,7 +38,7 @@ begin
     archive_name := '_archive_' || r.tablename || '_' || archive_suffix;
     if not exists (select 1 from pg_tables where schemaname='public' and tablename=archive_name) then
       execute format('create table public.%I as table public.%I', archive_name, r.tablename);
-      raise notice 'Archivé : % → %', r.tablename, archive_name;
+      raise notice 'Archive: % -> %', r.tablename, archive_name;
     end if;
   end loop;
 end $$;
@@ -598,9 +598,8 @@ declare v_count int;
 begin
   select count(*) into v_count from pg_tables
   where schemaname='public' and tablename like 'fl_%' and tablename not like '\_archive\_%';
-  raise notice '✅ Schéma V3 installé : % tables fl_* actives.', v_count;
-  raise notice 'ℹ️  Données archivées dans les tables _archive_*. Pour les purger après validation :';
-  raise notice '    select ''drop table '' || tablename || '' cascade;'' from pg_tables where tablename like ''\_archive\_%'';';
+  raise notice 'Schema V3 installe : % tables fl_ actives.', v_count;
+  raise notice 'Donnees archivees dans les tables _archive_ (recuperables).';
 end $$;
 
 -- ╔══════════════════════════════════════════════════════════════════════════╗
