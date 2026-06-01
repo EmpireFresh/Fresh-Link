@@ -83,8 +83,17 @@ html[dir="rtl"] .zone-card-badges{justify-content:flex-end}
 .erp-refresh:hover{border-color:rgba(255,255,255,.35);color:rgba(255,255,255,.8)}
 /* HERO */
 .hero{background:linear-gradient(135deg,#030805,var(--gd),#0D1A0D,var(--g1),#0A1A0C);background-size:300% 300%;animation:gradientShift 12s ease infinite;min-height:92vh;display:flex;align-items:center;padding:60px 20px;position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;right:-80px;top:-80px;width:580px;height:580px;border-radius:50%;background:rgba(184,150,12,.06)}
-.hero::after{content:"";position:absolute;left:40%;bottom:-90px;width:480px;height:480px;border-radius:50%;background:rgba(27,67,50,.35)}
+.hero::before{content:"";position:absolute;right:-80px;top:-80px;width:580px;height:580px;border-radius:50%;background:radial-gradient(circle,rgba(184,150,12,.14),transparent 70%);filter:blur(8px);animation:heroOrb 14s ease-in-out infinite}
+.hero::after{content:"";position:absolute;left:38%;bottom:-90px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(74,222,128,.22),transparent 70%);filter:blur(10px);animation:heroOrb 18s ease-in-out infinite reverse}
+@keyframes heroOrb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,30px) scale(1.12)}}
+/* Grain premium subtil */
+.hero-grain{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.5;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E")}
+/* Stats glassmorphiques */
+.hero-stat-card{flex:1;min-width:90px;background:rgba(255,255,255,.05);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px 14px;transition:transform .3s,border-color .3s,background .3s}
+.hero-stat-card:hover{transform:translateY(-4px);border-color:rgba(184,150,12,.4);background:rgba(255,255,255,.08)}
+.hero-stat-val{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;letter-spacing:-.5px}
+.hero-stat-lbl{font-size:11.5px;color:rgba(255,255,255,.55);margin-top:6px;font-weight:500}
+.hero-stat-cat{font-size:9.5px;color:rgba(255,255,255,.42);margin-top:4px;line-height:1.4}
 .hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;width:100%;max-width:1200px;margin:0 auto;position:relative;z-index:1}
 .hero-txt{max-width:560px}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(184,150,12,.13);color:var(--o2);border:1px solid rgba(184,150,12,.3);padding:7px 18px;border-radius:24px;font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:24px;animation:fadeSlideUp .6s cubic-bezier(.22,1,.36,1) both}
@@ -1559,7 +1568,8 @@ GET  /api/ext/commandes/:id → suivi commande</div>
   <!-- Slide dots -->
   <div class="hero-slide-dots" id="heroSlideDots"></div>
 
-  <div class="hero-inner" style="position:relative;z-index:1">
+  <div class="hero-grain"></div>
+  <div class="hero-inner" style="position:relative;z-index:2">
     <div class="hero-txt">
       <div class="hero-badge"><span class="dot"></span><span data-i18n="hero_badge">En ligne — Commandes ouvertes</span></div>
       <h1 data-i18n="hero_h1">Distribution de <em>Fruits &amp; Légumes Frais</em> au Maroc</h1>
@@ -1569,10 +1579,10 @@ GET  /api/ext/commandes/:id → suivi commande</div>
         <a href="#" class="btn-hero-whatsapp" onclick="orderWhatsApp(event)">📲 <span data-i18n="btn_wa_order">Commander</span></a>
         <a href="#" class="btn-hero-app" onclick="openGuide();return false;">📖 <span>Guide commande</span></a>
       </div>
-      <div class="hero-stats" style="display:flex;gap:28px;margin-top:44px;padding-top:28px;border-top:1px solid rgba(255,255,255,.1);animation:fadeSlideUp .75s .55s cubic-bezier(.22,1,.36,1) both">
-        <div><div class="counter-val" style="font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="stat-prods">50+</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Produits frais</div></div>
-        <div><div class="counter-val" style="font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">2h</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Livraison express</div></div>
-        <div><div class="counter-val" style="font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--o2),#FFE066);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="stat-clients">500+</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Clients actifs</div><div id="stat-clients-cat" style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;line-height:1.4"></div></div>
+      <div class="hero-stats" style="display:flex;gap:14px;margin-top:40px;animation:fadeSlideUp .75s .55s cubic-bezier(.22,1,.36,1) both">
+        <div class="hero-stat-card"><div class="hero-stat-val" id="stat-prods">50+</div><div class="hero-stat-lbl">🥦 Produits frais</div></div>
+        <div class="hero-stat-card"><div class="hero-stat-val">2h</div><div class="hero-stat-lbl">⚡ Livraison express</div></div>
+        <div class="hero-stat-card"><div class="hero-stat-val" id="stat-clients">500+</div><div class="hero-stat-lbl">👥 Clients actifs</div><div id="stat-clients-cat" class="hero-stat-cat"></div></div>
       </div>
     </div>
     <div class="hero-cards" id="hero-cards"></div>
