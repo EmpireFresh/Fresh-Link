@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Corps JSON invalide." }, { status: 400, headers: cors(origin) })
   }
 
-  const { type, nom, email, telephone, societe, ice, ville, message } = body
+  const { type, nom, email, telephone, societe, ice, ville, message, origine } = body
 
   // ── Validation ────────────────────────────────────────────────────────────
   const VALID_TYPES = ["client", "chr", "marchand", "particulier", "fournisseur"]
@@ -183,6 +183,7 @@ export async function POST(req: NextRequest) {
       ville:      ville?.trim() || null,
       categorie:  sousType,
       segment:    sousType === "chr" ? "CHR" : sousType === "marchand" ? "Marchand" : "standard",
+      origine:    origine || null,   // tracking marketing : commercial / reseaux / bouche_oreille / autre
       actif:      true,
       remisePct:  0,
       remiseActive: false,

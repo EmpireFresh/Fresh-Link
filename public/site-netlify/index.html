@@ -2728,6 +2728,16 @@ GET  /api/ext/commandes/:id → suivi commande</div>
           <label>Ville</label>
           <input type="text" id="signupVille" placeholder="Casablanca" autocomplete="address-level2"/>
         </div>
+        <div class="form-group">
+          <label>Comment avez-vous connu Vita Fresh ? <span style="color:#dc2626">*</span></label>
+          <select id="signupOrigine" required style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+            <option value="">Choisir...</option>
+            <option value="commercial">👔 Par un commercial terrain</option>
+            <option value="reseaux">📱 Par les réseaux sociaux</option>
+            <option value="bouche_oreille">🗣️ Par le bouche-à-oreille</option>
+            <option value="autre">❓ Autre</option>
+          </select>
+        </div>
         <button type="submit" class="btn-submit" id="btnSignupSubmit">📋 Envoyer ma demande</button>
       </form>
       <p style="margin-top:12px;text-align:center;font-size:13px;color:var(--gy)">
@@ -3988,12 +3998,15 @@ async function doSignup(e){
   var name=document.getElementById("signupName").value.trim(), phone=document.getElementById("signupPhone").value.trim();
   var email=document.getElementById("signupEmail").value.trim(), societe=document.getElementById("signupSociete").value.trim();
   var ville=document.getElementById("signupVille").value.trim();
+  var origineEl=document.getElementById("signupOrigine");
+  var origine=origineEl?origineEl.value.trim():"";
   var errEl=document.getElementById("signupError"), succEl=document.getElementById("signupSuccess"), btnEl=document.getElementById("btnSignupSubmit");
   errEl.classList.remove("show"); if(succEl) succEl.style.display="none";
   if(!type){errEl.textContent="Veuillez choisir le type de compte.";errEl.classList.add("show");return;}
   if(!name||!phone){errEl.textContent="Nom et téléphone sont obligatoires.";errEl.classList.add("show");return;}
+  if(!origine){errEl.textContent="Indiquez comment vous avez connu Vita Fresh.";errEl.classList.add("show");return;}
   btnEl.disabled=true; btnEl.textContent="⏳ Envoi en cours...";
-  var payload={type:type,nom:name,telephone:phone,email:email||undefined,societe:societe||undefined,ville:ville||undefined};
+  var payload={type:type,nom:name,telephone:phone,email:email||undefined,societe:societe||undefined,ville:ville||undefined,origine:origine};
   try{
     var res=await fetch(CONFIG.API_URL+"/api/ext/demande-compte",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
     var data=await res.json();
