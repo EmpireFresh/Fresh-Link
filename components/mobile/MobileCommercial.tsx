@@ -135,14 +135,26 @@ export default function MobileCommercial({ user }: Props) {
 
   // Inline article list — filtered + sorted
   const pickerArticles = useMemo(() => {
-    let list = [...articles]
+    // ⚡ Déduplication par id (évite les doublons d'articles dans la vue mobile)
+    const seen = new Set<string>()
+    let list = articles.filter(a => {
+      if (!a || !a.id || seen.has(a.id)) return false
+      seen.add(a.id)
+      return true
+    })
     if (articleSearch.trim()) {
       const q = articleSearch.trim().toLowerCase()
-      list = list.filter(a => a.nom.toLowerCase().includes(q) || a.nomAr.includes(q) || a.famille.toLowerCase().includes(q))
+      // 🛡️ Null-safety : sécurise nom/nomAr/famille contre undefined (fix crash client-side)
+      list = list.filter(a => {
+        const nom = (a.nom ?? "").toLowerCase()
+        const nomAr = a.nomAr ?? ""
+        const famille = (a.famille ?? "").toLowerCase()
+        return nom.includes(q) || nomAr.includes(q) || famille.includes(q)
+      })
     }
     if (articleSort === "rotation") list.sort((a, b) => (globalRotation[b.id] ?? 0) - (globalRotation[a.id] ?? 0))
-    else if (articleSort === "stock") list.sort((a, b) => b.stockDisponible - a.stockDisponible)
-    else list.sort((a, b) => a.nom.localeCompare(b.nom))
+    else if (articleSort === "stock") list.sort((a, b) => (Number(b.stockDisponible) || 0) - (Number(a.stockDisponible) || 0))
+    else list.sort((a, b) => (a.nom ?? "").localeCompare(b.nom ?? ""))
     return list
   }, [articles, articleSearch, articleSort, globalRotation])
 
@@ -1658,7 +1670,7 @@ export default function MobileCommercial({ user }: Props) {
                     if (!art) return false
                     if (!habitudeSearch.trim()) return true
                     const q = habitudeSearch.trim().toLowerCase()
-                    return art.nom.toLowerCase().includes(q) || art.nomAr.includes(q)
+                    return (art.nom ?? "").toLowerCase().includes(q) || (art.nomAr ?? "").includes(q)
                   })
                   .sort(([, a], [, b]) => b.count - a.count)
                   .map(([artId, hab]) => {
