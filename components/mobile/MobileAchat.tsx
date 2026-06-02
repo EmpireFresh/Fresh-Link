@@ -1660,7 +1660,7 @@ function AvisModule({ user }: { user: User }) {
   const filtered = avis.filter(a => filterSource === "all" || a.source === filterSource)
     .sort((a, b) => b.date.localeCompare(a.date))
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.nom.trim() || !form.message.trim()) return
     const newAvis: AvisEntry = {
       id: store.genId(),
@@ -1672,11 +1672,28 @@ function AvisModule({ user }: { user: User }) {
       auteurId: user.id,
       auteurNom: user.name,
     }
+    // ✅ Sauvegarde locale (optimistic UI — instantané)
     const updated = [newAvis, ...avis]
     saveAvis(updated)
     setAvis(updated)
     setForm({ source: "client", nom: "", message: "", note: 5 })
     setShowForm(false)
+    // 🔄 Push vers /api/ext/feedbacks → centralisé fl_feedbacks (BO temps réel)
+    try {
+      await fetch("/api/ext/feedbacks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          auteurId:   user.id,
+          auteurNom:  user.name,
+          auteurRole: user.role,
+          note:       form.note,
+          categorie:  form.source,            // client / fournisseur / equipe
+          message:    `${form.nom.trim()} — ${form.message.trim()}`,
+          source:     "mobile",
+        }),
+      })
+    } catch { /* silencieux — l'avis local reste, sera resync à la prochaine connexion */ }
   }
 
   const SOURCE_CONFIG = {
