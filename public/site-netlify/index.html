@@ -1309,40 +1309,55 @@ function setLang(lang){
     <div class="cfg-sec" id="s-supabase">
       <div class="cfg-grp">🔗 Connexion FreshLink ERP</div>
 
-      <!-- Mode 1 : API REST ERP -->
+      <!-- État connexion (résumé clair) -->
       <div style="background:#f0faf4;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px">
-        <div style="font-weight:700;color:#1a7a3c;margin-bottom:4px">🌐 Mode 1 — API REST ERP (recommandé)</div>
+        <div style="font-weight:700;color:#1a7a3c;margin-bottom:6px">🌐 État de la liaison ERP</div>
         <div class="erp-conn-status" style="margin-bottom:6px">
           <div class="erp-conn-dot warn" id="sb-conn-dot" style="width:9px;height:9px"></div>
           <span id="sb-conn-label" style="font-size:13px">En attente...</span>
         </div>
         <div class="erp-conn-sub" id="sb-conn-sub">Non testé</div>
-        <div style="margin-top:8px;padding:10px;background:#fff;border-radius:8px;font-size:12px;color:#555;line-height:1.8">
-          URL : <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px">https://f-l.vercel.app/api/ext/catalogue</code><br>
-          <strong style="color:#b45309">❗ Si erreur 403 :</strong> L'API est désactivée dans votre ERP.<br>
-          → <a href="https://vitafresh.vitacore.ma/" target="_blank" style="color:#1a7a3c;font-weight:700">Ouvrir FreshLink ERP</a>
-          → <strong>Administration → Intégration Site Web</strong><br>
-          1. Cliquez <strong>"Activer l'API externe"</strong> 🔛<br>
-          2. Activez <strong>"Catalogue public"</strong> ✅<br>
-          3. CORS → <strong>"*"</strong> ou votre domaine<br>
-          <span style="color:#999">ℹ️ En attendant, le Mode 2 (Supabase) prend le relais automatiquement.</span>
-        </div>
-      </div>
-
-      <!-- Mode 2 : Supabase direct (fallback) -->
-      <div style="background:#fffbe6;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px">
-        <div style="font-weight:700;color:#b45309;margin-bottom:4px">🗄️ Mode 2 — Supabase direct (fallback automatique)</div>
-        <div class="erp-conn-status" style="margin-bottom:6px">
+        <div class="erp-conn-status" style="margin-top:8px">
           <div class="erp-conn-dot warn" id="sb2-conn-dot" style="width:9px;height:9px"></div>
-          <span id="sb2-conn-label" style="font-size:13px">En attente...</span>
+          <span id="sb2-conn-label" style="font-size:13px">Supabase (secours)...</span>
         </div>
-        <div class="erp-conn-sub" id="sb2-conn-sub">Si l'API ERP n'est pas disponible, le site se connecte directement à Supabase.</div>
+        <div class="erp-conn-sub" id="sb2-conn-sub" style="display:none"></div>
+        <div style="margin-top:10px;font-size:11.5px;color:#6b7280;line-height:1.6">
+          ℹ️ Le site lit le catalogue depuis l'API ERP. En cas d'indisponibilité, Supabase prend le relais automatiquement. <strong>Seuls les articles « publiés » dans le BO Marketplace apparaissent ici.</strong>
+        </div>
       </div>
 
-      <div class="cfg-f"><label>🌐 Supabase URL</label><input id="c-sb-url" type="url" placeholder="https://xxx.supabase.co"><div class="cfg-hint">URL de votre projet Supabase FreshLink.</div></div>
+      <!-- 🌐 URL de l'application Pro (ÉDITABLE) -->
+      <div class="cfg-f">
+        <label>🌐 URL de l'application Pro (ERP)</label>
+        <input id="c-app-url" type="url" placeholder="https://app.vita-core.org/">
+        <div class="cfg-hint">Lien vers FreshLink Pro affiché sur le site (footer, boutons « Accéder à l'app »).</div>
+      </div>
+
+      <div class="cfg-f"><label>🔌 URL de l'API catalogue</label><input id="c-api-url" type="url" placeholder="https://f-l.vercel.app"><div class="cfg-hint">Base de l'API ERP (sans /api/ext/catalogue). Ex : https://f-l.vercel.app</div></div>
+      <div class="cfg-f"><label>🗄️ Supabase URL</label><input id="c-sb-url" type="url" placeholder="https://xxx.supabase.co"><div class="cfg-hint">URL projet Supabase (mode secours).</div></div>
       <div class="cfg-f"><label>🔑 Supabase Anon Key (publique)</label><input id="c-sb-key" type="text" placeholder="eyJhbGci..."><div class="cfg-hint">Clé anon uniquement — jamais la service role key.</div></div>
-      <button class="test-btn" onclick="testSupabase()">🔄 Tester les deux connexions</button>
+      <button class="test-btn" onclick="testSupabase()">🔄 Tester les connexions</button>
       <div class="erp-conn-box" id="sb-stats-box" style="display:none"><div id="sb-stats-text" style="font-size:12px;color:var(--g1);line-height:1.8"></div></div>
+
+      <!-- 🚧 Mode maintenance -->
+      <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:14px;margin-top:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:800;color:#c2410c;font-size:14px">🚧 Mode maintenance</div>
+            <div style="font-size:12px;color:#9a3412;margin-top:2px">Met le site hors ligne (page « En maintenance ») pour tous les visiteurs.</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:52px;height:28px;cursor:pointer;flex-shrink:0">
+            <input type="checkbox" id="c-maintenance" onchange="toggleMaintenance()" style="opacity:0;width:0;height:0">
+            <span id="maint-track" style="position:absolute;inset:0;background:#ccc;border-radius:24px;transition:.3s"></span>
+            <span id="maint-thumb" style="position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.3s"></span>
+          </label>
+        </div>
+        <div class="cfg-f" style="margin-top:12px;margin-bottom:0">
+          <label style="font-size:12px">Message affiché aux visiteurs</label>
+          <input id="c-maintenance-msg" type="text" placeholder="Site en maintenance — de retour très bientôt 🌿">
+        </div>
+      </div>
     </div>
     <div class="cfg-sec" id="s-galerie">
       <div class="cfg-grp">🖼️ Galerie photos &amp; vidéos</div>
@@ -2918,23 +2933,14 @@ GET  /api/ext/commandes/:id → suivi commande</div>
   <div class="mod">
     <button class="mod-x" onclick="document.getElementById('modal').classList.remove('show')">✕</button>
     <div class="mod-ic">✅</div>
-    <div class="mod-t">Commande enregistrée !</div>
-    <div class="mod-d">Votre commande est bien reçue. Envoyez-la sur WhatsApp pour confirmation rapide par notre équipe.</div>
-    <div class="mod-erp" id="mod-erp-info"><strong>🔗 Réf. commande :</strong> <span id="mod-order-num">—</span></div>
-    <!-- Boutons WA privés (détails complets — confidentiels) -->
-    <div style="display:grid;gap:10px;margin-top:16px;width:100%">
-      <a class="mbtn mwa" id="mod-wa-1" href="#" target="_blank" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px">
-        📲 Envoyer à l'équipe (1)
-      </a>
-      <a class="mbtn mwa" id="mod-wa-2" href="#" target="_blank" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;background:#128c7e">
-        📲 Envoyer à l'équipe (2)
-      </a>
-      <!-- Notification groupe anonymisée -->
-      <a class="mbtn" id="mod-wa-group" href="#" target="_blank" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);font-size:13px;padding:10px">
-        👥 Notifier le groupe (résumé anonyme)
-      </a>
-    </div>
-    <button class="mbtn mcl" style="margin-top:8px" onclick="document.getElementById('modal').classList.remove('show');cart={};updateCartUI()">✕ Fermer</button>
+    <div class="mod-t">Commande envoyée !</div>
+    <div class="mod-d">Votre commande a été transmise à notre équipe. Vous serez contacté pour confirmation rapide.</div>
+    <div class="mod-erp" id="mod-erp-info" style="font-size:18px;padding:16px;text-align:center"><strong>🔗 N° de commande</strong><br><span id="mod-order-num" style="font-size:24px;font-weight:900;letter-spacing:1px;color:#fff">—</span></div>
+    <!-- Liens WhatsApp cachés (utilisés pour l'envoi auto en arrière-plan) -->
+    <a id="mod-wa-1" href="#" target="_blank" style="display:none"></a>
+    <a id="mod-wa-2" href="#" target="_blank" style="display:none"></a>
+    <a id="mod-wa-group" href="#" target="_blank" style="display:none"></a>
+    <button class="mbtn mcl" style="margin-top:16px" onclick="document.getElementById('modal').classList.remove('show');cart={};updateCartUI()">✓ Terminé</button>
   </div>
 </div>
 
@@ -3657,19 +3663,20 @@ function updateCartUI(){
   var badge=document.getElementById("cart-badge"); if(badge){badge.textContent=total;badge.style.display=total?"flex":"none";}
   var sub=items.reduce(function(s,p){return s+p.p*p.qty;},0);
   var df=delMode==="exp"?CFG.exp:(sub>=CFG.free?0:CFG.std), tot=sub+df;
-  var totBtn=document.getElementById("total-btn"); if(totBtn) totBtn.textContent=tot+" MAD";
+  var fmt2=function(n){return (Number(n)||0).toFixed(2);};   // ✅ toujours 2 décimales
+  var totBtn=document.getElementById("total-btn"); if(totBtn) totBtn.textContent=fmt2(tot)+" MAD";
   var ci=document.getElementById("cart-items"), ct=document.getElementById("cart-totals");
   // Mobile cart FAB
   var mobFab=document.getElementById("mob-cart-fab"), mobCnt=document.getElementById("mob-cart-count");
   if(mobFab){mobFab.style.display=total?"flex":"none";}
   if(mobCnt)mobCnt.textContent=total;
   if(!items.length){ci.innerHTML='<div class="cempty">Votre panier est vide.<br>Ajoutez des produits depuis le catalogue.</div>';ct.style.display="none";return;}
-  ci.innerHTML=items.map(function(p){return'<div class="ci"><div class="ci-l"><div class="ci-em">'+p.em+'</div><div><div class="ci-n">'+p.n+'</div><div class="ci-m">'+p.qty+' '+p.u+' × '+p.p+' MAD</div></div></div><div style="display:flex;align-items:center;gap:8px"><div class="ci-p">'+(p.p*p.qty)+' MAD</div><button class="crm" onclick="upCart(\''+p.id+'\',-'+p.qty+')">✕</button></div></div>';}).join("");
+  ci.innerHTML=items.map(function(p){return'<div class="ci"><div class="ci-l"><div class="ci-em">'+p.em+'</div><div><div class="ci-n">'+p.n+'</div><div class="ci-m">'+p.qty+' '+p.u+' × '+fmt2(p.p)+' MAD</div></div></div><div style="display:flex;align-items:center;gap:8px"><div class="ci-p">'+fmt2(p.p*p.qty)+' MAD</div><button class="crm" onclick="upCart(\''+p.id+'\',-'+p.qty+')">✕</button></div></div>';}).join("");
   ct.style.display="block";
-  document.getElementById("t-sub").textContent=sub+" MAD";
-  document.getElementById("t-del").textContent=df===0?"Gratuite":"+"+df+" MAD";
-  document.getElementById("t-tot").textContent=tot+" MAD";
-  document.getElementById("t-conf").textContent=tot+" MAD";
+  document.getElementById("t-sub").textContent=fmt2(sub)+" MAD";
+  document.getElementById("t-del").textContent=df===0?"Gratuite":"+"+fmt2(df)+" MAD";
+  document.getElementById("t-tot").textContent=fmt2(tot)+" MAD";
+  document.getElementById("t-conf").textContent=fmt2(tot)+" MAD";
   document.getElementById("del-info").textContent=delMode==="exp"?"⚡ Express — livraison en "+CFG.expDelay+", supplément +"+CFG.exp+" MAD.":sub>=CFG.free?"🚛 Standard gratuite — commande ≥ "+CFG.free+" MAD.":"🚛 Standard — gratuite dès "+CFG.free+" MAD (actuellement +"+CFG.std+" MAD).";
 }
 
@@ -3752,6 +3759,16 @@ function emailBienvenue(p){
 window.initEmailJS=initEmailJS; window.emailCommande=emailCommande; window.emailBienvenue=emailBienvenue;
 
 function submitOrder(){
+  // ✅ Client connecté : pré-remplir auto depuis la session (pas besoin de re-saisir)
+  var _sess=getSession();
+  if(_sess && _sess.user){
+    var _u=_sess.user||{}, _c=_sess.client||{};
+    var _fill=function(id,val){var el=document.getElementById(id); if(el && !el.value.trim() && val) el.value=val;};
+    _fill("f-nom", _u.name||_c.nom);
+    _fill("f-tel", _u.telephone||_u.phone||_c.telephone);
+    _fill("f-email", _u.email||_c.email);
+    _fill("f-adr", _c.adresse||_u.adresse);
+  }
   var nom=document.getElementById("f-nom").value.trim(), tel=document.getElementById("f-tel").value.trim(), adr=document.getElementById("f-adr").value.trim();
   if(!nom||!tel||!adr){showToast("⚠️ Remplissez nom, téléphone et adresse");return;}
   if(!Object.keys(cart).length){showToast("🛒 Panier vide — ajoutez des produits");return;}
@@ -3836,9 +3853,9 @@ function submitOrder(){
         payment: pay, notes: notes, surCommande: hasSurCommande,
       });
     }catch(e){ console.warn("email order skipped",e); }
-    // 6. Ouvrir WhatsApp automatiquement
-    setTimeout(function(){ window.open(waUrl,"_blank"); }, 600);
-    showToast("✅ Commande confirmée — WhatsApp ouvert !");
+    // 6. Envoi WhatsApp automatique en arrière-plan (sans demander de choix au client)
+    setTimeout(function(){ try{ window.open(waUrl,"_blank"); }catch(_){} }, 700);
+    showToast("✅ Commande "+(num||cmdRef)+" envoyée !");
   }
 
   // ── Enregistrer dans l'ERP ──────────────────────────────────────────────────
@@ -3915,6 +3932,12 @@ function loadCfgFields(){
   set("c-wa",CFG.wa);set("c-email",CFG.email);set("c-addr",CFG.addr);set("c-fb",CFG.fb);set("c-ig",CFG.ig);
   set("c-exp",CFG.exp);set("c-free",CFG.free);set("c-std",CFG.std);set("c-sb-url",CFG.sbUrl);set("c-sb-key",CFG.sbKey);
   set("c-rib",CFG.rib);set("c-rib-benef",CFG.ribBenef);set("c-rib-banque",CFG.ribBanque);
+  // Nouveaux champs : URL app Pro, URL API, maintenance
+  set("c-app-url", CFG.appUrl || CONFIG.APP_URL || "");
+  set("c-api-url", CFG.apiUrl || CONFIG.API_URL || "");
+  set("c-maintenance-msg", CFG.maintenanceMsg || "Site en maintenance — de retour très bientôt 🌿");
+  var maintCb=document.getElementById("c-maintenance");
+  if(maintCb){ maintCb.checked = CFG.maintenance===true; syncMaintenanceUI(); }
   syncGalleryAdminUI();
   var ds=document.getElementById("c-expdelay"); if(ds) ds.value=CFG.expDelay||"2h";
   renderStatsCfg();
@@ -3942,12 +3965,55 @@ function saveConfig(){
   CFG.rib=get("c-rib"); CFG.ribBenef=get("c-rib-benef")||"Vita Fresh SARL"; CFG.ribBanque=get("c-rib-banque")||"CIH / Attijariwafa / BMCE";
   var newUrl=get("c-sb-url"), newKey=get("c-sb-key");
   if(newUrl)CFG.sbUrl=newUrl; if(newKey)CFG.sbKey=newKey;
+  // Nouveaux champs : URL app Pro + URL API + maintenance
+  var appUrl=get("c-app-url"); if(appUrl){ CFG.appUrl=appUrl; CONFIG.APP_URL=appUrl; updateAppLinks(appUrl); }
+  var apiUrl=get("c-api-url"); if(apiUrl){ CFG.apiUrl=apiUrl; CONFIG.API_URL=apiUrl; }
+  CFG.maintenanceMsg=get("c-maintenance-msg")||CFG.maintenanceMsg;
+  var maintCb=document.getElementById("c-maintenance"); CFG.maintenance = maintCb ? maintCb.checked : false;
   // Save stats separately in localStorage so they survive refresh
   try{ localStorage.setItem("vf_stats_v1", JSON.stringify(CONFIG.STATS)); } catch(_){}
-  localStorage.setItem("vf_cfg_v2",JSON.stringify(CFG)); updateContactLinks(); renderStats();
+  localStorage.setItem("vf_cfg_v2",JSON.stringify(CFG)); updateContactLinks(); renderStats(); applyMaintenanceMode();
   var msg=document.getElementById("cfg-saved"); if(msg){msg.textContent="✅ Enregistré — كتسجّل !";setTimeout(function(){msg.textContent="";},3000);}
   if(newUrl||newKey){sb=initSupabase();syncFromSupabase();}
 }
+
+// ── URL APP PRO : met à jour tous les liens vitafresh.vitacore.ma / app ──
+function updateAppLinks(url){
+  if(!url) return;
+  // Remplace href de tous les liens pointant vers l'ancienne URL app
+  document.querySelectorAll('a[href*="vitafresh.vitacore.ma"], a[href*="app.vita-core.org"], a[data-app-link]').forEach(function(a){
+    a.href=url;
+  });
+}
+
+// ── MODE MAINTENANCE ──
+function syncMaintenanceUI(){
+  var cb=document.getElementById("c-maintenance");
+  var track=document.getElementById("maint-track"), thumb=document.getElementById("maint-thumb");
+  if(!cb||!track||!thumb) return;
+  if(cb.checked){ track.style.background="#f97316"; thumb.style.transform="translateX(24px)"; }
+  else { track.style.background="#ccc"; thumb.style.transform="translateX(0)"; }
+}
+function toggleMaintenance(){ syncMaintenanceUI(); }
+function applyMaintenanceMode(){
+  // Affiche un overlay plein écran si maintenance activée (sauf pour l'admin connecté)
+  if(!CFG.maintenance) { var ex=document.getElementById("maintenance-overlay"); if(ex) ex.remove(); return; }
+  var sess=getSession();
+  var isAdmin = sess && sess.user && /admin/.test(String(sess.user.role||""));
+  if(isAdmin) return; // l'admin peut continuer à voir le site
+  if(document.getElementById("maintenance-overlay")) return;
+  var ov=document.createElement("div");
+  ov.id="maintenance-overlay";
+  ov.style.cssText="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0b3d1a,#1a4f2a,#2d7a46);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center";
+  ov.innerHTML='<div style="max-width:440px">'
+    +'<div style="font-size:72px;margin-bottom:16px">🌿</div>'
+    +'<h1 style="color:#fff;font-size:28px;font-weight:900;margin-bottom:12px">Vita Fresh</h1>'
+    +'<p style="color:rgba(255,255,255,.9);font-size:17px;line-height:1.6;margin-bottom:20px">'+((CFG.maintenanceMsg||"Site en maintenance — de retour très bientôt 🌿").replace(/</g,"&lt;"))+'</p>'
+    +'<a href="https://wa.me/'+(CFG.wa||"212681736910")+'" style="display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:12px 28px;border-radius:24px;font-weight:700;text-decoration:none">💬 Nous contacter</a>'
+    +'</div>';
+  document.body.appendChild(ov);
+}
+window.toggleMaintenance=toggleMaintenance; window.updateAppLinks=updateAppLinks;
 
 // ── CONTACT LINKS ──
 function updateContactLinks(){
@@ -5057,6 +5123,10 @@ function initReveal(){
 document.addEventListener("DOMContentLoaded",function(){
   sb=initSupabase();
   initEmailJS();
+  // Applique URL app perso + mode maintenance dès le boot
+  if(CFG.appUrl){ CONFIG.APP_URL=CFG.appUrl; updateAppLinks(CFG.appUrl); }
+  if(CFG.apiUrl){ CONFIG.API_URL=CFG.apiUrl; }
+  applyMaintenanceMode();
   updateContactLinks(); renderStats(); renderZones();
   setLang(currentLang);
   showSkeletons(8);
