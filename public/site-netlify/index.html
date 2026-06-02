@@ -317,11 +317,13 @@ html[dir="rtl"] .contact-box a{flex-direction:row-reverse}
 .form-sub{font-size:13px;color:var(--gy);margin-bottom:20px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0}
-/* ✅ Inscription : grille 2 colonnes desktop / 1 colonne mobile */
+/* ✅ Inscription : sections avec grille 2 colonnes desktop / 1 colonne mobile */
 .signup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .signup-grid .form-group{margin-bottom:0}
 .signup-full{grid-column:1 / -1}
-@media(max-width:560px){.signup-grid{grid-template-columns:1fr}}
+.signup-section{margin-bottom:18px;padding:14px 14px 10px;border:1px solid #e5e7eb;border-radius:14px;background:#fafafa;animation:fadeSlideUp .35s cubic-bezier(.22,1,.36,1)}
+.signup-section-title{font-size:12px;font-weight:800;color:#1a4f2a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+@media(max-width:560px){.signup-grid{grid-template-columns:1fr}.signup-section{padding:12px 12px 8px}}
 .form-group label{font-size:13px;font-weight:600;color:var(--gray-700)}
 .form-group input,.form-group select,.form-group textarea{padding:11px 13px;border:1.5px solid var(--gl);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;color:var(--gd);transition:.2s;outline:none;background:#fff}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--g1);box-shadow:0 0 0 3px rgba(27,67,50,.08)}
@@ -2703,50 +2705,173 @@ GET  /api/ext/commandes/:id → suivi commande</div>
       <div class="login-error" id="signupError"></div>
       <div id="signupSuccess" style="display:none;background:#f0faf4;border:1px solid #a7e3bf;border-radius:10px;padding:14px;text-align:center;font-size:14px;color:#1a7a3c;margin-bottom:10px"></div>
       <form onsubmit="doSignup(event)" novalidate id="signupForm">
-        <!-- ✅ Grid 2 colonnes responsive (desktop) / 1 col (mobile <560px) -->
-        <div class="signup-grid">
-          <div class="form-group">
-            <label>Type de compte</label>
-            <select id="signupType" required style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
-              <option value="">Choisir...</option>
-              <option value="client">🏠 Particulier</option>
-              <option value="chr">🏨 Restaurant / Hôtel / Café (CHR)</option>
-              <option value="marchand">🏪 Marchand / Grossiste</option>
-              <option value="fournisseur">🚚 Fournisseur / Producteur</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Prénom &amp; Nom</label>
-            <input type="text" id="signupName" placeholder="Mohammed Alami" autocomplete="name" required/>
-          </div>
-          <div class="form-group">
-            <label>Numéro de téléphone</label>
-            <div class="phone-input-wrap"><span class="phone-flag">🇲🇦</span><input type="tel" id="signupPhone" placeholder="06 XX XX XX XX" autocomplete="tel" required/></div>
-          </div>
-          <div class="form-group">
-            <label>Email (optionnel)</label>
-            <input type="email" id="signupEmail" placeholder="email@exemple.ma" autocomplete="email"/>
-          </div>
-          <div class="form-group signup-full" id="signupSocieteWrap" style="display:none">
-            <label>Nom de l'établissement / Société</label>
-            <input type="text" id="signupSociete" placeholder="Restaurant Al Warda, Épicerie Alami..." autocomplete="organization"/>
-          </div>
-          <div class="form-group">
-            <label>Ville</label>
-            <input type="text" id="signupVille" placeholder="Casablanca" autocomplete="address-level2"/>
-          </div>
-          <div class="form-group">
-            <label>Comment avez-vous connu Vita Fresh ? <span style="color:#dc2626">*</span></label>
-            <select id="signupOrigine" required style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
-              <option value="">Choisir...</option>
-              <option value="commercial">👔 Par un commercial terrain</option>
-              <option value="reseaux">📱 Par les réseaux sociaux</option>
-              <option value="bouche_oreille">🗣️ Par le bouche-à-oreille</option>
-              <option value="autre">❓ Autre</option>
-            </select>
+
+        <!-- ═══ SECTION 1 : Type de compte (déclenche les champs dynamiques) ═══ -->
+        <div class="form-group signup-full" style="margin-bottom:14px">
+          <label>Type de compte <span style="color:#dc2626">*</span></label>
+          <select id="signupType" required onchange="updateSignupFields()" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+            <option value="">— Choisir le type —</option>
+            <option value="client">🏠 Particulier</option>
+            <option value="chr">🏨 CHR — Restaurant / Hôtel / Café</option>
+            <option value="marchand">🏪 Marchand / Grossiste / Épicerie</option>
+            <option value="fournisseur">🚚 Fournisseur / Producteur</option>
+          </select>
+        </div>
+
+        <!-- ═══ SECTION 2 : Identité de base (toujours visible) ═══ -->
+        <div class="signup-section">
+          <div class="signup-section-title">👤 Identité</div>
+          <div class="signup-grid">
+            <div class="form-group">
+              <label>Prénom &amp; Nom <span style="color:#dc2626">*</span></label>
+              <input type="text" id="signupName" placeholder="Mohammed Alami" autocomplete="name" required/>
+            </div>
+            <div class="form-group">
+              <label>Téléphone <span style="color:#dc2626">*</span></label>
+              <div class="phone-input-wrap"><span class="phone-flag">🇲🇦</span><input type="tel" id="signupPhone" placeholder="06 XX XX XX XX" autocomplete="tel" required/></div>
+            </div>
+            <div class="form-group signup-full">
+              <label>Email (optionnel)</label>
+              <input type="email" id="signupEmail" placeholder="email@exemple.ma" autocomplete="email"/>
+            </div>
           </div>
         </div>
-        <button type="submit" class="btn-submit" id="btnSignupSubmit">📋 Envoyer ma demande</button>
+
+        <!-- ═══ SECTION 3 : Pro (CHR / Marchand / Fournisseur) ═══ -->
+        <div class="signup-section" id="signupProSection" style="display:none">
+          <div class="signup-section-title" id="signupProTitle">🏢 Établissement</div>
+          <div class="signup-grid">
+            <div class="form-group signup-full">
+              <label id="signupSocieteLabel">Nom de l'établissement <span style="color:#dc2626">*</span></label>
+              <input type="text" id="signupSociete" placeholder="Restaurant Al Warda, Épicerie Alami..." autocomplete="organization"/>
+            </div>
+            <div class="form-group" id="signupSousTypeWrap" style="display:none">
+              <label>Type d'activité</label>
+              <select id="signupSousType" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+                <option value="">— Choisir —</option>
+                <!-- Options injectées dynamiquement par updateSignupFields() -->
+              </select>
+            </div>
+            <div class="form-group" id="signupIceWrap" style="display:none">
+              <label>ICE (Identifiant Commun Entreprise)</label>
+              <input type="text" id="signupIce" placeholder="000000000000000" inputmode="numeric"/>
+            </div>
+            <div class="form-group signup-full">
+              <label>Adresse de l'établissement</label>
+              <input type="text" id="signupAdresse" placeholder="Rue / Quartier" autocomplete="street-address"/>
+            </div>
+            <div class="form-group">
+              <label>Secteur</label>
+              <input type="text" id="signupSecteur" placeholder="Nord, Centre, Sud..."/>
+            </div>
+            <div class="form-group">
+              <label>Zone / Ville <span style="color:#dc2626">*</span></label>
+              <input type="text" id="signupVille" placeholder="Casablanca, Hay Hassani..." autocomplete="address-level2"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION 4 : Particulier seulement (juste ville) ═══ -->
+        <div class="signup-section" id="signupParticulierSection" style="display:none">
+          <div class="signup-section-title">📍 Localisation</div>
+          <div class="signup-grid">
+            <div class="form-group signup-full">
+              <label>Adresse de livraison</label>
+              <input type="text" id="signupAdresseParticulier" placeholder="Rue, Quartier" autocomplete="street-address"/>
+            </div>
+            <div class="form-group signup-full">
+              <label>Ville <span style="color:#dc2626">*</span></label>
+              <input type="text" id="signupVilleParticulier" placeholder="Casablanca, Hay Hassani..." autocomplete="address-level2"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION 5 : Commercial (CHR / Marchand uniquement) ═══ -->
+        <div class="signup-section" id="signupCommercialSection" style="display:none">
+          <div class="signup-section-title">📦 Conditions commerciales</div>
+          <div class="signup-grid">
+            <div class="form-group">
+              <label>Volume estimé</label>
+              <select id="signupTaille" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+                <option value="">— Choisir —</option>
+                <option value="50-100kg">50–100 kg / commande</option>
+                <option value="150-300kg">150–300 kg / commande</option>
+                <option value="350-500kg">350–500 kg / commande</option>
+                <option value="500kg+">+ 500 kg / commande</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fréquence souhaitée</label>
+              <select id="signupRotation" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+                <option value="">— Choisir —</option>
+                <option value="journalier">Tous les jours</option>
+                <option value="4j/6">4 fois / semaine</option>
+                <option value="3/6">3 fois / semaine</option>
+                <option value="2/6">2 fois / semaine</option>
+                <option value="moins">Moins de 2 / semaine</option>
+              </select>
+            </div>
+            <div class="form-group signup-full">
+              <label>Modalité de paiement souhaitée</label>
+              <select id="signupModalite" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+                <option value="cash">💵 Cash à la livraison</option>
+                <option value="cheque">🧾 Chèque</option>
+                <option value="virement">🏦 Virement bancaire</option>
+                <option value="credit_7">📅 Crédit 7 jours</option>
+                <option value="credit_15">📅 Crédit 15 jours</option>
+                <option value="credit_30">📅 Crédit 30 jours</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION 6 : Fournisseur uniquement ═══ -->
+        <div class="signup-section" id="signupFournisseurSection" style="display:none">
+          <div class="signup-section-title">🚜 Production</div>
+          <div class="signup-grid">
+            <div class="form-group signup-full">
+              <label>Produits proposés</label>
+              <input type="text" id="signupProduits" placeholder="Tomates, Poivrons, Aubergines..."/>
+            </div>
+            <div class="form-group">
+              <label>Volume disponible (kg / semaine)</label>
+              <input type="number" min="0" id="signupVolumeFourn" placeholder="500"/>
+            </div>
+            <div class="form-group">
+              <label>Origine production</label>
+              <input type="text" id="signupOrigineProd" placeholder="Souss, Berkane, Agadir..."/>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION 7 : Tracking marketing (avec sous-questions) ═══ -->
+        <div class="signup-section">
+          <div class="signup-section-title">📣 Comment avez-vous connu Vita Fresh ? <span style="color:#dc2626">*</span></div>
+          <div class="signup-grid">
+            <div class="form-group signup-full">
+              <select id="signupOrigine" required onchange="updateOrigineSubFields()" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+                <option value="">— Choisir —</option>
+                <option value="commercial">👔 Par un commercial terrain Vita Fresh</option>
+                <option value="reseaux">📱 Par les réseaux sociaux</option>
+                <option value="bouche_oreille">🗣️ Par le bouche-à-oreille (un proche)</option>
+                <option value="moteur_recherche">🔍 Par un moteur de recherche (Google…)</option>
+                <option value="publicite">📺 Par une publicité</option>
+                <option value="evenement">🎪 Par un événement / salon</option>
+                <option value="autre">❓ Autre</option>
+              </select>
+            </div>
+
+            <!-- Sous-champ dynamique selon le choix -->
+            <div class="form-group signup-full" id="signupOrigineDetail" style="display:none">
+              <label id="signupOrigineDetailLabel">Précisez</label>
+              <!-- input ou select selon le contexte -->
+              <input type="text" id="signupOrigineDetailInput" placeholder="" style="display:none"/>
+              <select id="signupOrigineDetailSelect" style="display:none;width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff"></select>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSignupSubmit" style="margin-top:6px">📋 Envoyer ma demande</button>
       </form>
       <p style="margin-top:12px;text-align:center;font-size:13px;color:var(--gy)">
         <span>Déjà un compte ?</span>
@@ -3998,23 +4123,170 @@ async function doLogin(e){
   btnEl.disabled=false; btnEl.textContent=t("btn_login_ok");
 }
 // Show/hide société field based on type
-document.addEventListener("change",function(e){ if(e.target&&e.target.id==="signupType"){ var v=e.target.value; var sw=document.getElementById("signupSocieteWrap"); if(sw) sw.style.display=(v==="chr"||v==="marchand"||v==="fournisseur")?"block":"none"; } });
 function showProAppLink(){ var d=document.getElementById("pro-app-link-reveal"); if(d){d.style.display="block";} var b=document.getElementById("pro-app-link-btn"); if(b){b.style.display="none";} }
+
+// ═══ Adapte les sections du formulaire selon le type de compte ═══
+function updateSignupFields(){
+  var type=(document.getElementById("signupType")||{}).value||"";
+  var pro=document.getElementById("signupProSection");
+  var part=document.getElementById("signupParticulierSection");
+  var com=document.getElementById("signupCommercialSection");
+  var four=document.getElementById("signupFournisseurSection");
+  var proTitle=document.getElementById("signupProTitle");
+  var sousWrap=document.getElementById("signupSousTypeWrap");
+  var iceWrap=document.getElementById("signupIceWrap");
+  var sousSel=document.getElementById("signupSousType");
+  var socLabel=document.getElementById("signupSocieteLabel");
+  var hide=function(el){if(el)el.style.display="none";};
+  var show=function(el){if(el)el.style.display="";};
+  // reset
+  hide(pro); hide(part); hide(com); hide(four); hide(sousWrap); hide(iceWrap);
+  if(!type) return;
+  if(type==="client"){
+    show(part);
+    return;
+  }
+  // CHR / Marchand / Fournisseur → section Pro visible
+  show(pro);
+  show(iceWrap);
+  // Options sous-type selon le type
+  var opts="";
+  if(type==="chr"){
+    if(proTitle) proTitle.innerHTML='🏨 Établissement CHR';
+    if(socLabel) socLabel.innerHTML='Nom de l\'établissement <span style="color:#dc2626">*</span>';
+    show(sousWrap);
+    opts='<option value="">— Choisir —</option>'
+      +'<option value="restaurant">🍴 Restaurant</option>'
+      +'<option value="hotel">🏨 Hôtel</option>'
+      +'<option value="cafe">☕ Café / Snack</option>'
+      +'<option value="cantina">🍱 Cantina / Cantine</option>'
+      +'<option value="collectivite">🏢 Collectivité</option>'
+      +'<option value="traiteur">🎂 Traiteur</option>';
+    show(com);
+  } else if(type==="marchand"){
+    if(proTitle) proTitle.innerHTML='🏪 Établissement marchand';
+    if(socLabel) socLabel.innerHTML='Raison sociale <span style="color:#dc2626">*</span>';
+    show(sousWrap);
+    opts='<option value="">— Choisir —</option>'
+      +'<option value="epicerie">🛒 Épicerie</option>'
+      +'<option value="superette">🏪 Supérette</option>'
+      +'<option value="marche">🥬 Marché (étalage)</option>'
+      +'<option value="grossiste">📦 Grossiste</option>'
+      +'<option value="hypermarche">🏬 Hypermarché</option>'
+      +'<option value="export">🌍 Export</option>';
+    show(com);
+  } else if(type==="fournisseur"){
+    if(proTitle) proTitle.innerHTML='🚚 Société fournisseur';
+    if(socLabel) socLabel.innerHTML='Raison sociale <span style="color:#dc2626">*</span>';
+    hide(sousWrap);
+    show(four);
+  }
+  if(sousSel) sousSel.innerHTML=opts;
+}
+
+// ═══ Affiche un sous-champ contextuel selon l'origine choisie ═══
+function updateOrigineSubFields(){
+  var v=(document.getElementById("signupOrigine")||{}).value||"";
+  var wrap=document.getElementById("signupOrigineDetail");
+  var inp=document.getElementById("signupOrigineDetailInput");
+  var sel=document.getElementById("signupOrigineDetailSelect");
+  var lbl=document.getElementById("signupOrigineDetailLabel");
+  if(!wrap||!inp||!sel||!lbl) return;
+  wrap.style.display="none"; inp.style.display="none"; sel.style.display="none";
+  inp.value=""; sel.innerHTML="";
+  if(v==="commercial"){
+    lbl.textContent="Nom du commercial qui vous a contacté"; inp.placeholder="Ex : Jariri, Hicham, Ourai...";
+    wrap.style.display=""; inp.style.display="";
+  } else if(v==="reseaux"){
+    lbl.textContent="Sur quel réseau social ?";
+    sel.innerHTML='<option value="">— Choisir —</option>'
+      +'<option value="facebook">📘 Facebook</option>'
+      +'<option value="instagram">📸 Instagram</option>'
+      +'<option value="tiktok">🎵 TikTok</option>'
+      +'<option value="linkedin">💼 LinkedIn</option>'
+      +'<option value="whatsapp">💬 WhatsApp / Statut</option>'
+      +'<option value="youtube">▶️ YouTube</option>'
+      +'<option value="autre">❓ Autre</option>';
+    wrap.style.display=""; sel.style.display="";
+  } else if(v==="bouche_oreille"){
+    lbl.textContent="Qui vous a parlé de nous ? (nom — optionnel)"; inp.placeholder="Ex : Un ami restaurateur, un voisin...";
+    wrap.style.display=""; inp.style.display="";
+  } else if(v==="moteur_recherche"){
+    lbl.textContent="Quel mot-clé avez-vous tapé ? (optionnel)"; inp.placeholder="Ex : fruits légumes Casablanca";
+    wrap.style.display=""; inp.style.display="";
+  } else if(v==="publicite"){
+    lbl.textContent="Où avez-vous vu la publicité ? (optionnel)"; inp.placeholder="Ex : Radio 2M, panneau Bd Anfa...";
+    wrap.style.display=""; inp.style.display="";
+  } else if(v==="evenement"){
+    lbl.textContent="Quel événement ?"; inp.placeholder="Ex : SIAM Meknès 2026, foire CHR...";
+    wrap.style.display=""; inp.style.display="";
+  } else if(v==="autre"){
+    lbl.textContent="Précisez"; inp.placeholder="Comment nous avez-vous connus ?";
+    wrap.style.display=""; inp.style.display="";
+  }
+}
+window.updateSignupFields=updateSignupFields;
+window.updateOrigineSubFields=updateOrigineSubFields;
+
 async function doSignup(e){
   e.preventDefault();
-  var type=document.getElementById("signupType").value.trim();
-  var name=document.getElementById("signupName").value.trim(), phone=document.getElementById("signupPhone").value.trim();
-  var email=document.getElementById("signupEmail").value.trim(), societe=document.getElementById("signupSociete").value.trim();
-  var ville=document.getElementById("signupVille").value.trim();
-  var origineEl=document.getElementById("signupOrigine");
-  var origine=origineEl?origineEl.value.trim():"";
+  var get=function(id){var el=document.getElementById(id);return el?el.value.trim():"";};
+  var type=get("signupType");
+  var name=get("signupName"), phone=get("signupPhone"), email=get("signupEmail");
+  var origine=get("signupOrigine");
+  var origineInp=get("signupOrigineDetailInput");
+  var origineSel=get("signupOrigineDetailSelect");
+  var origineDetail=origineInp||origineSel||"";
+  // Champs par section
+  var societe=get("signupSociete"), ice=get("signupIce"), adresse=get("signupAdresse"), secteur=get("signupSecteur");
+  var sousType=get("signupSousType");
+  var villePro=get("signupVille"), villePart=get("signupVilleParticulier"), adressePart=get("signupAdresseParticulier");
+  var ville=villePro||villePart;
+  var adresseFinale=adresse||adressePart;
+  var taille=get("signupTaille"), rotation=get("signupRotation"), modalite=get("signupModalite");
+  var produits=get("signupProduits"), volumeFourn=get("signupVolumeFourn"), origineProd=get("signupOrigineProd");
+
   var errEl=document.getElementById("signupError"), succEl=document.getElementById("signupSuccess"), btnEl=document.getElementById("btnSignupSubmit");
   errEl.classList.remove("show"); if(succEl) succEl.style.display="none";
-  if(!type){errEl.textContent="Veuillez choisir le type de compte.";errEl.classList.add("show");return;}
-  if(!name||!phone){errEl.textContent="Nom et téléphone sont obligatoires.";errEl.classList.add("show");return;}
-  if(!origine){errEl.textContent="Indiquez comment vous avez connu Vita Fresh.";errEl.classList.add("show");return;}
+
+  if(!type){ errEl.textContent="Veuillez choisir le type de compte.";errEl.classList.add("show");return; }
+  if(!name||!phone){ errEl.textContent="Nom et téléphone sont obligatoires.";errEl.classList.add("show");return; }
+  if(!ville){ errEl.textContent="La ville est obligatoire.";errEl.classList.add("show");return; }
+  if((type==="chr"||type==="marchand"||type==="fournisseur") && !societe){
+    errEl.textContent="Le nom de l'établissement / société est requis pour les comptes Pro.";errEl.classList.add("show");return;
+  }
+  if(!origine){ errEl.textContent="Indiquez comment vous avez connu Vita Fresh.";errEl.classList.add("show");return; }
+  if(origine==="commercial" && !origineDetail){
+    errEl.textContent="Indiquez le nom du commercial Vita Fresh qui vous a contacté.";errEl.classList.add("show");return;
+  }
+  if(origine==="reseaux" && !origineDetail){
+    errEl.textContent="Choisissez le réseau social.";errEl.classList.add("show");return;
+  }
+  if(origine==="evenement" && !origineDetail){
+    errEl.textContent="Indiquez quel événement.";errEl.classList.add("show");return;
+  }
+
   btnEl.disabled=true; btnEl.textContent="⏳ Envoi en cours...";
-  var payload={type:type,nom:name,telephone:phone,email:email||undefined,societe:societe||undefined,ville:ville||undefined,origine:origine};
+  var payload={
+    type:type, nom:name, telephone:phone,
+    email:email||undefined,
+    societe:societe||undefined,
+    ice:ice||undefined,
+    adresse:adresseFinale||undefined,
+    ville:ville||undefined,
+    secteur:secteur||undefined,
+    sousType:sousType||undefined,
+    taille:taille||undefined,
+    rotation:rotation||undefined,
+    modalitePaiement:modalite||undefined,
+    // Spécifique fournisseur
+    produits:produits||undefined,
+    volumeKgSemaine:volumeFourn?Number(volumeFourn)||undefined:undefined,
+    origineProduction:origineProd||undefined,
+    // Tracking marketing
+    origine:origine,
+    origineDetail:origineDetail||undefined,
+  };
   try{
     var res=await fetch(CONFIG.API_URL+"/api/ext/demande-compte",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
     var data=await res.json();

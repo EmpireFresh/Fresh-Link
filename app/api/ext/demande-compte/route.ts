@@ -124,7 +124,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Corps JSON invalide." }, { status: 400, headers: cors(origin) })
   }
 
-  const { type, nom, email, telephone, societe, ice, ville, message, origine } = body
+  const {
+    type, nom, email, telephone, societe, ice, ville, message, origine,
+    // Champs étendus alignés sur le BO (BOComptesExternes)
+    adresse, secteur, sousType: bodySousType,
+    taille, rotation, modalitePaiement,
+    produits, volumeKgSemaine, origineProduction,
+    origineDetail,
+  } = body
 
   // ── Validation ────────────────────────────────────────────────────────────
   const VALID_TYPES = ["client", "chr", "marchand", "particulier", "fournisseur"]
@@ -173,17 +180,34 @@ export async function POST(req: NextRequest) {
     }
     const userOk = await sbUpsert("fl_users", userId, userPayload)
 
-    // 4. Créer fl_clients (profil)
-    const clientPayload = {
+    // 4. Créer fl_clients / fl_fournisseurs (profil étendu, aligné sur BO)
+    const clientPayload: Record<string, unknown> = {
       nom:        nomTrimmed,
       telephone:  telNorm,
       email:      email?.trim()?.toLowerCase() || null,
       societe:    societe?.trim() || null,
       ice:        ice?.trim() || null,
+      adresse:    adresse?.trim() || null,
       ville:      ville?.trim() || null,
+      secteur:    secteur?.trim() || null,
       categorie:  sousType,
       segment:    sousType === "chr" ? "CHR" : sousType === "marchand" ? "Marchand" : "standard",
-      origine:    origine || null,   // tracking marketing : commercial / reseaux / bouche_oreille / autre
+      // Sous-type métier détaillé (CHR : restaurant/hotel/cafe... · Marchand : epicerie/grossiste...)
+      type:       bodySousType?.trim() || null,
+      // Conditions commerciales (CHR / Marchand)
+      taille:     taille?.trim() || null,
+      rotation:   rotation?.trim() || null,
+      modalitePaiement: modalitePaiement?.trim() || "cash",
+      // Tracking marketing (avec détail)
+      origine:    origine || null,
+      origineDetail: origineDetail?.trim() || null,
+      // Spécifique fournisseur
+      ...(isFournisseur ? {
+        produits:           produits?.trim() || null,
+        volumeKgSemaine:    Number(volumeKgSemaine) || null,
+        origineProduction:  origineProduction?.trim() || null,
+      } : {}),
+      // Defaults
       actif:      true,
       remisePct:  0,
       remiseActive: false,
