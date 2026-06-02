@@ -316,7 +316,12 @@ html[dir="rtl"] .contact-box a{flex-direction:row-reverse}
 .pro-form-box h3{font-size:20px;font-weight:800;margin-bottom:5px}
 .form-sub{font-size:13px;color:var(--gy);margin-bottom:20px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0}
+/* ✅ Inscription : grille 2 colonnes desktop / 1 colonne mobile */
+.signup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.signup-grid .form-group{margin-bottom:0}
+.signup-full{grid-column:1 / -1}
+@media(max-width:560px){.signup-grid{grid-template-columns:1fr}}
 .form-group label{font-size:13px;font-weight:600;color:var(--gray-700)}
 .form-group input,.form-group select,.form-group textarea{padding:11px 13px;border:1.5px solid var(--gl);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;color:var(--gd);transition:.2s;outline:none;background:#fff}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--g1);box-shadow:0 0 0 3px rgba(27,67,50,.08)}
@@ -2698,45 +2703,48 @@ GET  /api/ext/commandes/:id → suivi commande</div>
       <div class="login-error" id="signupError"></div>
       <div id="signupSuccess" style="display:none;background:#f0faf4;border:1px solid #a7e3bf;border-radius:10px;padding:14px;text-align:center;font-size:14px;color:#1a7a3c;margin-bottom:10px"></div>
       <form onsubmit="doSignup(event)" novalidate id="signupForm">
-        <div class="form-group">
-          <label>Type de compte</label>
-          <select id="signupType" required style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
-            <option value="">Choisir...</option>
-            <option value="client">🏠 Particulier</option>
-            <option value="chr">🏨 Restaurant / Hôtel / Café (CHR)</option>
-            <option value="marchand">🏪 Marchand / Grossiste</option>
-            <option value="fournisseur">🚚 Fournisseur / Producteur</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Prénom &amp; Nom</label>
-          <input type="text" id="signupName" placeholder="Mohammed Alami" autocomplete="name" required/>
-        </div>
-        <div class="form-group">
-          <label>Numéro de téléphone</label>
-          <div class="phone-input-wrap"><span class="phone-flag">🇲🇦</span><input type="tel" id="signupPhone" placeholder="06 XX XX XX XX" autocomplete="tel" required/></div>
-        </div>
-        <div class="form-group">
-          <label>Email (optionnel)</label>
-          <input type="email" id="signupEmail" placeholder="email@exemple.ma" autocomplete="email"/>
-        </div>
-        <div class="form-group" id="signupSocieteWrap" style="display:none">
-          <label>Nom de l'établissement / Société</label>
-          <input type="text" id="signupSociete" placeholder="Restaurant Al Warda, Épicerie Alami..." autocomplete="organization"/>
-        </div>
-        <div class="form-group">
-          <label>Ville</label>
-          <input type="text" id="signupVille" placeholder="Casablanca" autocomplete="address-level2"/>
-        </div>
-        <div class="form-group">
-          <label>Comment avez-vous connu Vita Fresh ? <span style="color:#dc2626">*</span></label>
-          <select id="signupOrigine" required style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
-            <option value="">Choisir...</option>
-            <option value="commercial">👔 Par un commercial terrain</option>
-            <option value="reseaux">📱 Par les réseaux sociaux</option>
-            <option value="bouche_oreille">🗣️ Par le bouche-à-oreille</option>
-            <option value="autre">❓ Autre</option>
-          </select>
+        <!-- ✅ Grid 2 colonnes responsive (desktop) / 1 col (mobile <560px) -->
+        <div class="signup-grid">
+          <div class="form-group">
+            <label>Type de compte</label>
+            <select id="signupType" required style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+              <option value="">Choisir...</option>
+              <option value="client">🏠 Particulier</option>
+              <option value="chr">🏨 Restaurant / Hôtel / Café (CHR)</option>
+              <option value="marchand">🏪 Marchand / Grossiste</option>
+              <option value="fournisseur">🚚 Fournisseur / Producteur</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prénom &amp; Nom</label>
+            <input type="text" id="signupName" placeholder="Mohammed Alami" autocomplete="name" required/>
+          </div>
+          <div class="form-group">
+            <label>Numéro de téléphone</label>
+            <div class="phone-input-wrap"><span class="phone-flag">🇲🇦</span><input type="tel" id="signupPhone" placeholder="06 XX XX XX XX" autocomplete="tel" required/></div>
+          </div>
+          <div class="form-group">
+            <label>Email (optionnel)</label>
+            <input type="email" id="signupEmail" placeholder="email@exemple.ma" autocomplete="email"/>
+          </div>
+          <div class="form-group signup-full" id="signupSocieteWrap" style="display:none">
+            <label>Nom de l'établissement / Société</label>
+            <input type="text" id="signupSociete" placeholder="Restaurant Al Warda, Épicerie Alami..." autocomplete="organization"/>
+          </div>
+          <div class="form-group">
+            <label>Ville</label>
+            <input type="text" id="signupVille" placeholder="Casablanca" autocomplete="address-level2"/>
+          </div>
+          <div class="form-group">
+            <label>Comment avez-vous connu Vita Fresh ? <span style="color:#dc2626">*</span></label>
+            <select id="signupOrigine" required style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;font-family:inherit;background:#fff">
+              <option value="">Choisir...</option>
+              <option value="commercial">👔 Par un commercial terrain</option>
+              <option value="reseaux">📱 Par les réseaux sociaux</option>
+              <option value="bouche_oreille">🗣️ Par le bouche-à-oreille</option>
+              <option value="autre">❓ Autre</option>
+            </select>
+          </div>
         </div>
         <button type="submit" class="btn-submit" id="btnSignupSubmit">📋 Envoyer ma demande</button>
       </form>
