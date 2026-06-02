@@ -159,6 +159,42 @@ export default function BOGifts() {
     }
   }
 
+  // 📦 Crée la liste de cadeaux par défaut (7 matériels)
+  const seedDefaults = async () => {
+    if (!window.confirm("Créer la liste de cadeaux par défaut (Balance, Pack couteaux, Caisses, Vitrine, Tabliers, Étal, Bon fidélité) ?")) return
+    setBusy(true)
+    try {
+      const res = await fetch("/api/ext/gifts", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: "seed_defaults" }),
+      })
+      const d = await res.json()
+      if (!d.ok) throw new Error(d.error)
+      await load()
+      setError("")
+      window.alert(d.message ?? "Catalogue créé. Pensez à mettre le stock réel via +/-.")
+    } catch (e) { setError(String(e)) }
+    finally { setBusy(false) }
+  }
+
+  // 🤖 Lance l'algorithme d'attribution automatique
+  const runAutoScan = async () => {
+    if (!window.confirm("Lancer l'attribution automatique des cadeaux selon les seuils atteints par les clients (volume / CA / contrat) ?")) return
+    setBusy(true)
+    try {
+      const res = await fetch("/api/ext/gifts", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: "auto_scan" }),
+      })
+      const d = await res.json()
+      if (!d.ok) throw new Error(d.error)
+      await load()
+      setError("")
+      window.alert(d.message ?? `${d.attribues ?? 0} cadeaux attribués.`)
+    } catch (e) { setError(String(e)) }
+    finally { setBusy(false) }
+  }
+
   const patchAttribution = async (id: string, statut: Attribution["statut"]) => {
     setAttributions(prev => prev.map(x => x.id === id ? { ...x, statut, livre_le: statut === "livre" ? new Date().toISOString() : x.livre_le } : x))
     try {
@@ -248,6 +284,22 @@ export default function BOGifts() {
               onClick={() => { setShowMatForm(true); setShowAttribForm(false) }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/12 backdrop-blur-sm border border-white/20 text-white text-xs font-bold hover:bg-white/20 transition-all">
               ➕ Nouveau matériel
+            </button>
+            <button
+              type="button"
+              onClick={seedDefaults}
+              disabled={busy}
+              title="Crée la liste de cadeaux par défaut (Balance, Pack couteaux, Caisses, Vitrine...)"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/12 backdrop-blur-sm border border-white/20 text-white text-xs font-bold hover:bg-white/20 transition-all">
+              📦 Liste par défaut
+            </button>
+            <button
+              type="button"
+              onClick={runAutoScan}
+              disabled={busy}
+              title="Attribue automatiquement les cadeaux aux clients ayant atteint un seuil (volume/CA/contrat)"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-400/90 hover:bg-emerald-300 text-[#0b3d1a] text-xs font-black transition-all shadow-sm">
+              🤖 Attribution auto
             </button>
           </div>
         </div>

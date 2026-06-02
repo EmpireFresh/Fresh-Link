@@ -109,6 +109,16 @@ export default function BOPaHistorique() {
   const fmtMad   = (n: number) => `${n.toLocaleString("fr-MA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`
   const fmtDate  = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
 
+  // PA de base pour suggestion : PA prédit en priorité, sinon dernière saisie filtrée
+  const filteredEntries = filterArticle.trim() ? [...entries].sort((a, b) => b.date_marche.localeCompare(a.date_marche)) : []
+  const basePA = predit ? predit.value : (filteredEntries[0]?.pa ?? 0)
+  const prixBands = basePA > 0 ? [
+    { label: "🔴 Prix min (seuil)",   segment: "Rentabilité 15%", coef: 1.15, cls: "from-rose-500 to-rose-600",     ring: "ring-rose-200"    },
+    { label: "🏪 Marchand",          segment: "Marge 25%",        coef: 1.25, cls: "from-amber-500 to-orange-600",  ring: "ring-amber-200"   },
+    { label: "🏨 CHR",               segment: "Marge 30%",        coef: 1.30, cls: "from-purple-500 to-fuchsia-600",ring: "ring-purple-200"  },
+    { label: "🏠 Particulier",       segment: "Marge 40%",        coef: 1.40, cls: "from-blue-500 to-cyan-600",     ring: "ring-blue-200"    },
+  ].map(b => ({ ...b, prix: basePA * b.coef })) : []
+
   // KPIs
   const nbEntries  = entries.length
   const nbArticles = new Set(entries.map(e => e.article_id)).size
@@ -311,6 +321,35 @@ export default function BOPaHistorique() {
             <p className="text-xs text-fuchsia-700/80">Article <code className="font-mono bg-fuchsia-100 px-1 rounded">{predit.article}</code></p>
           </div>
           <p className="text-3xl font-black text-fuchsia-800 tabular-nums">{fmtMad(predit.value)}</p>
+        </div>
+      )}
+
+      {/* Suggestion de prix de vente */}
+      {prixBands.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-base">💡</span>
+            <h3 className="text-sm font-black text-slate-900">Suggestion prix de vente</h3>
+            <span className="text-[10px] text-slate-500">
+              — base PA {predit ? "prédit" : "dernière saisie"} : <strong>{fmtMad(basePA)}</strong>
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {prixBands.map(b => (
+              <div key={b.label} className={`relative overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm ring-1 ${b.ring}`}>
+                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${b.cls}`} />
+                <div className="px-4 py-3.5">
+                  <p className="text-xs font-bold text-slate-700 mb-1">{b.label}</p>
+                  <p className="text-[11px] text-slate-500 mb-2">{b.segment}</p>
+                  <p className="text-xl font-black text-slate-900 tabular-nums leading-tight">{fmtMad(b.prix)}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">× {b.coef.toFixed(2)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-400 mt-3">
+            ⚠️ Ces suggestions sont indicatives — ajuste selon la concurrence et les marges logistiques de ton secteur.
+          </p>
         </div>
       )}
 

@@ -174,7 +174,84 @@ export async function POST(req: NextRequest) {
       }, { headers: cors(origin) })
     }
 
-    return NextResponse.json({ ok: false, error: `scope POST inconnu (${scope}). Attendu : material | attribution` }, { status: 400, headers: cors(origin) })
+    // ── scope = seed_defaults : crée une liste de cadeaux par défaut ──
+    if (scope === "seed_defaults") {
+      const defaults = [
+        { id: "GM_BALANCE",  nom: "Balance Numérique Pro 30kg",   segment: "marchand", description: "Balance pro pour épiceries / marchands F&L", seuil_type: "volume_kg",   seuil_valeur: 1000, cout_unitaire: 850 },
+        { id: "GM_PACKPRO",  nom: "Pack Pro Couteaux de Chef",    segment: "chr",      description: "Set couteaux pro pour CHR (cafés, hôtels, restaurants)", seuil_type: "volume_kg", seuil_valeur: 800, cout_unitaire: 1200 },
+        { id: "GM_CAISSE",   nom: "Lot 10 Caisses Plastiques",    segment: "marchand", description: "Caisses de transport réutilisables", seuil_type: "volume_kg",  seuil_valeur: 500,  cout_unitaire: 350 },
+        { id: "GM_TABLIER",  nom: "Tabliers + Toques (x5)",       segment: "chr",      description: "Tenue cuisine brandée Vita Fresh", seuil_type: "montant_mad", seuil_valeur: 20000, cout_unitaire: 400 },
+        { id: "GM_FRIGO",    nom: "Vitrine Réfrigérée",           segment: "marchand", description: "Vitrine fraîcheur (gros volume / contrat annuel)", seuil_type: "contrat", seuil_valeur: 1, cout_unitaire: 6500 },
+        { id: "GM_PARASOL",  nom: "Parasol + Étal Pro",           segment: "marchand", description: "Étal marché brandé", seuil_type: "volume_kg",  seuil_valeur: 1500,  cout_unitaire: 900 },
+        { id: "GM_BONCADO",  nom: "Bon cadeau fidélité 500 MAD",  segment: "tous",     description: "Bon d'achat fidélité tous segments", seuil_type: "montant_mad", seuil_valeur: 50000, cout_unitaire: 500 },
+      ]
+      let created = 0
+      for (const d of defaults) {
+        const res = await sbFetch("fl_gift_materials", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: JSON.stringify({ ...d, stock_qte: 0, actif: true }),
+        })
+        if (res.ok) created++
+      }
+      return NextResponse.json({ ok: true, created, total: defaults.length, message: `✅ ${created} cadeaux dans le catalogue` }, { headers: cors(origin) })
+    }
+
+    // ── scope = auto_scan : ALGORITHME d'attribution automatique ──
+    //   Scanne fl_clients, cumule leur volume/CA, et attribue les cadeaux
+    //   dont le seuil est atteint et pas déjà attribué.
+    if (scope === "auto_scan") {
+      // 1. Charger matériels actifs en stock
+      const matRes = await sbFetch("fl_gift_materials?select=*&actif=eq.true")
+      const materials = matRes.ok ? await matRes.json() as { id: string; nom: string; segment: string; stock_qte: number; seuil_type: string; seuil_valeur: number }[] : []
+      // 2. Charger clients
+      const cliRes = await sbFetch("fl_clients?select=id,payload&limit=5000")
+      const clients = cliRes.ok ? await cliRes.json() as { id: string; payload: Record<string, unknown> }[] : []
+      // 3. Charger attributions existantes (éviter doublons)
+      const attRes = await sbFetch("fl_gift_attributions?select=client_id,material_id&limit=5000")
+      const existing = attRes.ok ? await attRes.json() as { client_id: string; material_id: string }[] : []
+      const dejaAttribue = new Set(existing.map(a => `${a.client_id}|${a.material_id}`))
+
+      const attributions: { client: string; material: string; nom: string }[] = []
+      for (const c of clients) {
+        if (String(c.id).startsWith("__")) continue
+        const p = c.payload ?? {}
+        const segClient = String(p.categorie ?? p.segment ?? "").toLowerCase()
+        const volumeCumule = Number(p.volumeCumuleKg ?? p.tonnageCumule ?? 0) || 0
+        const caCumule = Number(p.caCumule ?? p.chiffreAffaires ?? 0) || 0
+        const aContrat = p.contratSigne === true || p.contrat === true
+        for (const m of materials) {
+          if (m.stock_qte <= 0) continue
+          // Segment : "tous" matche tout, sinon doit correspondre
+          if (m.segment !== "tous" && !segClient.includes(m.segment)) continue
+          if (dejaAttribue.has(`${c.id}|${m.id}`)) continue
+          // Vérifier le seuil
+          let atteint = false
+          if (m.seuil_type === "volume_kg")   atteint = volumeCumule >= m.seuil_valeur
+          else if (m.seuil_type === "montant_mad") atteint = caCumule >= m.seuil_valeur
+          else if (m.seuil_type === "contrat") atteint = aContrat
+          if (!atteint) continue
+          // Attribuer (le trigger SQL décrémente stock + notifie)
+          const id = "GA" + Date.now().toString(36).toUpperCase() + Math.floor(Math.random()*99)
+          const ok = await sbFetch("fl_gift_attributions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
+            body: JSON.stringify({ id, client_id: c.id, material_id: m.id, segment: m.segment, declenche_par: "auto_scan", statut: "a_livrer", attribue_le: new Date().toISOString() }),
+          }).then(r => r.ok).catch(() => false)
+          if (ok) { attributions.push({ client: c.id, material: m.id, nom: m.nom }); dejaAttribue.add(`${c.id}|${m.id}`); m.stock_qte-- }
+        }
+      }
+      return NextResponse.json({
+        ok: true,
+        attribues: attributions.length,
+        details: attributions,
+        message: attributions.length > 0
+          ? `🎁 ${attributions.length} cadeau(x) attribué(s) automatiquement`
+          : "Aucun client n'a atteint un seuil cadeau (vérifiez volumeCumuleKg / caCumule / contratSigne dans les profils clients).",
+      }, { headers: cors(origin) })
+    }
+
+    return NextResponse.json({ ok: false, error: `scope POST inconnu (${scope}). Attendu : material | attribution | seed_defaults | auto_scan` }, { status: 400, headers: cors(origin) })
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500, headers: cors(origin) })
   }
