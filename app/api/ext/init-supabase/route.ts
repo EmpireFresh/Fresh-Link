@@ -1,28 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 
 // ══════════════════════════════════════════════════════════════════
-// /api/ext/init-supabase — Initialize RLS Policies + Gifts Catalog
+// /api/ext/init-supabase — Initialize Gift Catalog
+// RLS Policies must be created manually via Supabase SQL Editor
 // ══════════════════════════════════════════════════════════════════
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://jwdrwapuetqoqnankgma.supabase.co"
 const SB_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""
 
-async function executeSQL(sql: string): Promise<{ ok: boolean; error?: string }> {
-  try {
-    const res = await fetch(`${SB_URL}/rest/v1/rpc/exec_sql`, {
-      method: "POST",
-      headers: {
-        apikey: SB_SERVICE_KEY,
-        Authorization: `Bearer ${SB_SERVICE_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ sql }),
-    })
-    if (!res.ok) throw new Error(await res.text())
-    return { ok: true }
-  } catch (e) {
-    return { ok: false, error: String(e) }
-  }
+async function sbFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${SB_URL}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      ...(init.headers ?? {}),
+      apikey: SB_SERVICE_KEY,
+      Authorization: `Bearer ${SB_SERVICE_KEY}`,
+    },
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -33,53 +27,11 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const action = req.nextUrl.searchParams.get("action") ?? "rls"
+  const action = req.nextUrl.searchParams.get("action") ?? "gifts"
 
   try {
-    if (action === "rls") {
-      // Create RLS Policies
-      const policies = [
-        `CREATE POLICY IF NOT EXISTS "public_read_articles" ON public.fl_articles
-          FOR SELECT
-          USING (published = true OR auth.uid() IS NOT NULL);`,
-
-        `CREATE POLICY IF NOT EXISTS "auth_read_commandes" ON public.fl_commandes_web
-          FOR SELECT
-          USING (auth.uid() IS NOT NULL);`,
-
-        `CREATE POLICY IF NOT EXISTS "auth_insert_commandes" ON public.fl_commandes_web
-          FOR INSERT
-          WITH CHECK (auth.uid() IS NOT NULL);`,
-
-        `CREATE POLICY IF NOT EXISTS "auth_insert_feedbacks" ON public.fl_feedbacks
-          FOR INSERT
-          WITH CHECK (auth.uid() IS NOT NULL);`,
-      ]
-
-      const results = []
-      for (const policy of policies) {
-        const res = await fetch(`${SB_URL}/rest/v1/`, {
-          method: "POST",
-          headers: {
-            apikey: SB_SERVICE_KEY,
-            Authorization: `Bearer ${SB_SERVICE_KEY}`,
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal",
-          },
-          body: JSON.stringify({ query: policy }),
-        })
-        results.push({ policy: policy.slice(0, 50), status: res.status })
-      }
-
-      return NextResponse.json({
-        ok: true,
-        message: "✅ RLS Policies initialization started",
-        results,
-      })
-    }
-
     if (action === "gifts") {
-      // Initialize Gift Catalog
+      // Initialize Gift Catalog with stock quantities
       const gifts = [
         {
           id: "GM_BALANCE",
@@ -90,6 +42,7 @@ export async function POST(req: NextRequest) {
           seuil_valeur: 1000,
           cout_unitaire: 850,
           stock_qte: 3,
+          actif: true,
         },
         {
           id: "GM_PACKPRO",
@@ -100,6 +53,7 @@ export async function POST(req: NextRequest) {
           seuil_valeur: 800,
           cout_unitaire: 1200,
           stock_qte: 5,
+          actif: true,
         },
         {
           id: "GM_CAISSE",
@@ -110,6 +64,7 @@ export async function POST(req: NextRequest) {
           seuil_valeur: 500,
           cout_unitaire: 350,
           stock_qte: 10,
+          actif: true,
         },
         {
           id: "GM_TABLIER",
@@ -120,6 +75,7 @@ export async function POST(req: NextRequest) {
           seuil_valeur: 20000,
           cout_unitaire: 400,
           stock_qte: 8,
+          actif: true,
         },
         {
           id: "GM_FRIGO",
@@ -130,6 +86,7 @@ export async function POST(req: NextRequest) {
           seuil_valeur: 1,
           cout_unitaire: 6500,
           stock_qte: 1,
+          actif: true,
         },
         {
           id: "GM_PARASOL",
@@ -140,6 +97,7 @@ export async function POST(req: NextRequest) {
           seuil_valeur: 1500,
           cout_unitaire: 900,
           stock_qte: 2,
+          actif: true,
         },
         {
           id: "GM_BONCADO",
@@ -150,34 +108,38 @@ export async function POST(req: NextRequest) {
           seuil_valeur: 50000,
           cout_unitaire: 500,
           stock_qte: 50,
+          actif: true,
         },
       ]
 
       let created = 0
+      const errors = []
+
       for (const gift of gifts) {
-        const res = await fetch(`${SB_URL}/rest/v1/fl_gift_materials`, {
-          method: "POST",
-          headers: {
-            apikey: SB_SERVICE_KEY,
-            Authorization: `Bearer ${SB_SERVICE_KEY}`,
-            "Content-Type": "application/json",
-            Prefer: "resolution=merge-duplicates,return=minimal",
-          },
-          body: JSON.stringify({ ...gift, actif: true }),
-        })
-        if (res.ok) created++
+        try {
+          const res = await sbFetch("fl_gift_materials", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+            body: JSON.stringify(gift),
+          })
+          if (res.ok) created++
+          else errors.push(`${gift.id}: ${res.status}`)
+        } catch (e) {
+          errors.push(`${gift.id}: ${String(e)}`)
+        }
       }
 
       return NextResponse.json({
-        ok: true,
+        ok: created > 0,
         message: `✅ ${created}/${gifts.length} gifts initialized`,
         created,
         total: gifts.length,
+        errors: errors.length > 0 ? errors : undefined,
       })
     }
 
     return NextResponse.json(
-      { ok: false, error: "Unknown action" },
+      { ok: false, error: "Unknown action. Use ?action=gifts" },
       { status: 400 }
     )
   } catch (e) {
@@ -192,7 +154,7 @@ export async function OPTIONS() {
   return NextResponse.json(null, {
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     },
   })
