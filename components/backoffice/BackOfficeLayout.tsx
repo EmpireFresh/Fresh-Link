@@ -86,7 +86,7 @@ const ShelfLifePanel         = dynamic(() => import("./ShelfLifePanel"),        
 const ForecastPanel          = dynamic(() => import("./ForecastPanel"),          { ssr: false, loading: L("Chargement forecast...") })
 const ASHELMarketPanel       = dynamic(() => import("./ASHELMarketPanel"),       { ssr: false, loading: L("Chargement ASHEL...") })
 const CameraPermissionsPanel = dynamic(() => import("./CameraPermissionsPanel"), { ssr: false, loading: L("Chargement permissions...") })
-const CutoffNotificationsPanel = dynamic(() => import("./CutoffNotificationsPanel"), { ssr: false, loading: L("Chargement cutoffs...") })
+// (CutoffNotificationsPanel retiré — doublon ; le menu « Cutoffs » pointe désormais vers BOCutoffs, plus complet)
 const CaissesVidesPanel      = dynamic(() => import("./CaissesVidesPanel"),      { ssr: false, loading: L("Chargement caisses vides...") })
 const DeployGuidePanel       = dynamic(() => import("./DeployGuidePanel"),       { ssr: false, loading: L("Chargement guide...") })
 const BODepots               = dynamic(() => import("./BODepots"),               { ssr: false, loading: L("Chargement depots...") })
@@ -116,7 +116,7 @@ const BODeviceAccess         = dynamic(() => import("./BODeviceAccess"),        
 // (BOCommandesWeb retiré — doublon de Commandes ; les commandes web s'affichent dans BOCommandesUnifiees)
 const BOCommandesUnifiees    = dynamic(() => import("./BOCommandesUnifiees"),      { ssr: false, loading: L("Chargement commandes...") })
 // ── Modules V3 (moteur commercial, cadeaux, cutoffs, feedbacks, PA) ──
-const BOFeedbacksV3          = dynamic(() => import("./BOFeedbacks"),             { ssr: false, loading: L("Chargement feedbacks...") })
+// (BOFeedbacks/feedbacks_v3 retiré — doublon ; on garde FeedbackPanel « Feedbacks & Avis », plus complet)
 const BOCutoffsV3            = dynamic(() => import("./BOCutoffs"),               { ssr: false, loading: L("Chargement cutoffs...") })
 const BOGiftsV3              = dynamic(() => import("./BOGifts"),                 { ssr: false, loading: L("Chargement cadeaux...") })
 const BOMoteurCommercialV3   = dynamic(() => import("./BOMoteurCommercial"),      { ssr: false, loading: L("Chargement moteur commercial...") })
@@ -286,8 +286,6 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "moteur_commercial",  label: "💼 Moteur commercial",   labelAr: "محرك تجاري",       permKey: "canViewCommercial", icon: <Icon d="M9 7h6m0 0v6m0-6l-6 6" /> },
       { id: "gifts_v3",           label: "🎁 Cadeaux incentives",  labelAr: "هدايا تحفيزية",    permKey: "canViewCommercial", icon: <Icon d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /> },
       { id: "pa_historique",      label: "📈 PA Historique",       labelAr: "تاريخ سعر الشراء",  permKey: "canViewAchat",      icon: <Icon d="M3 3v18h18M7 14l3-3 3 3 5-5" /> },
-      { id: "cutoffs_v3",         label: "🚦 Cutoffs (flux)",      labelAr: "إيقاف التدفقات",   permKey: "canViewDatabase",   icon: <Icon d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /> },
-      { id: "feedbacks_v3",       label: "💬 Feedbacks V3",        labelAr: "ملاحظات",          icon: <Icon d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /> },
     ],
   },
   // ── 5. STOCK & CATALOGUE ─────────────────────────────────────────────────
@@ -397,7 +395,7 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   pa_historique:     (_u) => <BOPaHistoriqueV3 />,
   gifts_v3:          (_u) => <BOGiftsV3 />,
   cutoffs_v3:        (u)  => <BOCutoffsV3 currentUserId={u.id} />,
-  feedbacks_v3:      (_u) => <BOFeedbacksV3 />,
+  feedbacks_v3:      (u) => <FeedbackPanel user={u} />,
   commandes_web:       (u) => <BOCommandesUnifiees user={u} />,
   commandes_unifiees:  (u) => <BOCommandesUnifiees user={u} />,
   category_pricing:  (_u) => <BOCategoryPricing />,
@@ -426,7 +424,7 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   forecast:            (_u) => <ForecastPanel />,
   ashel_market:        (_u) => <ASHELMarketPanel />,
   camera_perms:      (u) => <CameraPermissionsPanel currentUser={u} />,
-  cutoffs:           (_u) => <CutoffNotificationsPanel />,
+  cutoffs:           (u)  => <BOCutoffsV3 currentUserId={u.id} />,
   deploy_guide:      (_u) => <DeployGuidePanel />,
   rh_productivite:   (u) => <BOResources user={u} />,
   rh_comptabilite:   (u) => <BOComptabiliteRH user={u} />,
