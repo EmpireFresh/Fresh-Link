@@ -332,14 +332,37 @@ export default function BOComptesExternes({ user }: Props) {
   const getPortalUser = (clientId: string) =>
     users.find(u => u.role === "client" && u.clientId === clientId)
 
-  const toggleActif = (userId: string) => {
+  const toggleActif = async (userId: string) => {
+    // Compte local (staff) → localStorage
     const all = store.getUsers()
     const idx = all.findIndex(u => u.id === userId)
-    if (idx < 0) return
-    all[idx].actif = !all[idx].actif
-    store.saveUsers(all)
-    setUsers([...all])
-    flash(true, all[idx].actif ? "Compte activé." : "Compte désactivé.")
+    if (idx >= 0) {
+      all[idx].actif = !all[idx].actif
+      store.saveUsers(all)
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, actif: all[idx].actif } : u))
+      flash(true, all[idx].actif ? "Compte activé." : "Compte désactivé.")
+      return
+    }
+    // Compte créé via le SITE WEB (présent uniquement dans Supabase) → maj via service_role
+    const wu = users.find(u => u.id === userId)
+    if (!wu) return
+    const newActif = !wu.actif
+    try {
+      const r   = await fetch("/api/sync-read?table=fl_users", { cache: "no-store" })
+      const j   = await r.json()
+      const row = (j?.data ?? []).find((x: { id: string }) => x.id === userId) as { payload?: Record<string, unknown> } | undefined
+      const payload = { ...(row?.payload ?? {}), actif: newActif }
+      const w = await fetch("/api/sync-write", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_users", upserts: [{ id: userId, payload, updated_at: new Date().toISOString() }] }),
+      })
+      const wj = await w.json()
+      if (!wj.ok) throw new Error("sync-write")
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, actif: newActif } : u))
+      flash(true, newActif ? "Compte web activé." : "Compte web désactivé.")
+    } catch {
+      flash(false, "Erreur lors de la mise à jour du compte web.")
+    }
   }
 
   const handleResetPwd = (userId: string) => {
