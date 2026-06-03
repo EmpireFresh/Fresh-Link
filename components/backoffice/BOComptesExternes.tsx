@@ -244,8 +244,72 @@ export default function BOComptesExternes({ user }: Props) {
   const canDelete = ALLOWED_ROLES.includes(user.role) || !!user.canViewExternal
 
   const reload = useCallback(() => {
-    setClients(store.getClients())
-    setUsers(store.getUsers())
+    // 1. Données locales (affichage instantané)
+    const localClients = store.getClients()
+    const localUsers   = store.getUsers()
+    setClients(localClients)
+    setUsers(localUsers)
+    // 2. ⚡ Fusion des comptes créés via le SITE WEB (présents uniquement dans Supabase,
+    //    pas dans le localStorage de l'app). Lecture service_role via /api/sync-read.
+    ;(async () => {
+      try {
+        const [cRes, uRes] = await Promise.all([
+          fetch("/api/sync-read?table=fl_clients", { cache: "no-store" }).then(r => r.json()).catch(() => ({})),
+          fetch("/api/sync-read?table=fl_users",   { cache: "no-store" }).then(r => r.json()).catch(() => ({})),
+        ])
+        const cRows = (cRes?.data ?? []) as { id: string; payload: Record<string, unknown> }[]
+        const uRows = (uRes?.data ?? []) as { id: string; payload: Record<string, unknown> }[]
+
+        const byId = new Map<string, Client>()
+        localClients.forEach(c => byId.set(c.id, c))
+        const telSet = new Set(localClients.map(c => String(c.telephone || "").replace(/\D/g, "")).filter(Boolean))
+        cRows.forEach(r => {
+          if (String(r.id).startsWith("__") || byId.has(r.id)) return
+          const p = r.payload || {}
+          const tel = String(p.telephone ?? "").replace(/\D/g, "")
+          if (tel && telSet.has(tel)) return  // déjà présent (même téléphone)
+          const cat = String(p.categorie ?? p.segment ?? "particulier").toLowerCase()
+          byId.set(r.id, {
+            id: r.id,
+            nom: String(p.nom ?? "—"),
+            telephone: String(p.telephone ?? ""),
+            email: String(p.email ?? ""),
+            adresse: String(p.adresse ?? ""),
+            secteur: String(p.secteur ?? "Site Web"),
+            zone: String(p.ville ?? p.zone ?? "Casablanca"),
+            type: (cat.includes("chr") ? "chr" : cat.includes("marchand") ? "marchand" : "particulier"),
+            categorie: (cat.includes("chr") ? "chr" : cat.includes("marchand") ? "marchand" : "particulier"),
+            taille: (p.taille ?? "0-50kg"),
+            rotation: (p.rotation ?? "ponctuel"),
+            typeProduits: "mixte",
+            ice: String(p.ice ?? ""),
+            modalitePaiement: (p.modalitePaiement ?? "cash"),
+            createdBy: "web",
+            createdAt: String(p.createdAt ?? new Date().toISOString()),
+            source: "web",
+          } as unknown as Client)
+        })
+        setClients(Array.from(byId.values()))
+
+        const uById = new Map<string, User>()
+        localUsers.forEach(u => uById.set(u.id, u))
+        uRows.forEach(r => {
+          if (String(r.id).startsWith("__") || uById.has(r.id)) return
+          const p = r.payload || {}
+          uById.set(r.id, {
+            id: r.id,
+            name: String(p.name ?? p.nom ?? "—"),
+            telephone: String(p.telephone ?? ""),
+            email: String(p.email ?? ""),
+            role: String(p.role ?? "client"),
+            clientId: String(p.clientId ?? ""),
+            actif: p.actif !== false,
+            password: String(p.password ?? ""),
+          } as unknown as User)
+        })
+        setUsers(Array.from(uById.values()))
+      } catch { /* hors ligne → on garde les données locales */ }
+    })()
   }, [])
 
   useEffect(() => {
