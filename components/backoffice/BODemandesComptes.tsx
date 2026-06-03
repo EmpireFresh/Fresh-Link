@@ -30,6 +30,53 @@ export default function BODemandesComptes({ user }: Props) {
   const [selected, setSelected]     = useState<AccountRequest | null>(null)
   const [msg, setMsg]               = useState<{ ok: boolean; text: string } | null>(null)
 
+  // ── Paramètres d'auto-validation (règles d'approbation automatique) ──────────
+  const [showAutoCfg, setShowAutoCfg] = useState(false)
+  const [autoCfg, setAutoCfg] = useState<{ enabled: boolean; autoTypes: string[]; phonePrefixes: string; gpsLat: string; gpsLng: string; gpsRadius: string }>(
+    { enabled: false, autoTypes: [], phonePrefixes: "", gpsLat: "", gpsLng: "", gpsRadius: "5" }
+  )
+  useEffect(() => {
+    fetch("/api/sync-read?table=fl_account_requests", { cache: "no-store" })
+      .then(r => r.json()).then(j => {
+        const row = (j?.data ?? []).find((x: { id: string }) => x.id === "__autoapprove")
+        const p = row?.payload
+        if (p) {
+          const z = (Array.isArray(p.gpsZones) && p.gpsZones[0]) ? p.gpsZones[0] : {}
+          setAutoCfg({
+            enabled: p.enabled === true,
+            autoTypes: Array.isArray(p.autoTypes) ? p.autoTypes : [],
+            phonePrefixes: Array.isArray(p.phonePrefixes) ? p.phonePrefixes.join(", ") : "",
+            gpsLat: z.lat != null ? String(z.lat) : "",
+            gpsLng: z.lng != null ? String(z.lng) : "",
+            gpsRadius: z.radiusKm != null ? String(z.radiusKm) : "5",
+          })
+        }
+      }).catch(() => {})
+  }, [])
+  async function saveAutoCfg() {
+    const payload: Record<string, unknown> = {
+      enabled: autoCfg.enabled,
+      autoTypes: autoCfg.autoTypes,
+      phonePrefixes: autoCfg.phonePrefixes.split(",").map(s => s.trim()).filter(Boolean),
+      gpsZones: (autoCfg.gpsLat && autoCfg.gpsLng)
+        ? [{ lat: Number(autoCfg.gpsLat), lng: Number(autoCfg.gpsLng), radiusKm: Number(autoCfg.gpsRadius) || 5 }]
+        : [],
+      updated_at: new Date().toISOString(),
+    }
+    try {
+      const r = await fetch("/api/sync-write", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_account_requests", upserts: [{ id: "__autoapprove", payload, updated_at: new Date().toISOString() }] }) })
+      const j = await r.json()
+      if (!j.ok) throw new Error("save")
+      setMsg({ ok: true, text: "✅ Règles d'auto-validation enregistrées." })
+      setShowAutoCfg(false)
+    } catch { setMsg({ ok: false, text: "Erreur d'enregistrement des règles." }) }
+    setTimeout(() => setMsg(null), 4000)
+  }
+  function toggleAutoType(t: string) {
+    setAutoCfg(c => ({ ...c, autoTypes: c.autoTypes.includes(t) ? c.autoTypes.filter(x => x !== t) : [...c.autoTypes, t] }))
+  }
+
   // ── Approve form ────────────────────────────────────────────────────────────
   const [approveForm, setApproveForm] = useState({ email: "", nom: "", password: "" })
   const [showApprove, setShowApprove] = useState(false)
@@ -326,11 +373,65 @@ export default function BODemandesComptes({ user }: Props) {
           </h2>
           <p className="text-sm text-muted-foreground">Demandes de création de compte depuis le portail externe</p>
         </div>
-        <button onClick={() => { refresh(); syncFromSupabase() }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-colors">
-          🔄 Actualiser
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAutoCfg(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">
+            ⚙️ Auto-validation
+          </button>
+          <button onClick={() => { refresh(); syncFromSupabase() }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-colors">
+            🔄 Actualiser
+          </button>
+        </div>
       </div>
+
+      {/* ── Modale : Règles d'auto-validation ─────────────────────────────── */}
+      {showAutoCfg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowAutoCfg(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-800 mb-1">⚙️ Auto-validation des comptes web</h3>
+            <p className="text-sm text-slate-500 mb-4">Les comptes qui correspondent à ces règles sont <strong>activés automatiquement</strong> (sans validation manuelle). Les autres restent « en attente ».</p>
+
+            <label className="flex items-center gap-2 mb-4 p-3 rounded-xl border border-emerald-200 bg-emerald-50 cursor-pointer">
+              <input type="checkbox" checked={autoCfg.enabled} onChange={e => setAutoCfg(c => ({ ...c, enabled: e.target.checked }))} className="w-5 h-5 accent-emerald-600" />
+              <span className="text-sm font-semibold text-emerald-800">Activer les règles d'auto-validation</span>
+            </label>
+
+            <div className="mb-4">
+              <div className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Par type de client (auto-validés)</div>
+              <div className="flex flex-wrap gap-2">
+                {[["particulier","🏠 Particulier"],["client","👤 Client"],["chr","🍽️ CHR"],["marchand","🏪 Marchand"],["fournisseur","🚚 Fournisseur"]].map(([v,lab]) => (
+                  <button key={v} type="button" onClick={() => toggleAutoType(v)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${autoCfg.autoTypes.includes(v) ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-600 border-slate-300"}`}>
+                    {lab}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Par préfixe de téléphone (séparés par virgule)</label>
+              <input value={autoCfg.phonePrefixes} onChange={e => setAutoCfg(c => ({ ...c, phonePrefixes: e.target.value }))}
+                placeholder="Ex : 0661, 0770" className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+            </div>
+
+            <div className="mb-5">
+              <div className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Par zone GPS (rayon autour d'un point)</div>
+              <div className="grid grid-cols-3 gap-2">
+                <input value={autoCfg.gpsLat} onChange={e => setAutoCfg(c => ({ ...c, gpsLat: e.target.value }))} placeholder="Latitude" className="px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input value={autoCfg.gpsLng} onChange={e => setAutoCfg(c => ({ ...c, gpsLng: e.target.value }))} placeholder="Longitude" className="px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input value={autoCfg.gpsRadius} onChange={e => setAutoCfg(c => ({ ...c, gpsRadius: e.target.value }))} placeholder="Rayon km" className="px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">Astuce : récupère lat/lng sur Google Maps (clic droit → coordonnées).</p>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowAutoCfg(false)} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Annuler</button>
+              <button onClick={saveAutoCfg} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">💾 Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Message */}
       {msg && (
