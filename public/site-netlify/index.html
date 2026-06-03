@@ -849,7 +849,9 @@ const CONFIG = {
   WA_EQUIPE_2:     "212647333456",  // Direction
   HOURS:           "Lun–Sam : 06h00 – 18h00",
   APP_URL:         "https://app.vita-core.org/",
-  API_URL:         "https://f-l.vercel.app",
+  // ⚡ Same-origin : les appels passent par /api/* (proxy Vercel → f-l.vercel.app),
+  // ce qui élimine les erreurs CORS / "Failed to fetch" cross-domain du navigateur.
+  API_URL:         "",
   LOGO_URL:        "data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20130%20130'%3E%3Cpath%20d%3D'M65%2032C41%2032%2C22%2052%2C22%2078C22%20104%2C41%20120%2C65%20120C89%20120%2C108%20104%2C108%2078C108%2052%2C89%2032%2C65%2032Z'%20fill%3D'%25236CBC4E'%2F%3E%3Cpath%20d%3D'M41%2058L65%20100L89%2058'%20stroke%3D'white'%20stroke-width%3D'12'%20fill%3D'none'%20stroke-linejoin%3D'miter'%2F%3E%3Crect%20x%3D'62'%20y%3D'22'%20width%3D'6'%20height%3D'14'%20fill%3D'%25232D7A45'%2F%3E%3Cpath%20d%3D'M68%2026C80%2012%2C100%2010%2C110%2017C103%2034%2C84%2038%2C68%2026Z'%20fill%3D'%25232D7A45'%2F%3E%3C%2Fsvg%3E",
   // ── الإحصائيات — قابلة للتعديل من لوحة الإدارة ──
   // كل عنصر: num = الرقم، fr/ar/en = الترجمة
@@ -1872,10 +1874,47 @@ GET  /api/ext/commandes/:id → suivi commande</div>
               <div id="uid-adr" style="font-weight:600;color:#374151;font-size:12px">—</div>
             </div>
           </div>
-          <div class="fg" style="margin-top:10px">
-            <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">📍 Adresse de livraison (modifiable)</label>
+          <div class="fg" style="margin-top:12px">
+            <style>
+              .addr-opt{flex:1 1 140px;background:#fff;border:1.5px solid #d1fae5;color:#374151;padding:9px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;text-align:center}
+              .addr-opt:hover{border-color:#16a34a}
+              .addr-opt.on{border-color:#16a34a;background:#f0fdf4;color:#15803d;box-shadow:0 0 0 2px rgba(22,163,74,.15)}
+            </style>
+            <label style="font-size:12px;font-weight:800;color:#1e5631;display:block;margin-bottom:7px">📍 Adresse de livraison — pour mieux gérer notre circuit et vous livrer à temps, choisissez une option :</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:9px">
+              <button type="button" id="addr-opt-saved" class="addr-opt on" onclick="pickAddr('saved')">🏠 Mon adresse enregistrée</button>
+              <button type="button" id="addr-opt-gps"   class="addr-opt"    onclick="pickAddr('gps')">📡 Ma position GPS actuelle</button>
+              <button type="button" id="addr-opt-new"   class="addr-opt"    onclick="pickAddr('new')">✏️ Nouvelle adresse</button>
+            </div>
             <input id="f-adr-visible" type="text" placeholder="N° rue, quartier, bâtiment..." style="border-color:#16a34a;background:#fff" oninput="document.getElementById('f-adr').value=this.value">
+            <div id="addr-gps-status" style="font-size:11px;margin-top:5px;display:none"></div>
           </div>
+          <script>
+          (function(){
+            window.pickAddr=function(mode){
+              ["saved","gps","new"].forEach(function(m){var b=document.getElementById("addr-opt-"+m);if(b)b.classList.toggle("on",m===mode);});
+              var inp=document.getElementById("f-adr-visible"), hid=document.getElementById("f-adr"), st=document.getElementById("addr-gps-status");
+              if(!inp||!hid) return;
+              if(st){st.style.display="none";st.textContent="";}
+              if(mode==="saved"){
+                var sv=(document.getElementById("uid-adr")||{}).textContent||""; sv=(sv&&sv.trim()!=="—")?sv.trim():"";
+                inp.readOnly=true; inp.value=sv; hid.value=sv;
+                if(!sv&&st){st.style.display="block";st.style.color="#d97706";st.textContent="Aucune adresse enregistrée — utilisez le GPS ou saisissez une nouvelle adresse.";}
+              } else if(mode==="new"){
+                inp.readOnly=false; inp.value=""; hid.value=""; try{inp.focus();}catch(e){}
+              } else if(mode==="gps"){
+                inp.readOnly=true;
+                if(!navigator.geolocation){ if(st){st.style.display="block";st.style.color="#dc2626";st.textContent="GPS indisponible sur cet appareil.";} return; }
+                if(st){st.style.display="block";st.style.color="#6b7280";st.textContent="📡 Localisation en cours...";}
+                navigator.geolocation.getCurrentPosition(function(p){
+                  var lat=p.coords.latitude.toFixed(6), lng=p.coords.longitude.toFixed(6), g="https://maps.google.com/?q="+lat+","+lng;
+                  inp.value="Position GPS : "+lat+", "+lng; hid.value="Position GPS : "+lat+", "+lng+" — "+g;
+                  if(st){st.style.display="block";st.style.color="#16a34a";st.innerHTML="✅ Position captée — <a href='"+g+"' target='_blank' style='color:#16a34a;text-decoration:underline'>voir sur la carte</a>";}
+                },function(){ if(st){st.style.display="block";st.style.color="#dc2626";st.textContent="❌ Localisation refusée — saisissez votre adresse manuellement.";} window.pickAddr("new"); },{enableHighAccuracy:true,timeout:10000});
+              }
+            };
+          })();
+          </script>
         </div>
 
         <!-- ── Formulaire invité (non connecté) ─────────────────────── -->
