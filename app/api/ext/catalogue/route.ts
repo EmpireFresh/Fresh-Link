@@ -62,7 +62,10 @@ export async function GET(req: NextRequest) {
             const p = (r.payload && typeof r.payload === "object" ? r.payload : {}) as Record<string, unknown>
             return { ...p, id: r.id } as Record<string, unknown>
           })
-          .filter(a => a.marketplaceActif !== false && a.marketplace_actif !== false)
+          // ⚡ Source de vérité UNIQUE : un article n'apparaît sur le site QUE s'il est
+          // explicitement publié (marketplaceActif === true). Un flag absent/undefined ne suffit plus.
+          // → le compteur "publiés" du site == le compteur "publiés" du BO (0 si rien n'est publié).
+          .filter(a => a.marketplaceActif === true || a.marketplace_actif === true)
         const result = applyFilters(articles, q, tag).sort(byOrdre).map(normalizePayload)
         return NextResponse.json(result, { status: 200, headers: { ...cors(origin), "X-Source": "supabase" } })
       }

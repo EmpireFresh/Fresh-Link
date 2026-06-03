@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { store, type Commande, type LigneCommande } from "@/lib/store"
 import type { User } from "@/lib/store"
 
@@ -68,39 +67,18 @@ function getStatutCfg(statut: string, source: "web" | "erp") {
 
 // ── Normalisation des données ─────────────────────────────────────────────────
 
-function normalizeWeb(row: Record<string, unknown>): CmdUnifiee {
-  const lignes = (Array.isArray(row.lignes) ? row.lignes : []) as Record<string, unknown>[]
-  return {
-    id:         String(row.id ?? ""),
-    numero:     String(row.numero ?? row.id ?? ""),
-    date:       String(row.created_at ?? ""),
-    nom_client: String(row.nom_client ?? "—"),
-    telephone:  String(row.telephone ?? ""),
-    adresse:    row.adresse_livraison ? String(row.adresse_livraison) : undefined,
-    lignes: lignes.map(l => ({
-      nom:      String(l.articleNom ?? l.nom ?? "Article"),
-      quantite: Number(l.quantite ?? l.qty ?? 1),
-      unite:    String(l.unite ?? "kg"),
-      prix:     Number(l.prixUnitaire ?? 0),
-      total:    Number(l.total ?? l.montant ?? 0),
-    })),
-    montant:    Number(row.montant_total ?? 0),
-    statut:     String(row.statut ?? "nouveau"),
-    source:     "web",
-    prevendeur: "",
-    notes:      row.instructions ? String(row.instructions) : undefined,
-    table:      "fl_commandes_web",
-  }
-}
-
-function normalizeERP(row: { id: string; payload: Record<string, unknown>; updated_at: string }): CmdUnifiee {
+function normalizeERP(row: { id: string; payload: Record<string, unknown>; updated_at?: string }): CmdUnifiee {
   const p = row.payload ?? {}
+  // Détecte une commande issue du site web (payload {nom_client, source:"site_web", id "WEB-..."})
+  // vs une commande ERP interne (payload {clientNom, commercialNom, date}).
+  const isWeb = String(p.source ?? "").includes("web") || String(row.id).startsWith("WEB-")
   const lignes = (Array.isArray(p.lignes) ? p.lignes : []) as Record<string, unknown>[]
-  const montant = lignes.reduce((sum, l) => {
+  const computed = lignes.reduce((sum, l) => {
     const q  = Number(l.quantite ?? 1)
     const pu = Number(l.prixVente ?? l.prixUnitaire ?? 0)
     return sum + q * pu
   }, 0)
+  const montant = Number(p.montant_total ?? p.montant ?? 0) || Math.round(computed * 100) / 100
   // Catégorie client : type (chr/particulier/marchand) ou secteur
   const rawType = String(p.clientType ?? p.secteur ?? "")
   const cat = rawType.toLowerCase()
@@ -110,24 +88,25 @@ function normalizeERP(row: { id: string; payload: Record<string, unknown>; updat
     : rawType || undefined
   return {
     id:         row.id,
-    numero:     row.id,
-    date:       String(p.date ?? row.updated_at ?? ""),
-    nom_client: String(p.clientNom ?? "—"),
+    numero:     String(p.numero ?? row.id),
+    date:       String(p.date ?? p.created_at ?? row.updated_at ?? ""),
+    nom_client: String(p.clientNom ?? p.nom_client ?? "—"),
     telephone:  String(p.clientTel ?? p.telephone ?? ""),
+    adresse:    p.adresse_livraison ? String(p.adresse_livraison) : (p.adresse ? String(p.adresse) : undefined),
     lignes: lignes.map(l => ({
       nom:      String(l.articleNom ?? l.nom ?? "Article"),
       quantite: Number(l.quantite ?? 1),
       unite:    String(l.unite ?? "kg"),
       prix:     Number(l.prixVente ?? l.prixUnitaire ?? 0),
-      total:    Number(l.quantite ?? 1) * Number(l.prixVente ?? l.prixUnitaire ?? 0),
+      total:    Number(l.total ?? Number(l.quantite ?? 1) * Number(l.prixVente ?? l.prixUnitaire ?? 0)),
     })),
-    montant:    Math.round(montant * 100) / 100,
-    statut:     String(p.statut ?? "en_attente"),
-    source:     "erp",
+    montant,
+    statut:     String(p.statut ?? (isWeb ? "nouveau" : "en_attente")),
+    source:     isWeb ? "web" : "erp",
     prevendeur: String(p.commercialNom ?? ""),
-    zone:       p.zone ? String(p.zone) : undefined,
+    zone:       p.zone ? String(p.zone) : (p.creneau ? String(p.creneau) : undefined),
     categorie,
-    notes:      p.notes ? String(p.notes) : (p.commentaire ? String(p.commentaire) : undefined),
+    notes:      p.notes ? String(p.notes) : (p.instructions ? String(p.instructions) : (p.commentaire ? String(p.commentaire) : undefined)),
     table:      "fl_commandes",
     rawPayload: p as Record<string, unknown>,
   }
@@ -172,29 +151,17 @@ export default function BOCommandesUnifiees({ user }: Props) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const sb = createClient()
-      const [webRes, erpRes] = await Promise.all([
-        sb.from("fl_commandes_web")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(500),
-        sb.from("fl_commandes")
-          .select("id, payload, updated_at")
-          .order("updated_at", { ascending: false })
-          .limit(500),
-      ])
-
-      const webOrders: CmdUnifiee[] = (webRes.data ?? []).map(
-        r => normalizeWeb(r as Record<string, unknown>)
-      )
-      const erpOrders: CmdUnifiee[] = (erpRes.data ?? [])
-        .filter(r => r.payload)
-        .map(r => normalizeERP(r as { id: string; payload: Record<string, unknown>; updated_at: string }))
-
-      // Fusion + tri par date décroissante
-      const all = [...webOrders, ...erpOrders]
-      all.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
-      setCmds(all)
+      // ⚡ Lecture via l'API service_role (/api/sync-read) — le client Supabase ANON
+      // est bloqué par la RLS sur fl_commandes (renvoie [] alors que les données existent).
+      // Toutes les commandes (web ET ERP) sont stockées dans fl_commandes {id, payload}.
+      const res  = await fetch("/api/sync-read?table=fl_commandes", { cache: "no-store" })
+      const json = await res.json()
+      const rows: { id: string; payload: Record<string, unknown> }[] = json?.ok ? (json.data ?? []) : []
+      const orders: CmdUnifiee[] = rows
+        .filter(r => r.payload && !String(r.id).startsWith("__"))
+        .map(r => normalizeERP(r))
+      orders.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
+      setCmds(orders)
     } catch (e) {
       console.error("[BOCommandesUnifiees]", e)
     }
@@ -211,34 +178,28 @@ export default function BOCommandesUnifiees({ user }: Props) {
   const updateStatut = async (cmd: CmdUnifiee, newStatut: string) => {
     setUpdating(true)
     try {
-      const sb = createClient()
-      if (cmd.table === "fl_commandes_web") {
-        const { error } = await sb
-          .from("fl_commandes_web")
-          .update({
-            statut:     newStatut,
-            traite_par: user.name,
-            traite_at:  new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", cmd.id)
-        if (error) throw error
-      } else {
-        // ERP : mise à jour du statut dans le payload JSONB
-        const { error } = await sb
-          .from("fl_commandes")
-          .update({
-            payload:    { ...(cmd.rawPayload ?? {}), statut: newStatut },
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", cmd.id)
-        if (error) throw error
+      // Mise à jour du statut dans le payload JSONB via l'API service_role (bypass RLS)
+      const mergedPayload = {
+        ...(cmd.rawPayload ?? {}),
+        statut:     newStatut,
+        traite_par: user.name,
+        traite_at:  new Date().toISOString(),
       }
+      const res = await fetch("/api/sync-write", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table:   "fl_commandes",
+          upserts: [{ id: cmd.id, payload: mergedPayload, updated_at: new Date().toISOString() }],
+        }),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error((json.errors || []).join(", "))
       setMsg({ ok: true, text: `✅ Statut mis à jour → ${getStatutCfg(newStatut, cmd.source).label}` })
       setSelected(prev => prev ? { ...prev, statut: newStatut } : null)
       // Refresh local state immédiatement
       setCmds(prev => prev.map(c =>
-        c.id === cmd.id && c.table === cmd.table ? { ...c, statut: newStatut } : c
+        c.id === cmd.id && c.table === cmd.table ? { ...c, statut: newStatut, rawPayload: mergedPayload } : c
       ))
     } catch {
       setMsg({ ok: false, text: "❌ Erreur lors de la mise à jour." })
@@ -251,14 +212,18 @@ export default function BOCommandesUnifiees({ user }: Props) {
   const deleteCommande = async (cmd: CmdUnifiee) => {
     if (!confirm(`⚠️ Supprimer définitivement la commande ${cmd.numero} de ${cmd.nom_client} ?\n\nCette action est irréversible.`)) return
     try {
-      const sb = createClient()
-      if (cmd.source === "web") {
-        await sb.from("fl_commandes_web").delete().eq("id", cmd.id)
-      } else {
-        // Commande ERP (localStorage + Supabase)
+      // Commande ERP locale → retirer aussi du store localStorage
+      if (cmd.source === "erp") {
         store.saveCommandes(store.getCommandes().filter(c => c.id !== cmd.id))
-        try { await sb.from("fl_commandes").delete().eq("id", cmd.id) } catch {}
       }
+      // Suppression Supabase via l'API service_role (toutes les commandes sont dans fl_commandes)
+      const res = await fetch("/api/sync-write", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_commandes", deletes: [cmd.id] }),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error((json.errors || []).join(", "))
       setCmds(prev => prev.filter(c => !(c.id === cmd.id && c.table === cmd.table)))
       setSelected(null)
       setMsg({ ok: true, text: `✅ Commande ${cmd.numero} supprimée.` })
@@ -329,9 +294,15 @@ export default function BOCommandesUnifiees({ user }: Props) {
 
     store.saveCommandes([...store.getCommandes(), newCmd])
 
-    // Marquer la commande web comme "confirmee" dans Supabase
-    const sb = createClient()
-    await sb.from("fl_commandes_web").update({ statut: "confirmee" }).eq("id", cmd.rawId)
+    // Marquer la commande web comme "confirmee" dans Supabase via l'API service_role
+    await fetch("/api/sync-write", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table:   "fl_commandes",
+        upserts: [{ id: cmd.id, payload: { ...(cmd.rawPayload ?? {}), statut: "confirmee" }, updated_at: new Date().toISOString() }],
+      }),
+    })
 
     setMsg({ ok: true, text: `✅ ${cmd.numero} injectée dans la logistique ERP (Préparation / Dispatch / Stock).` })
     setTimeout(() => setMsg(null), 5000)
