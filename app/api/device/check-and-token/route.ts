@@ -22,7 +22,11 @@ export async function POST(req: NextRequest) {
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.service_role ||
+      process.env.SUPABASE_SERVICE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     // ── Mode dégradé : Supabase non configuré → approuver automatiquement ──
     if (!supabaseUrl || !supabaseKey) {
@@ -32,15 +36,14 @@ export async function POST(req: NextRequest) {
       return res
     }
 
-    // ── Vérifier dans Supabase ─────────────────────────────────────────────
+    // ── Vérifier dans Supabase (format JSONB {id, payload}, clé service_role) ──
     const sbRes = await fetch(
-      `${supabaseUrl}/rest/v1/fl_site_access?device_id=eq.${encodeURIComponent(fingerprint)}&select=statut`,
+      `${supabaseUrl}/rest/v1/fl_site_access?id=eq.${encodeURIComponent(fingerprint)}&select=payload`,
       {
         headers: {
           apikey:        supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
         },
-        // Edge Runtime cache: toujours fraîche
         cache: "no-store",
       }
     )
@@ -49,13 +52,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Erreur Supabase" }, { status: 502 })
     }
 
-    const rows = (await sbRes.json()) as Array<{ statut: string }>
+    const rows = (await sbRes.json()) as Array<{ payload?: { statut?: string } }>
 
     if (!rows.length) {
       return NextResponse.json({ approved: false, statut: "not_found" })
     }
 
-    const { statut } = rows[0]
+    const statut = rows[0]?.payload?.statut ?? "en_attente"
 
     if (statut === "autorise") {
       // ✅ Approuvé → signer le token et poser le cookie

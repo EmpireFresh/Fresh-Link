@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
 import type { User } from "@/lib/store"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -55,17 +54,39 @@ export default function BODeviceAccess({ user }: Props) {
   const [editNotes,setEditNotes]= useState("")
   const [editTel,  setEditTel]  = useState("")
 
-  const sb = createClient()
-
+  // Lecture/écriture via l'API service_role (bypass RLS) — format JSONB {id, payload}
   const load = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await sb
-      .from("fl_site_access")
-      .select("*")
-      .order("first_visit_at", { ascending: false })
-    if (!error && data) setRows(data as DeviceRequest[])
+    try {
+      const res  = await fetch("/api/sync-read?table=fl_site_access", { cache: "no-store" })
+      const json = await res.json()
+      const list: DeviceRequest[] = (json?.ok ? (json.data ?? []) : [])
+        .filter((r: { id: string }) => !String(r.id).startsWith("__"))
+        .map((r: { id: string; payload?: Record<string, unknown> }) => {
+          const p = r.payload ?? {}
+          return {
+            id:             r.id,
+            device_id:      String(p.device_id ?? r.id),
+            nom:            (p.nom as string) ?? null,
+            telephone:      (p.telephone as string) ?? null,
+            statut:         (p.statut as DeviceRequest["statut"]) ?? "en_attente",
+            gps_lat:        (p.gps_lat as number) ?? null,
+            gps_lng:        (p.gps_lng as number) ?? null,
+            gps_precision:  (p.gps_precision as number) ?? null,
+            user_agent:     (p.user_agent as string) ?? null,
+            first_visit_at: (p.first_visit_at as string) ?? null,
+            updated_at:     (p.updated_at as string) ?? null,
+            autorise_par:   (p.autorise_par as string) ?? null,
+            autorise_at:    (p.autorise_at as string) ?? null,
+            notes:          (p.notes as string) ?? null,
+          }
+        })
+        .sort((a: DeviceRequest, b: DeviceRequest) =>
+          new Date(b.first_visit_at || 0).getTime() - new Date(a.first_visit_at || 0).getTime())
+      setRows(list)
+    } catch { /* hors ligne */ }
     setLoading(false)
-  }, [sb])
+  }, [])
 
   useEffect(() => { load() }, [load])
 
@@ -76,34 +97,56 @@ export default function BODeviceAccess({ user }: Props) {
   }, [load])
 
   // ── Actions ────────────────────────────────────────────────────────────────
+  // Reconstruit le payload JSONB complet depuis la ligne affichée + champs modifiés
+  function rowToPayload(r: DeviceRequest, over: Record<string, unknown>): Record<string, unknown> {
+    return {
+      device_id: r.device_id, nom: r.nom, telephone: r.telephone, statut: r.statut,
+      gps_lat: r.gps_lat, gps_lng: r.gps_lng, gps_precision: r.gps_precision,
+      user_agent: r.user_agent, first_visit_at: r.first_visit_at,
+      autorise_par: r.autorise_par, autorise_at: r.autorise_at, notes: r.notes,
+      updated_at: new Date().toISOString(), ...over,
+    }
+  }
+  async function writeRow(id: string, payload: Record<string, unknown>): Promise<boolean> {
+    try {
+      const res = await fetch("/api/sync-write", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_site_access", upserts: [{ id, payload, updated_at: new Date().toISOString() }] }),
+      })
+      const j = await res.json()
+      return j.ok === true
+    } catch { return false }
+  }
+
   async function setStatut(deviceId: string, statut: "autorise" | "bloque", nom: string | null) {
     const now = new Date().toISOString()
-    const update: Record<string, unknown> = {
+    const row = rows.find(r => r.device_id === deviceId || r.id === deviceId)
+    const base: DeviceRequest = row ?? ({ id: deviceId, device_id: deviceId, nom, statut } as DeviceRequest)
+    const payload = rowToPayload(base, {
       statut,
-      updated_at: now,
       autorise_par: user.name ?? user.email ?? "Jawad",
-    }
-    if (statut === "autorise") update.autorise_at = now
-    if (statut === "bloque")   update.bloque_at   = now
-
-    const { error } = await sb
-      .from("fl_site_access")
-      .update(update)
-      .eq("device_id", deviceId)
-
-    if (error) {
-      setMsg({ ok: false, text: `Erreur : ${error.message}` })
-    } else {
+      ...(statut === "autorise" ? { autorise_at: now } : {}),
+    })
+    const ok = await writeRow(row?.id ?? deviceId, payload)
+    if (ok) {
       const action = statut === "autorise" ? "✅ Autorisé" : "🚫 Bloqué"
       setMsg({ ok: true, text: `${action} — ${nom ?? deviceId.slice(0, 12)}` })
       setTimeout(() => setMsg(null), 4000)
       load()
+    } else {
+      setMsg({ ok: false, text: "Erreur lors de la mise à jour." })
     }
   }
 
   async function deleteRow(deviceId: string, nom: string | null) {
     if (!confirm(`Supprimer la demande de ${nom ?? deviceId} ? Action irréversible.`)) return
-    await sb.from("fl_site_access").delete().eq("device_id", deviceId)
+    const row = rows.find(r => r.device_id === deviceId || r.id === deviceId)
+    try {
+      await fetch("/api/sync-write", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_site_access", deletes: [row?.id ?? deviceId] }),
+      })
+    } catch { /* ignore */ }
     load()
   }
 
@@ -116,17 +159,19 @@ export default function BODeviceAccess({ user }: Props) {
 
   async function saveEdit() {
     if (!editRow) return
-    const { error } = await sb
-      .from("fl_site_access")
-      .update({ nom: editNom.trim() || null, telephone: editTel.trim() || null, notes: editNotes.trim() || null, updated_at: new Date().toISOString() })
-      .eq("device_id", editRow.device_id)
-    if (error) {
-      setMsg({ ok: false, text: `Erreur : ${error.message}` })
-    } else {
+    const payload = rowToPayload(editRow, {
+      nom:       editNom.trim() || null,
+      telephone: editTel.trim() || null,
+      notes:     editNotes.trim() || null,
+    })
+    const ok = await writeRow(editRow.id, payload)
+    if (ok) {
       setMsg({ ok: true, text: "✅ Appareil mis à jour." })
       setTimeout(() => setMsg(null), 3000)
       setEditRow(null)
       load()
+    } else {
+      setMsg({ ok: false, text: "Erreur lors de la mise à jour." })
     }
   }
 
