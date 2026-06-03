@@ -218,22 +218,30 @@ export async function POST(req: NextRequest) {
     }
     await sbUpsert(isFournisseur ? "fl_fournisseurs" : "fl_clients", clientId, clientPayload)
 
-    // 5. Enregistrer dans fl_account_requests (historique)
+    // 5. Enregistrer la DEMANDE dans fl_account_requests (format JSONB {id, payload})
+    //    → visible dans le BO « Demandes Comptes » pour validation par l'admin.
     try {
+      const reqId = "REQ-" + userId
       await fetch(`${SB_URL}/rest/v1/fl_account_requests`, {
         method:  "POST",
         headers: {
           apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}`,
-          "Content-Type": "application/json", Prefer: "return=minimal",
+          "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal",
         },
         body: JSON.stringify({
-          type: roleUser, sous_type: sousType,
-          nom: nomTrimmed, email: email?.trim()?.toLowerCase() || null,
-          telephone: telNorm, societe: societe?.trim() || null,
-          ice: ice?.trim() || null, ville: ville?.trim() || null,
-          message: message?.trim() || null,
-          statut: "approuve", userId,
-          created_at: new Date().toISOString(),
+          id: reqId,
+          payload: {
+            type: roleUser, sous_type: sousType,
+            nom: nomTrimmed, email: email?.trim()?.toLowerCase() || null,
+            telephone: telNorm, societe: societe?.trim() || null,
+            ice: ice?.trim() || null, ville: ville?.trim() || null,
+            message: message?.trim() || null,
+            statut: "en_attente",
+            origine: origine || "web",
+            userId, _linkedUserId: userId, _linkedClientId: clientId,
+            created_at: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
         }),
       })
     } catch {}

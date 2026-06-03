@@ -118,12 +118,13 @@ TRUNCATE
   public.fl_caisse_entries,
   public.fl_documents,
   public.fl_gift_materials,
-  public.fl_pa_historique;
+  public.fl_pa_historique
+CASCADE;   -- CASCADE : vide aussi les tables liées par clé étrangère (ex. fl_gift_attributions)
 
 -- 3c. Données de RÉFÉRENCE (fournisseurs, dépôts, RH, livreurs, contacts).
 --     Par défaut on les GARDE. Décommente la ligne pour AUSSI les remettre à zéro :
 -- TRUNCATE public.fl_fournisseurs, public.fl_depots, public.fl_salaries,
---          public.fl_actionnaires, public.fl_livreurs, public.fl_company_contacts;
+--          public.fl_actionnaires, public.fl_livreurs, public.fl_company_contacts CASCADE;
 
 
 -- ─────────────────────────────────────────────────────────────────────────────

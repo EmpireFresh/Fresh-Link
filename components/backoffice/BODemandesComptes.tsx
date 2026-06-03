@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { store, type AccountRequest, type User, type Client, type Fournisseur } from "@/lib/store"
-import { createClient } from "@/lib/supabase/client"
 
 function generatePassword(len = 10): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
@@ -45,10 +44,7 @@ export default function BODemandesComptes({ user }: Props) {
     nom: "", telephone: "", email: "", ville: "", societe: "", message: "", statut: "en_attente",
   })
 
-  // ── Supabase client ─────────────────────────────────────────────────────────
-  const sb = createClient()
-
-  // ── LocalStorage helpers ────────────────────────────────────────────────────
+  // ── LocalStorage helpers (cache hors-ligne uniquement) ──────────────────────
   const getAccountRequests = (): AccountRequest[] => {
     try { return JSON.parse(localStorage.getItem("fl_account_requests") ?? "[]") } catch { return [] }
   }
@@ -58,37 +54,67 @@ export default function BODemandesComptes({ user }: Props) {
 
   const refresh = () => setRequests(getAccountRequests())
 
-  // ── Sync depuis Supabase ────────────────────────────────────────────────────
+  // ── Sync depuis Supabase (service_role, format JSONB {id, payload}) ──────────
+  // Supabase = source de vérité ; le localStorage sert seulement de cache hors-ligne.
   const syncFromSupabase = async () => {
     try {
-      const { data, error } = await sb
-        .from("fl_account_requests")
-        .select("*")
-        .order("created_at", { ascending: false })
-      if (error || !data) return
-      const local = getAccountRequests()
-      const localIds = new Set(local.map((r: AccountRequest) => r.id))
-      const fromSb: AccountRequest[] = (data as Record<string, unknown>[]).map(row => ({
-        id:        String(row.id),
-        type:      String(row.type ?? "client") as "client" | "fournisseur",
-        sous_type: row.sous_type ? String(row.sous_type) : undefined,
-        nom:       String(row.nom ?? ""),
-        email:     String(row.email ?? ""),
-        telephone: String(row.telephone ?? ""),
-        societe:   String(row.societe ?? row.nom_societe ?? ""),
-        ice:       row.ice as string | undefined,
-        ville:     row.ville as string | undefined,
-        message:   row.message as string | undefined,
-        statut:    String(row.statut ?? "en_attente") as AccountRequest["statut"],
-        createdAt: String(row.created_at ?? new Date().toISOString()),
-      }))
-      const newFromSb = fromSb.filter(r => !localIds.has(r.id))
-      if (newFromSb.length > 0) {
-        const merged = [...newFromSb, ...local]
-        saveAccountRequests(merged)
-        setRequests(merged)
-      }
-    } catch { /* offline ok */ }
+      const res  = await fetch("/api/sync-read?table=fl_account_requests", { cache: "no-store" })
+      const json = await res.json()
+      if (!json?.ok) return
+      const rows = (json.data ?? []) as { id: string; payload?: Record<string, unknown> }[]
+      const fromSb: AccountRequest[] = rows
+        .filter(r => !String(r.id).startsWith("__"))
+        .map(r => {
+          const p = r.payload ?? {}
+          return {
+            id:        r.id,
+            type:      String(p.type ?? "client") as "client" | "fournisseur",
+            sous_type: p.sous_type ? String(p.sous_type) : undefined,
+            nom:       String(p.nom ?? ""),
+            email:     String(p.email ?? ""),
+            telephone: String(p.telephone ?? ""),
+            societe:   String(p.societe ?? ""),
+            ice:       p.ice as string | undefined,
+            ville:     p.ville as string | undefined,
+            message:   p.message as string | undefined,
+            statut:    String(p.statut ?? "en_attente") as AccountRequest["statut"],
+            createdAt: String(p.created_at ?? new Date().toISOString()),
+            _linkedClientId:      p._linkedClientId as string | undefined,
+            _linkedFournisseurId: p._linkedFournisseurId as string | undefined,
+            _linkedUserId:        p._linkedUserId as string | undefined,
+          } as AccountRequest
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      setRequests(fromSb)
+      saveAccountRequests(fromSb)
+    } catch { /* hors ligne → garde le cache local */ }
+  }
+
+  // ── Helpers écriture Supabase (service_role) ─────────────────────────────────
+  async function writeRequestStatut(reqId: string, statut: string, extra: Record<string, unknown> = {}) {
+    const cur = requests.find(r => r.id === reqId)
+    const payload = {
+      type: cur?.type, sous_type: cur?.sous_type, nom: cur?.nom, email: cur?.email,
+      telephone: cur?.telephone, societe: cur?.societe, ice: cur?.ice, ville: cur?.ville,
+      message: cur?.message, created_at: cur?.createdAt,
+      _linkedClientId: cur?._linkedClientId, _linkedUserId: (cur as { _linkedUserId?: string })?._linkedUserId,
+      statut, updated_at: new Date().toISOString(), ...extra,
+    }
+    try {
+      await fetch("/api/sync-write", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_account_requests", upserts: [{ id: reqId, payload, updated_at: new Date().toISOString() }] }) })
+    } catch {}
+  }
+  async function setUserActifSb(userId: string, actif: boolean) {
+    if (!userId) return
+    try {
+      const r = await fetch("/api/sync-read?table=fl_users", { cache: "no-store" })
+      const j = await r.json()
+      const row = (j?.data ?? []).find((x: { id: string }) => x.id === userId) as { payload?: Record<string, unknown> } | undefined
+      const payload = { ...(row?.payload ?? {}), actif }
+      await fetch("/api/sync-write", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: "fl_users", upserts: [{ id: userId, payload, updated_at: new Date().toISOString() }] }) })
+    } catch {}
   }
 
   useEffect(() => { refresh(); syncFromSupabase() }, [])
@@ -149,96 +175,81 @@ export default function BODemandesComptes({ user }: Props) {
 
   // ── CRUD actions ─────────────────────────────────────────────────────────────
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selected) return
-    if (!approveForm.email.trim() || !approveForm.nom.trim() || !approveForm.password.trim()) {
-      setMsg({ ok: false, text: "Tous les champs sont requis." })
+    const phone = selected.telephone?.replace(/\D/g, "") ?? ""
+    const linkedUserId = (selected as { _linkedUserId?: string })._linkedUserId
+
+    if (linkedUserId) {
+      // ── Compte WEB : il existe déjà dans Supabase (créé à l'inscription).
+      //    On l'ACTIVE + on marque la demande « approuvée ». Aucune création en double.
+      await setUserActifSb(linkedUserId, true)
+      await writeRequestStatut(selected.id, "approuve", { approvedBy: user.id, approvedAt: new Date().toISOString() })
+      setRequests(prev => prev.map(r => r.id === selected.id ? { ...r, statut: "approuve" as const } : r))
+      if (phone) {
+        const waMsg = encodeURIComponent(
+          `Bonjour ${selected.nom} 👋\n\n✅ Votre compte Vita Fresh est *validé* !\n\n` +
+          `🌐 Connectez-vous avec le téléphone/email et le mot de passe reçus à l'inscription.\n\n— Vita Fresh 🍃`)
+        setTimeout(() => window.open(`https://wa.me/${phone}?text=${waMsg}`, "_blank"), 400)
+      }
+      setShowApprove(false); setSelected(null)
+      setMsg({ ok: true, text: `✅ Compte validé pour ${selected.nom}.${phone ? " WhatsApp ouvert !" : ""}` })
+      setTimeout(() => setMsg(null), 7000)
       return
     }
+
+    // ── Demande MANUELLE (legacy, sans compte lié) : on crée le compte ──────────
+    if (!approveForm.email.trim() || !approveForm.nom.trim() || !approveForm.password.trim()) {
+      setMsg({ ok: false, text: "Tous les champs sont requis." }); return
+    }
     const newUser: User = {
-      id: store.genId(),
-      name: approveForm.nom.trim(),
-      email: approveForm.email.trim(),
+      id: store.genId(), name: approveForm.nom.trim(), email: approveForm.email.trim(),
       password: approveForm.password.trim(),
       role: selected.type === "client" ? "client" : "fournisseur",
-      actif: true,
-      accessType: "both",
-      ...(selected.type === "client" && selected._linkedClientId
-        ? { clientId: selected._linkedClientId } : {}),
-      ...(selected.type === "fournisseur" && selected._linkedFournisseurId
-        ? { fournisseurId: selected._linkedFournisseurId } : {}),
+      actif: true, accessType: "both",
+      ...(selected.type === "client" && selected._linkedClientId ? { clientId: selected._linkedClientId } : {}),
+      ...(selected.type === "fournisseur" && selected._linkedFournisseurId ? { fournisseurId: selected._linkedFournisseurId } : {}),
     }
     if (selected.type === "client" && !selected._linkedClientId) {
       const client: Client = {
-        id: store.genId(),
-        nom: selected.societe || selected.nom,
-        secteur: "", zone: "", type: "autre", taille: "50-100kg",
-        typeProduits: "moyenne", rotation: "journalier",
-        telephone: selected.telephone, email: selected.email,
-        adresse: selected.ville ?? "",
+        id: store.genId(), nom: selected.societe || selected.nom, secteur: "", zone: "", type: "autre",
+        taille: "50-100kg", typeProduits: "moyenne", rotation: "journalier",
+        telephone: selected.telephone, email: selected.email, adresse: selected.ville ?? "",
         createdBy: user.id, createdAt: new Date().toISOString(),
       }
-      store.saveClients([...store.getClients(), client])
-      newUser.clientId = client.id
+      store.saveClients([...store.getClients(), client]); newUser.clientId = client.id
     }
     if (selected.type === "fournisseur" && !selected._linkedFournisseurId) {
       const fourn: Fournisseur = {
-        id: store.genId(),
-        nom: selected.societe || selected.nom,
-        contact: selected.nom, telephone: selected.telephone,
-        email: selected.email, ville: selected.ville,
+        id: store.genId(), nom: selected.societe || selected.nom, contact: selected.nom,
+        telephone: selected.telephone, email: selected.email, ville: selected.ville,
         ice: selected.ice, specialites: [], itineraires: [],
       }
-      store.saveFournisseurs([...store.getFournisseurs(), fourn])
-      newUser.fournisseurId = fourn.id
+      store.saveFournisseurs([...store.getFournisseurs(), fourn]); newUser.fournisseurId = fourn.id
     }
     store.saveUsers([...store.getUsers(), newUser])
-    const updated = requests.map(r =>
-      r.id === selected.id
-        ? { ...r, statut: "approuve" as const, approvedAt: new Date().toISOString(), approvedBy: user.id }
-        : r
-    )
-    saveAccountRequests(updated)
-    setRequests(updated)
-    // Sync statut to Supabase
-    sb.from("fl_account_requests").update({ statut: "approuve" }).eq("id", selected.id).then(() => {})
-
-    // ── Notification WhatsApp au demandeur ──────────────────────────────────
-    const phone = selected.telephone?.replace(/\D/g, "") ?? ""
+    await writeRequestStatut(selected.id, "approuve", { approvedBy: user.id, approvedAt: new Date().toISOString() })
+    setRequests(prev => prev.map(r => r.id === selected.id ? { ...r, statut: "approuve" as const } : r))
     if (phone) {
-      const siteUrl = "https://vita-fresh.netlify.app"
       const waMsg = encodeURIComponent(
-        `Bonjour ${approveForm.nom} 👋\n\n` +
-        `✅ Votre compte Vita Fresh a été créé avec succès !\n\n` +
-        `🔑 Identifiants de connexion :\n` +
-        `• Email : ${approveForm.email}\n` +
-        `• Mot de passe : ${approveForm.password}\n\n` +
-        `🌐 Connectez-vous sur :\n${siteUrl}\n\n` +
-        `⚠️ Changez votre mot de passe après la première connexion.\n\n` +
-        `— Vita Fresh 🍃`
-      )
+        `Bonjour ${approveForm.nom} 👋\n\n✅ Votre compte Vita Fresh a été créé !\n\n` +
+        `🔑 Connexion :\n• Email : ${approveForm.email}\n• Mot de passe : ${approveForm.password}\n\n` +
+        `🌐 https://vitafresh.vita-core.org\n\n— Vita Fresh 🍃`)
       setTimeout(() => window.open(`https://wa.me/${phone}?text=${waMsg}`, "_blank"), 400)
     }
-
-    setShowApprove(false)
-    setSelected(null)
-    setMsg({ ok: true, text: `✅ Compte créé pour ${approveForm.nom}. Mot de passe : ${approveForm.password}${phone ? " — WhatsApp ouvert !" : ""}` })
-    setTimeout(() => setMsg(null), 10000)
+    setShowApprove(false); setSelected(null)
+    setMsg({ ok: true, text: `✅ Compte créé pour ${approveForm.nom}.${phone ? " WhatsApp ouvert !" : ""}` })
+    setTimeout(() => setMsg(null), 9000)
   }
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!selected) return
-    const updated = requests.map(r =>
-      r.id === selected.id
-        ? { ...r, statut: "rejete" as const, rejectedAt: new Date().toISOString(), rejectedBy: user.id, rejectReason }
-        : r
-    )
-    saveAccountRequests(updated)
-    setRequests(updated)
-    sb.from("fl_account_requests").update({ statut: "rejete", reject_reason: rejectReason }).eq("id", selected.id).then(() => {})
-    setShowReject(false)
-    setSelected(null)
-    setMsg({ ok: false, text: "Demande rejetée." })
+    const linkedUserId = (selected as { _linkedUserId?: string })._linkedUserId
+    if (linkedUserId) await setUserActifSb(linkedUserId, false)  // désactive le compte web
+    await writeRequestStatut(selected.id, "rejete", { rejectedBy: user.id, rejectedAt: new Date().toISOString(), rejectReason })
+    setRequests(prev => prev.map(r => r.id === selected.id ? { ...r, statut: "rejete" as const } : r))
+    setShowReject(false); setSelected(null)
+    setMsg({ ok: false, text: "Demande rejetée — compte désactivé." })
     setTimeout(() => setMsg(null), 4000)
   }
 
@@ -260,12 +271,16 @@ export default function BODemandesComptes({ user }: Props) {
     )
     saveAccountRequests(updated)
     setRequests(updated)
-    // Sync to Supabase
-    await sb.from("fl_account_requests").update({
-      nom: nom.trim(), telephone: telephone.trim(), email: email.trim(),
-      ville: ville.trim() || null, societe: societe.trim() || null,
-      message: message.trim() || null, statut,
-    }).eq("id", selected.id)
+    // Sync to Supabase (service_role, JSONB)
+    await fetch("/api/sync-write", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table: "fl_account_requests", upserts: [{ id: selected.id, payload: {
+        type: selected.type, sous_type: selected.sous_type,
+        nom: nom.trim(), telephone: telephone.trim(), email: email.trim(),
+        ville: ville.trim() || null, societe: societe.trim() || null, message: message.trim() || null,
+        ice: selected.ice, statut, created_at: selected.createdAt,
+        _linkedUserId: (selected as { _linkedUserId?: string })._linkedUserId, _linkedClientId: selected._linkedClientId,
+        updated_at: new Date().toISOString(),
+      }, updated_at: new Date().toISOString() }] }) })
     setShowEdit(false)
     setSelected(null)
     setMsg({ ok: true, text: "✅ Demande mise à jour." })
@@ -277,7 +292,8 @@ export default function BODemandesComptes({ user }: Props) {
     const updated = requests.filter(r => r.id !== req.id)
     saveAccountRequests(updated)
     setRequests(updated)
-    await sb.from("fl_account_requests").delete().eq("id", req.id)
+    await fetch("/api/sync-write", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table: "fl_account_requests", deletes: [req.id] }) })
     setMsg({ ok: true, text: `🗑️ Demande de ${req.nom} supprimée.` })
     setTimeout(() => setMsg(null), 4000)
   }
@@ -288,7 +304,7 @@ export default function BODemandesComptes({ user }: Props) {
     )
     saveAccountRequests(updated)
     setRequests(updated)
-    await sb.from("fl_account_requests").update({ statut: newStatut }).eq("id", req.id)
+    await writeRequestStatut(req.id, newStatut)
     setMsg({ ok: true, text: `Statut mis à jour → ${STATUT_CFG[newStatut]?.label}` })
     setTimeout(() => setMsg(null), 3000)
   }
