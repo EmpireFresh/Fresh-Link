@@ -131,6 +131,8 @@ export async function POST(req: NextRequest) {
     taille, rotation, modalitePaiement,
     produits, volumeKgSemaine, origineProduction,
     origineDetail,
+    // Géolocalisation (consentement client) — pour la gestion du circuit de livraison
+    gps_lat, gps_lng, gps_precision, gps_consent,
   } = body
 
   // ── Validation ────────────────────────────────────────────────────────────
@@ -150,6 +152,37 @@ export async function POST(req: NextRequest) {
 
   // ── Mode auto (SERVICE_ROLE_KEY disponible) ───────────────────────────────
   const hasServiceKey = !!((process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.service_role || process.env.SUPABASE_SERVICE_KEY))
+
+  // ── Règles d'auto-approbation (configurables dans le BO « Demandes Comptes ») ──
+  //    Config = ligne __autoapprove de fl_account_requests, payload :
+  //    { enabled, autoTypes:[], phonePrefixes:[], gpsZones:[{lat,lng,radiusKm}] }
+  //    Désactivée/absente → tous auto-approuvés (comportement par défaut, non bloquant).
+  let autoApproved = true
+  try {
+    const cfgRes = await fetch(`${SB_URL}/rest/v1/fl_account_requests?id=eq.__autoapprove&select=payload`,
+      { headers: { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}` }, cache: "no-store" })
+    if (cfgRes.ok) {
+      const cfgRows = await cfgRes.json() as { payload?: Record<string, unknown> }[]
+      const cfg = cfgRows?.[0]?.payload as Record<string, unknown> | undefined
+      if (cfg && cfg.enabled === true) {
+        autoApproved = false
+        const types    = Array.isArray(cfg.autoTypes)     ? cfg.autoTypes as string[]     : []
+        const prefixes = Array.isArray(cfg.phonePrefixes) ? cfg.phonePrefixes as string[] : []
+        const zones    = Array.isArray(cfg.gpsZones)      ? cfg.gpsZones as { lat:number; lng:number; radiusKm:number }[] : []
+        if (types.map(t => String(t).toLowerCase()).includes(String(sousType).toLowerCase())) autoApproved = true
+        if (!autoApproved && prefixes.some(p => telNorm.startsWith(String(p).replace(/\D/g, "")))) autoApproved = true
+        if (!autoApproved && gps_lat != null && gps_lng != null) {
+          const toR = (x: number) => (x * Math.PI) / 180
+          for (const z of zones) {
+            const dLat = toR(Number(gps_lat) - Number(z.lat)), dLng = toR(Number(gps_lng) - Number(z.lng))
+            const a = Math.sin(dLat/2)**2 + Math.cos(toR(Number(z.lat))) * Math.cos(toR(Number(gps_lat))) * Math.sin(dLng/2)**2
+            const km = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+            if (km <= (Number(z.radiusKm) || 5)) { autoApproved = true; break }
+          }
+        }
+      }
+    }
+  } catch { /* config absente → auto-approuvé par défaut */ }
 
   if (hasServiceKey) {
     // 1. Vérifier doublon
@@ -174,7 +207,7 @@ export async function POST(req: NextRequest) {
       password,
       role:      roleUser,
       clientId,
-      actif:     true,
+      actif:     autoApproved,   // auto-approuvé → actif ; sinon en attente de validation
       sousType,
       createdAt: new Date().toISOString(),
     }
@@ -207,8 +240,14 @@ export async function POST(req: NextRequest) {
         volumeKgSemaine:    Number(volumeKgSemaine) || null,
         origineProduction:  origineProduction?.trim() || null,
       } : {}),
+      // Géolocalisation (si consentement client) — gestion du circuit de livraison
+      ...(gps_lat != null && gps_lng != null ? {
+        gps_lat: Number(gps_lat), gps_lng: Number(gps_lng),
+        gps_precision: gps_precision != null ? Number(gps_precision) : null,
+        gps_consent: gps_consent === true,
+      } : {}),
       // Defaults
-      actif:      true,
+      actif:      autoApproved,
       remisePct:  0,
       remiseActive: false,
       loyaltyPoints: 0,
@@ -236,8 +275,10 @@ export async function POST(req: NextRequest) {
             telephone: telNorm, societe: societe?.trim() || null,
             ice: ice?.trim() || null, ville: ville?.trim() || null,
             message: message?.trim() || null,
-            statut: "en_attente",
+            statut: autoApproved ? "approuve" : "en_attente",
+            auto_approved: autoApproved,
             origine: origine || "web",
+            ...(gps_lat != null && gps_lng != null ? { gps_lat: Number(gps_lat), gps_lng: Number(gps_lng), gps_precision: gps_precision != null ? Number(gps_precision) : null } : {}),
             userId, _linkedUserId: userId, _linkedClientId: clientId,
             created_at: new Date().toISOString(),
           },
@@ -248,9 +289,12 @@ export async function POST(req: NextRequest) {
 
     if (userOk) {
       return NextResponse.json({
-        statut:   "actif",
+        statut:       autoApproved ? "actif" : "en_attente",
+        autoApproved,
         password,
-        message:  `Compte créé avec succès ! Connectez-vous avec le ${telNorm} et le mot de passe ci-dessous.`,
+        message:      autoApproved
+          ? `Compte créé avec succès ! Connectez-vous avec le ${telNorm} et le mot de passe ci-dessous.`
+          : `Compte créé ! Il sera activé après validation par notre équipe. Notez bien votre mot de passe ci-dessous.`,
         user: { id: userId, name: nomTrimmed, telephone: telNorm, role: roleUser },
       }, { status: 201, headers: cors(origin) })
     }

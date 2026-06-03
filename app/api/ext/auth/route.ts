@@ -135,34 +135,38 @@ async function getClientById(clientId: string): Promise<any | null> {
 async function checkDevice(deviceId: string | null, nom: string | null, userAgent: string | null): Promise<"autorise" | "en_attente" | "bloque" | "skip"> {
   if (!deviceId?.trim()) return "skip"
   try {
-    // Vérifier si le device existe déjà
+    // fl_site_access est au format JSONB {id, payload} (id = fingerprint)
     const res = await fetch(
-      `${SB_URL}/rest/v1/fl_site_access?device_id=eq.${encodeURIComponent(deviceId)}&select=statut&limit=1`,
+      `${SB_URL}/rest/v1/fl_site_access?id=eq.${encodeURIComponent(deviceId)}&select=payload&limit=1`,
       { headers: { apikey: SB_SERVER_KEY, Authorization: `Bearer ${SB_SERVER_KEY}` } }
     )
     if (res.ok) {
-      const rows: { statut: string }[] = await res.json()
+      const rows: { payload?: { statut?: string } }[] = await res.json()
       if (rows?.[0]) {
-        const s = rows[0].statut
+        const s = rows[0]?.payload?.statut
         if (s === "autorise") return "autorise"
         if (s === "bloque")   return "bloque"
         return "en_attente"
       }
     }
-    // Device inconnu — l'enregistrer comme en_attente
+    // Device inconnu — l'enregistrer comme en_attente (format JSONB, ignore-duplicates)
     await fetch(`${SB_URL}/rest/v1/fl_site_access`, {
       method: "POST",
       headers: {
         apikey: SB_SERVER_KEY, Authorization: `Bearer ${SB_SERVER_KEY}`,
-        "Content-Type": "application/json", Prefer: "return=minimal",
+        "Content-Type": "application/json", Prefer: "resolution=ignore-duplicates,return=minimal",
       },
       body: JSON.stringify({
-        device_id:      deviceId,
-        nom:            nom ?? null,
-        user_agent:     userAgent ?? null,
-        statut:         "en_attente",
-        first_visit_at: new Date().toISOString(),
-        updated_at:     new Date().toISOString(),
+        id: deviceId,
+        payload: {
+          device_id:      deviceId,
+          nom:            nom ?? null,
+          user_agent:     userAgent ?? null,
+          statut:         "en_attente",
+          first_visit_at: new Date().toISOString(),
+          updated_at:     new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
       }),
     })
     return "en_attente"
@@ -254,7 +258,9 @@ export async function POST(req: NextRequest) {
     // ── Vérification accès appareil (optionnel — ne bloque pas si pas de device_id) ──
     // Le device_id est envoyé par le site web depuis localStorage.
     // Si envoyé: vérifie fl_site_access. Non envoyé: login normal (rétrocompatible).
-    if (device_id?.trim()) {
+    // ⚡ Le contrôle d'appareil ne s'applique QU'À l'application ERP (staff).
+    // Les CLIENTS du site web ne doivent jamais être bloqués par l'approbation d'appareil.
+    if (!isWebsite && device_id?.trim()) {
       const deviceStatus = await checkDevice(
         device_id.trim(),
         user.name ?? null,

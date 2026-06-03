@@ -2937,6 +2937,14 @@ GET  /api/ext/commandes/:id → suivi commande</div>
           </div>
         </div>
 
+        <!-- ── Consentement géolocalisation (optionnel) ───────────────────── -->
+        <label id="signupGpsConsent" style="display:flex;align-items:flex-start;gap:9px;margin:4px 2px 10px;padding:11px 13px;border:1.5px solid #d1fae5;border-radius:12px;background:#f0fdf4;cursor:pointer">
+          <input type="checkbox" id="signupGpsCheck" checked style="margin-top:2px;width:17px;height:17px;accent-color:#16a34a;flex-shrink:0"/>
+          <span style="font-size:12px;color:#374151;line-height:1.5">
+            <strong style="color:#15803d">📍 J'autorise Vita Fresh à enregistrer ma position</strong><br>
+            Cela nous aide à <strong>mieux gérer notre circuit de livraison</strong> et à vous garantir une <strong>livraison à temps et un service de qualité</strong>. Vous restez libre de décocher cette option.
+          </span>
+        </label>
         <button type="submit" class="btn-submit" id="btnSignupSubmit" style="margin-top:6px">📋 Envoyer ma demande</button>
       </form>
       <p style="margin-top:12px;text-align:center;font-size:13px;color:var(--gy)">
@@ -4419,6 +4427,21 @@ async function doSignup(e){
     origine:origine,
     origineDetail:origineDetail||undefined,
   };
+  // ── Capture GPS si consentement coché (gestion du circuit de livraison) ──────
+  try{
+    var gpsChk=document.getElementById("signupGpsCheck");
+    if(gpsChk && gpsChk.checked && navigator.geolocation){
+      btnEl.textContent="📍 Localisation...";
+      var pos=await new Promise(function(resolve){
+        navigator.geolocation.getCurrentPosition(
+          function(p){resolve(p);}, function(){resolve(null);},
+          {enableHighAccuracy:true,timeout:8000,maximumAge:0}
+        );
+      });
+      if(pos){ payload.gps_lat=pos.coords.latitude; payload.gps_lng=pos.coords.longitude; payload.gps_precision=Math.round(pos.coords.accuracy); payload.gps_consent=true; }
+      btnEl.textContent="⏳ Envoi en cours...";
+    }
+  }catch(e){}
   // POST avec timeout 20s + 1 réessai (résiste aux démarrages à froid / coupures réseau temporaires)
   async function postDemandeCompte(){
     for(var attempt=1; attempt<=2; attempt++){
@@ -4440,7 +4463,7 @@ async function doSignup(e){
     var res=await postDemandeCompte();
     var data=await res.json();
     if(!res.ok){errEl.textContent=data.error||data.message||"Erreur lors de l'envoi.";errEl.classList.add("show");}
-    else if(data.statut==="actif"&&data.password){
+    else if(data.password){
       // ── Compte créé automatiquement → afficher le mot de passe ──────────
       // ✉️ Email de bienvenue avec identifiants (si email fourni)
       try{ emailBienvenue({nom:name,email:email,telephone:phone,password:data.password,type:type}); }catch(e){}
@@ -4450,15 +4473,16 @@ async function doSignup(e){
         succEl.innerHTML=
           '<div style="text-align:center;padding:8px 0">'
           +'<div style="font-size:28px;margin-bottom:6px">✅</div>'
-          +'<strong style="font-size:16px;color:#166534">Compte créé avec succès !</strong>'
+          +'<strong style="font-size:16px;color:#166534">'+(data.statut==="actif"?"Compte créé avec succès !":"Compte créé — en attente de validation")+'</strong>'
+          +(data.statut!=="actif"?'<p style="margin:6px 0 0;font-size:12px;color:#92400e">⏳ Notre équipe valide votre accès. Vous pourrez vous connecter dès l\'activation.</p>':'')
           +'<p style="margin:10px 0 6px;font-size:13px;color:#374151">Votre numéro : <strong>'+phone+'</strong></p>'
           +'<p style="margin:0 0 10px;font-size:13px;color:#374151">Votre mot de passe :</p>'
           +'<div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:10px;padding:10px 16px;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
           +'<span id="newPwd" style="font-size:22px;font-weight:900;letter-spacing:3px;color:#15803d;font-family:monospace">'+data.password+'</span>'
           +'<button onclick="navigator.clipboard.writeText(\''+data.password+'\');this.textContent=\'✅\'" style="background:#22c55e;color:#fff;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:700">📋 Copier</button>'
           +'</div>'
-          +'<p style="font-size:11px;color:#6b7280;margin:0 0 14px">⚠️ Notez ce mot de passe, il ne sera plus affiché.</p>'
-          +'<button onclick="document.getElementById(\'loginPhone\').value=\''+phone+'\';document.getElementById(\'loginPass\').value=\''+data.password+'\';closeSignup();openLogin();" style="background:linear-gradient(135deg,#1a4f2a,#2d7a46);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:14px;cursor:pointer;width:100%">🔐 Se connecter maintenant</button>'
+          +'<p style="font-size:11px;color:#6b7280;margin:0 0 6px">⚠️ Notez ce mot de passe, il ne sera plus affiché.</p>'
+          +'<p style="font-size:12px;color:#15803d;margin:0">Vous pourrez vous connecter à tout moment avec votre numéro et ce mot de passe.</p>'
           +'</div>';
       }
       showToast("✅ Compte créé ! Connectez-vous avec "+phone);
