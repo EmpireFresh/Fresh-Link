@@ -23,14 +23,15 @@ function VFIcon({ size }: { size: number }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 48 48"
+      viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ borderRadius: 10, flexShrink: 0 }}
+      style={{ flexShrink: 0 }}
     >
-      <rect width="48" height="48" rx="10" fill="#1a4f2a" />
-      <text x="24" y="34" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial, sans-serif" fill="#b8962e">VF</text>
-      <path d="M8 38 Q24 42 40 38" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.6" />
+      <circle cx="50" cy="50" r="50" fill="#1a4d2e" />
+      <path d="M28 40 L50 77 L72 40" fill="none" stroke="#ffffff" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M53 32 C61 16,80 12,92 16 C86 34,66 40,53 32 Z" fill="#ffffff" />
+      <path d="M59 29 C69 22,81 19,89 17" stroke="#1a4d2e" strokeWidth="2.4" fill="none" strokeLinecap="round" />
     </svg>
   )
 }

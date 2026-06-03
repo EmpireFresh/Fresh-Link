@@ -104,7 +104,7 @@ const BOInvestisseurDashboard = dynamic(() => import("./BOInvestisseurDashboard"
 const BOFinanceControlGestion  = dynamic(() => import("./BOFinanceControlGestion"),  { ssr: false, loading: L("Chargement finance...") })
 const BOSourcing             = dynamic(() => import("./BOSourcing"),             { ssr: false, loading: L("Chargement sourcing...") })
 const BOPricing              = dynamic(() => import("./BOPricing"),              { ssr: false, loading: L("Chargement releve prix...") })
-const BODemandesComptes      = dynamic(() => import("./BODemandesComptes"),      { ssr: false, loading: L("Chargement demandes comptes...") })
+// (BODemandesComptes retiré — doublon de Gestion Clients ; les comptes web s'affichent dans BOComptesExternes)
 const BOWebIntegration       = dynamic(() => import("./BOWebIntegration"),       { ssr: false, loading: L("Chargement integration web...") })
 const BOPermissionsMatrix    = dynamic(() => import("./BOPermissionsMatrix"),    { ssr: false, loading: L("Chargement permissions...") })
 const BOMarketplace          = dynamic(() => import("./BOMarketplace"),          { ssr: false, loading: L("Chargement marketplace...") })
@@ -113,7 +113,7 @@ const BOCategoryPricing      = dynamic(() => import("./BOCategoryPricing"),     
 const BOFirebaseArchive      = dynamic(() => import("./BOFirebaseArchive"),      { ssr: false, loading: L("Chargement archivage Firebase...") })
 const BOExternalLinks        = dynamic(() => import("./BOExternalLinks"),         { ssr: false, loading: L("Chargement liens...") })
 const BODeviceAccess         = dynamic(() => import("./BODeviceAccess"),          { ssr: false, loading: L("Chargement accès appareils...") })
-const BOCommandesWeb         = dynamic(() => import("./BOCommandesWeb"),           { ssr: false, loading: L("Chargement commandes web...") })
+// (BOCommandesWeb retiré — doublon de Commandes ; les commandes web s'affichent dans BOCommandesUnifiees)
 const BOCommandesUnifiees    = dynamic(() => import("./BOCommandesUnifiees"),      { ssr: false, loading: L("Chargement commandes...") })
 // ── Modules V3 (moteur commercial, cadeaux, cutoffs, feedbacks, PA) ──
 const BOFeedbacksV3          = dynamic(() => import("./BOFeedbacks"),             { ssr: false, loading: L("Chargement feedbacks...") })
@@ -282,7 +282,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: "comptes_externes",   label: "Gestion Clients",        labelAr: "إدارة الزبائن",     permKey: "canViewExternal",   icon: <Icon d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
       { id: "loyalty",            label: "Promotions & Fidelite",  labelAr: "العروض والولاء",    permKey: "canViewCommercial" as keyof User, icon: <Icon d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /> },
-      { id: "demandes_comptes",   label: "Demandes Comptes",       labelAr: "طلبات الحسابات",    permKey: "canViewExternal",   icon: <Icon d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /> },
       { id: "marketplace",        label: "Marketplace & Web",      labelAr: "المتجر الإلكتروني", permKey: "canViewCommercial", icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /> },
       { id: "moteur_commercial",  label: "💼 Moteur commercial",   labelAr: "محرك تجاري",       permKey: "canViewCommercial", icon: <Icon d="M9 7h6m0 0v6m0-6l-6 6" /> },
       { id: "gifts_v3",           label: "🎁 Cadeaux incentives",  labelAr: "هدايا تحفيزية",    permKey: "canViewCommercial", icon: <Icon d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /> },
@@ -399,13 +398,13 @@ const PANELS: Record<Tab, (u: User) => React.ReactNode> = {
   gifts_v3:          (_u) => <BOGiftsV3 />,
   cutoffs_v3:        (u)  => <BOCutoffsV3 currentUserId={u.id} />,
   feedbacks_v3:      (_u) => <BOFeedbacksV3 />,
-  commandes_web:       (u) => <BOCommandesWeb user={u} />,
+  commandes_web:       (u) => <BOCommandesUnifiees user={u} />,
   commandes_unifiees:  (u) => <BOCommandesUnifiees user={u} />,
   category_pricing:  (_u) => <BOCategoryPricing />,
   documents:         (u) => <BODocuments user={u} />,
   firebase_archive:  (_u) => <BOFirebaseArchive />,
   liens_externes:    (u)  => <BOExternalLinks user={u} />,
-  demandes_comptes:  (u) => <BODemandesComptes user={u} />,
+  demandes_comptes:  (u) => <BOComptesExternes user={u} />,
   web_integration:   (u) => <BOWebIntegration user={u} />,
   permissions_matrix:(_u) => <BOPermissionsMatrix />,
   settings:          (u) => <BOSettings user={u} />,
