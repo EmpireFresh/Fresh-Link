@@ -2952,7 +2952,8 @@ var CFG = {
   fb:"", ig:"", exp:20, expDelay:"2h", free:150, std:15,
   rib:"", ribBanque:"CIH / Attijariwafa / BMCE", ribBenef:"Vita Core SARL",
   sbUrl:"https://jwdrwapuetqoqnankgma.supabase.co",
-  sbKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3ZHJ3YXB1ZXRxb3FuYW5rZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDE1NzUsImV4cCI6MjA5NDAxNzU3NX0.9l0e2eE9milvCWg29TIoGXgWY-ULOmTVrPmWRCsIvtw"
+  sbKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3ZHJ3YXB1ZXRxb3FuYW5rZ21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDE1NzUsImV4cCI6MjA5NDAxNzU3NX0.9l0e2eE9milvCWg29TIoGXgWY-ULOmTVrPmWRCsIvtw",
+  maintenance: false
 };
 try{ Object.assign(CFG, JSON.parse(localStorage.getItem("vf_cfg_v2")||"{}")); }catch(e){}
 // كرجّع الإحصائيات المحفوظة من الإدارة
@@ -5583,11 +5584,11 @@ window.activeCategory=activeCategory;
 })();
 </script>
 
-<!-- STICKY WHATSAPP BUTTON + PRICE COMPARISON + REVIEWS STARS -->
+<!-- CHATBOT BUTTON -->
 
 <style>
-/* Sticky WhatsApp Button */
-.wa-sticky {
+/* Chatbot Floating Button */
+.chatbot-btn {
   position: fixed;
   bottom: 24px;
   right: 24px;
@@ -5595,77 +5596,37 @@ window.activeCategory=activeCategory;
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #25d366, #128c7e);
+  background: linear-gradient(135deg, #0ea5e9, #06b6d4);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(37, 211, 102, 0.35);
+  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.35);
   transition: all 0.3s;
+  border: none;
   text-decoration: none;
 }
-.wa-sticky:hover {
+.chatbot-btn:hover {
   transform: scale(1.12) translateY(-6px);
-  box-shadow: 0 12px 36px rgba(37, 211, 102, 0.5);
-}
-.price-compare-banner {
-  background: #ecfdf5;
-  border-left: 4px solid #16a34a;
-  padding: 16px 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  color: #166534;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.product-reviews {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 8px;
-}
-.star { color: #fbbf24; }
-.bio-badge {
-  display: inline-block;
-  background: #ecfdf5;
-  color: #047857;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  margin-top: 6px;
+  box-shadow: 0 12px 36px rgba(6, 182, 212, 0.5);
 }
 </style>
 
 <script>
 (function() {
-  var wa = document.createElement('a');
-  wa.className = 'wa-sticky';
-  wa.title = 'WhatsApp';
-  wa.innerHTML = '💬';
-  wa.onclick = function(e) {
+  var btn = document.createElement('a');
+  btn.className = 'chatbot-btn';
+  btn.title = 'Chatbot Support';
+  btn.innerHTML = '🤖';
+  btn.href = '#';
+  btn.onclick = function(e) {
     e.preventDefault();
     var waNum = CFG && CFG.wa ? CFG.wa : '212681736910';
     window.open('https://wa.me/' + waNum, '_blank');
   };
-  document.body.appendChild(wa);
-  
-  function injectBanner() {
-    var cat = document.getElementById('catalogue');
-    if(!cat) return;
-    var b = document.createElement('div');
-    b.className = 'price-compare-banner';
-    b.innerHTML = '💰 <strong>Nos prix sont 15-20% moins chers</strong> que la concurrence (Aswak, Khodra, Natura Beldi) — <a href="javascript:alert(\'🥕 Carotte 7.50 DH (Aswak 7.95)\\n🍅 Tomate 10.00 DH (Aswak 11.95)\\n🫑 Poivron 11.00 DH (Aswak 12.95)\')" style="color:#059669;text-decoration:underline;cursor:pointer">Voir détails</a>';
-    cat.insertBefore(b, cat.firstChild);
-  }
-  
-  setTimeout(function() { injectBanner(); }, 800);
+  document.body.appendChild(btn);
 })();
 </script>
 
