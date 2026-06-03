@@ -4380,8 +4380,25 @@ async function doSignup(e){
     origine:origine,
     origineDetail:origineDetail||undefined,
   };
+  // POST avec timeout 20s + 1 réessai (résiste aux démarrages à froid / coupures réseau temporaires)
+  async function postDemandeCompte(){
+    for(var attempt=1; attempt<=2; attempt++){
+      var ctrl=(typeof AbortController!=="undefined")?new AbortController():null;
+      var to=ctrl?setTimeout(function(){ctrl.abort();},20000):null;
+      try{
+        var r=await fetch(CONFIG.API_URL+"/api/ext/demande-compte",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal:ctrl?ctrl.signal:undefined});
+        if(to)clearTimeout(to);
+        return r;
+      }catch(e){
+        if(to)clearTimeout(to);
+        console.error("[doSignup] tentative "+attempt+" échouée:",e);
+        if(attempt>=2) throw e;
+        await new Promise(function(rs){setTimeout(rs,1300);});
+      }
+    }
+  }
   try{
-    var res=await fetch(CONFIG.API_URL+"/api/ext/demande-compte",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    var res=await postDemandeCompte();
     var data=await res.json();
     if(!res.ok){errEl.textContent=data.error||data.message||"Erreur lors de l'envoi.";errEl.classList.add("show");}
     else if(data.statut==="actif"&&data.password){
@@ -4414,7 +4431,9 @@ async function doSignup(e){
       showToast("✅ Demande de compte envoyée !");
     }
   }catch(err){
-    errEl.textContent="Connexion impossible. Contactez-nous par WhatsApp pour créer votre compte.";errEl.classList.add("show");
+    console.error("[doSignup] échec final:",err);
+    var detail=(err&&err.name==="AbortError")?"délai dépassé":((err&&err.message)?err.message:"réseau");
+    errEl.textContent="Connexion impossible ("+detail+"). Réessayez dans un instant, ou contactez-nous sur WhatsApp.";errEl.classList.add("show");
     setTimeout(function(){
       var waMsg=encodeURIComponent("🆕 Demande de compte Vita Fresh\nType : "+type+"\nNom : "+name+"\nTél : "+phone+(ville?"\nVille : "+ville:"")+(societe?"\nSociété : "+societe:""));
       window.open("https://wa.me/"+CFG.wa+"?text="+waMsg,"_blank");
