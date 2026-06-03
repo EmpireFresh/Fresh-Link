@@ -30,7 +30,7 @@ function VFIcon({ size }: { size: number }) {
     >
       <circle cx="50" cy="50" r="50" fill="#1a4d2e" />
       <path d="M28 40 L50 77 L72 40" fill="none" stroke="#ffffff" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M53 32 C61 16,80 12,92 16 C86 34,66 40,53 32 Z" fill="#ffffff" />
+      <path d="M53 32 C61 16,80 12,92 16 C86 34,66 40,53 32 Z" fill="#4ade80" />
       <path d="M59 29 C69 22,81 19,89 17" stroke="#1a4d2e" strokeWidth="2.4" fill="none" strokeLinecap="round" />
     </svg>
   )
