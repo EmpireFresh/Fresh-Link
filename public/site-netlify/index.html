@@ -319,17 +319,18 @@ html[dir="rtl"] .contact-box a{flex-direction:row-reverse}
 .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0}
 /* ✅ Inscription : flexbox — les champs remplissent chaque ligne (jamais de case vide),
    les champs pleine largeur prennent leur propre ligne. Responsive 1→3 colonnes. */
-.signup-grid{display:flex;flex-wrap:wrap;gap:12px}
-.signup-grid .form-group{flex:1 1 190px;min-width:0;margin-bottom:0}
+.signup-grid{display:flex;flex-wrap:wrap;gap:10px 14px}
+/* 3 à 4 champs par ligne (flex-basis étroit), avec une fine barre verticale verte qui sépare les colonnes */
+.signup-grid .form-group{flex:1 1 160px;min-width:0;margin-bottom:0;border-left:2px solid #dfeede;padding-left:10px}
 .signup-full{flex-basis:100%}
-.signup-half{flex:1 1 300px}
+.signup-half{flex:1 1 320px}
 .signup-grid .phone-input-wrap{width:100%}
 .signup-grid select,.signup-grid input{width:100%}
-.signup-section{margin-bottom:16px;padding:14px 14px 10px;border:1px solid #e5e7eb;border-radius:14px;background:#fafafa;animation:fadeSlideUp .35s cubic-bezier(.22,1,.36,1)}
+.signup-section{margin-bottom:14px;padding:14px 14px 10px;border:1px solid #e5e7eb;border-radius:14px;background:#fafafa;animation:fadeSlideUp .35s cubic-bezier(.22,1,.36,1)}
 .signup-section-title{font-size:12px;font-weight:800;color:#1a4f2a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-/* Élargir la modale en mode inscription pour afficher plusieurs colonnes par ligne */
-.modal-box.signup-mode{max-width:740px}
-@media(max-width:560px){.signup-grid .form-group{flex-basis:100%}.signup-section{padding:12px 12px 8px}}
+/* Modale élargie + scroll en mode inscription pour afficher 3-4 colonnes par ligne */
+.modal-box.signup-mode{max-width:860px;max-height:92vh;overflow-y:auto}
+@media(max-width:600px){.signup-grid .form-group{flex-basis:100%;border-left:none;padding-left:0}.signup-section{padding:12px 12px 8px}}
 .form-group label{font-size:13px;font-weight:600;color:var(--gray-700)}
 .form-group input,.form-group select,.form-group textarea{padding:11px 13px;border:1.5px solid var(--gl);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;color:var(--gd);transition:.2s;outline:none;background:#fff}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--g1);box-shadow:0 0 0 3px rgba(27,67,50,.08)}
