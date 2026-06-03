@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Vita Fresh — Fruits &amp; Légumes Frais · Casablanca · VITACORE GROUP</title>
 <meta name="description" content="Vita Fresh — Distribution fruits et légumes frais Casablanca. CHR, marchands et particuliers. Livraison standard 24h et express 2h. Membre du groupe VITACORE."/>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%231E5631'/><path d='M28 42 L50 78 L72 42' stroke='white' stroke-width='12' fill='none' stroke-linejoin='miter'/><rect x='47' y='18' width='6' height='14' fill='%232D7A45'/><path d='M53 22 C62 10,80 8,90 14 C84 30,66 34,53 22Z' fill='%232D7A45'/></svg>"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%231a4d2e'/><path d='M28 40 L50 77 L72 40' fill='none' stroke='white' stroke-width='11' stroke-linejoin='round' stroke-linecap='round'/><path d='M53 32 C61 16,80 12,92 16 C86 34,66 40,53 32 Z' fill='white'/><path d='M59 29 C69 22,81 19,89 17' stroke='%231a4d2e' stroke-width='2.4' fill='none' stroke-linecap='round'/></svg>"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -1494,10 +1494,10 @@ GET  /api/ext/commandes/:id → suivi commande</div>
   <div class="nav-inner">
     <a href="#" class="nav-brand">
       <svg class="nav-logo" viewBox="0 0 100 100" width="44" height="44" role="img" aria-label="Vita Fresh">
-        <circle cx="50" cy="50" r="48" fill="#1E5631"/>
-        <path d="M28 42 L50 78 L72 42" stroke="#ffffff" stroke-width="12" fill="none" stroke-linejoin="miter"/>
-        <rect x="47" y="18" width="6" height="15" fill="#6CBC4E"/>
-        <path d="M53 23 C62 10,81 8,91 14 C85 31,66 35,53 23Z" fill="#6CBC4E"/>
+        <circle cx="50" cy="50" r="48" fill="#1a4d2e"/>
+        <path d="M28 40 L50 77 L72 40" fill="none" stroke="#ffffff" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M53 32 C61 16,80 12,92 16 C86 34,66 40,53 32 Z" fill="#ffffff"/>
+        <path d="M59 29 C69 22,81 19,89 17" stroke="#1a4d2e" stroke-width="2.4" fill="none" stroke-linecap="round"/>
       </svg>
       <div class="nav-brand-text">
         <span class="nav-brand-name">VITA FRESH</span>
@@ -2688,10 +2688,10 @@ GET  /api/ext/commandes/:id → suivi commande</div>
   <div class="modal-box">
     <button class="modal-close" onclick="closeLogin()">✕</button>
     <svg class="modal-logo" viewBox="0 0 100 100" width="56" height="56" role="img" aria-label="Vita Fresh" style="display:block;margin:0 auto 12px">
-      <circle cx="50" cy="50" r="48" fill="#1E5631"/>
-      <path d="M28 42 L50 78 L72 42" stroke="#ffffff" stroke-width="12" fill="none" stroke-linejoin="miter"/>
-      <rect x="47" y="18" width="6" height="15" fill="#6CBC4E"/>
-      <path d="M53 23 C62 10,81 8,91 14 C85 31,66 35,53 23Z" fill="#6CBC4E"/>
+      <circle cx="50" cy="50" r="48" fill="#1a4d2e"/>
+      <path d="M28 40 L50 77 L72 40" fill="none" stroke="#ffffff" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M53 32 C61 16,80 12,92 16 C86 34,66 40,53 32 Z" fill="#ffffff"/>
+      <path d="M59 29 C69 22,81 19,89 17" stroke="#1a4d2e" stroke-width="2.4" fill="none" stroke-linecap="round"/>
     </svg>
     <!-- Tabs: Connexion / Créer un compte -->
     <div style="display:flex;border-bottom:2px solid #eee;margin-bottom:18px">
@@ -3405,9 +3405,11 @@ function syncFromSupabase(){
         .select("id,payload,updated_at")
         .then(function(r){
           if(r.error) throw r.error;
-          // Filtrer : exclure entrées __config et articles désactivés
+          // Filtrer : exclure entrées __config + n'afficher QUE les articles explicitement
+          // publiés sur le web (marketplaceActif === true). Même règle que l'API /api/ext/catalogue,
+          // pour que le site affiche EXACTEMENT le même nombre que l'application (0 si rien n'est publié).
           var data=(r.data||[]).filter(function(row){
-            return !String(row.id).startsWith("__") && row.payload && row.payload.marketplaceActif!==false;
+            return !String(row.id).startsWith("__") && row.payload && row.payload.marketplaceActif===true;
           });
           if(!data.length){
             // ✅ Supabase joint, mais 0 articles → état préparation (PAS de fallback local)
